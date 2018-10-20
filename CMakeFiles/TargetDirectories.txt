@@ -1,4 +1,0 @@
-/home/bootfrog/PhotoMosaic/CMakeFiles/rebuild_cache.dir
-/home/bootfrog/PhotoMosaic/CMakeFiles/edit_cache.dir
-/home/bootfrog/PhotoMosaic/CMakeFiles/Preprocess.dir
-/home/bootfrog/PhotoMosaic/CMakeFiles/PhotoMosaic.dir

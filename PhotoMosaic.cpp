@@ -22,49 +22,6 @@ int cur_zoom = MIN_ZOOM;
 
 int x_offset, y_offset;
 
-double deg2Rad(double deg)
-{
-  return (deg * M_PI / 180.0);
-}
-
-// Resizes input image (img) such that
-// (height = targetHeight && width >= targetWidth) || (height >= targetHeight && width = targetWidth)
-// and puts the resized image in result
-void resizeImageExclusive(Mat& img, Mat& result, int targetHeight, int targetWidth)
-{
-    //Calculates resize factor
-    double resizeFactor = ((double) targetHeight / img.rows);
-    if (targetWidth > resizeFactor * img.cols)
-        resizeFactor = ((double) targetWidth / img.cols);
-
-    //Resizes image
-    if (resizeFactor < 1)
-        resize(img, result, Size(round(resizeFactor * img.cols), round(resizeFactor * img.rows)), 0, 0, INTER_AREA);
-    else if (resizeFactor > 1)
-        resize(img, result, Size(round(resizeFactor * img.cols), round(resizeFactor * img.rows)), 0, 0, INTER_CUBIC);
-    else
-        result = img;
-}
-
-// Resizes input image (img) such that
-// (height = targetHeight && width <= targetWidth) || (height <= targetHeight && width = targetWidth)
-// and puts the resized image in result
-void resizeImageInclusive(Mat& img, Mat& result, int targetHeight, int targetWidth)
-{
-    //Calculates resize factor
-    double resizeFactor = ((double) targetHeight / img.rows);
-    if (targetWidth < resizeFactor * img.cols)
-        resizeFactor = ((double) targetWidth / img.cols);
-
-    //Resizes image
-    if (resizeFactor < 1)
-        resize(img, result, Size(resizeFactor * img.cols, resizeFactor * img.rows), 0, 0, INTER_AREA);
-    else if (resizeFactor > 1)
-        resize(img, result, Size(resizeFactor * img.cols, resizeFactor * img.rows), 0, 0, INTER_CUBIC);
-    else
-        result = img;
-}
-
 // Returns the index in images of the image with the least variance from main_img
 int findBestImage(Mat& main_img, vector<Mat> images, vector<int> repeats)
 {

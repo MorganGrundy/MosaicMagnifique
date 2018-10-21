@@ -15,4 +15,6 @@
 //Image formats that are always supported and some additional commons
 #define IMAGE_WILDCARD "/*.{bmp,dib,pbm,pgm,ppm,pxm,pnm,sr,ras,hdr,pic,jpeg,jpg,jpe,png}"
 
+void progressBar(int cur, int max, int width);
+
 #endif //SHARED_HPP_

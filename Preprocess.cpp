@@ -12,20 +12,6 @@
 using namespace cv;
 using namespace std;
 
-void progressBar(int cur, int max, int width)
-{
-    int bar_width = width - 8;
-    int progress = (cur * bar_width) / max;
-    cout << "[";
-    for (int i = 0; i < bar_width; i++)
-        if (i < progress)
-            cout << "=";
-        else
-            cout << " ";
-    cout << "] " << (cur * 100) / max << "% \r";
-    cout.flush();
-}
-
 // Resizes input image (img) such that
 // (height = targetHeight && width >= targetWidth) || (height >= targetHeight && width = targetWidth)
 // and puts the resized image in result
@@ -55,7 +41,7 @@ int main(int argc, char** argv)
         cout << argv[0] << " images_in_path images_out_path" << endl;
         return -1;
     }
-    
+
     //Get list of photos in given folder
     vector<String> fn;
     String filepath(argv[1]);

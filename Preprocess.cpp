@@ -13,7 +13,9 @@ using namespace cv;
 using namespace std;
 using namespace boost::filesystem;
 
-void process_images(vector<String> *fn, struct winsize w, String img_out_path)
+//Reads all images in fn, resizes them, and writes into out path
+//Provides progress bar, records time taken and outputs
+void resize_images(vector<String> *fn, struct winsize w, String img_out_path)
 {
   double t = getTickCount();
 
@@ -48,8 +50,12 @@ int main(int argc, char** argv)
     path img_in_path(argv[1]);
     path img_out_path(argv[2]);
     if (!exists(img_out_path) || !is_directory(img_out_path))
+    {
+      cout << argv[2] << " is not a directory" << endl;
       return false;
+    }
 
+    //Reads all image names from given directory
     vector<String> fn;
     if (!read_image_names(img_in_path, &fn))
       return 0;
@@ -58,19 +64,8 @@ int main(int argc, char** argv)
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 
+    //Loads, resizes images, writes new images
     cout << "Processing " << fn.size() << " images at size " << CELL_SIZE << ":" << endl;
-    process_images(&fn, w, argv[2]);
-
-    /*
-    //Get list of photos in given folder
-    vector<String> fn;
-    String filepath(img_in_path);
-    filepath += "*.jpg";
-    glob(filepath, fn, false); //Populates fn with all the .jpg at filepath
-
-    cout << "Processing " << fn.size() << " images at size " << CELL_SIZE << ":" << endl;
-
-    process_images(fn, w);*/
-
+    resize_images(&fn, w, argv[2]);
     return 0;
 }

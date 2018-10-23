@@ -26,10 +26,14 @@ using namespace boost::filesystem;
 #define REPEAT_ADDITION 1
 
 //Image formats that are always supported and some additional commons
-String IMG_FORMATS_ARR[15] = {".bmp",".dib",".pbm",".pgm",".ppm",".pxm",".pnm",".sr",".ras",".hdr",".pic",".jpeg",".jpg",".jpe",".png"};
+const String IMG_FORMATS_ARR[15] = {".bmp",".dib",".pbm",".pgm",".ppm",".pxm",".pnm",".sr",".ras",".hdr",".pic",".jpeg",".jpg",".jpe",".png"};
 const vector<String> IMG_FORMATS(&IMG_FORMATS_ARR[0], &IMG_FORMATS_ARR[0] + 15);
 
+//Displays progress bar
 void progressBar(int cur, int max, int width);
+
+// If val exceeds a bound returns bound else returns val
+int wrap(int val, int lower_bound, int upper_bound);
 
 //Converts the given value in degrees into radians
 double deg2Rad(double deg);

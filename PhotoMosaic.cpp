@@ -4,6 +4,7 @@
 #include <opencv2/imgproc.hpp>
 #include <iostream>
 #include <sstream>
+#include <iterator>
 #include <string>
 #include <cmath>
 #include <climits>
@@ -21,6 +22,8 @@ int lastZoom;
 int cur_zoom = MIN_ZOOM;
 
 int x_offset, y_offset;
+
+bool fast_mode = false;
 
 // Returns the index in images of the image with the least variance from main_img
 int findBestImage(Mat& main_img, vector<Mat> images, vector<int> repeats)
@@ -40,7 +43,6 @@ int findBestImage(Mat& main_img, vector<Mat> images, vector<int> repeats)
     for (int i = 0; i < (int) images.size(); ++i)
     {
         int im_rows = images[i].rows;
-        //int im_cols = images[i].cols * images[i].channels();
 
         int im_cols = images[i].cols;
         if (images[i].isContinuous())
@@ -134,17 +136,6 @@ int findBestImage(Mat& main_img, vector<Mat> images, vector<int> repeats)
     return best_fit;
 }
 
-// If val exceeds a bound returns bound else returns val
-int wrap(int val, int lower_bound, int upper_bound)
-{
-    if (val > upper_bound)
-        return upper_bound;
-    else if (val < lower_bound)
-        return lower_bound;
-    else
-        return val;
-}
-
 // Callback for trackbars
 void showMosaic(int pos, void *userdata)
 {
@@ -172,36 +163,51 @@ void showMosaic(int pos, void *userdata)
 void populateRepeats(vector< vector<int> > gridIndex, int y, int x, vector<int> *repeats)
 {
     for (int i = 0; i < (int) (*repeats).size(); ++i)
-    {
         (*repeats)[i] = 0;
-    }
+
     int startX = wrap(x - REPEAT_RANGE, 0, gridIndex[0].size());
     int endX = wrap(x + REPEAT_RANGE, 0, gridIndex[0].size());
     int startY = wrap(y - REPEAT_RANGE, 0, gridIndex.size());
     //int endY = wrap(y + REPEAT_RANGE, 0, gridIndex.size());
 
     for (int yPos = startY; yPos < wrap(y - 1, 0, gridIndex.size()); ++yPos)
-    {
         for (int xPos = startX; xPos < endX; ++xPos)
-        {
             (*repeats)[gridIndex[yPos][xPos]]++;
-        }
-    }
 
     for (int xPos = startX; xPos < wrap(x - 1, 0, gridIndex[0].size()); ++xPos)
-    {
         (*repeats)[gridIndex[y][xPos]]++;
-    }
 }
 
 int main(int argc, char** argv)
 {
-    if(argc < 3)
+    //Reads args
+    if(argc < 4)
     {
-        cout << argv[0] << " mainImage.jpg path_to_images" << endl;
+        cout << argv[0] << " path/to/main.image path/to/images path/to/result.image [-flags]" << endl << endl;
+
+        //Outputs the accepted image types
+        cout << "Accepted image types:" << endl;
+        ostringstream oss;
+        copy(IMG_FORMATS.begin(), IMG_FORMATS.end()-1, ostream_iterator<String>(oss, ", "));
+        oss << IMG_FORMATS.back();
+        cout << oss.str() << endl << endl;
+
+        //Outputs flags and descriptions
+        cout << "Flags:" << endl;
+        cout << "-f: Switches colour difference algorithm from CIEDE2000 to CIE76 (less accurate, much faster)" << endl;
+
         return -1;
     }
+    if (argc > 4) //Reads flags
+    {
+      String flags = argv[4];
+      fast_mode = flags == "-f";
+    }
 
+    path img_out_path(argv[3]);
+    //img_out_path = canonical(img_out_path);
+
+    //Loads and checks main image
     String imageName = argv[1];
     Mat mainIm = imread(imageName, IMREAD_COLOR);
     if (mainIm.empty()) // Check for invalid input
@@ -210,23 +216,22 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    //Resizes main image
+    //Resizes main image and converts to Lab colour space
     cout << "Original size: " << mainIm.size() << endl;
     resizeImageInclusive(mainIm, mainIm, MAX_HEIGHT, MAX_WIDTH);
-    cvtColor(mainIm, mainIm, COLOR_BGR2Lab);
     cout << "Resized: " << mainIm.size() << endl;
+    cvtColor(mainIm, mainIm, COLOR_BGR2Lab);
 
     //Get list of photos in given folder
+    path img_in_path(argv[2]);
     vector<String> fn;
-    String filepath(argv[2]);
-    filepath += "/*.jpg";
-    glob(filepath, fn, false); // Populates fn with all the .jpg at filepath
+    if (!read_image_names(img_in_path, &fn))
+      return 0;
 
     //Calculate number of cells
     int no_of_cell_x = mainIm.cols / CELL_SIZE;
     int no_of_cell_y = mainIm.rows / CELL_SIZE;
-    cout << "x: " << no_of_cell_x << endl;
-    cout << "y: " << no_of_cell_y << endl;
+    cout << "Number of cells: (" << no_of_cell_x << ", " << no_of_cell_y << ")"<< endl;
 ////////////////////////////////////////////////////////////////////////////////
 ////    PREPROCESS IMAGES
 ////////////////////////////////////////////////////////////////////////////////
@@ -238,13 +243,16 @@ int main(int argc, char** argv)
     int max_cell_size = CELL_SIZE * (MAX_ZOOM / 100.0);
     for (size_t i = 0; i < fn.size(); ++i)
     {
+        //Reads image, resizes to min zoom and max zoom (min used for compare)
         images[i] = imread(fn[i], IMREAD_COLOR);
         resizeImageExclusive(images[i], imagesMax[i], max_cell_size, max_cell_size);
         resizeImageExclusive(imagesMax[i], images[i], CELL_SIZE, CELL_SIZE);
 
-        imagesMax[i] = imagesMax[i](Range(0, max_cell_size), Range(0, max_cell_size)); // Temporary cropping: REMOVE!!!!!
-        images[i] = images[i](Range(0, CELL_SIZE), Range(0, CELL_SIZE)); // Temporary cropping: REMOVE!!!!!
+        //Crops images, TEMPORARY
+        imagesMax[i] = imagesMax[i](Range(0, max_cell_size), Range(0, max_cell_size));
+        images[i] = images[i](Range(0, CELL_SIZE), Range(0, CELL_SIZE));
 
+        //Converts to Lab colour space
         cvtColor(images[i], images[i], COLOR_BGR2Lab);
     }
     t = (getTickCount() - t) / getTickFrequency();
@@ -252,6 +260,10 @@ int main(int argc, char** argv)
 ////////////////////////////////////////////////////////////////////////////////
 ////    CREATE MOSAIC PARTS
 ////////////////////////////////////////////////////////////////////////////////
+    //Used to determine width of window for progress bar
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+
     t = getTickCount();
     //Creates 2D grid of image cells and splits main image between them
     //Finds best match for each cell and creates a 2D vector of the best matches
@@ -264,14 +276,19 @@ int main(int argc, char** argv)
         Mat cell;
         for (int x = 0; x < no_of_cell_x; ++x)
         {
+            //Creates cell at x,y from main image
             cell = mainIm(Range(y * CELL_SIZE, (y+1) * CELL_SIZE),
                 Range(x * CELL_SIZE, (x+1) * CELL_SIZE));
 
+            //Calculates number of repeats around x,y for each image
             populateRepeats(gridIndex, y, x, &repeats);
 
+            //Find best image for cell at x,y
             int temp = findBestImage(cell, images, repeats);
             gridIndex[y][x] = temp;
             result[y][x] = imagesMax[temp];
+            
+            progressBar(x + (no_of_cell_x - 1) * y, no_of_cell_x * no_of_cell_y - 1, w.ws_col);
         }
     }
     t = (getTickCount() - t) / getTickFrequency();
@@ -288,6 +305,13 @@ int main(int argc, char** argv)
 
     t = (getTickCount() - t) / getTickFrequency();
     cout << "Time passed in seconds for concat: " << t << endl;
+
+    //Writes mosaic result at reduced size
+    {
+      Mat mosaicSmall;
+      resizeImageExclusive(mosaic, mosaicSmall, MAX_WIDTH * 2, MAX_HEIGHT * 2);
+      imwrite(img_out_path.string(), mosaicSmall);
+    }
 ////////////////////////////////////////////////////////////////////////////////
 ////    DISPLAY RESULT
 ////////////////////////////////////////////////////////////////////////////////

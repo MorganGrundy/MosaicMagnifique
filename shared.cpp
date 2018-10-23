@@ -16,9 +16,10 @@ using namespace std;
 using namespace cv;
 using namespace boost::filesystem;
 
+//Displays progress bar
 void progressBar(int cur, int max, int width)
 {
-    int bar_width = width - 8;
+    int bar_width = width - 8; //-8 for additional characters
     int progress = (cur * bar_width) / max;
     cout << (cur * 100) / max << "% [";
     for (int i = 0; i < bar_width; i++)
@@ -28,6 +29,17 @@ void progressBar(int cur, int max, int width)
             cout << " ";
     cout << "]" << " \r";
     cout.flush();
+}
+
+// If val exceeds a bound returns bound else returns val
+int wrap(int val, int lower_bound, int upper_bound)
+{
+    if (val > upper_bound)
+        return upper_bound;
+    else if (val < lower_bound)
+        return lower_bound;
+    else
+        return val;
 }
 
 //Converts the given value in degrees into radians

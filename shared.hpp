@@ -27,6 +27,8 @@ using namespace boost::filesystem;
 
 #define MAX_CELL_SIZE CELL_SIZE * (MAX_ZOOM / 100.0)
 
+#define DEG2RAD(deg) ((deg) * M_PI / 180.0)
+
 //Image formats that are always supported and some additional commons
 const String IMG_FORMATS_ARR[15] = {".bmp",".dib",".pbm",".pgm",".ppm",".pxm",".pnm",".sr",".ras",".hdr",".pic",".jpeg",".jpg",".jpe",".png"};
 const vector<String> IMG_FORMATS(&IMG_FORMATS_ARR[0], &IMG_FORMATS_ARR[0] + 15);

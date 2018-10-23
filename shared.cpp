@@ -16,18 +16,27 @@ using namespace std;
 using namespace cv;
 using namespace boost::filesystem;
 
+//Removes progress bar from window
+void progressBarClean(int width)
+{
+    for (int i = 0; i < width; i++)
+      cout << " ";
+    cout << "\r";
+    cout.flush();
+}
+
 //Displays progress bar
 void progressBar(int cur, int max, int width)
 {
     int bar_width = width - 8; //-8 for additional characters
     int progress = (cur * bar_width) / max;
-    cout << (cur * 100) / max << "% [";
+    cout <<  " [";
     for (int i = 0; i < bar_width; i++)
         if (i < progress)
             cout << "=";
         else
             cout << " ";
-    cout << "]" << " \r";
+    cout << "] " << (cur * 100) / max << "% \r";
     cout.flush();
 }
 

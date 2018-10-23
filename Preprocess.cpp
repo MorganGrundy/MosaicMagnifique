@@ -21,7 +21,6 @@ void resize_images(vector<String> *fn, struct winsize w, String img_out_path)
 
   //Read in images and preprocess them
   Mat temp_img;
-  int max_cell_size = CELL_SIZE * (MAX_ZOOM / 100.0);
   for (size_t i = 0; i < (*fn).size(); i++)
   {
       temp_img = imread((*fn)[i], IMREAD_COLOR);
@@ -30,13 +29,14 @@ void resize_images(vector<String> *fn, struct winsize w, String img_out_path)
         cout << "Failed to load: " << (*fn)[i] << endl;
         return;
       }
-      resizeImageExclusive(temp_img, temp_img, max_cell_size, max_cell_size);
+      resizeImageExclusive(temp_img, temp_img, MAX_CELL_SIZE, MAX_CELL_SIZE);
       String file_out = img_out_path + (*fn)[i].substr((*fn)[i].find_last_of("/"), (*fn)[i].length());
       imwrite(file_out, temp_img);
       progressBar(i, (*fn).size() - 1, w.ws_col);
   }
+  progressBarClean(w.ws_col);
   t = (getTickCount() - t) / getTickFrequency();
-  cout << "\nTime passed in seconds for read: " << t << endl;
+  cout << "Time passed in seconds for read: " << t << endl;
 }
 
 int main(int argc, char** argv)

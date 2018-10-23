@@ -25,9 +25,14 @@ using namespace boost::filesystem;
 #define REPEAT_RANGE 5
 #define REPEAT_ADDITION 1
 
+#define MAX_CELL_SIZE CELL_SIZE * (MAX_ZOOM / 100.0)
+
 //Image formats that are always supported and some additional commons
 const String IMG_FORMATS_ARR[15] = {".bmp",".dib",".pbm",".pgm",".ppm",".pxm",".pnm",".sr",".ras",".hdr",".pic",".jpeg",".jpg",".jpe",".png"};
 const vector<String> IMG_FORMATS(&IMG_FORMATS_ARR[0], &IMG_FORMATS_ARR[0] + 15);
+
+//Removes progress bar from window
+void progressBarClean(int width);
 
 //Displays progress bar
 void progressBar(int cur, int max, int width);

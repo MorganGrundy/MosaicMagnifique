@@ -50,24 +50,6 @@ void showMosaic(int pos, void *userdata)
     imshow("Mosaic", focusMosaic); //Display mosaic
 }
 
-void populateRepeats(vector< vector<int> > gridIndex, int y, int x, vector<int> *repeats)
-{
-    for (int i = 0; i < (int) (*repeats).size(); ++i)
-        (*repeats)[i] = 0;
-
-    int startX = wrap(x - REPEAT_RANGE, 0, gridIndex[0].size());
-    int endX = wrap(x + REPEAT_RANGE, 0, gridIndex[0].size());
-    int startY = wrap(y - REPEAT_RANGE, 0, gridIndex.size());
-    //int endY = wrap(y + REPEAT_RANGE, 0, gridIndex.size());
-
-    for (int yPos = startY; yPos < wrap(y - 1, 0, gridIndex.size()); ++yPos)
-        for (int xPos = startX; xPos < endX; ++xPos)
-            (*repeats)[gridIndex[yPos][xPos]]++;
-
-    for (int xPos = startX; xPos < wrap(x - 1, 0, gridIndex[0].size()); ++xPos)
-        (*repeats)[gridIndex[y][xPos]]++;
-}
-
 int main(int argc, char** argv)
 {
     //Reads args
@@ -155,31 +137,8 @@ int main(int argc, char** argv)
     t = getTickCount();
     //Creates 2D grid of image cells and splits main image between them
     //Finds best match for each cell and creates a 2D vector of the best matches
-    vector< vector<int> > gridIndex(no_of_cell_y, vector<int>(no_of_cell_x));
-    vector< vector<Mat> > result(no_of_cell_y, vector<Mat>(no_of_cell_x));
+    vector< vector<Mat> > result = findBestImagesCIE2000(mainIm, images, imagesMax, no_of_cell_x, no_of_cell_y, w.ws_col);
 
-    Mat cell;
-    vector<int> repeats(images.size());
-    for (int y = 0; y < no_of_cell_y; ++y)
-    {
-        for (int x = 0; x < no_of_cell_x; ++x)
-        {
-            //Creates cell at x,y from main image
-            cell = mainIm(Range(y * CELL_SIZE, (y+1) * CELL_SIZE),
-                Range(x * CELL_SIZE, (x+1) * CELL_SIZE));
-
-            //Calculates number of repeats around x,y for each image
-            populateRepeats(gridIndex, y, x, &repeats);
-
-            //Find best image for cell at x,y
-            int temp = findBestImageCIE2000(cell, images, repeats);
-            gridIndex[y][x] = temp;
-            result[y][x] = imagesMax[temp];
-
-            progressBar(x + (no_of_cell_x - 1) * y, no_of_cell_x * no_of_cell_y - 1, w.ws_col);
-        }
-    }
-    progressBarClean(w.ws_col);
     t = (getTickCount() - t) / getTickFrequency();
     cout << "Time passed in seconds for split & find: " << t << endl;
 ////////////////////////////////////////////////////////////////////////////////
@@ -189,7 +148,7 @@ int main(int argc, char** argv)
     //Combines all results into single image (mosaic)
     vector<Mat> mosaicRows(no_of_cell_y);
     for (int y = 0; y < no_of_cell_y; ++y)
-        hconcat(result[y], mosaicRows[y]);
+      hconcat(result[y], mosaicRows[y]);
     vconcat(mosaicRows, mosaic);
 
     t = (getTickCount() - t) / getTickFrequency();

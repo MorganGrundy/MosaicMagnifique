@@ -137,7 +137,11 @@ int main(int argc, char** argv)
     t = getTickCount();
     //Creates 2D grid of image cells and splits main image between them
     //Finds best match for each cell and creates a 2D vector of the best matches
-    vector< vector<Mat> > result = findBestImagesCIE2000(mainIm, images, imagesMax, no_of_cell_x, no_of_cell_y, w.ws_col);
+    vector< vector<Mat> > result;
+    if (fast_mode)
+      result = findBestImagesCIE76(mainIm, images, imagesMax, no_of_cell_x, no_of_cell_y, w.ws_col);
+    else
+      result = findBestImagesCIE2000(mainIm, images, imagesMax, no_of_cell_x, no_of_cell_y, w.ws_col);
 
     t = (getTickCount() - t) / getTickFrequency();
     cout << "Time passed in seconds for split & find: " << t << endl;

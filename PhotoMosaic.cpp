@@ -195,5 +195,6 @@ int main(int argc, char** argv)
     showMosaic(0, NULL);
 
     waitKey(0); // Wait for a keystroke in the window
+    destroyAllWindows();
     return 0;
 }

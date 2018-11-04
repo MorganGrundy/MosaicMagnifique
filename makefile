@@ -13,8 +13,8 @@ Preprocess:
 clean:
 	rm PhotoMosaic Preprocess
 
-mosaic1:
+cat:
 	./PhotoMosaic ~/Pictures/42-north-788021-unsplash.jpg Images cat.jpg
 
-fast-mosaic1:
+cat-fast:
 	./PhotoMosaic ~/Pictures/42-north-788021-unsplash.jpg Images cat.jpg -f

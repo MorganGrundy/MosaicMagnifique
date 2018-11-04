@@ -98,20 +98,12 @@ vector< vector<Mat> > findBestImagesCIE76(Mat& main_img, vector<Mat>& images, ve
 }
 
 // Returns the index in images of the image with the least variance from main_img, using CIE2000 colour difference
-int findBestImageCIE2000(Mat& main_img, vector<Mat> images, vector<int> repeats, vector<vector<vector<double> > >& C2Star)
+int findBestImageCIE2000(Mat& main_img, vector<Mat> images, vector<int> repeats)
 {
   int main_rows = main_img.rows;
   int main_cols = main_img.cols * main_img.channels();
 
   uchar* p_main;
-  vector< vector<double> > C1Star(main_rows, vector<double>(main_cols));
-  for (int row = 0; row < main_rows; ++row)
-  {
-    p_main = main_img.ptr<uchar>(row);
-    for (int col = 0; col < main_cols; col += main_img.channels())
-      C1Star[row][col] = sqrt(pow(p_main[col + 1], 2) + pow(p_main[col + 2], 2));
-  }
-
   //Index of current image with lowest variant
   int best_fit = -1;
   //Initial best_variant set higher than max variant
@@ -127,9 +119,10 @@ int findBestImageCIE2000(Mat& main_img, vector<Mat> images, vector<int> repeats,
       p_im = images[i].ptr<uchar>(row);
       for (int col = 0; col < main_cols && variant < best_variant; col += main_img.channels())
       {
-        //double C2Star = sqrt(pow(p_im[col + 1], 2) + pow(p_im[col + 2], 2));
+        double C1Star = sqrt(pow(p_main[col + 1], 2) + pow(p_main[col + 2], 2));
+        double C2Star = sqrt(pow(p_im[col + 1], 2) + pow(p_im[col + 2], 2));
         double LDash = (p_main[col] + p_im[col]) / 2;
-        double CDash = pow((C1Star[row][col] + C2Star[i][row][col]) / 2, 7);
+        double CDash = pow((C1Star + C2Star) / 2, 7);
 
         double a1Prime = p_main[col + 1] + (p_main[col + 1] / 2) * (1 - sqrt(CDash / (CDash + pow(25, 7))));
         double a2Prime = p_im[col + 1] + (p_im[col + 1] / 2) * (1 - sqrt(CDash / (CDash + pow(25, 7))));
@@ -194,23 +187,6 @@ int findBestImageCIE2000(Mat& main_img, vector<Mat> images, vector<int> repeats,
 //Returns 2D vector of Mat that make up the best fitting images of main_img cells using CIE2000 colour difference
 vector< vector<Mat> > findBestImagesCIE2000(Mat& main_img, vector<Mat>& images, vector<Mat>& imagesMax, int no_of_cell_x, int no_of_cell_y, int window_width)
 {
-  int main_rows = main_img.rows;
-  int main_cols = main_img.cols * main_img.channels();
-
-  vector<vector<vector<double> > > C2Star(images.size(), vector< vector<double> >(main_rows, vector<double>(main_cols)));
-  for (int i = 0; i < (int) images.size(); ++i)
-  {
-    uchar* p_im;
-    for (int row = 0; row < main_rows; ++row)
-    {
-      p_im = images[i].ptr<uchar>(row);
-      for (int col = 0; col < main_cols; col += main_img.channels())
-      {
-        C2Star[i][row][col] = sqrt(pow(p_im[col + 1], 2) + pow(p_im[col + 2], 2));
-      }
-    }
-  }
-
   vector< vector<int> > gridIndex(no_of_cell_y, vector<int>(no_of_cell_x));
   vector< vector<Mat> > result(no_of_cell_y, vector<Mat>(no_of_cell_x));
   vector<int> repeats(images.size());
@@ -227,7 +203,7 @@ vector< vector<Mat> > findBestImagesCIE2000(Mat& main_img, vector<Mat>& images, 
           populateRepeats(gridIndex, y, x, &repeats);
 
           //Find best image for cell at x,y
-          int temp = findBestImageCIE2000(cell, images, repeats, C2Star);
+          int temp = findBestImageCIE2000(cell, images, repeats);
           gridIndex[y][x] = temp;
           result[y][x] = imagesMax[temp];
 

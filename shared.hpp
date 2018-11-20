@@ -17,14 +17,13 @@ using namespace boost::filesystem;
 #define MAX_HEIGHT 1080
 #define MAX_WIDTH 1920
 
-#define CELL_SIZE 5
-
 #define MIN_ZOOM 100
 #define MAX_ZOOM 1000
 
 #define REPEAT_RANGE 5
 #define REPEAT_ADDITION 1
 
+#define CELL_SIZE 10
 #define MAX_CELL_SIZE CELL_SIZE * (MAX_ZOOM / 100.0)
 
 #define DEG2RAD(deg) ((deg) * M_PI / 180.0)

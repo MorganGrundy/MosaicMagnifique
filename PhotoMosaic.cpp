@@ -106,6 +106,9 @@ int main(int argc, char** argv)
 ////////////////////////////////////////////////////////////////////////////////
 ////    READ + PREPROCESS IMAGES
 ////////////////////////////////////////////////////////////////////////////////
+// Worst case complexity:
+// O(Ni),
+// where Ni = Number of images
     double t = getTickCount();
 
     //Read in images and preprocess them
@@ -130,6 +133,12 @@ int main(int argc, char** argv)
 ////////////////////////////////////////////////////////////////////////////////
 ////    CREATE MOSAIC PARTS
 ////////////////////////////////////////////////////////////////////////////////
+// Worst case complexity:
+// O(rows * cols ((REPEAT_RANGE^2) / 2) * Ni) ~
+// O(rows * cols * Ni),
+// where Ni = number of images,
+// rows = main image rows
+// cols = main image cols
     //Used to determine width of window for progress bar
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);

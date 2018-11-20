@@ -15,13 +15,14 @@ using namespace boost::filesystem;
 
 //Reads all images in fn, resizes them, and writes into out path
 //Provides progress bar, records time taken and outputs
+//Complexity: O(Ni), where Ni = Number of images
 void resize_images(vector<String> *fn, struct winsize w, String img_out_path)
 {
   double t = getTickCount();
 
   //Read in images and preprocess them
   Mat temp_img;
-  for (size_t i = 0; i < (*fn).size(); i++)
+  for (size_t i = 0; i < (*fn).size(); i++) 
   {
       temp_img = imread((*fn)[i], IMREAD_COLOR);
       if (temp_img.empty())

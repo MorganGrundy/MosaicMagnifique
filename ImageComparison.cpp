@@ -14,9 +14,10 @@
 using namespace cv;
 using namespace std;
 
+//Worst case complexity: O((REPEAT_RANGE^2) / 2)
 void populateRepeats(vector< vector<int> > gridIndex, int y, int x, vector<int> *repeats)
 {
-    for (int i = 0; i < (int) (*repeats).size(); ++i)
+    for (int i = 0; i < (int) (*repeats).size(); ++i) //O(Ni)
         (*repeats)[i] = 0;
 
     int startX = wrap(x - REPEAT_RANGE, 0, gridIndex[0].size());
@@ -33,6 +34,9 @@ void populateRepeats(vector< vector<int> > gridIndex, int y, int x, vector<int> 
 }
 
 // Returns the index in images of the image with the least variance from main_img, using CIE76 colour difference
+//Worst case complexity: O(Ni * CELL_SIZE^2), where Ni = number of images
+//Colour comparison worst case:
+//1 sqrt, 3 pow, 3 -, 5 +
 int findBestImageCIE76(Mat& main_img, vector<Mat> images, vector<int> repeats)
 {
     int main_rows = main_img.rows;
@@ -67,6 +71,7 @@ int findBestImageCIE76(Mat& main_img, vector<Mat> images, vector<int> repeats)
 }
 
 //Returns 2D vector of Mat that make up the best fitting images of main_img cells using CIE76 colour difference
+//Worst case complexity: O(y * x ((REPEAT_RANGE^2) / 2) * Ni * CELL_SIZE^2), where Ni = number of images, x = main image rows / CELL_SIZE, y = main image cols / CELL_SIZE
 vector< vector<Mat> > findBestImagesCIE76(Mat& main_img, vector<Mat>& images, vector<Mat>& imagesMax, int no_of_cell_x, int no_of_cell_y, int window_width)
 {
   vector< vector<int> > gridIndex(no_of_cell_y, vector<int>(no_of_cell_x));
@@ -98,6 +103,9 @@ vector< vector<Mat> > findBestImagesCIE76(Mat& main_img, vector<Mat>& images, ve
 }
 
 // Returns the index in images of the image with the least variance from main_img, using CIE2000 colour difference
+//Worst case complexity: O(Ni * CELL_SIZE^2), where Ni = number of images
+//Colour comparison worst case:
+//1 exp, 2 sin, 4 cos, 2 abs, 2 atan2, 10 sqrt, 14 pow2, 6 pow7, 41 +, 31 *, 14 -, 8 /, 4 ==, 2 ||, 1 >, 2 <, 1 <=
 int findBestImageCIE2000(Mat& main_img, vector<Mat> images, vector<int> repeats)
 {
   int main_rows = main_img.rows;
@@ -121,16 +129,16 @@ int findBestImageCIE2000(Mat& main_img, vector<Mat> images, vector<int> repeats)
       {
         double C1Star = sqrt(pow(p_main[col + 1], 2) + pow(p_main[col + 2], 2));
         double C2Star = sqrt(pow(p_im[col + 1], 2) + pow(p_im[col + 2], 2));
-        double LDash = (p_main[col] + p_im[col]) / 2;
-        double CDash = pow((C1Star + C2Star) / 2, 7);
+        double LDash = (p_main[col] + p_im[col]) * 0.5;
+        double CDash = pow((C1Star + C2Star) * 0.5, 7);
 
-        double a1Prime = p_main[col + 1] + (p_main[col + 1] / 2) * (1 - sqrt(CDash / (CDash + pow(25, 7))));
-        double a2Prime = p_im[col + 1] + (p_im[col + 1] / 2) * (1 - sqrt(CDash / (CDash + pow(25, 7))));
+        double a1Prime = p_main[col + 1] + (p_main[col + 1] * 0.5) * (1 - sqrt(CDash / (CDash + pow(25, 7))));
+        double a2Prime = p_im[col + 1] + (p_im[col + 1] * 0.5) * (1 - sqrt(CDash / (CDash + pow(25, 7))));
 
         double C1Prime = sqrt(pow(a1Prime, 2) + pow(p_main[col + 2], 2));
         double C2Prime = sqrt(pow(a2Prime, 2) + pow(p_im[col + 2], 2));
 
-        double CDashPrime = (C1Prime + C2Prime) / 2;
+        double CDashPrime = (C1Prime + C2Prime) * 0.5;
 
         double h1Prime = atan2(p_main[col + 2], a1Prime) + M_PI;
         double h2Prime = atan2(p_im[col + 2], a2Prime) + M_PI;
@@ -140,7 +148,7 @@ int findBestImageCIE2000(Mat& main_img, vector<Mat> images, vector<int> repeats)
           deltahPrime = 0;
         else
         {
-          deltahPrime = (h2Prime - h1Prime) / 2;
+          deltahPrime = (h2Prime - h1Prime) * 0.5;
           if (abs(h1Prime - h2Prime) > M_PI)
           {
             if (h1Prime + h2Prime < 2 * M_PI)
@@ -154,11 +162,11 @@ int findBestImageCIE2000(Mat& main_img, vector<Mat> images, vector<int> repeats)
         if (C1Prime == 0 || C2Prime == 0)
           HDashPrime = h1Prime + h2Prime;
         else if (abs(h1Prime - h2Prime) <= M_PI)
-          HDashPrime = (h1Prime + h2Prime) / 2;
+          HDashPrime = (h1Prime + h2Prime) * 0.5;
         else if (h1Prime + h2Prime < 2 * M_PI)
-          HDashPrime = (h1Prime + h2Prime + 2 * M_PI) / 2;
+          HDashPrime = (h1Prime + h2Prime + 2 * M_PI) * 0.5;
         else
-          HDashPrime = (h1Prime + h2Prime - 2 * M_PI) / 2;
+          HDashPrime = (h1Prime + h2Prime - 2 * M_PI) * 0.5;
 
         double T = 1 - 0.17 * cos(HDashPrime - (DEG2RAD(30))) + 0.24 * cos(2 * HDashPrime) + 0.32 * cos(3 * HDashPrime + (DEG2RAD(6))) - 0.2 * cos(4 * HDashPrime - (DEG2RAD(63)));
 
@@ -185,6 +193,7 @@ int findBestImageCIE2000(Mat& main_img, vector<Mat> images, vector<int> repeats)
 }
 
 //Returns 2D vector of Mat that make up the best fitting images of main_img cells using CIE2000 colour difference
+//Worst case complexity: O(y * x ((REPEAT_RANGE^2) / 2) * Ni * CELL_SIZE^2), where Ni = number of images, x = main image rows / CELL_SIZE, y = main image cols / CELL_SIZE
 vector< vector<Mat> > findBestImagesCIE2000(Mat& main_img, vector<Mat>& images, vector<Mat>& imagesMax, int no_of_cell_x, int no_of_cell_y, int window_width)
 {
   vector< vector<int> > gridIndex(no_of_cell_y, vector<int>(no_of_cell_x));

@@ -23,7 +23,7 @@ using namespace boost::filesystem;
 #define REPEAT_RANGE 5
 #define REPEAT_ADDITION 1
 
-#define CELL_SIZE 10
+#define CELL_SIZE 5
 #define MAX_CELL_SIZE CELL_SIZE * (MAX_ZOOM / 100.0)
 
 #define DEG2RAD(deg) ((deg) * M_PI / 180.0)

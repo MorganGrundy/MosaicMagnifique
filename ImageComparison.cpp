@@ -127,60 +127,91 @@ int findBestImageCIE2000(Mat& main_img, vector<Mat> images, vector<int> repeats)
       p_im = images[i].ptr<uchar>(row);
       for (int col = 0; col < main_cols && variant < best_variant; col += main_img.channels())
       {
-        double C1Star = sqrt(pow(p_main[col + 1], 2) + pow(p_main[col + 2], 2));
-        double C2Star = sqrt(pow(p_im[col + 1], 2) + pow(p_im[col + 2], 2));
-        double LDash = (p_main[col] + p_im[col]) * 0.5;
-        double CDash = pow((C1Star + C2Star) * 0.5, 7);
-
-        double a1Prime = p_main[col + 1] + (p_main[col + 1] * 0.5) * (1 - sqrt(CDash / (CDash + pow(25, 7))));
-        double a2Prime = p_im[col + 1] + (p_im[col + 1] * 0.5) * (1 - sqrt(CDash / (CDash + pow(25, 7))));
-
-        double C1Prime = sqrt(pow(a1Prime, 2) + pow(p_main[col + 2], 2));
-        double C2Prime = sqrt(pow(a2Prime, 2) + pow(p_im[col + 2], 2));
-
-        double CDashPrime = (C1Prime + C2Prime) * 0.5;
-
-        double h1Prime = atan2(p_main[col + 2], a1Prime) + M_PI;
-        double h2Prime = atan2(p_im[col + 2], a2Prime) + M_PI;
-
-        double deltahPrime;
-        if (C1Prime == 0 || C2Prime == 0)
-          deltahPrime = 0;
-        else
-        {
-          deltahPrime = (h2Prime - h1Prime) * 0.5;
-          if (abs(h1Prime - h2Prime) > M_PI)
-          {
-            if (h1Prime + h2Prime < 2 * M_PI)
-              deltahPrime += M_PI;
-            else
-              deltahPrime -= M_PI;
-          }
-        }
-
-        double HDashPrime = 0;
-        if (C1Prime == 0 || C2Prime == 0)
-          HDashPrime = h1Prime + h2Prime;
-        else if (abs(h1Prime - h2Prime) <= M_PI)
-          HDashPrime = (h1Prime + h2Prime) * 0.5;
-        else if (h1Prime + h2Prime < 2 * M_PI)
-          HDashPrime = (h1Prime + h2Prime + 2 * M_PI) * 0.5;
-        else
-          HDashPrime = (h1Prime + h2Prime - 2 * M_PI) * 0.5;
-
-        double T = 1 - 0.17 * cos(HDashPrime - (DEG2RAD(30))) + 0.24 * cos(2 * HDashPrime) + 0.32 * cos(3 * HDashPrime + (DEG2RAD(6))) - 0.2 * cos(4 * HDashPrime - (DEG2RAD(63)));
-
-        double SL = 1 + ((0.015 * pow(LDash - 50, 2)) / sqrt(20 + pow(LDash - 50, 2)));
-        double SC = 1 + 0.045 * CDashPrime;
-
-        double deltaCPrime = (C2Prime - C1Prime) / SC;
-
-        double deltaHPrime = 2 * sqrt(C1Prime * C2Prime) * sin(deltahPrime);
-        deltaHPrime /= 1 + 0.015 * CDashPrime * T;
-
-        double RT = -2 * sqrt(pow(CDashPrime, 7) / (pow(CDashPrime, 7) + pow(25, 7))) * sin((DEG2RAD(60)) * exp(-pow((HDashPrime - DEG2RAD(275)) / (DEG2RAD(25)), 2)));
-
-        variant += sqrt(pow((p_im[col] - p_main[col]) / SL, 2) + pow(deltaCPrime, 2) + pow(deltaHPrime, 2) + RT * deltaCPrime * deltaHPrime);
+        const double k_L = 1.0, k_C = 1.0, k_H = 1.0;
+	    const double deg360InRad = DEG2RAD(360.0);
+	    const double deg180InRad = DEG2RAD(180.0);
+	    const double pow25To7 = 6103515625.0; //pow(25, 7)
+	    
+	    double C1 = sqrt((p_main[col + 1] * p_main[col + 1]) + (p_main[col + 2] * p_main[col + 2]));
+	    double C2 = sqrt((p_im[col + 1] * p_im[col + 1]) + (p_im[col + 2] * p_im[col + 2]));
+	    double barC = (C1 + C2) / 2.0;
+	    
+	    double G = 0.5 * (1 - sqrt(pow(barC, 7) / (pow(barC, 7) + pow25To7)));
+	    
+	    double a1Prime = (1.0 + G) * p_main[col + 1];
+	    double a2Prime = (1.0 + G) * p_im[col + 1];
+	    
+	    double CPrime1 = sqrt((a1Prime * a1Prime) + (p_main[col + 2] * p_main[col + 2]));
+	    double CPrime2 = sqrt((a2Prime * a2Prime) + (p_im[col + 2] * p_im[col + 2]));
+	    
+	    double hPrime1;
+	    if (p_main[col + 2] == 0 && a1Prime == 0)
+		    hPrime1 = 0.0;
+	    else {
+		    hPrime1 = atan2(p_main[col + 2], a1Prime);
+		    //This must be converted to a hue angle in degrees between 0 and 360 by addition of 2 pi to negative hue angles.
+		    if (hPrime1 < 0)
+			    hPrime1 += deg360InRad;
+	    }
+	    double hPrime2;
+	    if (p_im[col + 2] == 0 && a2Prime == 0)
+		    hPrime2 = 0.0;
+	    else {
+		    hPrime2 = atan2(p_im[col + 2], a2Prime);
+		    //This must be converted to a hue angle in degrees between 0 and 360 by addition of 2pi to negative hue angles.
+		    if (hPrime2 < 0)
+			    hPrime2 += deg360InRad;
+	    }
+	
+	    double deltaLPrime = p_im[col] - p_main[col];
+	    double deltaCPrime = CPrime2 - CPrime1;
+	    
+	    double deltahPrime;
+	    double CPrimeProduct = CPrime1 * CPrime2;
+	    if (CPrimeProduct == 0)
+		    deltahPrime = 0;
+	    else {
+		    //Avoid the fabs() call
+		    deltahPrime = hPrime2 - hPrime1;
+		    if (deltahPrime < -deg180InRad)
+			    deltahPrime += deg360InRad;
+		    else if (deltahPrime > deg180InRad)
+			    deltahPrime -= deg360InRad;
+	    }
+	    
+	    double deltaHPrime = 2.0 * sqrt(CPrimeProduct) * sin(deltahPrime / 2.0);
+	
+	    double barLPrime = (p_main[col] + p_im[col]) / 2.0;
+	    double barCPrime = (CPrime1 + CPrime2) / 2.0;
+	    
+	    double barhPrime, hPrimeSum = hPrime1 + hPrime2;
+	    if (CPrime1 * CPrime2 == 0) {
+		    barhPrime = hPrimeSum;
+	    } else {
+		    if (fabs(hPrime1 - hPrime2) <= deg180InRad)
+			    barhPrime = hPrimeSum / 2.0;
+		    else {
+			    if (hPrimeSum < deg360InRad)
+				    barhPrime = (hPrimeSum + deg360InRad) / 2.0;
+			    else
+				    barhPrime = (hPrimeSum - deg360InRad) / 2.0;
+		    }
+	    }
+	    
+	    double T = 1.0 - (0.17 * cos(barhPrime - DEG2RAD(30.0))) + (0.24 * cos(2.0 * barhPrime)) + (0.32 * cos((3.0 * barhPrime) + DEG2RAD(6.0))) - (0.20 * cos((4.0 * barhPrime) - DEG2RAD(63.0)));
+	    
+	    double deltaTheta = DEG2RAD(30.0) * exp(-pow((barhPrime - deg2Rad(275.0)) / deg2Rad(25.0), 2.0));
+	    
+	    double R_C = 2.0 * sqrt(pow(barCPrime, 7.0) / (pow(barCPrime, 7.0) + pow25To7));
+	    
+	    double S_L = 1 + ((0.015 * pow(barLPrime - 50.0, 2.0)) / sqrt(20 + pow(barLPrime - 50.0, 2.0)));
+	    double S_C = 1 + (0.045 * barCPrime);
+	    double S_H = 1 + (0.015 * barCPrime * T);
+	    
+	    double R_T = (-sin(2.0 * deltaTheta)) * R_C;
+	
+	    
+	    variant += sqrt(pow(deltaLPrime / (k_L * S_L), 2.0) + pow(deltaCPrime / (k_C * S_C), 2.0) + pow(deltaHPrime / (k_H * S_H), 2.0) + (R_T * (deltaCPrime / (k_C * S_C)) * (deltaHPrime / (k_H * S_H))));
       }
     }
     if (variant < best_variant)

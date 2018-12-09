@@ -14,19 +14,19 @@ using namespace cv;
 using namespace std;
 using namespace boost::filesystem;
 
+#define DEG2RAD(deg) ((deg) * M_PI / 180.0)
+
 #define MAX_HEIGHT 1080
 #define MAX_WIDTH 1920
 
 #define MIN_ZOOM 100
 #define MAX_ZOOM 1000
 
-#define REPEAT_RANGE 5
-#define REPEAT_ADDITION 1
+extern int REPEAT_RANGE;
+extern int REPEAT_ADDITION;
 
-#define CELL_SIZE 5
-#define MAX_CELL_SIZE CELL_SIZE * (MAX_ZOOM / 100.0)
-
-#define DEG2RAD(deg) ((deg) * M_PI / 180.0)
+extern int CELL_SIZE;
+extern int MAX_CELL_SIZE;
 
 //Image formats that are always supported and some additional commons
 const String IMG_FORMATS_ARR[15] = {".bmp",".dib",".pbm",".pgm",".ppm",".pxm",".pnm",".sr",".ras",".hdr",".pic",".jpeg",".jpg",".jpe",".png"};
@@ -53,6 +53,9 @@ void resizeImageInclusive(Mat& img, Mat& result, int targetHeight, int targetWid
 // (height = targetHeight && width >= targetWidth) || (height >= targetHeight && width = targetWidth)
 // and puts the resized image in result
 void resizeImageExclusive(Mat& img, Mat& result, int targetHeight, int targetWidth);
+
+//Ensures image rows == cols, result image focus at centre of original
+void imageToSquare(Mat& img);
 
 //Given filepath creates list of filepaths to accepted images in given filepath
 bool read_image_names(path img_in_path, vector<String> *fn);

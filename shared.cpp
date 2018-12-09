@@ -16,6 +16,12 @@ using namespace std;
 using namespace cv;
 using namespace boost::filesystem;
 
+int REPEAT_RANGE = 3;
+int REPEAT_ADDITION = 10;
+
+int CELL_SIZE = 8;
+int MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / 100.0);
+
 //Removes progress bar from window
 void progressBarClean(int width)
 {
@@ -93,6 +99,26 @@ void resizeImageExclusive(Mat& img, Mat& result, int targetHeight, int targetWid
         resize(img, result, Size(round(resizeFactor * img.cols), round(resizeFactor * img.rows)), 0, 0, INTER_CUBIC);
     else
         result = img;
+}
+
+//Ensures image rows == cols, result image focus at centre of original
+void imageToSquare(Mat& img)
+{
+  if (img.cols != img.rows)
+  {
+    int midX = floor(img.cols * 0.5);
+    int midY = floor(img.rows * 0.5);
+    if (midX < midY)
+    {
+      int diff = midY - midX;
+      img = img(Range(diff, img.rows - diff), Range(0, img.cols));
+    }
+    else
+    {
+      int diff = midX - midY;
+      img = img(Range(0, img.rows), Range(diff, img.cols - diff));
+    }
+  }
 }
 
 //Given filepath creates list of filepaths to accepted images in given filepath

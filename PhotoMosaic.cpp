@@ -26,7 +26,7 @@ int x_offset, y_offset;
 
 bool fast_mode = false;
 
-// Callback for trackbars
+//Callback for trackbars
 void showMosaic(int pos, void *userdata)
 {
     //Calculates number of pixels needed for a border in y and x to prevent viewing exceeding image bounds
@@ -50,6 +50,26 @@ void showMosaic(int pos, void *userdata)
     imshow("Mosaic", focusMosaic); //Display mosaic
 }
 
+uchar encodeValueToPixel(int value)
+{
+  //int max8bit = pow(2, 8) - 1;
+  return 0;
+}
+
+//Forms and writes photomosaic
+void writePhotomosaic(vector<Mat> images, vector< vector<unsigned int> > mosaic)
+{
+  int imageSize = CELL_SIZE * MAX_ZOOM / MIN_ZOOM;
+  int noImagesY = mosaic.size() % imageSize;
+  int noImagesX = images.size() / noImagesY;
+
+  int resultWidth = 1 + mosaic[0].size() + noImagesX * imageSize;
+
+  Mat result(mosaic[0].size(), resultWidth, CV_8UC3);
+
+  //result.ptr(0,0) = encodeValueToPixel(images.size());
+}
+
 int main(int argc, char** argv)
 {
     //Reads args
@@ -66,14 +86,41 @@ int main(int argc, char** argv)
 
         //Outputs flags and descriptions
         cout << "Flags:" << endl;
-        cout << "-f: Switches colour difference algorithm from CIEDE2000 to CIE76 (less accurate, much faster)" << endl;
+        cout << "-fast, -f: Switches colour difference algorithm from CIEDE2000 to CIE76 (less accurate, but faster)" << endl;
+        cout << "-cell_size x, -cs x: Uses the integer in the next argument (x) as the cell size in pixels. Default: " << CELL_SIZE << endl;
+        cout << "-repeat_range x, -rr x: Uses the integer in the next argument (x) as the range in cells that repeats will be looked for. Default: " << REPEAT_RANGE << endl;
+        cout << "-repeat_addition x, -ra x: Uses the integer in the next argument (x) as the value to add to variant for each repeat in range. Default: " << REPEAT_ADDITION << endl;
 
         return -1;
     }
     if (argc > 4) //Reads flags
     {
-      String flags = argv[4];
-      fast_mode = flags == "-f";
+      for (int i = 4; i < argc; ++i)
+      {
+        string flag = argv[i];
+        if (flag == "-f" || flag == "-fast")
+          fast_mode = true;
+        else if (i + 1 < argc) //Flags that require two arguments
+        {
+          string other = argv[i + 1];
+          if (flag == "-cs" || flag == "-cell_size")
+          {
+            CELL_SIZE = stoi(other);
+            MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / 100.0);
+            i++;
+          }
+          else if (flag == "-rr" || flag == "-repeat_range")
+          {
+            REPEAT_RANGE = stoi(other);
+            i++;
+          }
+          else if (flag == "-ra" || flag == "-repeat_addition")
+          {
+            REPEAT_ADDITION = stoi(other);
+            i++;
+          }
+        }
+      }
     }
 
     path img_out_path(argv[3]);
@@ -118,12 +165,9 @@ int main(int argc, char** argv)
     {
         //Reads image, resizes to min zoom and max zoom (min used for compare)
         images[i] = imread(fn[i], IMREAD_COLOR);
+        imageToSquare(images[i]);
         resizeImageExclusive(images[i], imagesMax[i], MAX_CELL_SIZE, MAX_CELL_SIZE);
         resizeImageExclusive(imagesMax[i], images[i], CELL_SIZE, CELL_SIZE);
-
-        //Crops images, TEMPORARY
-        imagesMax[i] = imagesMax[i](Range(0, MAX_CELL_SIZE), Range(0, MAX_CELL_SIZE));
-        images[i] = images[i](Range(0, CELL_SIZE), Range(0, CELL_SIZE));
 
         //Converts to Lab colour space
         cvtColor(images[i], images[i], COLOR_BGR2Lab);

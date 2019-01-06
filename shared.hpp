@@ -28,6 +28,8 @@ extern int REPEAT_ADDITION;
 extern int CELL_SIZE;
 extern int MAX_CELL_SIZE;
 
+extern int CELL_SHAPE;
+
 //Image formats that are always supported and some additional commons
 const String IMG_FORMATS_ARR[15] = {".bmp",".dib",".pbm",".pgm",".ppm",".pxm",".pnm",".sr",".ras",".hdr",".pic",".jpeg",".jpg",".jpe",".png"};
 const vector<String> IMG_FORMATS(&IMG_FORMATS_ARR[0], &IMG_FORMATS_ARR[0] + 15);

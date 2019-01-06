@@ -5,7 +5,7 @@ libs = -lopencv_core -lopencv_imgcodecs -lopencv_highgui -lopencv_imgproc -lboos
 all: PhotoMosaic Preprocess
 
 PhotoMosaic:
-	g++ -std=c++11 -Werror -Wall PhotoMosaic.cpp shared.cpp ImageComparison.cpp -o PhotoMosaic $(libs)
+	g++ -std=c++11 -Werror -Wall PhotoMosaic.cpp shared.cpp cells.cpp ImageComparison.cpp -o PhotoMosaic $(libs)
 
 Preprocess:
 	g++ -std=c++11 -Werror -Wall Preprocess.cpp shared.cpp -o Preprocess $(libs)

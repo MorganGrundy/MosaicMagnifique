@@ -11,6 +11,7 @@
 
 #include "shared.hpp"
 #include "ImageComparison.hpp"
+#include "cells.hpp"
 
 using namespace cv;
 using namespace std;
@@ -87,9 +88,10 @@ int main(int argc, char** argv)
         //Outputs flags and descriptions
         cout << "Flags:" << endl;
         cout << "-fast, -f: Switches colour difference algorithm from CIEDE2000 to CIE76 (less accurate, but faster)" << endl;
-        cout << "-cell_size x, -cs x: Uses the integer in the next argument (x) as the cell size in pixels. Default: " << CELL_SIZE << endl;
+        cout << "-cell_size x, -s x: Uses the integer in the next argument (x) as the cell size in pixels. Default: " << CELL_SIZE << endl;
         cout << "-repeat_range x, -rr x: Uses the integer in the next argument (x) as the range in cells that repeats will be looked for. Default: " << REPEAT_RANGE << endl;
         cout << "-repeat_addition x, -ra x: Uses the integer in the next argument (x) as the value to add to variant for each repeat in range. Default: " << REPEAT_ADDITION << endl;
+        cout << "-cell_shape x, -cs x: Uses the integer in the next argument (x) as the cell shape. 0 = square, 1 = hexagon. Default: " << CELL_SHAPE << endl;
 
         return -1;
     }
@@ -103,7 +105,7 @@ int main(int argc, char** argv)
         else if (i + 1 < argc) //Flags that require two arguments
         {
           string other = argv[i + 1];
-          if (flag == "-cs" || flag == "-cell_size")
+          if (flag == "-s" || flag == "-cell_size")
           {
             CELL_SIZE = stoi(other);
             MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / 100.0);
@@ -119,9 +121,17 @@ int main(int argc, char** argv)
             REPEAT_ADDITION = stoi(other);
             i++;
           }
+          else if (flag == "-cs" || flag == "-cell_shape")
+          {
+            CELL_SHAPE = stoi(other);
+            i++;
+          }
         }
       }
     }
+
+    if (loadCellShape() == -1)
+        return -1;
 
     path img_out_path(argv[3]);
 

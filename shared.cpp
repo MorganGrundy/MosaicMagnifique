@@ -22,6 +22,8 @@ int REPEAT_ADDITION = 10;
 int CELL_SIZE = 8;
 int MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / 100.0);
 
+int CELL_SHAPE = 0;
+
 //Removes progress bar from window
 void progressBarClean(int width)
 {

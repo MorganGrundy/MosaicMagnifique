@@ -17,54 +17,88 @@ using namespace std;
 using namespace cv;
 using namespace boost::filesystem;
 
-Mat cellMask; //Bit mask for cell shape
+Mat cellMask; //Bit mask for cell shape at max cell size
+Mat cellMaskCmp; //Bit mask for cell shape at cell size
 int cellOffsetX, cellOffsetY; //Offset to interjoin cells
+int cellOffsetCmpX, cellOffsetCmpY; //Offset to interjoin cells
+
+//Resizes img inclusively using INTER_NEAREST to targetSize
+//Returns resize factor
+double resizeInterNearest(Mat& img, Mat& result, int targetSize)
+{
+    //Calculates resize factor for max cell size
+    double resizeFactor = ((double) targetSize / img.rows);
+    if (targetSize < resizeFactor * img.cols)
+        resizeFactor = ((double) targetSize / img.cols);
+
+    //Resizes cell mask to max cell size
+    resize(img, result, Size(resizeFactor * img.cols, resizeFactor * img.rows), 0, 0, INTER_NEAREST);
+    return resizeFactor;
+}
 
 int loadCellShape()
 {
     String cellMaskName, cellOffsetName;
     switch(CELL_SHAPE)
     {
-        default: case 0: return 0; //Square
+        default: case 0: cellOffsetX = MAX_CELL_SIZE; cellOffsetY = MAX_CELL_SIZE; cellOffsetCmpX = CELL_SIZE; cellOffsetCmpY = CELL_SIZE; return 0; //Square
         case 1: cellMaskName = "./Cells/Hexagon.png";
                 cellOffsetName = "./Cells/HexagonOffset.png";
                 break; //Hexagon
     }
 
     //Loads and checks cell mask
-    cellMask = imread(cellMaskName, IMREAD_UNCHANGED);
-    if (cellMask.empty()) // Check for invalid input
+    Mat tmpCellMask = imread(cellMaskName, IMREAD_COLOR);
+    if (tmpCellMask.empty()) // Check for invalid input
     {
         cout <<  "Could not open or find the cell mask image" << endl;
         return -1;
     }
+    cvtColor(tmpCellMask, tmpCellMask, COLOR_BGR2GRAY);
     //Get original cell mask size
-    cellOffsetX = cellMask.cols;
-    cellOffsetY = cellMask.rows;
-    //resizeImageInclusive(cellMask, cellMask, CELL_SIZE, CELL_SIZE);
-    //Calculates resize factor
-    double resizeFactor = ((double) (MAX_ZOOM / MIN_ZOOM) * CELL_SIZE / cellMask.rows);
-    if ((MAX_ZOOM / MIN_ZOOM) * CELL_SIZE < resizeFactor * cellMask.cols)
-        resizeFactor = ((double) (MAX_ZOOM / MIN_ZOOM) * CELL_SIZE / cellMask.cols);
+    cellOffsetX = tmpCellMask.cols;
+    cellOffsetY = tmpCellMask.rows;
+    //Resizes cell mask to max cell size
+    double resizeFactorMax = resizeInterNearest(tmpCellMask, cellMask, MAX_CELL_SIZE);
 
-    //Resizes image
-    resize(cellMask, cellMask, Size(resizeFactor * cellMask.cols, resizeFactor * cellMask.rows), 0, 0, INTER_NEAREST);
+    //Resizes cell mask to cell size
+    double resizeFactorMin = resizeInterNearest(tmpCellMask, cellMaskCmp, CELL_SIZE);
+
+    bool not01 = false;
+    int main_rows = cellMask.rows;
+    int main_cols = cellMask.cols * cellMask.channels();
+    uchar* p_main;
+    for (int row = 0; row < main_rows; ++row)
+    {
+        p_main = cellMask.ptr<uchar>(row);
+        for (int col = 0; col < main_cols * cellMask.channels(); ++col)
+            if ((int) p_main[col] != 0 && (int) p_main[col] != 255)
+                not01 = true;
+    }
+    if (cellMask.channels() != 1)
+    {
+        cout << "Mask channels not 1: " << cellMask.channels() << endl;
+        return -1;
+    }
+    if (not01 == true)
+    {
+        cout << "Mask contains value other than 0 or 255" << endl;
+        return -1;
+    }
 
     //Loads and checks cell offset
-    Mat cellOffset = imread(cellOffsetName, IMREAD_UNCHANGED);
+    Mat cellOffset = imread(cellOffsetName, IMREAD_COLOR);
     if (cellOffset.empty()) // Check for invalid input
     {
         cout <<  "Could not open or find the cell offset image" << endl;
         return -1;
     }
-    cellOffsetX = (cellOffset.cols * cellMask.cols) / cellOffsetX;
-    cellOffsetY = (cellOffset.rows * cellMask.rows) / cellOffsetY;
+    cellOffsetX = cellOffset.cols * resizeFactorMax;
+    cellOffsetY = cellOffset.rows * resizeFactorMax;
+    cellOffsetCmpX = cellOffset.cols * resizeFactorMin;
+    cellOffsetCmpY = cellOffset.rows * resizeFactorMin;
 
     cout << "Cell offset: " << cellOffsetX << "," << cellOffsetY << endl;
-
-    imshow("Cell shape", cellMask);
-    waitKey(0); // Wait for a keystroke in the window
-    destroyAllWindows();
 
     return 0;
 }

@@ -157,8 +157,9 @@ int main(int argc, char** argv)
       return 0;
 
     //Calculate number of cells
-    int no_of_cell_x = mainIm.cols / CELL_SIZE;
-    int no_of_cell_y = mainIm.rows / CELL_SIZE;
+    cout << "(Cell size, Offset): (" << CELL_SIZE << ", " << cellOffsetCmpX << ")" << cellOffsetX << endl;
+    int no_of_cell_x = mainIm.cols / (cellOffsetCmpX * 2);
+    int no_of_cell_y = mainIm.rows / cellOffsetCmpY;
     cout << "Number of cells: (" << no_of_cell_x << ", " << no_of_cell_y << ")"<< endl;
 ////////////////////////////////////////////////////////////////////////////////
 ////    READ + PREPROCESS IMAGES
@@ -171,12 +172,19 @@ int main(int argc, char** argv)
     //Read in images and preprocess them
     vector<Mat> images(fn.size());
     vector<Mat> imagesMax(fn.size());
+    Mat tmp_img;
     for (size_t i = 0; i < fn.size(); ++i)
     {
         //Reads image, resizes to min zoom and max zoom (min used for compare)
         images[i] = imread(fn[i], IMREAD_COLOR);
         imageToSquare(images[i]);
-        resizeImageExclusive(images[i], imagesMax[i], MAX_CELL_SIZE, MAX_CELL_SIZE);
+        if (CELL_SHAPE == 0)
+            resizeImageExclusive(images[i], imagesMax[i], MAX_CELL_SIZE, MAX_CELL_SIZE);
+        else
+        {
+            resizeImageExclusive(images[i], tmp_img, MAX_CELL_SIZE, MAX_CELL_SIZE);
+            tmp_img.copyTo(imagesMax[i], cellMask);
+        }
         resizeImageExclusive(imagesMax[i], images[i], CELL_SIZE, CELL_SIZE);
 
         //Converts to Lab colour space
@@ -212,11 +220,27 @@ int main(int argc, char** argv)
 ////    COMBINE PARTS INTO MOSAIC
 ////////////////////////////////////////////////////////////////////////////////
     t = getTickCount();
-    //Combines all results into single image (mosaic)
-    vector<Mat> mosaicRows(no_of_cell_y);
-    for (int y = 0; y < no_of_cell_y; ++y)
-      hconcat(result[y], mosaicRows[y]);
-    vconcat(mosaicRows, mosaic);
+    if (CELL_SHAPE == 0)
+    {
+        //Combines all results into single image (mosaic)
+        vector<Mat> mosaicRows(no_of_cell_y);
+        for (int y = 0; y < no_of_cell_y; ++y)
+          hconcat(result[y], mosaicRows[y]);
+        vconcat(mosaicRows, mosaic);
+    }
+    else
+    {
+        Mat tmp_mosaic((no_of_cell_y - 1) * cellOffsetY + MAX_CELL_SIZE, (no_of_cell_x - 1) * cellOffsetX * 2 + MAX_CELL_SIZE, mainIm.type(), cvScalar(0));
+
+        for (int y = 0; y < no_of_cell_y; ++y)
+        {
+            for (int x = 0; x < no_of_cell_x; ++x)
+            {
+                result[y][x].copyTo(tmp_mosaic(Range(y * cellOffsetY, y * cellOffsetY + MAX_CELL_SIZE), Range(x * cellOffsetX * 2 + (y%2 == 1)?cellOffsetX:0, x * cellOffsetX * 2 + MAX_CELL_SIZE + (y%2 == 1)?cellOffsetX:0)), cellMask);
+            }
+        }
+        mosaic = tmp_mosaic;
+    }
 
     t = (getTickCount() - t) / getTickFrequency();
     cout << "Time passed in seconds for concat: " << t << endl;

@@ -17,8 +17,10 @@ using namespace std;
 using namespace cv;
 using namespace boost::filesystem;
 
-extern Mat cellMask; //Bit mask for cell shape
-extern int cellOffsetX, cellOffsetY; //Offset to interjoin cells
+extern Mat cellMask; //Bit mask for cell shape at max cell size
+extern Mat cellMaskCmp; //Bit mask for cell shape at cell size
+extern int cellOffsetX, cellOffsetY; //Offset to interjoin cells at max cell size
+extern int cellOffsetCmpX, cellOffsetCmpY; //Offset to interjoin cells at cell size
 
 int loadCellShape();
 

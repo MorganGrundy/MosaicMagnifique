@@ -19,7 +19,7 @@ using namespace boost::filesystem;
 #define MAX_HEIGHT 1080
 #define MAX_WIDTH 1920
 
-#define MIN_ZOOM 100
+#define MIN_ZOOM 100.0
 #define MAX_ZOOM 1000
 
 extern int REPEAT_RANGE;

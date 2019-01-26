@@ -43,6 +43,9 @@ void progressBar(int cur, int max, int width);
 // If val exceeds a bound returns bound else returns val
 int wrap(int val, int lower_bound, int upper_bound);
 
+//Returns if val is between min and max
+bool intInRange(int val, int min, int max);
+
 //Converts the given value in degrees into radians
 double deg2Rad(double deg);
 

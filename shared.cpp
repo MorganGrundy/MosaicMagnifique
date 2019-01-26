@@ -48,7 +48,7 @@ void progressBar(int cur, int max, int width)
     cout.flush();
 }
 
-// If val exceeds a bound returns bound else returns val
+//If val exceeds a bound returns bound else returns val
 int wrap(int val, int lower_bound, int upper_bound)
 {
     if (val > upper_bound)
@@ -57,6 +57,14 @@ int wrap(int val, int lower_bound, int upper_bound)
         return lower_bound;
     else
         return val;
+}
+
+//Returns if val is between min and max
+bool intInRange(int val, int min, int max)
+{
+    if (val < min || val > max)
+        return false;
+    return true;
 }
 
 //Converts the given value in degrees into radians

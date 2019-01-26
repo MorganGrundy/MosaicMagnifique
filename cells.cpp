@@ -19,8 +19,8 @@ using namespace boost::filesystem;
 
 Mat cellMask; //Bit mask for cell shape at max cell size
 Mat cellMaskCmp; //Bit mask for cell shape at cell size
-int cellOffsetX, cellOffsetY; //Offset to interjoin cells
-int cellOffsetCmpX, cellOffsetCmpY; //Offset to interjoin cells
+int cellOffsetX [2], cellOffsetY [2]; //Offset to interjoin cells
+int cellOffsetCmpX [2], cellOffsetCmpY [2]; //Offset to interjoin cells
 
 //Resizes img inclusively using INTER_NEAREST to targetSize
 //Returns resize factor
@@ -38,12 +38,22 @@ double resizeInterNearest(Mat& img, Mat& result, int targetSize)
 
 int loadCellShape()
 {
-    String cellMaskName, cellOffsetName;
+    String cellMaskName, cellOffsetXName, cellOffsetYName;
     switch(CELL_SHAPE)
     {
-        default: case 0: cellOffsetX = MAX_CELL_SIZE; cellOffsetY = MAX_CELL_SIZE; cellOffsetCmpX = CELL_SIZE; cellOffsetCmpY = CELL_SIZE; return 0; //Square
-        case 1: cellMaskName = "./Cells/Hexagon.png";
-                cellOffsetName = "./Cells/HexagonOffset.png";
+        default: case 0:
+            cellOffsetX[0] = 0;
+            cellOffsetX[1] = MAX_CELL_SIZE;
+            cellOffsetY[0] = MAX_CELL_SIZE;
+            cellOffsetY[1] = 0;
+            cellOffsetCmpX[0] = 0;
+            cellOffsetCmpX[1] = CELL_SIZE;
+            cellOffsetCmpY[0] = CELL_SIZE;
+            cellOffsetCmpY[1] = 0;
+            return 0; //Square
+        case 1: cellMaskName = "./Cells/Hexagon/Shape.png";
+                cellOffsetXName = "./Cells/Hexagon/OffsetX.png";
+                cellOffsetYName = "./Cells/Hexagon/OffsetY.png";
                 break; //Hexagon
     }
 
@@ -56,8 +66,8 @@ int loadCellShape()
     }
     cvtColor(tmpCellMask, tmpCellMask, COLOR_BGR2GRAY);
     //Get original cell mask size
-    cellOffsetX = tmpCellMask.cols;
-    cellOffsetY = tmpCellMask.rows;
+    cellOffsetX[0] = tmpCellMask.cols;
+    cellOffsetY[0] = tmpCellMask.rows;
     //Resizes cell mask to max cell size
     double resizeFactorMax = resizeInterNearest(tmpCellMask, cellMask, MAX_CELL_SIZE);
 
@@ -86,19 +96,29 @@ int loadCellShape()
         return -1;
     }
 
-    //Loads and checks cell offset
-    Mat cellOffset = imread(cellOffsetName, IMREAD_COLOR);
+    //Loads and checks cell offset x
+    Mat cellOffset = imread(cellOffsetXName, IMREAD_COLOR);
     if (cellOffset.empty()) // Check for invalid input
     {
         cout <<  "Could not open or find the cell offset image" << endl;
         return -1;
     }
-    cellOffsetX = cellOffset.cols * resizeFactorMax;
-    cellOffsetY = cellOffset.rows * resizeFactorMax;
-    cellOffsetCmpX = cellOffset.cols * resizeFactorMin;
-    cellOffsetCmpY = cellOffset.rows * resizeFactorMin;
+    cellOffsetX[1] = (cellOffset.cols - 1) * resizeFactorMax;
+    cellOffsetX[0] = (cellOffset.rows - 1) * resizeFactorMax;
+    cellOffsetCmpX[1] = (cellOffset.cols - 1) * resizeFactorMin;
+    cellOffsetCmpX[0] = (cellOffset.rows - 1) * resizeFactorMin;
 
-    cout << "Cell offset: " << cellOffsetX << "," << cellOffsetY << endl;
+    //Loads and checks cell offset y
+    cellOffset = imread(cellOffsetYName, IMREAD_COLOR);
+    if (cellOffset.empty()) // Check for invalid input
+    {
+        cout <<  "Could not open or find the cell offset image" << endl;
+        return -1;
+    }
+    cellOffsetY[1] = (cellOffset.cols - 1) * resizeFactorMax;
+    cellOffsetY[0] = (cellOffset.rows - 1) * resizeFactorMax;
+    cellOffsetCmpY[1] = (cellOffset.cols - 1) * resizeFactorMin;
+    cellOffsetCmpY[0] = (cellOffset.rows - 1) * resizeFactorMin;
 
     return 0;
 }

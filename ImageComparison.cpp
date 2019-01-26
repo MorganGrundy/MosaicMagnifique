@@ -86,9 +86,40 @@ vector< vector<Mat> > findBestImagesCIE76(Mat& main_img, vector<Mat>& images, ve
   {
       for (int x = 0; x < no_of_cell_x; ++x)
       {
+          int yStart = y * cellOffsetCmpY[0] + ((x % 2 == 1) ? cellOffsetCmpX[0] : 0);
+          if (!intInRange(yStart, 0, main_img.rows))
+          {
+              //cout << "Error: " << x << ", " << y << endl;
+              result[y][x] = imagesMax[0];
+              continue;
+          }
+
+          int yEnd = (y+1) * cellOffsetCmpY[0] + ((x % 2 == 1) ? cellOffsetCmpX[0] : 0);
+          if (!intInRange(yEnd, 0, main_img.rows))
+          {
+              //cout << "Error: " << x << ", " << y << endl;
+              result[y][x] = imagesMax[0];
+              continue;
+          }
+
+          int xStart = x * cellOffsetCmpX[1] + ((y % 2 == 1) ? cellOffsetCmpY[1] : 0);
+          if (!intInRange(xStart, 0, main_img.cols))
+          {
+              //cout << "Error: " << x << ", " << y << endl;
+              result[y][x] = imagesMax[0];
+              continue;
+          }
+
+          int xEnd = (x+1) * cellOffsetCmpX[1] + ((y % 2 == 1) ? cellOffsetCmpY[1] : 0);
+          if (!intInRange(xEnd, 0, main_img.cols))
+          {
+              //cout << "Error: " << x << ", " << y << endl;
+              result[y][x] = imagesMax[0];
+              continue;
+          }
+
           //Creates cell at x,y from main image
-          cell = main_img(Range(y * cellOffsetCmpY, (y+1) * cellOffsetCmpY),
-              Range(x * cellOffsetCmpX, (x+1) * cellOffsetCmpX));
+          cell = main_img(Range(yStart, yEnd), Range(xStart, xEnd));
 
           //Calculates number of repeats around x,y for each image
           populateRepeats(gridIndex, y, x, &repeats);
@@ -244,9 +275,40 @@ vector< vector<Mat> > findBestImagesCIE2000(Mat& main_img, vector<Mat>& images, 
   {
       for (int x = 0; x < no_of_cell_x; ++x)
       {
+          int yStart = y * cellOffsetCmpY[0] + ((x % 2 == 1) ? cellOffsetCmpX[0] : 0);
+          if (!intInRange(yStart, 0, main_img.rows))
+          {
+              //cout << "Error: " << x << ", " << y << endl;
+              result[y][x] = imagesMax[0];
+              continue;
+          }
+
+          int yEnd = (y+1) * cellOffsetCmpY[0] + ((x % 2 == 1) ? cellOffsetCmpX[0] : 0);
+          if (!intInRange(yEnd, 0, main_img.rows))
+          {
+              //cout << "Error: " << x << ", " << y << endl;
+              result[y][x] = imagesMax[0];
+              continue;
+          }
+
+          int xStart = x * cellOffsetCmpX[1] + ((y % 2 == 1) ? cellOffsetCmpY[1] : 0);
+          if (!intInRange(xStart, 0, main_img.cols))
+          {
+              //cout << "Error: " << x << ", " << y << endl;
+              result[y][x] = imagesMax[0];
+              continue;
+          }
+
+          int xEnd = (x+1) * cellOffsetCmpX[1] + ((y % 2 == 1) ? cellOffsetCmpY[1] : 0);
+          if (!intInRange(xEnd, 0, main_img.cols))
+          {
+              //cout << "Error: " << x << ", " << y << endl;
+              result[y][x] = imagesMax[0];
+              continue;
+          }
+          
           //Creates cell at x,y from main image
-          cell = main_img(Range(y * CELL_SIZE, (y+1) * CELL_SIZE),
-              Range(x * CELL_SIZE, (x+1) * CELL_SIZE));
+          cell = main_img(Range(yStart, yEnd), Range(xStart, xEnd));
 
           //Calculates number of repeats around x,y for each image
           populateRepeats(gridIndex, y, x, &repeats);

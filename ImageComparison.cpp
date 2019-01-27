@@ -306,7 +306,7 @@ vector< vector<Mat> > findBestImagesCIE2000(Mat& main_img, vector<Mat>& images, 
               result[y][x] = imagesMax[0];
               continue;
           }
-          
+
           //Creates cell at x,y from main image
           cell = main_img(Range(yStart, yEnd), Range(xStart, xEnd));
 

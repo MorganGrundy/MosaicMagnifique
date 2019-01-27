@@ -19,8 +19,8 @@ using namespace boost::filesystem;
 
 extern Mat cellMask; //Bit mask for cell shape at max cell size
 extern Mat cellMaskCmp; //Bit mask for cell shape at cell size
-extern int cellOffsetX [2], cellOffsetY [2]; //Offset to interjoin cells at max cell size
-extern int cellOffsetCmpX [2], cellOffsetCmpY [2]; //Offset to interjoin cells at cell size
+extern double cellOffsetX [2], cellOffsetY [2]; //Offset to interjoin cells at max cell size
+extern double cellOffsetCmpX [2], cellOffsetCmpY [2]; //Offset to interjoin cells at cell size
 
 int loadCellShape();
 

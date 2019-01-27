@@ -25,7 +25,7 @@ int cur_zoom = MIN_ZOOM;
 
 int x_offset, y_offset;
 
-bool fast_mode = false;
+bool fast_mode = true;
 
 //Callback for trackbars
 void showMosaic(int pos, void *userdata)
@@ -87,7 +87,7 @@ int main(int argc, char** argv)
 
         //Outputs flags and descriptions
         cout << "Flags:" << endl;
-        cout << "-fast, -f: Switches colour difference algorithm from CIEDE2000 to CIE76 (less accurate, but faster)" << endl;
+        cout << "-cie2000, -c: Switches colour difference algorithm from CIE76 to CIEDE2000 (more accurate, but slower)" << endl;
         cout << "-cell_size x, -s x: Uses the integer in the next argument (x) as the cell size in pixels. Default: " << CELL_SIZE << endl;
         cout << "-repeat_range x, -rr x: Uses the integer in the next argument (x) as the range in cells that repeats will be looked for. Default: " << REPEAT_RANGE << endl;
         cout << "-repeat_addition x, -ra x: Uses the integer in the next argument (x) as the value to add to variant for each repeat in range. Default: " << REPEAT_ADDITION << endl;
@@ -100,15 +100,15 @@ int main(int argc, char** argv)
       for (int i = 4; i < argc; ++i)
       {
         string flag = argv[i];
-        if (flag == "-f" || flag == "-fast")
-          fast_mode = true;
+        if (flag == "-c" || flag == "-cie2000")
+          fast_mode = false;
         else if (i + 1 < argc) //Flags that require two arguments
         {
           string other = argv[i + 1];
           if (flag == "-s" || flag == "-cell_size")
           {
             CELL_SIZE = stoi(other);
-            MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / 100.0);
+            MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / MIN_ZOOM);
             i++;
           }
           else if (flag == "-rr" || flag == "-repeat_range")
@@ -162,8 +162,18 @@ int main(int argc, char** argv)
     cout << "Cell offset Y: (" << cellOffsetY[0] << ", " << cellOffsetY[1] << ")" << endl;
     cout << "Cell cmp offset X: (" << cellOffsetCmpX[0] << ", " << cellOffsetCmpX[1] << ")" << endl;
     cout << "Cell cmp offset Y: (" << cellOffsetCmpY[0] << ", " << cellOffsetCmpY[1] << ")" << endl;
-    int no_of_cell_x = mainIm.cols / (cellOffsetCmpX[1]);
-    int no_of_cell_y = mainIm.rows / cellOffsetCmpY[0];
+
+    int no_of_cell_x = round(mainIm.cols / cellOffsetCmpX[1]);
+    int no_of_cell_y = round(mainIm.rows / cellOffsetCmpY[0]);
+    cellOffsetCmpY[0] = floor(cellOffsetCmpY[0]);
+    cellOffsetCmpY[1] = floor(cellOffsetCmpY[1]);
+    cellOffsetCmpX[0] = floor(cellOffsetCmpX[0]);
+    cellOffsetCmpX[1] = floor(cellOffsetCmpX[1]);
+
+    cellOffsetY[0] = floor(cellOffsetY[0]);
+    cellOffsetY[1] = floor(cellOffsetY[1]);
+    cellOffsetX[0] = floor(cellOffsetX[0]);
+    cellOffsetX[1] = floor(cellOffsetX[1]);
     cout << "Number of cells: (" << no_of_cell_x << ", " << no_of_cell_y << ")"<< endl;
 ////////////////////////////////////////////////////////////////////////////////
 ////    READ + PREPROCESS IMAGES
@@ -236,23 +246,24 @@ int main(int argc, char** argv)
     {
         Mat tmp_mosaic(no_of_cell_y * cellOffsetY[0], no_of_cell_x * cellOffsetX[1], mainIm.type(), cvScalar(0));
 
+        int yStart, yEnd, xStart, xEnd;
         for (int y = 0; y < no_of_cell_y; ++y)
         {
             for (int x = 0; x < no_of_cell_x; ++x)
             {
-                int yStart = y * cellOffsetY[0] + ((x % 2 == 1) ? cellOffsetX[0] : 0);
+                yStart = y * cellOffsetY[0] + ((x % 2 == 1) ? cellOffsetX[0] : 0);
                 if (!intInRange(yStart, 0, tmp_mosaic.rows + 1))
                     continue;
 
-                int yEnd = y * cellOffsetY[0] + cellMask.rows + ((x % 2 == 1) ? cellOffsetX[0] : 0);
+                yEnd = y * cellOffsetY[0] + cellMask.rows + ((x % 2 == 1) ? cellOffsetX[0] : 0);
                 if (!intInRange(yEnd, 0, tmp_mosaic.rows + 1))
                     continue;
 
-                int xStart = x * cellOffsetX[1] + ((y % 2 == 1) ? cellOffsetY[1] : 0);
+                xStart = x * cellOffsetX[1] + ((y % 2 == 1) ? cellOffsetY[1] : 0);
                 if (!intInRange(xStart, 0, tmp_mosaic.cols + 1))
                     continue;
 
-                int xEnd = x * cellOffsetX[1] + cellMask.cols + ((y % 2 == 1) ? cellOffsetY[1] : 0);
+                xEnd = x * cellOffsetX[1] + cellMask.cols + ((y % 2 == 1) ? cellOffsetY[1] : 0);
                 if (!intInRange(xEnd, 0, tmp_mosaic.cols + 1))
                     continue;
 

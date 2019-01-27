@@ -62,7 +62,7 @@ int wrap(int val, int lower_bound, int upper_bound)
 //Returns if val is between min and max
 bool intInRange(int val, int min, int max)
 {
-    if (val < min || val > max)
+    if (val < min || val >= max)
         return false;
     return true;
 }

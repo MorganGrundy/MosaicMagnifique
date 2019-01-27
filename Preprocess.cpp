@@ -76,7 +76,7 @@ int main(int argc, char** argv)
         {
           cout << "Cell size: " << stoi(other) << endl;
           CELL_SIZE = stoi(other);
-          MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / 100.0);
+          MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / MIN_ZOOM);
           i++;
         }
       }
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 
   //Loads, resizes images, writes new images
-  cout << "Processing " << fn.size() << " images at size " << CELL_SIZE << ":" << endl;
+  cout << "Processing " << fn.size() << " images at size " << MAX_CELL_SIZE << ":" << endl;
   resize_images(&fn, w, argv[2]);
   return 0;
 }

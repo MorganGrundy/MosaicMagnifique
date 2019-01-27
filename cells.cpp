@@ -20,8 +20,8 @@ using namespace boost::filesystem;
 
 Mat cellMask; //Bit mask for cell shape at max cell size
 Mat cellMaskCmp; //Bit mask for cell shape at cell size
-double cellOffsetX [2], cellOffsetY [2]; //Offset to interjoin cells
-double cellOffsetCmpX [2], cellOffsetCmpY [2]; //Offset to interjoin cells
+int cellOffsetX [2], cellOffsetY [2]; //Offset to interjoin cells
+int cellOffsetCmpX [2], cellOffsetCmpY [2]; //Offset to interjoin cells
 
 //Resizes img inclusively using INTER_NEAREST to targetSize
 //Returns resize factor

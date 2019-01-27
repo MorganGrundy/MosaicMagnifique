@@ -86,7 +86,7 @@ vector< vector<Mat> > findBestImagesCIE76(Mat& main_img, vector<Mat>& images, ve
   {
       for (int x = 0; x < no_of_cell_x; ++x)
       {
-          int yStart = y * cellOffsetCmpY[0] + ((x % 2 == 1) ? cellOffsetCmpX[0] : 0);
+          int yStart = wrap(y * cellOffsetCmpY[0] + ((x % 2 == 1) ? cellOffsetCmpX[0] : 0), 0, main_img.rows - 1);
           if (!intInRange(yStart, 0, main_img.rows))
           {
               //cout << "Error: " << x << ", " << y << endl;
@@ -94,7 +94,7 @@ vector< vector<Mat> > findBestImagesCIE76(Mat& main_img, vector<Mat>& images, ve
               continue;
           }
 
-          int yEnd = (y+1) * cellOffsetCmpY[0] + ((x % 2 == 1) ? cellOffsetCmpX[0] : 0);
+          int yEnd = wrap((y+1) * cellOffsetCmpY[0] + ((x % 2 == 1) ? cellOffsetCmpX[0] : 0), 0, main_img.rows - 1);
           if (!intInRange(yEnd, 0, main_img.rows))
           {
               //cout << "Error: " << x << ", " << y << endl;
@@ -102,7 +102,7 @@ vector< vector<Mat> > findBestImagesCIE76(Mat& main_img, vector<Mat>& images, ve
               continue;
           }
 
-          int xStart = x * cellOffsetCmpX[1] + ((y % 2 == 1) ? cellOffsetCmpY[1] : 0);
+          int xStart = wrap(x * cellOffsetCmpX[1] + ((y % 2 == 1) ? cellOffsetCmpY[1] : 0), 0, main_img.cols - 1);
           if (!intInRange(xStart, 0, main_img.cols))
           {
               //cout << "Error: " << x << ", " << y << endl;
@@ -110,7 +110,7 @@ vector< vector<Mat> > findBestImagesCIE76(Mat& main_img, vector<Mat>& images, ve
               continue;
           }
 
-          int xEnd = (x+1) * cellOffsetCmpX[1] + ((y % 2 == 1) ? cellOffsetCmpY[1] : 0);
+          int xEnd = wrap((x+1) * cellOffsetCmpX[1] + ((y % 2 == 1) ? cellOffsetCmpY[1] : 0), 0, main_img.cols - 1);
           if (!intInRange(xEnd, 0, main_img.cols))
           {
               //cout << "Error: " << x << ", " << y << endl;

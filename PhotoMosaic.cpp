@@ -163,17 +163,8 @@ int main(int argc, char** argv)
     cout << "Cell cmp offset X: (" << cellOffsetCmpX[0] << ", " << cellOffsetCmpX[1] << ")" << endl;
     cout << "Cell cmp offset Y: (" << cellOffsetCmpY[0] << ", " << cellOffsetCmpY[1] << ")" << endl;
 
-    int no_of_cell_x = round(mainIm.cols / cellOffsetCmpX[1]);
-    int no_of_cell_y = round(mainIm.rows / cellOffsetCmpY[0]);
-    cellOffsetCmpY[0] = floor(cellOffsetCmpY[0]);
-    cellOffsetCmpY[1] = floor(cellOffsetCmpY[1]);
-    cellOffsetCmpX[0] = floor(cellOffsetCmpX[0]);
-    cellOffsetCmpX[1] = floor(cellOffsetCmpX[1]);
-
-    cellOffsetY[0] = floor(cellOffsetY[0]);
-    cellOffsetY[1] = floor(cellOffsetY[1]);
-    cellOffsetX[0] = floor(cellOffsetX[0]);
-    cellOffsetX[1] = floor(cellOffsetX[1]);
+    int no_of_cell_x = round(mainIm.cols / (double)cellOffsetCmpX[1]);
+    int no_of_cell_y = round(mainIm.rows / (double)cellOffsetCmpY[0]);
     cout << "Number of cells: (" << no_of_cell_x << ", " << no_of_cell_y << ")"<< endl;
 ////////////////////////////////////////////////////////////////////////////////
 ////    READ + PREPROCESS IMAGES
@@ -252,19 +243,19 @@ int main(int argc, char** argv)
             for (int x = 0; x < no_of_cell_x; ++x)
             {
                 yStart = y * cellOffsetY[0] + ((x % 2 == 1) ? cellOffsetX[0] : 0);
-                if (!intInRange(yStart, 0, tmp_mosaic.rows + 1))
+                if (!intInRange(yStart, 0, tmp_mosaic.rows))
                     continue;
 
                 yEnd = y * cellOffsetY[0] + cellMask.rows + ((x % 2 == 1) ? cellOffsetX[0] : 0);
-                if (!intInRange(yEnd, 0, tmp_mosaic.rows + 1))
+                if (!intInRange(yEnd, 0, tmp_mosaic.rows))
                     continue;
 
                 xStart = x * cellOffsetX[1] + ((y % 2 == 1) ? cellOffsetY[1] : 0);
-                if (!intInRange(xStart, 0, tmp_mosaic.cols + 1))
+                if (!intInRange(xStart, 0, tmp_mosaic.cols))
                     continue;
 
                 xEnd = x * cellOffsetX[1] + cellMask.cols + ((y % 2 == 1) ? cellOffsetY[1] : 0);
-                if (!intInRange(xEnd, 0, tmp_mosaic.cols + 1))
+                if (!intInRange(xEnd, 0, tmp_mosaic.cols))
                     continue;
 
                 result[y][x].copyTo(tmp_mosaic(Range(yStart, yEnd), Range(xStart, xEnd)), cellMask);

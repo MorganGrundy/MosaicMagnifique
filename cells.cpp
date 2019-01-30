@@ -51,8 +51,8 @@ int loadCellShape()
             cellOffsetCmpX[1] = CELL_SIZE;
             cellOffsetCmpY[0] = CELL_SIZE;
             cellOffsetCmpY[1] = 0;
-            cellMaskCmp = Mat(CELL_SIZE, CELL_SIZE, CV_8UC3, cvScalar(0));
-            cellMask = Mat(MAX_CELL_SIZE, MAX_CELL_SIZE, CV_8UC3, cvScalar(0));
+            cellMaskCmp = Mat(CELL_SIZE, CELL_SIZE, CV_8UC3, cvScalar(255));
+            cellMask = Mat(MAX_CELL_SIZE, MAX_CELL_SIZE, CV_8UC3, cvScalar(255));
             return 0; //Square
         case 1: cellMaskName = "./Cells/Hexagon/Shape.png";
                 cellOffsetXName = "./Cells/Hexagon/OffsetX.png";

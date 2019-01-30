@@ -87,6 +87,7 @@ int main(int argc, char** argv)
 
         //Outputs flags and descriptions
         cout << "Flags:" << endl;
+        cout << "-info, -i: Extra information is output" << endl;
         cout << "-cie2000, -c: Switches colour difference algorithm from CIE76 to CIEDE2000 (more accurate, but slower)" << endl;
         cout << "-cell_size x, -s x: Uses the integer in the next argument (x) as the cell size in pixels. Default: " << CELL_SIZE << endl;
         cout << "-repeat_range x, -rr x: Uses the integer in the next argument (x) as the range in cells that repeats will be looked for. Default: " << REPEAT_RANGE << endl;
@@ -100,7 +101,9 @@ int main(int argc, char** argv)
       for (int i = 4; i < argc; ++i)
       {
         string flag = argv[i];
-        if (flag == "-c" || flag == "-cie2000")
+        if (flag == "-i" || flag == "-info")
+            extraInfo = true;
+        else if (flag == "-c" || flag == "-cie2000")
           fast_mode = false;
         else if (i + 1 < argc) //Flags that require two arguments
         {
@@ -157,15 +160,22 @@ int main(int argc, char** argv)
       return 0;
 
     //Calculate number of cells
-    cout << "Cell size: " << CELL_SIZE << endl;
-    cout << "Cell offset X: (" << cellOffsetX[0] << ", " << cellOffsetX[1] << ")" << endl;
-    cout << "Cell offset Y: (" << cellOffsetY[0] << ", " << cellOffsetY[1] << ")" << endl;
-    cout << "Cell cmp offset X: (" << cellOffsetCmpX[0] << ", " << cellOffsetCmpX[1] << ")" << endl;
-    cout << "Cell cmp offset Y: (" << cellOffsetCmpY[0] << ", " << cellOffsetCmpY[1] << ")" << endl;
-
     int no_of_cell_x = round(mainIm.cols / (double)cellOffsetCmpX[1]);
     int no_of_cell_y = round(mainIm.rows / (double)cellOffsetCmpY[0]);
-    cout << "Number of cells: (" << no_of_cell_x + padRows * 2 << ", " << no_of_cell_y + padCols * 2 << ")"<< endl;
+
+    if (extraInfo)
+    {
+        cout << "Cell size: " << CELL_SIZE << endl;
+
+        cout << "Cell offset X: (" << cellOffsetX[0] << ", " << cellOffsetX[1] << ")" << endl;
+        cout << "Cell offset Y: (" << cellOffsetY[0] << ", " << cellOffsetY[1] << ")" << endl;
+
+        cout << "Cell cmp offset X: (" << cellOffsetCmpX[0] << ", " << cellOffsetCmpX[1] << ")" << endl;
+        cout << "Cell cmp offset Y: (" << cellOffsetCmpY[0] << ", " << cellOffsetCmpY[1] << ")" << endl;
+
+        cout << "Number of cells: (" << no_of_cell_x + padRows * 2 << ", " << no_of_cell_y + padCols * 2 << ")"<< endl;
+    }
+
 ////////////////////////////////////////////////////////////////////////////////
 ////    READ + PREPROCESS IMAGES
 ////////////////////////////////////////////////////////////////////////////////

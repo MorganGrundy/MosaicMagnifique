@@ -27,6 +27,8 @@ int CELL_SHAPE = 0;
 bool padRows = false;
 bool padCols = false;
 
+bool extraInfo = false;
+
 //Removes progress bar from window
 void progressBarClean(int width)
 {

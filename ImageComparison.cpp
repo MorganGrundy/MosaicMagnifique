@@ -38,10 +38,10 @@ void populateRepeats(vector< vector<int> > gridIndex, int y, int x, vector<int> 
 //Worst case complexity: O(Ni * CELL_SIZE^2), where Ni = number of images
 //Colour comparison worst case:
 //1 sqrt, 3 pow, 3 -, 5 +
-int findBestImageCIE76(Mat& main_img, vector<Mat> images, vector<int> repeats)
+int findBestImageCIE76(Mat& main_img, vector<Mat> images, vector<int> repeats, int yStart, int yEnd, int xStart, int xEnd)
 {
-    int main_rows = main_img.rows;
-    int main_cols = main_img.cols * main_img.channels();
+    //int main_rows = main_img.rows;
+    //int main_cols = main_img.cols * main_img.channels();
 
     //Index of current image with lowest variant
     int best_fit = -1;
@@ -54,12 +54,12 @@ int findBestImageCIE76(Mat& main_img, vector<Mat> images, vector<int> repeats)
         uchar* p_mask;
         long double variant = REPEAT_ADDITION * repeats[i];
         //Calculates sum of difference between corresponding pixel values
-        for (int row = 0; row < main_rows && variant < best_variant; ++row)
+        for (int row = yStart; row < yEnd && variant < best_variant; ++row)
         {
             p_main = main_img.ptr<uchar>(row);
             p_im = images[i].ptr<uchar>(row);
             p_mask = cellMaskCmp.ptr<uchar>(row);
-            for (int col = 0; col < main_cols && variant < best_variant; col += main_img.channels())
+            for (int col = xStart; col < xEnd * main_img.channels() && variant < best_variant; col += main_img.channels())
                 if (CELL_SHAPE == 0 || p_mask[col / main_img.channels()] == 255)
                     variant += sqrt(pow(p_main[col] - p_im[col], 2) +
                                 pow(p_main[col + 1] - p_im[col + 1], 2) +
@@ -78,58 +78,49 @@ int findBestImageCIE76(Mat& main_img, vector<Mat> images, vector<int> repeats)
 //Worst case complexity: O(y * x ((REPEAT_RANGE^2) / 2) * Ni * CELL_SIZE^2), where Ni = number of images, x = main image rows / CELL_SIZE, y = main image cols / CELL_SIZE
 vector< vector<Mat> > findBestImagesCIE76(Mat& main_img, vector<Mat>& images, vector<Mat>& imagesMax, int no_of_cell_x, int no_of_cell_y, int window_width)
 {
-  vector< vector<int> > gridIndex(no_of_cell_y, vector<int>(no_of_cell_x));
-  vector< vector<Mat> > result(no_of_cell_y, vector<Mat>(no_of_cell_x));
+  vector< vector<int> > gridIndex(no_of_cell_y + padCols * 2, vector<int>(no_of_cell_x + padRows * 2));
+
+  vector< vector<Mat> > result(no_of_cell_y + padCols * 2, vector<Mat>(no_of_cell_x + padRows * 2));
+
   vector<int> repeats(images.size());
-  Mat cell;
-  for (int y = 0; y < no_of_cell_y; ++y)
+
+  Mat cell(cellMaskCmp.rows, cellMaskCmp.cols, main_img.type(), cvScalar(0));
+  for (int y = -padCols; y < no_of_cell_y + padCols; ++y)
   {
-      for (int x = 0; x < no_of_cell_x; ++x)
+      for (int x = -padRows; x < no_of_cell_x + padRows; ++x)
       {
-          int yStart = wrap(y * cellOffsetCmpY[0] + ((x % 2 == 1) ? cellOffsetCmpX[0] : 0), 0, main_img.rows - 1);
-          if (!intInRange(yStart, 0, main_img.rows))
-          {
-              //cout << "Error: " << x << ", " << y << endl;
-              result[y][x] = imagesMax[0];
-              continue;
-          }
+          int yUnboundedStart = y * cellOffsetCmpY[0] + ((abs(x % 2) == 1) ? cellOffsetCmpX[0] : 0);
+          int yStart = wrap(yUnboundedStart, 0, main_img.rows - 1);
 
-          int yEnd = wrap((y+1) * cellOffsetCmpY[0] + ((x % 2 == 1) ? cellOffsetCmpX[0] : 0), 0, main_img.rows - 1);
-          if (!intInRange(yEnd, 0, main_img.rows))
-          {
-              //cout << "Error: " << x << ", " << y << endl;
-              result[y][x] = imagesMax[0];
-              continue;
-          }
+          int yUnboundedEnd = y * cellOffsetCmpY[0] + cellMaskCmp.rows + ((abs(x % 2) == 1) ? cellOffsetCmpX[0] : 0);
+          int yEnd = wrap(yUnboundedEnd, 0, main_img.rows - 1);
 
-          int xStart = wrap(x * cellOffsetCmpX[1] + ((y % 2 == 1) ? cellOffsetCmpY[1] : 0), 0, main_img.cols - 1);
-          if (!intInRange(xStart, 0, main_img.cols))
-          {
-              //cout << "Error: " << x << ", " << y << endl;
-              result[y][x] = imagesMax[0];
-              continue;
-          }
+          int xUnboundedStart = x * cellOffsetCmpX[1] + ((abs(y % 2) == 1) ? cellOffsetCmpY[1] : 0);
+          int xStart = wrap(xUnboundedStart, 0, main_img.cols - 1);
 
-          int xEnd = wrap((x+1) * cellOffsetCmpX[1] + ((y % 2 == 1) ? cellOffsetCmpY[1] : 0), 0, main_img.cols - 1);
-          if (!intInRange(xEnd, 0, main_img.cols))
+          int xUnboundedEnd = x * cellOffsetCmpX[1] + cellMaskCmp.cols + ((abs(y % 2) == 1) ? cellOffsetCmpY[1] : 0);
+          int xEnd = wrap(xUnboundedEnd, 0, main_img.cols - 1);
+
+          //Cell completely out of bounds, just skip
+          if (yStart == yEnd || xStart == xEnd)
           {
-              //cout << "Error: " << x << ", " << y << endl;
-              result[y][x] = imagesMax[0];
+              result[y + padCols][x + padRows] = imagesMax[0];
               continue;
           }
 
           //Creates cell at x,y from main image
-          cell = main_img(Range(yStart, yEnd), Range(xStart, xEnd));
+          Mat imageBounded = main_img(Range(yStart, yEnd), Range(xStart, xEnd));
+          imageBounded.copyTo(cell(Range(yStart - yUnboundedStart, yEnd - yUnboundedStart), Range(xStart - xUnboundedStart, xEnd - xUnboundedStart)));
 
           //Calculates number of repeats around x,y for each image
-          populateRepeats(gridIndex, y, x, &repeats);
+          populateRepeats(gridIndex, y + padCols, x + padRows, &repeats);
 
           //Find best image for cell at x,y
-          int temp = findBestImageCIE76(cell, images, repeats);
-          gridIndex[y][x] = temp;
-          result[y][x] = imagesMax[temp];
+          int temp = findBestImageCIE76(cell, images, repeats, yStart - yUnboundedStart, yEnd - yUnboundedStart, xStart - xUnboundedStart, xEnd - xUnboundedStart);
+          gridIndex[y + padCols][x + padRows] = temp;
+          result[y + padCols][x + padRows] = imagesMax[temp];
 
-          progressBar(x + (no_of_cell_x - 1) * y, no_of_cell_x * no_of_cell_y - 1, window_width);
+          progressBar(x + padRows * 2 + (no_of_cell_x - 1) * (y + padCols * 2), (no_of_cell_x + padRows * 2) * (no_of_cell_y + padCols * 2) - 1, window_width);
       }
   }
   progressBarClean(window_width);

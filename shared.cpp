@@ -24,6 +24,9 @@ int MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / MIN_ZOOM);
 
 int CELL_SHAPE = 0;
 
+bool padRows = false;
+bool padCols = false;
+
 //Removes progress bar from window
 void progressBarClean(int width)
 {

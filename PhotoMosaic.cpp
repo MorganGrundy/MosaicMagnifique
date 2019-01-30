@@ -31,8 +31,8 @@ bool fast_mode = true;
 void showMosaic(int pos, void *userdata)
 {
     //Calculates number of pixels needed for a border in y and x to prevent viewing exceeding image bounds
-    int borderSizeY = (mosaic.rows * MIN_ZOOM) / (2 * cur_zoom); // (image height / 2) / (zoom / min zoom)
-    int borderSizeX = (mosaic.cols * MIN_ZOOM) / (2 * cur_zoom); // (image width / 2) / (zoom / min zoom)
+    int borderSizeY = floor((mosaic.rows * MIN_ZOOM) / (2 * cur_zoom)); // (image height / 2) / (zoom / min zoom)
+    int borderSizeX = floor((mosaic.cols * MIN_ZOOM) / (2 * cur_zoom)); // (image width / 2) / (zoom / min zoom)
 
     //Wraps y and x offsets to be within the border
     int y_wrapped = wrap(y_offset * (MAX_ZOOM / MIN_ZOOM), borderSizeY, mosaic.rows - borderSizeY);
@@ -165,7 +165,7 @@ int main(int argc, char** argv)
 
     int no_of_cell_x = round(mainIm.cols / (double)cellOffsetCmpX[1]);
     int no_of_cell_y = round(mainIm.rows / (double)cellOffsetCmpY[0]);
-    cout << "Number of cells: (" << no_of_cell_x << ", " << no_of_cell_y << ")"<< endl;
+    cout << "Number of cells: (" << no_of_cell_x + padRows * 2 << ", " << no_of_cell_y + padCols * 2 << ")"<< endl;
 ////////////////////////////////////////////////////////////////////////////////
 ////    READ + PREPROCESS IMAGES
 ////////////////////////////////////////////////////////////////////////////////
@@ -235,33 +235,47 @@ int main(int argc, char** argv)
     }
     else
     {
-        Mat tmp_mosaic(no_of_cell_y * cellOffsetY[0], no_of_cell_x * cellOffsetX[1], mainIm.type(), cvScalar(0));
+        mosaic = Mat(no_of_cell_y * cellOffsetY[0], no_of_cell_x * cellOffsetX[1], mainIm.type(), cvScalar(0));
 
-        int yStart, yEnd, xStart, xEnd;
-        for (int y = 0; y < no_of_cell_y; ++y)
+        //For all cells
+        for (int y = -padCols; y < no_of_cell_y + padCols; ++y)
         {
-            for (int x = 0; x < no_of_cell_x; ++x)
+            for (int x = -padRows; x < no_of_cell_x + padRows; ++x)
             {
-                yStart = y * cellOffsetY[0] + ((x % 2 == 1) ? cellOffsetX[0] : 0);
-                if (!intInRange(yStart, 0, tmp_mosaic.rows))
+                //Cell y start position
+                int yUnboundedStart = y * cellOffsetY[0] + ((abs(x % 2) == 1) ? cellOffsetX[0] : 0);
+                //Cell bounded y start position (in mosaic area)
+                int yStart = wrap(yUnboundedStart, 0, mosaic.rows - 1);
+
+                //Cell y end position
+                int yUnboundedEnd = y * cellOffsetY[0] + cellMask.rows + ((abs(x % 2) == 1) ? cellOffsetX[0] : 0);
+                //Cell bounded y end position (in mosaic area)
+                int yEnd = wrap(yUnboundedEnd, 0, mosaic.rows - 1);
+
+                //Cell x start position
+                int xUnboundedStart = x * cellOffsetX[1] + ((abs(y % 2) == 1) ? cellOffsetY[1] : 0);
+                //Cell bounded x start position (in mosaic area)
+                int xStart = wrap(xUnboundedStart, 0, mosaic.cols - 1);
+
+                //Cell x end position
+                int xUnboundedEnd = x * cellOffsetX[1] + cellMask.cols + ((abs(y % 2) == 1) ? cellOffsetY[1] : 0);
+                //Cell bounded x end position (in mosaic area)
+                int xEnd = wrap(xUnboundedEnd, 0, mosaic.cols - 1);
+
+                //Cell completely out of bounds, just skip
+                if (yStart == yEnd || xStart == xEnd)
                     continue;
 
-                yEnd = y * cellOffsetY[0] + cellMask.rows + ((x % 2 == 1) ? cellOffsetX[0] : 0);
-                if (!intInRange(yEnd, 0, tmp_mosaic.rows))
-                    continue;
+                //Creates a mat that is the cell area actually visible in mosaic
+                Mat cellBounded = result[y + padCols][x + padRows](Range(yStart - yUnboundedStart, yEnd - yUnboundedStart), Range(xStart - xUnboundedStart, xEnd - xUnboundedStart));
 
-                xStart = x * cellOffsetX[1] + ((y % 2 == 1) ? cellOffsetY[1] : 0);
-                if (!intInRange(xStart, 0, tmp_mosaic.cols))
-                    continue;
+                //Creates mask bounded same as cell (so that size equals)
+                Mat maskBounded = cellMask(Range(yStart - yUnboundedStart, yEnd - yUnboundedStart), Range(xStart - xUnboundedStart, xEnd - xUnboundedStart));
 
-                xEnd = x * cellOffsetX[1] + cellMask.cols + ((y % 2 == 1) ? cellOffsetY[1] : 0);
-                if (!intInRange(xEnd, 0, tmp_mosaic.cols))
-                    continue;
-
-                result[y][x].copyTo(tmp_mosaic(Range(yStart, yEnd), Range(xStart, xEnd)), cellMask);
+                //Copys cell to mosaic using mask
+                cellBounded.copyTo(mosaic(Range(yStart, yEnd), Range(xStart, xEnd)), maskBounded);
             }
         }
-        mosaic = tmp_mosaic;
     }
 
     t = (getTickCount() - t) / getTickFrequency();

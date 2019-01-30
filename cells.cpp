@@ -121,6 +121,9 @@ int loadCellShape()
     cellOffsetCmpY[1] = (cellOffset.cols - 1) * resizeFactorMin;
     cellOffsetCmpY[0] = (cellOffset.rows - 1) * resizeFactorMin;
 
+    padCols = (cellOffsetY[1] > 0) || (cellOffsetX[1] < cellMask.cols);
+    padRows = (cellOffsetX[0] > 0) || (cellOffsetY[0] < cellMask.rows);
+
     return 0;
 }
 

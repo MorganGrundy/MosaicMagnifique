@@ -34,15 +34,10 @@ void populateRepeats(vector< vector<int> > gridIndex, int y, int x, vector<int> 
         (*repeats)[gridIndex[y][xPos]]++;
 }
 
-// Returns the index in images of the image with the least variance from main_img, using CIE76 colour difference
+// Returns the index in images of the image with the least variance from main_img in the given area, using CIE76 colour difference
 //Worst case complexity: O(Ni * CELL_SIZE^2), where Ni = number of images
-//Colour comparison worst case:
-//1 sqrt, 3 pow, 3 -, 5 +
 int findBestImageCIE76(Mat& main_img, vector<Mat> images, vector<int> repeats, int yStart, int yEnd, int xStart, int xEnd)
 {
-    //int main_rows = main_img.rows;
-    //int main_cols = main_img.cols * main_img.channels();
-
     //Index of current image with lowest variant
     int best_fit = -1;
     //Initial best_variant set higher than max variant
@@ -60,6 +55,7 @@ int findBestImageCIE76(Mat& main_img, vector<Mat> images, vector<int> repeats, i
             p_im = images[i].ptr<uchar>(row);
             p_mask = cellMaskCmp.ptr<uchar>(row);
             for (int col = xStart; col < xEnd * main_img.channels() && variant < best_variant; col += main_img.channels())
+                //Only compare if default cell shape or in active mask area
                 if (CELL_SHAPE == 0 || p_mask[col / main_img.channels()] == 255)
                     variant += sqrt(pow(p_main[col] - p_im[col], 2) +
                                 pow(p_main[col + 1] - p_im[col + 1], 2) +
@@ -85,20 +81,30 @@ vector< vector<Mat> > findBestImagesCIE76(Mat& main_img, vector<Mat>& images, ve
   vector<int> repeats(images.size());
 
   Mat cell(cellMaskCmp.rows, cellMaskCmp.cols, main_img.type(), cvScalar(0));
+
+  //For all cells
   for (int y = -padCols; y < no_of_cell_y + padCols; ++y)
   {
       for (int x = -padRows; x < no_of_cell_x + padRows; ++x)
       {
+          //Cell y start position
           int yUnboundedStart = y * cellOffsetCmpY[0] + ((abs(x % 2) == 1) ? cellOffsetCmpX[0] : 0);
+          //Cell bounded y start position (in image area)
           int yStart = wrap(yUnboundedStart, 0, main_img.rows - 1);
 
+          //Cell y end position
           int yUnboundedEnd = y * cellOffsetCmpY[0] + cellMaskCmp.rows + ((abs(x % 2) == 1) ? cellOffsetCmpX[0] : 0);
+          //Cell bounded y end position (in image area)
           int yEnd = wrap(yUnboundedEnd, 0, main_img.rows - 1);
 
+          //Cell x start position
           int xUnboundedStart = x * cellOffsetCmpX[1] + ((abs(y % 2) == 1) ? cellOffsetCmpY[1] : 0);
+          //Cell bounded x start position (in image area)
           int xStart = wrap(xUnboundedStart, 0, main_img.cols - 1);
 
+          //Cell x end position
           int xUnboundedEnd = x * cellOffsetCmpX[1] + cellMaskCmp.cols + ((abs(y % 2) == 1) ? cellOffsetCmpY[1] : 0);
+          //Cell bounded x end position (in image area)
           int xEnd = wrap(xUnboundedEnd, 0, main_img.cols - 1);
 
           //Cell completely out of bounds, just skip

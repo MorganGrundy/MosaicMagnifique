@@ -81,7 +81,7 @@ int main(int argc, char** argv)
         //Outputs the accepted image types
         cout << "Accepted image types:" << endl;
         ostringstream oss;
-        copy(IMG_FORMATS.begin(), IMG_FORMATS.end()-1, ostream_iterator<String>(oss, ", "));
+        copy(IMG_FORMATS.begin(), IMG_FORMATS.end()-1, ostream_iterator<string>(oss, ", "));
         oss << IMG_FORMATS.back();
         cout << oss.str() << endl << endl;
 
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
         cout << "-cell_size x, -s x: Uses the integer in the next argument (x) as the cell size in pixels. Default: " << CELL_SIZE << endl;
         cout << "-repeat_range x, -rr x: Uses the integer in the next argument (x) as the range in cells that repeats will be looked for. Default: " << REPEAT_RANGE << endl;
         cout << "-repeat_addition x, -ra x: Uses the integer in the next argument (x) as the value to add to variant for each repeat in range. Default: " << REPEAT_ADDITION << endl;
-        cout << "-cell_shape x, -cs x: Uses the integer in the next argument (x) as the cell shape. 0 = square, 1 = hexagon. Default: " << CELL_SHAPE << endl;
+        cout << "-cell_shape x, -cs x: Uses the string in the next argument (x) as the cell name in ./Cells/x. Default: " << CELL_SHAPE << endl;
 
         return -1;
     }
@@ -126,7 +126,7 @@ int main(int argc, char** argv)
           }
           else if (flag == "-cs" || flag == "-cell_shape")
           {
-            CELL_SHAPE = stoi(other);
+            CELL_SHAPE = other;
             i++;
           }
         }
@@ -193,7 +193,7 @@ int main(int argc, char** argv)
         //Reads image, resizes to min zoom and max zoom (min used for compare)
         images[i] = imread(fn[i], IMREAD_COLOR);
         imageToSquare(images[i]);
-        if (CELL_SHAPE == 0)
+        if (CELL_SHAPE == "square")
             resizeImageExclusive(images[i], imagesMax[i], MAX_CELL_SIZE, MAX_CELL_SIZE);
         else
         {
@@ -235,7 +235,7 @@ int main(int argc, char** argv)
 ////    COMBINE PARTS INTO MOSAIC
 ////////////////////////////////////////////////////////////////////////////////
     t = getTickCount();
-    if (CELL_SHAPE == 0)
+    if (CELL_SHAPE == "square")
     {
         //Combines all results into single image (mosaic)
         vector<Mat> mosaicRows(no_of_cell_y);

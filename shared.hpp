@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <unistd.h>
 #include <boost/filesystem.hpp>
+#include <string>
 
 using namespace cv;
 using namespace std;
@@ -28,7 +29,7 @@ extern int REPEAT_ADDITION;
 extern int CELL_SIZE;
 extern int MAX_CELL_SIZE;
 
-extern int CELL_SHAPE;
+extern string CELL_SHAPE;
 
 extern bool padRows;
 extern bool padCols;

@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <boost/filesystem.hpp>
 #include <math.h>
+#include <string>
 
 #include "shared.hpp"
 
@@ -39,26 +40,34 @@ double resizeInterNearest(Mat& img, Mat& result, int targetSize)
 
 int loadCellShape()
 {
-    String cellMaskName, cellOffsetXName, cellOffsetYName;
-    switch(CELL_SHAPE)
+    string cellMaskName, cellOffsetXName, cellOffsetYName;
+    if (CELL_SHAPE.compare("square") == 0)
     {
-        default: case 0:
-            cellOffsetX[0] = 0;
-            cellOffsetX[1] = MAX_CELL_SIZE;
-            cellOffsetY[0] = MAX_CELL_SIZE;
-            cellOffsetY[1] = 0;
-            cellOffsetCmpX[0] = 0;
-            cellOffsetCmpX[1] = CELL_SIZE;
-            cellOffsetCmpY[0] = CELL_SIZE;
-            cellOffsetCmpY[1] = 0;
-            cellMaskCmp = Mat(CELL_SIZE, CELL_SIZE, CV_8UC3, cvScalar(255));
-            cellMask = Mat(MAX_CELL_SIZE, MAX_CELL_SIZE, CV_8UC3, cvScalar(255));
-            return 0; //Square
-        case 1: cellMaskName = "./Cells/Hexagon/Shape.png";
-                cellOffsetXName = "./Cells/Hexagon/OffsetX.png";
-                cellOffsetYName = "./Cells/Hexagon/OffsetY.png";
-                break; //Hexagon
+        cellOffsetX[0] = 0;
+        cellOffsetX[1] = MAX_CELL_SIZE;
+        cellOffsetY[0] = MAX_CELL_SIZE;
+        cellOffsetY[1] = 0;
+        cellOffsetCmpX[0] = 0;
+        cellOffsetCmpX[1] = CELL_SIZE;
+        cellOffsetCmpY[0] = CELL_SIZE;
+        cellOffsetCmpY[1] = 0;
+        cellMaskCmp = Mat(CELL_SIZE, CELL_SIZE, CV_8UC3, cvScalar(255));
+        cellMask = Mat(MAX_CELL_SIZE, MAX_CELL_SIZE, CV_8UC3, cvScalar(255));
+        return 0; //Square
     }
+
+
+    cellMaskName = "./Cells/";
+    cellMaskName += CELL_SHAPE;
+    cellMaskName += "/Shape.png";
+
+    cellOffsetXName = "./Cells/";
+    cellOffsetXName += CELL_SHAPE;
+    cellOffsetXName += "/OffsetX.png";
+
+    cellOffsetYName = "./Cells/";
+    cellOffsetYName += CELL_SHAPE;
+    cellOffsetYName += "/OffsetY.png";
 
     //Loads and checks cell mask
     Mat tmpCellMask = imread(cellMaskName, IMREAD_COLOR);

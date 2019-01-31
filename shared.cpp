@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <unistd.h>
 #include <boost/filesystem.hpp>
+#include <string>
 
 #include "shared.hpp"
 
@@ -22,7 +23,7 @@ int REPEAT_ADDITION = 10;
 int CELL_SIZE = 8;
 int MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / MIN_ZOOM);
 
-int CELL_SHAPE = 0;
+string CELL_SHAPE = "square";
 
 bool padRows = false;
 bool padCols = false;

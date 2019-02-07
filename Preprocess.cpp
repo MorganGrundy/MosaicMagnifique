@@ -48,7 +48,7 @@ int main(int argc, char** argv)
   //Reads args
   if(argc < 3)
   {
-      cout << argv[0] << " images_in_path images_out_path" << endl << endl;
+      cout << argv[0] << " images_in_path images_out_path [-flags]" << endl << endl;
 
       //Outputs the accepted image types
       cout << "Accepted image types:" << endl;
@@ -65,19 +65,30 @@ int main(int argc, char** argv)
   }
   if (argc > 3) //Reads flags
   {
-    cout << "Argc: " << argc << endl;
-    for (int i = 4; i < argc; ++i)
+    for (int i = 3; i < argc; ++i)
     {
       string flag = argv[i];
       if (i + 1 < argc) //Flags that require two arguments
       {
         string other = argv[i + 1];
-        if (flag == "-cs" || flag == "-cell_size")
+        if (flag == "-s" || flag == "-cell_size")
         {
-          cout << "Cell size: " << stoi(other) << endl;
-          CELL_SIZE = stoi(other);
-          MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / MIN_ZOOM);
-          i++;
+          try
+          {
+            if (stoi(other) < MIN_CELL_SIZE)
+            {
+                cout << "Minimum cell size is " << MIN_CELL_SIZE << endl;
+                return -1;
+            }
+            CELL_SIZE = stoi(other);
+            MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / MIN_ZOOM);
+            i++;
+          }
+          catch(exception const& e)
+          {
+            cout << "Cell size was not a valid integer" << endl;
+            return -1;
+          }
         }
       }
     }

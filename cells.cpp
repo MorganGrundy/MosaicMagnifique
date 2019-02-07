@@ -51,12 +51,12 @@ int loadCellShape()
         cellOffsetCmpX[1] = CELL_SIZE;
         cellOffsetCmpY[0] = CELL_SIZE;
         cellOffsetCmpY[1] = 0;
-        cellMaskCmp = Mat(CELL_SIZE, CELL_SIZE, CV_8UC3, cvScalar(255));
-        cellMask = Mat(MAX_CELL_SIZE, MAX_CELL_SIZE, CV_8UC3, cvScalar(255));
+        cellMaskCmp = Mat(CELL_SIZE, CELL_SIZE, CV_8UC1, cvScalar(255));
+        cellMask = Mat(MAX_CELL_SIZE, MAX_CELL_SIZE, CV_8UC1, cvScalar(255));
         return 0; //Square
     }
 
-
+    //Filepaths for cell mask and offsets
     cellMaskName = "./Cells/";
     cellMaskName += CELL_SHAPE;
     cellMaskName += "/Shape.png";

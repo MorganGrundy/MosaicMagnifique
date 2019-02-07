@@ -23,9 +23,11 @@ using namespace boost::filesystem;
 #define MIN_ZOOM 100.0
 #define MAX_ZOOM 1000
 
+#define MIN_REPEAT_RANGE 0
 extern int REPEAT_RANGE;
 extern int REPEAT_ADDITION;
 
+#define MIN_CELL_SIZE 8
 extern int CELL_SIZE;
 extern int MAX_CELL_SIZE;
 

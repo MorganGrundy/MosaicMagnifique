@@ -51,26 +51,6 @@ void showMosaic(int pos, void *userdata)
     imshow("Mosaic", focusMosaic); //Display mosaic
 }
 
-uchar encodeValueToPixel(int value)
-{
-  //int max8bit = pow(2, 8) - 1;
-  return 0;
-}
-
-//Forms and writes photomosaic
-void writePhotomosaic(vector<Mat> images, vector< vector<unsigned int> > mosaic)
-{
-  int imageSize = CELL_SIZE * MAX_ZOOM / MIN_ZOOM;
-  int noImagesY = mosaic.size() % imageSize;
-  int noImagesX = images.size() / noImagesY;
-
-  int resultWidth = 1 + mosaic[0].size() + noImagesX * imageSize;
-
-  Mat result(mosaic[0].size(), resultWidth, CV_8UC3);
-
-  //result.ptr(0,0) = encodeValueToPixel(images.size());
-}
-
 int main(int argc, char** argv)
 {
     //Reads args
@@ -88,7 +68,7 @@ int main(int argc, char** argv)
         //Outputs flags and descriptions
         cout << "Flags:" << endl;
         cout << "-info, -i: Extra information is output" << endl;
-        cout << "-cie2000, -c: Switches colour difference algorithm from CIE76 to CIEDE2000 (more accurate, but slower)" << endl;
+        cout << "-cie2000, -c: Switches colour difference algorithm from CIE76 to CIEDE2000 (more accurate, but slower, doesn't guarantee better result)" << endl;
         cout << "-cell_size x, -s x: Uses the integer in the next argument (x) as the cell size in pixels. Default: " << CELL_SIZE << endl;
         cout << "-repeat_range x, -rr x: Uses the integer in the next argument (x) as the range in cells that repeats will be looked for. Default: " << REPEAT_RANGE << endl;
         cout << "-repeat_addition x, -ra x: Uses the integer in the next argument (x) as the value to add to variant for each repeat in range. Default: " << REPEAT_ADDITION << endl;
@@ -110,19 +90,53 @@ int main(int argc, char** argv)
           string other = argv[i + 1];
           if (flag == "-s" || flag == "-cell_size")
           {
-            CELL_SIZE = stoi(other);
-            MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / MIN_ZOOM);
-            i++;
+            try
+            {
+              if (stoi(other) < MIN_CELL_SIZE)
+              {
+                  cout << "Minimum cell size is " << MIN_CELL_SIZE << endl;
+                  return -1;
+              }
+              CELL_SIZE = stoi(other);
+              MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / MIN_ZOOM);
+              i++;
+            }
+            catch(exception const& e)
+            {
+              cout << "Cell size was not a valid integer" << endl;
+              return -1;
+            }
           }
           else if (flag == "-rr" || flag == "-repeat_range")
           {
-            REPEAT_RANGE = stoi(other);
-            i++;
+            try
+            {
+              if (stoi(other) < MIN_REPEAT_RANGE)
+              {
+                cout << "Minimum repeat range is " << MIN_REPEAT_RANGE << endl;
+                return -1;
+              }
+              REPEAT_RANGE = stoi(other);
+              i++;
+            }
+            catch(exception const& e)
+            {
+              cout << "Repeat range was not a valid integer" << endl;
+              return -1;
+            }
           }
           else if (flag == "-ra" || flag == "-repeat_addition")
           {
-            REPEAT_ADDITION = stoi(other);
-            i++;
+            try
+            {
+              REPEAT_ADDITION = stoi(other);
+              i++;
+            }
+            catch(exception const& e)
+            {
+              cout << "Repeat addition was not a valid integer" << endl;
+              return -1;
+            }
           }
           else if (flag == "-cs" || flag == "-cell_shape")
           {

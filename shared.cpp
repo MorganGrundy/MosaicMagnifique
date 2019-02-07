@@ -20,8 +20,8 @@ using namespace boost::filesystem;
 int REPEAT_RANGE = 3;
 int REPEAT_ADDITION = 10;
 
-int CELL_SIZE = 8;
-int MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / MIN_ZOOM);
+int CELL_SIZE = MIN_CELL_SIZE;
+int MAX_CELL_SIZE = MIN_CELL_SIZE * (MAX_ZOOM / MIN_ZOOM);
 
 string CELL_SHAPE = "square";
 

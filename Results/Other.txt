@@ -44,17 +44,21 @@ time (read)
 --------------------------------------------------------------------------------
 Result preference
 
-Name    - Picturemosaics    - CIE2000   - CIE76 (fast)
-abbs    - 0                 - 2         - 2
-ahmed   - 0                 - 1         - 3
-anthony - 0                 - 1         - 3
-casey   - 0                 - 2         - 2
-cat     - 0                 - 1         - 3
-colton  - 0                 - 0         - 4
-denis   - 0                 - 0         - 4
-edgar   - 0                 - 2         - 2
-mathew  - 0                 - 1         - 3
-samuel  - 0                 - 1         - 3
+Name    - Picturemosaics    - CIE2000   - CIE76
+abbs    - 0                 - 3         - 5
+ahmed   - 0                 - 2         - 6
+anthony - 0                 - 1         - 7
+casey   - 0                 - 5         - 3
+cat     - 0                 - 2         - 6
+colton  - 0                 - 1         - 7
+denis   - 0                 - 0         - 8
+edgar   - 0                 - 3         - 5
+heather - 0                 - 0         - 8
+jf      - 0                 - 4         - 4
+journey - 0                 - 1         - 7
+mathew  - 0                 - 2         - 6
+samuel  - 0                 - 1         - 7
+smit    - 0                 - 3         - 5
 
-Total   - 0                 - 11        - 29
-        - 0%                - 27.5%     - 72.5%
+Total   - 0                 - 28        - 84
+        - 0%                - 25.0%     - 75.0%

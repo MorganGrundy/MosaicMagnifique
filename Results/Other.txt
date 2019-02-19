@@ -1,3 +1,22 @@
+My results
+
+Preprocess = 33.1s
+
+Read < 0.1s
+
+Name    - Result
+abbs    - 4.5s
+ahmed   - 4.5s
+anthony - 8.5s
+casey   - 3.5s
+cat     - 7.9s
+colton  - 8.5s
+denis   - 4.2s
+edgar   - 6.5s
+mathew  - 8.1s
+samuel  - 7.5s
+
+--------------------------------------------------------------------------------
 www.picturemosaics.com
 
 Uploading images - 13m 35s
@@ -45,20 +64,20 @@ time (read)
 Result preference
 
 Name    - Picturemosaics    - CIE2000   - CIE76
-abbs    - 0                 - 3         - 5
-ahmed   - 0                 - 2         - 6
-anthony - 0                 - 1         - 7
-casey   - 0                 - 5         - 3
-cat     - 0                 - 2         - 6
-colton  - 0                 - 1         - 7
-denis   - 0                 - 0         - 8
-edgar   - 0                 - 3         - 5
-heather - 0                 - 0         - 8
-jf      - 0                 - 4         - 4
-journey - 0                 - 1         - 7
-mathew  - 0                 - 2         - 6
-samuel  - 0                 - 1         - 7
-smit    - 0                 - 3         - 5
+abbs    - 0                 - 3         - 8
+ahmed   - 0                 - 2         - 9
+anthony - 0                 - 1         - 710
+casey   - 0                 - 7         - 4
+cat     - 0                 - 3         - 8
+colton  - 0                 - 1         - 10
+denis   - 0                 - 0         - 11
+edgar   - 0                 - 4         - 7
+heather - 0                 - 0         - 11
+jf      - 0                 - 5         - 6
+journey - 0                 - 2         - 9
+mathew  - 0                 - 3         - 8
+samuel  - 0                 - 2         - 9
+smit    - 0                 - 4         - 7
 
-Total   - 0                 - 28        - 84
-        - 0%                - 25.0%     - 75.0%
+Total   - 0                 - 37        - 117
+        - 0%                - 24.0%     - 76.0%

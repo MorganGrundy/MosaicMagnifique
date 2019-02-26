@@ -17,11 +17,14 @@ using namespace boost::filesystem;
 
 #define DEG2RAD(deg) ((deg) * M_PI / 180.0)
 
-#define MAX_HEIGHT 1080
-#define MAX_WIDTH 1920
+extern int TARGET_HEIGHT;
+extern int TARGET_WIDTH;
+
+#define DISPLAY_HEIGHT 1080
+#define DISPLAY_WIDTH 1920
 
 #define MIN_ZOOM 100.0
-#define MAX_ZOOM 1000
+#define MAX_ZOOM 350
 
 #define MIN_REPEAT_RANGE 0
 extern int REPEAT_RANGE;

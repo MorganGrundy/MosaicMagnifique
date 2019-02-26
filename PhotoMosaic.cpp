@@ -16,8 +16,6 @@
 using namespace cv;
 using namespace std;
 
-int actual_height, actual_width;
-
 Mat mosaic;
 
 int lastZoom;
@@ -35,8 +33,8 @@ void showMosaic(int pos, void *userdata)
     int borderSizeX = floor((mosaic.cols * MIN_ZOOM) / (2 * cur_zoom)); // (image width / 2) / (zoom / min zoom)
 
     //Wraps y and x offsets to be within the border
-    int y_wrapped = wrap(y_offset * (MAX_ZOOM / MIN_ZOOM), borderSizeY, mosaic.rows - borderSizeY);
-    int x_wrapped = wrap(x_offset * (MAX_ZOOM / MIN_ZOOM), borderSizeX, mosaic.cols - borderSizeX);
+    int y_wrapped = wrap(y_offset, borderSizeY, mosaic.rows - borderSizeY);
+    int x_wrapped = wrap(x_offset, borderSizeX, mosaic.cols - borderSizeX);
 
     //Calculates bounding box of current view
     int y_min = y_wrapped - (MIN_ZOOM * mosaic.rows) / (2 * cur_zoom);
@@ -47,7 +45,7 @@ void showMosaic(int pos, void *userdata)
     //Creates new Mat that points to a subsection of the image, only whats in the bounding box
     Mat focusMosaic = mosaic(Range(y_min, y_max), Range(x_min, x_max));
     //Resizes subsection of image to fit window
-    resizeImageInclusive(focusMosaic, focusMosaic, MAX_HEIGHT, MAX_WIDTH);
+    resizeImageInclusive(focusMosaic, focusMosaic, DISPLAY_HEIGHT, DISPLAY_WIDTH);
     imshow("Mosaic", focusMosaic); //Display mosaic
 }
 
@@ -73,6 +71,7 @@ int main(int argc, char** argv)
         cout << "-repeat_range x, -rr x: Uses the integer in the next argument (x) as the range in cells that repeats will be looked for. Default: " << REPEAT_RANGE << endl;
         cout << "-repeat_addition x, -ra x: Uses the integer in the next argument (x) as the value to add to variant for each repeat in range. Default: " << REPEAT_ADDITION << endl;
         cout << "-cell_shape x, -cs x: Uses the string in the next argument (x) as the cell name in ./Cells/x. Default: " << CELL_SHAPE << endl;
+        cout << "-mosaic_size x1 x2, -ms x1 x2: Uses the integer in x1 as image height and x2 as image width. Default: Original image size" << endl;
 
         return -1;
     }
@@ -81,23 +80,54 @@ int main(int argc, char** argv)
       for (int i = 4; i < argc; ++i)
       {
         string flag = argv[i];
+
+        if (i + 2 < argc) //Flags that require three arguments
+        {
+          string x1 = argv[i + 1];
+          string x2 = argv[i + 2];
+          // MOSAIC SIZE
+          if (flag == "-mosaic_size" || flag == "-ms")
+          {
+            try
+            {
+              if (stoi(x1) <= 0 || stoi(x1) <= 0)
+              {
+                cout << "Mosaic size must be positive integers" << endl;
+                return -1;
+              }
+              TARGET_HEIGHT = stoi(x1);
+              TARGET_WIDTH = stoi(x2);
+              cout << x1 << " x " << x2 << endl;
+              cout << TARGET_HEIGHT << " x " << TARGET_WIDTH << endl;
+              i += 2;
+              continue;
+            }
+            catch(exception const& e)
+            {
+              cout << "Mosaic size was not a valid integer" << endl;
+              return -1;
+            }
+          }
+        }
+
         if (flag == "-i" || flag == "-info")
-            extraInfo = true;
+          extraInfo = true;
         else if (flag == "-c" || flag == "-cie2000")
           fast_mode = false;
         else if (i + 1 < argc) //Flags that require two arguments
         {
-          string other = argv[i + 1];
+          string x = argv[i + 1];
+          // CELL SIZE
           if (flag == "-s" || flag == "-cell_size")
           {
             try
             {
-              if (stoi(other) < MIN_CELL_SIZE)
+              if (stoi(x) < MIN_CELL_SIZE)
               {
                   cout << "Minimum cell size is " << MIN_CELL_SIZE << endl;
                   return -1;
               }
-              CELL_SIZE = stoi(other);
+              CELL_SIZE = stoi(x);
               MAX_CELL_SIZE = CELL_SIZE * (MAX_ZOOM / MIN_ZOOM);
               i++;
             }
@@ -107,16 +137,17 @@ int main(int argc, char** argv)
               return -1;
             }
           }
+          // REPEAT RANGE
           else if (flag == "-rr" || flag == "-repeat_range")
           {
             try
             {
-              if (stoi(other) < MIN_REPEAT_RANGE)
+              if (stoi(x) < MIN_REPEAT_RANGE)
               {
                 cout << "Minimum repeat range is " << MIN_REPEAT_RANGE << endl;
                 return -1;
               }
-              REPEAT_RANGE = stoi(other);
+              REPEAT_RANGE = stoi(x);
               i++;
             }
             catch(exception const& e)
@@ -125,11 +156,12 @@ int main(int argc, char** argv)
               return -1;
             }
           }
+          // REPEAT ADDITION
           else if (flag == "-ra" || flag == "-repeat_addition")
           {
             try
             {
-              REPEAT_ADDITION = stoi(other);
+              REPEAT_ADDITION = stoi(x);
               i++;
             }
             catch(exception const& e)
@@ -138,9 +170,10 @@ int main(int argc, char** argv)
               return -1;
             }
           }
+          // CELL SHAPE
           else if (flag == "-cs" || flag == "-cell_shape")
           {
-            CELL_SHAPE = other;
+            CELL_SHAPE = x;
             i++;
           }
         }
@@ -154,18 +187,29 @@ int main(int argc, char** argv)
 
     //Loads and checks main image
     String imageName = argv[1];
-    Mat mainIm = imread(imageName, IMREAD_COLOR);
-    if (mainIm.empty()) // Check for invalid input
+    Mat originalIm = imread(imageName, IMREAD_COLOR);
+    if (originalIm.empty()) // Check for invalid input
     {
         cout <<  "Could not open or find the image" << endl;
         return -1;
     }
 
+    //If mosaic size not specified then set to original image size
+    if (TARGET_HEIGHT == 0)
+    {
+        TARGET_HEIGHT = originalIm.rows;
+        TARGET_WIDTH = originalIm.cols;
+    }
+
     //Resizes main image and converts to Lab colour space
-    cout << "Original size: " << mainIm.size() << endl;
-    resizeImageInclusive(mainIm, mainIm, MAX_HEIGHT, MAX_WIDTH);
+    Mat mainIm;
+    cout << "Original size: " << originalIm.size() << endl;
+    resizeImageInclusive(originalIm, mainIm, (TARGET_HEIGHT * MIN_ZOOM) / MAX_ZOOM, (TARGET_WIDTH * MIN_ZOOM) / MAX_ZOOM);
     cout << "Resized: " << mainIm.size() << endl;
     cvtColor(mainIm, mainIm, COLOR_BGR2Lab);
+
+    //Resizes original image to fit in display window
+    resizeImageInclusive(originalIm, originalIm, DISPLAY_HEIGHT, DISPLAY_WIDTH);
 
     //Get list of photos in given folder
     path img_in_path(argv[2]);
@@ -305,39 +349,27 @@ int main(int argc, char** argv)
     t = (getTickCount() - t) / getTickFrequency();
     cout << "Time passed in seconds for concat: " << t << endl;
 
-    //Writes mosaic result at reduced size
-    {
-      Mat mosaicSmall;
-      resizeImageExclusive(mosaic, mosaicSmall, MAX_WIDTH * 2, MAX_HEIGHT * 2);
-      imwrite(img_out_path.string(), mosaicSmall);
-    }
+    //Writes mosaic result
+    imwrite(img_out_path.string(), mosaic);
 ////////////////////////////////////////////////////////////////////////////////
 ////    DISPLAY RESULT
 ////////////////////////////////////////////////////////////////////////////////
     //Display original image
     namedWindow("Original", WINDOW_AUTOSIZE);
-    cvtColor(mainIm, mainIm, COLOR_Lab2BGR);
-    imshow("Original", mainIm);
+    imshow("Original", originalIm);
 
-    //Calculates resize factor for image
-    double resizeFactor = ((double) MAX_HEIGHT / mosaic.rows);
-    if (MAX_WIDTH < resizeFactor * mosaic.cols)
-        resizeFactor = ((double) MAX_WIDTH / mosaic.cols);
-
-    //Calculates actual size of image
-    actual_height = mosaic.rows * resizeFactor;
-    actual_width = mosaic.cols * resizeFactor;
+    resizeImageInclusive(mosaic, mosaic, DISPLAY_HEIGHT, DISPLAY_WIDTH);
 
     //Initialises x and y offset at center of image
-    x_offset = actual_width / 2;
-    y_offset = actual_height / 2;
+    x_offset = mosaic.cols / 2;
+    y_offset = mosaic.rows / 2;
 
     //Create window with trackbars for zoom and x, y offset
     namedWindow("Mosaic", WINDOW_AUTOSIZE);
     createTrackbar("Zoom %", "Mosaic", &cur_zoom, MAX_ZOOM, showMosaic);
     setTrackbarMin("Zoom %", "Mosaic", MIN_ZOOM);
-    createTrackbar("X focus", "Mosaic", &x_offset, actual_width, showMosaic);
-    createTrackbar("Y focus", "Mosaic", &y_offset, actual_height, showMosaic);
+    createTrackbar("X focus", "Mosaic", &x_offset, mosaic.cols, showMosaic);
+    createTrackbar("Y focus", "Mosaic", &y_offset, mosaic.rows, showMosaic);
 
     showMosaic(0, NULL);
 

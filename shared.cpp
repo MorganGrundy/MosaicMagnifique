@@ -17,6 +17,9 @@ using namespace std;
 using namespace cv;
 using namespace boost::filesystem;
 
+int TARGET_HEIGHT = 0;
+int TARGET_WIDTH = 0;
+
 int REPEAT_RANGE = 3;
 int REPEAT_ADDITION = 10;
 

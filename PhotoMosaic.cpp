@@ -90,7 +90,7 @@ int main(int argc, char** argv)
           {
             try
             {
-              if (stoi(x1) <= 0 || stoi(x1) <= 0)
+              if (stoi(x1) <= 0 || stoi(x2) <= 0)
               {
                 cout << "Mosaic size must be positive integers" << endl;
                 return -1;

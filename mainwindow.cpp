@@ -9,6 +9,11 @@
 #include <QImageReader>
 #include <QDebug>
 #include <QMessageBox>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
+
+#include "utilityfuncs.h"
 
 MainWindow::MainWindow(QWidget *t_parent)
     : QMainWindow(t_parent), ui(new Ui::MainWindow)
@@ -31,6 +36,7 @@ MainWindow::MainWindow(QWidget *t_parent)
                                "}");
     progressBar->setVisible(false);
     ui->statusbar->addPermanentWidget(progressBar);
+    ui->statusbar->setSizeGripEnabled(false);
 
     //Setup image library list
     ui->listPhoto->setResizeMode(QListWidget::ResizeMode::Adjust);
@@ -43,13 +49,6 @@ MainWindow::MainWindow(QWidget *t_parent)
     connect(ui->buttonLibCellSize, SIGNAL(released()), this, SLOT(updateCellSize()));
     connect(ui->buttonSave, SIGNAL(released()), this, SLOT(saveLibrary()));
     connect(ui->buttonLoad, SIGNAL(released()), this, SLOT(loadLibrary()));
-
-    //Creates a string of all supported image types for use with QFileDialog
-    imageTypes += tr("Image Files (");
-    auto supportedTypes = QImageReader::supportedImageFormats();
-    for (auto type: supportedTypes)
-        imageTypes += "*." + type + " ";
-    imageTypes += ")";
 }
 
 MainWindow::~MainWindow()
@@ -62,56 +61,50 @@ MainWindow::~MainWindow()
 void MainWindow::addImages()
 {
     QStringList filenames = QFileDialog::getOpenFileNames(this, tr("Select image to add"), "",
-                                                          imageTypes);
+                                                          "Image Files (*.bmp *.dib *.jpeg *.jpg "
+                                                          "*.jpe *.jp2 *.png *.pbm *.pgm *.ppm "
+                                                          "*.pxm *.pnm *.sr *.ras *.tiff *.tif "
+                                                          "*.hdr *.pic)");
 
     progressBar->setRange(0, filenames.size());
     progressBar->setValue(0);
     progressBar->setVisible(true);
     //For all files selected by user load and add to library
-    QImageReader imgReader;
     for (auto filename: filenames)
     {
-        imgReader.setFileName(filename);
-        if (QImage img = imgReader.read(); !img.isNull())
+        cv::Mat image = cv::imread(filename.toStdString(), cv::ImreadModes::IMREAD_COLOR);
+        if (image.empty())
         {
-            //Crops image to square, with center origin
-            if (img.width() < img.height())
-            {
-                int size = img.width();
-                img = img.copy(0, (img.height() - size)/2, size, size);
-            }
-            else
-            {
-                int size = img.height();
-                img = img.copy((img.width() - size)/2, 0, size, size);
-            }
-
-            QPixmap pixmap = QPixmap::fromImage(img);
-
-            //Extracts filename and extension from full path
-            QString name;
-            for (auto it = filename.cbegin() + filename.lastIndexOf('/') + 1, end = filename.cend();
-                 it != end; ++it)
-            {
-                name += (*it);
-            }
-
-            //Resize image then add to library
-            QListWidgetItem listItem(
-                        QIcon(pixmap.scaled(QSize(imageSize, imageSize),
-                                            Qt::AspectRatioMode::KeepAspectRatioByExpanding,
-                                            Qt::TransformationMode::SmoothTransformation)), name);
-            ui->listPhoto->addItem(new QListWidgetItem(listItem));
-
-            //Store original image
-            originalImages.insert(listItem, pixmap);
+            qDebug() << "Could not open or find the image";
+            continue;
         }
+
+        //Square image with focus on center and resize to image size
+        UtilityFuncs::imageToSquare(image);
+        cv::Mat resizedImage = UtilityFuncs::resizeImage(image, imageSize, imageSize,
+                                                         UtilityFuncs::ResizeType::EXCLUSIVE);
+
+        //Extracts filename and extension from full path
+        QString name;
+        for (auto it = filename.cbegin() + filename.lastIndexOf('/') + 1, end = filename.cend();
+             it != end; ++it)
+        {
+            name += (*it);
+        }
+
+        //Add image to library
+        QListWidgetItem listItem(QIcon(UtilityFuncs::matToQPixmap(resizedImage)), name);
+        ui->listPhoto->addItem(new QListWidgetItem(listItem));
+
+        //Store QListWidgetItem with resized and original OpenCV Mat
+        allImages.insert(listItem, {resizedImage, image});
+
         progressBar->setValue(progressBar->value() + 1);
     }
     progressBar->setVisible(false);
 
     //Update status bar with new number of images
-    ui->statusbar->showMessage(QString::number(originalImages.size()) + tr(" images"));
+    ui->statusbar->showMessage(QString::number(allImages.size()) + tr(" images"));
 }
 
 //Deletes selected images
@@ -119,37 +112,39 @@ void MainWindow::deleteImages()
 {
     auto selectedItems = ui->listPhoto->selectedItems();
     for (auto item: selectedItems)
-        originalImages.remove(*item);
+        allImages.remove(*item);
 
     qDeleteAll(selectedItems);
 
     //Update status bar with new number of images
-    ui->statusbar->showMessage(QString::number(originalImages.size()) + tr(" images"));
+    ui->statusbar->showMessage(QString::number(allImages.size()) + tr(" images"));
 }
 
+//Reads the cell size from ui spin box, then resizes all images
 void MainWindow::updateCellSize()
 {
     imageSize = ui->spinLibCellSize->value();
     ui->listPhoto->clear();
 
-    progressBar->setRange(0, originalImages.size());
+    progressBar->setRange(0, allImages.size());
     progressBar->setValue(0);
     progressBar->setVisible(true);
-    for (auto image: originalImages.keys())
+    for (auto listItem: allImages.keys())
     {
-        image.setIcon(QIcon(originalImages.value(image).
-                            scaled(QSize(imageSize, imageSize),
-                                   Qt::AspectRatioMode::KeepAspectRatioByExpanding,
-                                   Qt::TransformationMode::SmoothTransformation)));
-        ui->listPhoto->addItem(new QListWidgetItem(image));
+        allImages[listItem].first = UtilityFuncs::resizeImage(allImages[listItem].second,
+                                                         imageSize, imageSize,
+                                                         UtilityFuncs::ResizeType::EXCLUSIVE);
+        listItem.setIcon(QIcon(UtilityFuncs::matToQPixmap(allImages[listItem].first)));
+        ui->listPhoto->addItem(new QListWidgetItem(listItem));
         progressBar->setValue(progressBar->value() + 1);
     }
     progressBar->setVisible(false);
 }
 
-// MIL = Mosaic Image Library
+//Saves the image library to a file
 void MainWindow::saveLibrary()
 {
+    // mil = Mosaic Image Library
     QString filename = QFileDialog::getSaveFileName(this, tr("Save image library"), "",
                                                     tr("Image Files") + " (*.mil)");
     QFile file(filename);
@@ -159,19 +154,19 @@ void MainWindow::saveLibrary()
         QDataStream out(&file);
         //Write header with "magic number" and version
         out << static_cast<quint32>(0xADBE2480);
-        out << static_cast<qint32>(100);
+        out << static_cast<qint32>(UtilityFuncs::FILE_VERSION);
 
         out.setVersion(QDataStream::Qt_5_13);
         //Write images and names
         out << imageSize;
-        out << originalImages.size();
-        progressBar->setRange(0, originalImages.size());
+        out << allImages.size();
+        progressBar->setRange(0, allImages.size());
         progressBar->setValue(0);
         progressBar->setVisible(true);
-        for (auto image: originalImages.keys())
+        for (auto listItem: allImages.keys())
         {
-            out << image.icon().pixmap(QSize(imageSize, imageSize));
-            out << image.text();
+            out << allImages[listItem].first;
+            out << listItem.text();
             progressBar->setValue(progressBar->value() + 1);
         }
         progressBar->setVisible(false);
@@ -179,8 +174,10 @@ void MainWindow::saveLibrary()
     }
 }
 
+//Loads an image library from a file
 void MainWindow::loadLibrary()
 {
+    // mil = Mosaic Image Library
     QString filename = QFileDialog::getOpenFileName(this, tr("Select image library to load"), "",
                                                     tr("Image Files") + " (*.mil)");
     QFile file(filename);
@@ -203,12 +200,21 @@ void MainWindow::loadLibrary()
         //Read the version
         qint32 version;
         in >> version;
-        if (version == 100)
+        if (version == UtilityFuncs::FILE_VERSION)
             in.setVersion(QDataStream::Qt_5_13);
         else
+        {
+            QMessageBox msgBox;
+            if (version < UtilityFuncs::VERSION_NO)
+                msgBox.setText(filename + tr(" uses an outdated file version"));
+            else
+                msgBox.setText(filename + tr(" uses a newer file version"));
+            msgBox.exec();
             return;
+        }
 
-        originalImages.clear();
+        allImages.clear();
+        ui->listPhoto->clear();
 
         //Read images and names
         in >> imageSize;
@@ -221,20 +227,16 @@ void MainWindow::loadLibrary()
         while (numberOfImage > 0)
         {
             --numberOfImage;
-            QPixmap pixmap;
-            in >> pixmap;
+            cv::Mat image;
+            in >> image;
 
             QString name;
             in >> name;
 
-            QListWidgetItem listItem(
-                        QIcon(pixmap.scaled(QSize(imageSize, imageSize),
-                                            Qt::AspectRatioMode::KeepAspectRatioByExpanding,
-                                            Qt::TransformationMode::SmoothTransformation)), name);
+            QListWidgetItem listItem(QIcon(UtilityFuncs::matToQPixmap(image)), name);
             ui->listPhoto->addItem(new QListWidgetItem(listItem));
 
-            //Store original image
-            originalImages.insert(listItem, pixmap);
+            allImages.insert(listItem, {image, image});
             progressBar->setValue(progressBar->value() + 1);
         }
         progressBar->setVisible(false);
@@ -242,5 +244,33 @@ void MainWindow::loadLibrary()
         file.close();
     }
     //Update status bar with new number of images
-    ui->statusbar->showMessage(QString::number(originalImages.size()) + tr(" images"));
+    ui->statusbar->showMessage(QString::number(allImages.size()) + tr(" images"));
+}
+
+//Outputs a OpenCV mat to a QDataStream
+//Can be used to save a OpenCV mat to a file
+QDataStream &operator<<(QDataStream &t_out, const cv::Mat &t_mat)
+{
+    t_out << t_mat.type() << t_mat.rows << t_mat.cols;
+
+    const int dataSize = t_mat.cols * t_mat.rows * static_cast<int>(t_mat.elemSize());
+    QByteArray data = QByteArray::fromRawData(reinterpret_cast<const char *>(t_mat.ptr()),
+                                              dataSize);
+    t_out << data;
+
+    return t_out;
+}
+
+//Inputs a OpenCV mat from a QDataStream
+//Can be used to load a OpenCV mat from a file
+QDataStream &operator>>(QDataStream &t_in, cv::Mat &t_mat)
+{
+    int type, rows, cols;
+    QByteArray data;
+    t_in >> type >> rows >> cols;
+    t_in >> data;
+
+    t_mat = cv::Mat(rows, cols, type, data.data()).clone();
+
+    return t_in;
 }

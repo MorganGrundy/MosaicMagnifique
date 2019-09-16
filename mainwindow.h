@@ -28,8 +28,6 @@ public slots:
     void loadLibrary();
 
 private:
-    QImage mat2QImage(const cv::Mat &t_mat) const;
-
     Ui::MainWindow *ui;
     QProgressBar *progressBar;
 

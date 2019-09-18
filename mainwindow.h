@@ -27,6 +27,10 @@ public slots:
     void saveLibrary();
     void loadLibrary();
 
+    void selectMainImage();
+    void selectCellFolder();
+    void enableCellShape(int t_state);
+
 private:
     Ui::MainWindow *ui;
     QProgressBar *progressBar;

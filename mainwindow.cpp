@@ -49,6 +49,11 @@ MainWindow::MainWindow(QWidget *t_parent)
     connect(ui->buttonLibCellSize, SIGNAL(released()), this, SLOT(updateCellSize()));
     connect(ui->buttonSave, SIGNAL(released()), this, SLOT(saveLibrary()));
     connect(ui->buttonLoad, SIGNAL(released()), this, SLOT(loadLibrary()));
+
+    //Connects generator settings to appropriate methods
+    connect(ui->toolMainImage, SIGNAL(released()), this, SLOT(selectMainImage()));
+    connect(ui->toolCellShape, SIGNAL(released()), this, SLOT(selectCellFolder()));
+    connect(ui->checkCellShape, SIGNAL(stateChanged(int)), this, SLOT(enableCellShape(int)));
 }
 
 MainWindow::~MainWindow()
@@ -124,6 +129,7 @@ void MainWindow::deleteImages()
 void MainWindow::updateCellSize()
 {
     imageSize = ui->spinLibCellSize->value();
+    ui->spinCellSize->setValue(imageSize);
     ui->listPhoto->clear();
 
     progressBar->setRange(0, allImages.size());
@@ -219,6 +225,7 @@ void MainWindow::loadLibrary()
         //Read images and names
         in >> imageSize;
         ui->spinLibCellSize->setValue(imageSize);
+        ui->spinCellSize->setValue(imageSize);
         int numberOfImage;
         in >> numberOfImage;
         progressBar->setRange(0, numberOfImage);
@@ -245,6 +252,34 @@ void MainWindow::loadLibrary()
     }
     //Update status bar with new number of images
     ui->statusbar->showMessage(QString::number(allImages.size()) + tr(" images"));
+}
+
+//Prompts user for a cell folder
+void MainWindow::selectCellFolder()
+{
+    QString folder = QFileDialog::getExistingDirectory(this, tr("Select cell folder"));
+
+    if (!folder.isNull())
+        ui->lineCellShape->setText(folder);
+}
+
+//Prompts user for a main image
+void MainWindow::selectMainImage()
+{
+    QString filename = QFileDialog::getOpenFileName(this, tr("Select main image"), "",
+                                                    "Image Files (*.bmp *.dib *.jpeg *.jpg "
+                                                    "*.jpe *.jp2 *.png *.pbm *.pgm *.ppm "
+                                                    "*.pxm *.pnm *.sr *.ras *.tiff *.tif "
+                                                    "*.hdr *.pic)");
+    if (!filename.isNull())
+        ui->lineMainImage->setText(filename);
+}
+
+//Enables/disables non-square cell shapes, GUI widgets for choosing
+void MainWindow::enableCellShape(int t_state)
+{
+    ui->lineCellShape->setEnabled(t_state == Qt::Checked);
+    ui->toolCellShape->setEnabled(t_state == Qt::Checked);
 }
 
 //Outputs a OpenCV mat to a QDataStream

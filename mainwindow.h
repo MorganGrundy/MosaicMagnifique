@@ -12,6 +12,8 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
+#define OPENCV_WITH_CUDA
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -28,8 +30,10 @@ public slots:
     void loadLibrary();
 
     void selectMainImage();
-    void selectCellFolder();
     void enableCellShape(int t_state);
+    void selectCellFolder();
+
+    void generatePhotomosaic();
 
 private:
     Ui::MainWindow *ui;

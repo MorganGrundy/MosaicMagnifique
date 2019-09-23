@@ -27,18 +27,16 @@ cv::Mat UtilityFuncs::resizeImage(const cv::Mat &t_img,
             (t_type == ResizeType::INCLUSIVE && t_targetWidth > resizeFactor * t_img.cols))
         resizeFactor = static_cast<double>(t_targetWidth) / t_img.cols;
 
+    if (resizeFactor == 1.0)
+        return t_img;
+
+    //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
+    cv::InterpolationFlags flags = (resizeFactor < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
+
     //Resizes image
     cv::Mat result;
-    if (resizeFactor < 1)
-        resize(t_img, result, cv::Size(static_cast<int>(resizeFactor * t_img.cols),
-                                     static_cast<int>(resizeFactor * t_img.rows)), 0, 0,
-               cv::INTER_AREA);
-    else if (resizeFactor > 1)
-        resize(t_img, result, cv::Size(static_cast<int>(resizeFactor * t_img.cols),
-                                     static_cast<int>(resizeFactor * t_img.rows)), 0, 0,
-               cv::INTER_CUBIC);
-    else
-        result = t_img;
+    cv::resize(t_img, result, cv::Size(static_cast<int>(resizeFactor * t_img.cols),
+                                       static_cast<int>(resizeFactor * t_img.rows)), 0, 0, flags);
     return result;
 }
 
@@ -48,12 +46,12 @@ void UtilityFuncs::imageToSquare(cv::Mat& t_img)
     if (t_img.cols < t_img.rows)
     {
         int diff = (t_img.rows - t_img.cols)/2;
-        t_img = t_img(cv::Range(diff, t_img.rows - diff), cv::Range(0, t_img.cols));
+        t_img = t_img(cv::Range(diff, t_img.cols + diff), cv::Range(0, t_img.cols));
     }
     else if (t_img.cols > t_img.rows)
     {
         int diff = (t_img.cols - t_img.rows)/2;
-        t_img = t_img(cv::Range(0, t_img.rows), cv::Range(diff, t_img.cols - diff));
+        t_img = t_img(cv::Range(0, t_img.rows), cv::Range(diff, t_img.rows + diff));
     }
 }
 

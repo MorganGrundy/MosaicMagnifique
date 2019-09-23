@@ -2,12 +2,6 @@
 #define SHARED_HPP_
 
 #include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc.hpp>
-#include <iostream>
-#include <cstdio>
-#include <boost/filesystem.hpp>
-#include <string>
 #include <QPixmap>
 
 class UtilityFuncs

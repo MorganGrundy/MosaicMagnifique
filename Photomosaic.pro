@@ -18,10 +18,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    photomosaicgenerator.cpp \
     utilityfuncs.cpp
 
 HEADERS += \
     mainwindow.h \
+    photomosaicgenerator.h \
     utilityfuncs.h
 
 FORMS += \
@@ -41,7 +43,9 @@ CONFIG( debug, debug|release ) {
 	-lopencv_imgcodecs411d \
 	-lopencv_imgproc411d \
 	-lopencv_features2d411d \
-	-lopencv_calib3d411d
+	-lopencv_calib3d411d \
+	-lopencv_cudaarithm411d \
+	-lopencv_cudawarping411d
 } else {
 	# release
 	LIBS += -L$$(OPENCV_DIR)/lib \
@@ -50,7 +54,9 @@ CONFIG( debug, debug|release ) {
 	-lopencv_imgcodecs411 \
 	-lopencv_imgproc411 \
 	-lopencv_features2d411 \
-	-lopencv_calib3d411
+	-lopencv_calib3d411 \
+	-lopencv_cudaarithm411 \
+	-lopencv_cudawarping411
 }
 
 # Default rules for deployment.

@@ -12,8 +12,15 @@
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+#include <chrono>
+
+#ifdef OPENCV_WITH_CUDA
+#include <opencv2/cudawarping.hpp>
+#endif
 
 #include "utilityfuncs.h"
+#include "photomosaicgenerator.h"
 
 MainWindow::MainWindow(QWidget *t_parent)
     : QMainWindow(t_parent), ui(new Ui::MainWindow)
@@ -54,6 +61,8 @@ MainWindow::MainWindow(QWidget *t_parent)
     connect(ui->toolMainImage, SIGNAL(released()), this, SLOT(selectMainImage()));
     connect(ui->toolCellShape, SIGNAL(released()), this, SLOT(selectCellFolder()));
     connect(ui->checkCellShape, SIGNAL(stateChanged(int)), this, SLOT(enableCellShape(int)));
+
+    connect(ui->toolGenerate, SIGNAL(released()), this, SLOT(generatePhotomosaic()));
 }
 
 MainWindow::~MainWindow()
@@ -77,7 +86,7 @@ void MainWindow::addImages()
     //For all files selected by user load and add to library
     for (auto filename: filenames)
     {
-        cv::Mat image = cv::imread(filename.toStdString(), cv::ImreadModes::IMREAD_COLOR);
+        cv::Mat image = cv::imread(filename.toStdString());
         if (image.empty())
         {
             qDebug() << "Could not open or find the image";
@@ -128,13 +137,58 @@ void MainWindow::deleteImages()
 //Reads the cell size from ui spin box, then resizes all images
 void MainWindow::updateCellSize()
 {
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    if (imageSize == ui->spinLibCellSize->value())
+        return;
+
     imageSize = ui->spinLibCellSize->value();
     ui->spinCellSize->setValue(imageSize);
     ui->listPhoto->clear();
 
-    progressBar->setRange(0, allImages.size());
     progressBar->setValue(0);
     progressBar->setVisible(true);
+
+#ifdef OPENCV_WITH_CUDA
+    progressBar->setRange(0, allImages.size() * 2);
+
+    //Upload all Mat to GpuMat
+    std::vector<cv::cuda::GpuMat> src, dst(static_cast<size_t>(allImages.size()));
+    for (auto listItem: allImages.keys())
+        src.push_back(cv::cuda::GpuMat(allImages[listItem].second));
+
+    //Calculates resize factor
+    double resizeFactor = static_cast<double>(imageSize) / src.front().rows;
+    if (imageSize < resizeFactor * src.front().cols)
+        resizeFactor = static_cast<double>(imageSize) / src.front().cols;
+
+    //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
+    cv::InterpolationFlags flags = (resizeFactor < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
+
+    //Resize GpuMat
+    auto dstIt = dst.begin(), dstEnd = dst.end();
+    for (auto srcIt = src.cbegin(), srcEnd = src.cend();
+         srcIt != srcEnd; ++srcIt, ++dstIt)
+    {
+        cv::cuda::resize(*srcIt, *dstIt, cv::Size(static_cast<int>(resizeFactor * srcIt->cols),
+                                                  static_cast<int>(resizeFactor * srcIt->rows)),
+                         0, 0, flags);
+        progressBar->setValue(progressBar->value() + 1);
+    }
+
+    //Download resized GpuMat to Mat and update GUI
+    auto it = dst.cbegin();
+    for (auto listItem: allImages.keys())
+    {
+        it->download(allImages[listItem].first);
+        listItem.setIcon(QIcon(UtilityFuncs::matToQPixmap(allImages[listItem].first)));
+        ui->listPhoto->addItem(new QListWidgetItem(listItem));
+        progressBar->setValue(progressBar->value() + 1);
+        ++it;
+    }
+#else
+    progressBar->setRange(0, allImages.size());
+
     for (auto listItem: allImages.keys())
     {
         allImages[listItem].first = UtilityFuncs::resizeImage(allImages[listItem].second,
@@ -144,7 +198,11 @@ void MainWindow::updateCellSize()
         ui->listPhoto->addItem(new QListWidgetItem(listItem));
         progressBar->setValue(progressBar->value() + 1);
     }
+#endif
     progressBar->setVisible(false);
+
+    qDebug() << "Time: " << std::chrono::duration_cast<std::chrono::microseconds>(
+                    std::chrono::high_resolution_clock::now() - t1).count() << "\xC2\xB5s";
 }
 
 //Saves the image library to a file
@@ -254,15 +312,6 @@ void MainWindow::loadLibrary()
     ui->statusbar->showMessage(QString::number(allImages.size()) + tr(" images"));
 }
 
-//Prompts user for a cell folder
-void MainWindow::selectCellFolder()
-{
-    QString folder = QFileDialog::getExistingDirectory(this, tr("Select cell folder"));
-
-    if (!folder.isNull())
-        ui->lineCellShape->setText(folder);
-}
-
 //Prompts user for a main image
 void MainWindow::selectMainImage()
 {
@@ -280,6 +329,53 @@ void MainWindow::enableCellShape(int t_state)
 {
     ui->lineCellShape->setEnabled(t_state == Qt::Checked);
     ui->toolCellShape->setEnabled(t_state == Qt::Checked);
+}
+
+//Prompts user for a cell folder
+void MainWindow::selectCellFolder()
+{
+    QString folder = QFileDialog::getExistingDirectory(this, tr("Select cell folder"));
+
+    if (!folder.isNull())
+        ui->lineCellShape->setText(folder);
+}
+
+//Attempts to generate and display a Photomosaic for current settings
+void MainWindow::generatePhotomosaic()
+{
+    //Check library contains images
+    if (allImages.size() == 0)
+    {
+        QMessageBox msgBox;
+        msgBox.setText(tr("The library is empty, please add some images"));
+        msgBox.exec();
+        return;
+    }
+
+    //Load main image and check is valid
+    cv::Mat mainImage = cv::imread(ui->lineMainImage->text().toStdString());
+    if (mainImage.empty())
+    {
+        QMessageBox msgBox;
+        msgBox.setText(tr("The main image \"") + ui->lineMainImage->text() + tr("\" failed to load"));
+        msgBox.exec();
+        return;
+    }
+    //Resize main image to user entered size
+    mainImage = UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
+                                          ui->spinPhotomosaicWidth->value(),
+                                          UtilityFuncs::ResizeType::INCLUSIVE);
+
+    std::vector<cv::Mat> library;
+    for (auto pair: allImages.values())
+        library.push_back(pair.first);
+
+    //Generate Photomosaic
+    auto t1 = std::chrono::high_resolution_clock::now();
+    cv::Mat mosaic = PhotomosaicGenerator::generate(mainImage, library);
+    qDebug() << "Generator time: " << std::chrono::duration_cast<std::chrono::seconds>(
+                    std::chrono::high_resolution_clock::now() - t1).count() << "s";
+    cv::imshow("Mosaic", mosaic);
 }
 
 //Outputs a OpenCV mat to a QDataStream

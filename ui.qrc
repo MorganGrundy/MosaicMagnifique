@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/img">
+        <file>LinkIcon.png</file>
+        <file>UnlinkIcon.png</file>
+    </qresource>
+</RCC>

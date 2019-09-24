@@ -57,9 +57,18 @@ MainWindow::MainWindow(QWidget *t_parent)
     connect(ui->buttonSave, SIGNAL(released()), this, SLOT(saveLibrary()));
     connect(ui->buttonLoad, SIGNAL(released()), this, SLOT(loadLibrary()));
 
+    photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) /
+            ui->spinPhotomosaicHeight->value();
+
     //Connects generator settings to appropriate methods
     connect(ui->buttonMainImage, SIGNAL(released()), this, SLOT(selectMainImage()));
+    connect(ui->buttonPhotomosaicSizeLink, SIGNAL(released()), this, SLOT(photomosaicSizeLink()));
+    connect(ui->spinPhotomosaicWidth, SIGNAL(valueChanged(int)), this,
+            SLOT(photomosaicWidthChanged(int)));
+    connect(ui->spinPhotomosaicHeight, SIGNAL(valueChanged(int)), this,
+            SLOT(photomosaicHeightChanged(int)));
     connect(ui->buttonPhotomosaicSize, SIGNAL(released()), this, SLOT(loadImageSize()));
+
     connect(ui->buttonCellShape, SIGNAL(released()), this, SLOT(selectCellFolder()));
     connect(ui->checkCellShape, SIGNAL(stateChanged(int)), this, SLOT(enableCellShape(int)));
 
@@ -325,14 +334,62 @@ void MainWindow::selectMainImage()
         ui->lineMainImage->setText(filename);
 }
 
+//Changes icon of photomosaic size link button and saves ratio
+void MainWindow::photomosaicSizeLink()
+{
+    if (ui->buttonPhotomosaicSizeLink->isChecked())
+    {
+        ui->buttonPhotomosaicSizeLink->setIcon(QIcon(":/img/LinkIcon.png"));
+        photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) /
+                ui->spinPhotomosaicHeight->value();
+    }
+    else
+    {
+        ui->buttonPhotomosaicSizeLink->setIcon(QIcon(":/img/UnlinkIcon.png"));
+    }
+}
+
+//If link is active then when Photomosaic width changes updates height
+void MainWindow::photomosaicWidthChanged(int i)
+{
+    if (ui->buttonPhotomosaicSizeLink->isChecked())
+    {
+        //Blocks signals while changing value to prevent infinite loop
+        ui->spinPhotomosaicHeight->blockSignals(true);
+        ui->spinPhotomosaicHeight->setValue(static_cast<int>(i / photomosaicSizeRatio));
+        ui->spinPhotomosaicHeight->blockSignals(false);
+    }
+}
+
+//If link is active then when Photomosaic height changes updates width
+void MainWindow::photomosaicHeightChanged(int i)
+{
+    if (ui->buttonPhotomosaicSizeLink->isChecked())
+    {
+        //Blocks signals while changing value to prevent infinite loop
+        ui->spinPhotomosaicWidth->blockSignals(true);
+        ui->spinPhotomosaicWidth->setValue(static_cast<int>(i * photomosaicSizeRatio));
+        ui->spinPhotomosaicWidth->blockSignals(false);
+    }
+}
+
+//If a main image has been entered sets the Photomosaic size spinboxes to the image size
 void MainWindow::loadImageSize()
 {
     //Load main image and check is valid
     cv::Mat mainImage = cv::imread(ui->lineMainImage->text().toStdString());
     if (!mainImage.empty())
     {
+        //Blocks signals while changing value
+        ui->spinPhotomosaicWidth->blockSignals(true);
+        ui->spinPhotomosaicHeight->blockSignals(true);
         ui->spinPhotomosaicWidth->setValue(mainImage.cols);
         ui->spinPhotomosaicHeight->setValue(mainImage.rows);
+        ui->spinPhotomosaicWidth->blockSignals(false);
+        ui->spinPhotomosaicHeight->blockSignals(false);
+        //Update size ratio
+        photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) /
+                ui->spinPhotomosaicHeight->value();
     }
 }
 

@@ -30,6 +30,9 @@ public slots:
     void loadLibrary();
 
     void selectMainImage();
+    void photomosaicSizeLink();
+    void photomosaicWidthChanged(int i);
+    void photomosaicHeightChanged(int i);
     void loadImageSize();
     void enableCellShape(int t_state);
     void selectCellFolder();
@@ -39,6 +42,8 @@ public slots:
 private:
     Ui::MainWindow *ui;
     QProgressBar *progressBar;
+
+    double photomosaicSizeRatio;
 
     int imageSize;
     QMap<QListWidgetItem, std::pair<cv::Mat, cv::Mat>> allImages;

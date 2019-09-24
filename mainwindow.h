@@ -30,6 +30,7 @@ public slots:
     void loadLibrary();
 
     void selectMainImage();
+    void loadImageSize();
     void enableCellShape(int t_state);
     void selectCellFolder();
 

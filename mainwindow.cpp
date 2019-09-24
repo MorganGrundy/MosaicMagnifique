@@ -58,11 +58,12 @@ MainWindow::MainWindow(QWidget *t_parent)
     connect(ui->buttonLoad, SIGNAL(released()), this, SLOT(loadLibrary()));
 
     //Connects generator settings to appropriate methods
-    connect(ui->toolMainImage, SIGNAL(released()), this, SLOT(selectMainImage()));
-    connect(ui->toolCellShape, SIGNAL(released()), this, SLOT(selectCellFolder()));
+    connect(ui->buttonMainImage, SIGNAL(released()), this, SLOT(selectMainImage()));
+    connect(ui->buttonPhotomosaicSize, SIGNAL(released()), this, SLOT(loadImageSize()));
+    connect(ui->buttonCellShape, SIGNAL(released()), this, SLOT(selectCellFolder()));
     connect(ui->checkCellShape, SIGNAL(stateChanged(int)), this, SLOT(enableCellShape(int)));
 
-    connect(ui->toolGenerate, SIGNAL(released()), this, SLOT(generatePhotomosaic()));
+    connect(ui->buttonGenerate, SIGNAL(released()), this, SLOT(generatePhotomosaic()));
 }
 
 MainWindow::~MainWindow()
@@ -324,11 +325,22 @@ void MainWindow::selectMainImage()
         ui->lineMainImage->setText(filename);
 }
 
+void MainWindow::loadImageSize()
+{
+    //Load main image and check is valid
+    cv::Mat mainImage = cv::imread(ui->lineMainImage->text().toStdString());
+    if (!mainImage.empty())
+    {
+        ui->spinPhotomosaicWidth->setValue(mainImage.cols);
+        ui->spinPhotomosaicHeight->setValue(mainImage.rows);
+    }
+}
+
 //Enables/disables non-square cell shapes, GUI widgets for choosing
 void MainWindow::enableCellShape(int t_state)
 {
     ui->lineCellShape->setEnabled(t_state == Qt::Checked);
-    ui->toolCellShape->setEnabled(t_state == Qt::Checked);
+    ui->buttonCellShape->setEnabled(t_state == Qt::Checked);
 }
 
 //Prompts user for a cell folder

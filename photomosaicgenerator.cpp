@@ -9,10 +9,13 @@
 #include <QDebug>
 
 cv::Mat PhotomosaicGenerator::generate(const cv::Mat &mainImage,
-                                       const std::vector<cv::Mat> &library)
+                                       const std::vector<cv::Mat> &library,
+                                       QProgressDialog *progress)
 {
     cv::Point cellSize(library.front().cols, library.front().rows);
     cv::Point gridSize(mainImage.cols / cellSize.x, mainImage.rows / cellSize.y);
+    progress->setMaximum(gridSize.x * gridSize.y);
+    progress->setLabelText("Finding best fits...");
 
     //Split main image into grid
     //Find best match for each cell in grid
@@ -26,6 +29,9 @@ cv::Mat PhotomosaicGenerator::generate(const cv::Mat &mainImage,
 
             cv::Mat cell = mainImage(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd));
             result.at(x).at(y) = library.at(findBestImage(cell, library));
+            progress->setValue(progress->value() + 1);
+            if (progress->wasCanceled())
+                return cv::Mat();
         }
     }
 

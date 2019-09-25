@@ -420,11 +420,16 @@ void MainWindow::generatePhotomosaic()
                                                UtilityFuncs::ResizeType::EXCLUSIVE, progressBar);
 
     //Generate Photomosaic
+    QProgressDialog progressDialog(this);
+    progressDialog.setWindowModality(Qt::WindowModal);
+
     auto t1 = std::chrono::high_resolution_clock::now();
-    cv::Mat mosaic = PhotomosaicGenerator::generate(mainImage, library);
+    cv::Mat mosaic = PhotomosaicGenerator::generate(mainImage, library, &progressDialog);
     qDebug() << "Generator time: " << std::chrono::duration_cast<std::chrono::seconds>(
                     std::chrono::high_resolution_clock::now() - t1).count() << "s";
-    cv::imshow("Mosaic", mosaic);
+
+    if (!mosaic.empty())
+        cv::imshow("Mosaic", mosaic);
 }
 
 //Outputs a OpenCV mat to a QDataStream

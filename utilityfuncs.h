@@ -3,6 +3,9 @@
 
 #include <opencv2/core.hpp>
 #include <QPixmap>
+#include <QProgressBar>
+
+#define OPENCV_WITH_CUDA
 
 class UtilityFuncs
 {
@@ -30,6 +33,10 @@ public:
 
     //Converts an OpenCV Mat to a QPixmap and returns
     static QPixmap matToQPixmap(const cv::Mat &t_mat);
+
+    static std::vector<cv::Mat> batchResizeMat(const std::vector<cv::Mat> &images,
+                                               const int t_targetHeight, const int t_targetWidth,
+                                               const ResizeType t_type, QProgressBar *progressBar);
 
 private:
     UtilityFuncs() {}

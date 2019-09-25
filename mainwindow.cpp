@@ -15,12 +15,12 @@
 #include <opencv2/highgui.hpp>
 #include <chrono>
 
+#include "utilityfuncs.h"
+#include "photomosaicgenerator.h"
+
 #ifdef OPENCV_WITH_CUDA
 #include <opencv2/cudawarping.hpp>
 #endif
-
-#include "utilityfuncs.h"
-#include "photomosaicgenerator.h"
 
 MainWindow::MainWindow(QWidget *t_parent)
     : QMainWindow(t_parent), ui(new Ui::MainWindow)
@@ -93,6 +93,9 @@ void MainWindow::addImages()
     progressBar->setRange(0, filenames.size());
     progressBar->setValue(0);
     progressBar->setVisible(true);
+    std::vector<cv::Mat> originalImages;
+    std::vector<cv::Mat> images;
+    std::vector<QString> names;
     //For all files selected by user load and add to library
     for (auto filename: filenames)
     {
@@ -105,8 +108,7 @@ void MainWindow::addImages()
 
         //Square image with focus on center and resize to image size
         UtilityFuncs::imageToSquare(image);
-        cv::Mat resizedImage = UtilityFuncs::resizeImage(image, imageSize, imageSize,
-                                                         UtilityFuncs::ResizeType::EXCLUSIVE);
+        originalImages.push_back(image);
 
         //Extracts filename and extension from full path
         QString name;
@@ -115,17 +117,28 @@ void MainWindow::addImages()
         {
             name += (*it);
         }
+        names.push_back(name);
+        progressBar->setValue(progressBar->value() + 1);
+    }
 
+    //Resize to images to current library size
+    images = UtilityFuncs::batchResizeMat(originalImages, imageSize, imageSize,
+                                          UtilityFuncs::ResizeType::EXCLUSIVE, progressBar);
+
+    auto nameIt = names.cbegin();
+    auto imageIt = images.cbegin();
+    for (auto image: originalImages)
+    {
         //Add image to library
-        QListWidgetItem listItem(QIcon(UtilityFuncs::matToQPixmap(resizedImage)), name);
+        QListWidgetItem listItem(QIcon(UtilityFuncs::matToQPixmap(*imageIt)), *nameIt);
         ui->listPhoto->addItem(new QListWidgetItem(listItem));
 
         //Store QListWidgetItem with resized and original OpenCV Mat
-        allImages.insert(listItem, {resizedImage, image});
+        allImages.insert(listItem, {*imageIt, image});
 
-        progressBar->setValue(progressBar->value() + 1);
+        ++nameIt;
+        ++imageIt;
     }
-    progressBar->setVisible(false);
 
     //Update status bar with new number of images
     ui->statusbar->showMessage(QString::number(allImages.size()) + tr(" images"));
@@ -156,60 +169,22 @@ void MainWindow::updateCellSize()
     ui->spinCellSize->setValue(imageSize);
     ui->listPhoto->clear();
 
-    progressBar->setValue(0);
-    progressBar->setVisible(true);
+    std::vector<cv::Mat> images;
+    for (auto image: allImages.values())
+        images.push_back(image.second);
 
-#ifdef OPENCV_WITH_CUDA
-    progressBar->setRange(0, allImages.size() * 2);
+    images = UtilityFuncs::batchResizeMat(images, imageSize, imageSize,
+                                          UtilityFuncs::ResizeType::EXCLUSIVE, progressBar);
 
-    //Upload all Mat to GpuMat
-    std::vector<cv::cuda::GpuMat> src, dst(static_cast<size_t>(allImages.size()));
-    for (auto listItem: allImages.keys())
-        src.push_back(cv::cuda::GpuMat(allImages[listItem].second));
-
-    //Calculates resize factor
-    double resizeFactor = static_cast<double>(imageSize) / src.front().rows;
-    if (imageSize < resizeFactor * src.front().cols)
-        resizeFactor = static_cast<double>(imageSize) / src.front().cols;
-
-    //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
-    cv::InterpolationFlags flags = (resizeFactor < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
-
-    //Resize GpuMat
-    auto dstIt = dst.begin(), dstEnd = dst.end();
-    for (auto srcIt = src.cbegin(), srcEnd = src.cend();
-         srcIt != srcEnd; ++srcIt, ++dstIt)
-    {
-        cv::cuda::resize(*srcIt, *dstIt, cv::Size(static_cast<int>(resizeFactor * srcIt->cols),
-                                                  static_cast<int>(resizeFactor * srcIt->rows)),
-                         0, 0, flags);
-        progressBar->setValue(progressBar->value() + 1);
-    }
-
-    //Download resized GpuMat to Mat and update GUI
-    auto it = dst.cbegin();
+    auto it = images.cbegin();
     for (auto listItem: allImages.keys())
     {
-        it->download(allImages[listItem].first);
-        listItem.setIcon(QIcon(UtilityFuncs::matToQPixmap(allImages[listItem].first)));
+        allImages[listItem].first = *it;
+        listItem.setIcon(QIcon(UtilityFuncs::matToQPixmap(*it)));
         ui->listPhoto->addItem(new QListWidgetItem(listItem));
-        progressBar->setValue(progressBar->value() + 1);
+
         ++it;
     }
-#else
-    progressBar->setRange(0, allImages.size());
-
-    for (auto listItem: allImages.keys())
-    {
-        allImages[listItem].first = UtilityFuncs::resizeImage(allImages[listItem].second,
-                                                         imageSize, imageSize,
-                                                         UtilityFuncs::ResizeType::EXCLUSIVE);
-        listItem.setIcon(QIcon(UtilityFuncs::matToQPixmap(allImages[listItem].first)));
-        ui->listPhoto->addItem(new QListWidgetItem(listItem));
-        progressBar->setValue(progressBar->value() + 1);
-    }
-#endif
-    progressBar->setVisible(false);
 
     qDebug() << "Time: " << std::chrono::duration_cast<std::chrono::microseconds>(
                     std::chrono::high_resolution_clock::now() - t1).count() << "\xC2\xB5s";
@@ -438,6 +413,11 @@ void MainWindow::generatePhotomosaic()
     std::vector<cv::Mat> library;
     for (auto pair: allImages.values())
         library.push_back(pair.first);
+
+    if (library.front().cols != ui->spinCellSize->value())
+        library = UtilityFuncs::batchResizeMat(library, ui->spinCellSize->value(),
+                                               ui->spinCellSize->value(),
+                                               UtilityFuncs::ResizeType::EXCLUSIVE, progressBar);
 
     //Generate Photomosaic
     auto t1 = std::chrono::high_resolution_clock::now();

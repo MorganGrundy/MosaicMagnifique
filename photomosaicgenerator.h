@@ -7,9 +7,11 @@
 class PhotomosaicGenerator
 {
 public:
-    static cv::Mat generate(const cv::Mat &mainImage, const std::vector<cv::Mat> &library,
-                            QProgressDialog *progress);
-    static int findBestImage(const cv::Mat &mainImage, const std::vector<cv::Mat> &library);
+    enum class Mode {RGB_EUCLIDEAN, CIE76, CIEDE2000};
+
+    static cv::Mat generate(cv::Mat &mainImage, const std::vector<cv::Mat> &library,
+                            Mode mode, QProgressDialog &progress);
+    static int findBestFitEuclidean(const cv::Mat &cell, const std::vector<cv::Mat> &library);
 
 private:
     PhotomosaicGenerator() {}

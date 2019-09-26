@@ -90,7 +90,7 @@ void MainWindow::addImages()
                                                           "*.pxm *.pnm *.sr *.ras *.tiff *.tif "
                                                           "*.hdr *.pic)");
 
-    progressBar->setRange(0, filenames.size());
+    progressBar->setMaximum(filenames.size());
     progressBar->setValue(0);
     progressBar->setVisible(true);
     std::vector<cv::Mat> originalImages;
@@ -423,8 +423,14 @@ void MainWindow::generatePhotomosaic()
     QProgressDialog progressDialog(this);
     progressDialog.setWindowModality(Qt::WindowModal);
 
+    PhotomosaicGenerator::Mode mode = PhotomosaicGenerator::Mode::RGB_EUCLIDEAN;
+    if (ui->comboMode->currentText() == "CIE76")
+        mode = PhotomosaicGenerator::Mode::CIE76;
+    else if (ui->comboMode->currentText() == "CIEDE2000")
+        mode = PhotomosaicGenerator::Mode::CIEDE2000;
+
     auto t1 = std::chrono::high_resolution_clock::now();
-    cv::Mat mosaic = PhotomosaicGenerator::generate(mainImage, library, &progressDialog);
+    cv::Mat mosaic = PhotomosaicGenerator::generate(mainImage, library, mode, progressDialog);
     qDebug() << "Generator time: " << std::chrono::duration_cast<std::chrono::seconds>(
                     std::chrono::high_resolution_clock::now() - t1).count() << "s";
 

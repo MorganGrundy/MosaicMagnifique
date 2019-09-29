@@ -420,17 +420,19 @@ void MainWindow::generatePhotomosaic()
                                                UtilityFuncs::ResizeType::EXCLUSIVE, progressBar);
 
     //Generate Photomosaic
-    QProgressDialog progressDialog(this);
-    progressDialog.setWindowModality(Qt::WindowModal);
-
-    PhotomosaicGenerator::Mode mode = PhotomosaicGenerator::Mode::RGB_EUCLIDEAN;
-    if (ui->comboMode->currentText() == "CIE76")
-        mode = PhotomosaicGenerator::Mode::CIE76;
+    PhotomosaicGenerator generator(this);
+    if (ui->comboMode->currentText() == "RGB Euclidean")
+        generator.m_mode = PhotomosaicGenerator::Mode::RGB_EUCLIDEAN;
+    else if (ui->comboMode->currentText() == "CIE76")
+        generator.m_mode = PhotomosaicGenerator::Mode::CIE76;
     else if (ui->comboMode->currentText() == "CIEDE2000")
-        mode = PhotomosaicGenerator::Mode::CIEDE2000;
+        generator.m_mode = PhotomosaicGenerator::Mode::CIEDE2000;
+
+    generator.m_repeatRange = ui->spinRepeatRange->value();
+    generator.m_repeatAddition = ui->spinRepeatAddition->value();
 
     auto t1 = std::chrono::high_resolution_clock::now();
-    cv::Mat mosaic = PhotomosaicGenerator::generate(mainImage, library, mode, progressDialog);
+    cv::Mat mosaic = generator.generate(mainImage, library);
     qDebug() << "Generator time: " << std::chrono::duration_cast<std::chrono::seconds>(
                     std::chrono::high_resolution_clock::now() - t1).count() << "s";
 

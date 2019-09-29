@@ -150,7 +150,7 @@ border: 1px solid dimgray;
              <string/>
             </property>
             <property name="suffix">
-             <string/>
+             <string>px</string>
             </property>
             <property name="minimum">
              <number>10</number>
@@ -552,7 +552,7 @@ border: 1px solid dimgray;
                  <bool>false</bool>
                 </property>
                 <property name="suffix">
-                 <string/>
+                 <string>px</string>
                 </property>
                 <property name="prefix">
                  <string/>
@@ -596,6 +596,9 @@ border: 1px solid dimgray;
                 </property>
                 <property name="buttonSymbols">
                  <enum>QAbstractSpinBox::PlusMinus</enum>
+                </property>
+                <property name="suffix">
+                 <string>px</string>
                 </property>
                 <property name="prefix">
                  <string/>
@@ -782,7 +785,7 @@ border: 1px solid dimgray;
                  <string/>
                 </property>
                 <property name="suffix">
-                 <string/>
+                 <string>px</string>
                 </property>
                 <property name="minimum">
                  <number>10</number>

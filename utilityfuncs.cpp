@@ -81,9 +81,12 @@ std::vector<cv::Mat> UtilityFuncs::batchResizeMat(const std::vector<cv::Mat> &im
     std::vector<cv::Mat> result(images.size(), cv::Mat());
 
 #ifdef OPENCV_WITH_CUDA
-    progressBar->setMaximum(0);
-    progressBar->setValue(0);
-    progressBar->setVisible(true);
+    if (progressBar != nullptr)
+    {
+        progressBar->setMaximum(0);
+        progressBar->setValue(0);
+        progressBar->setVisible(true);
+    }
 
     cv::cuda::Stream stream;
     std::vector<cv::cuda::GpuMat> src(images.size()), dst(images.size());
@@ -110,14 +113,19 @@ std::vector<cv::Mat> UtilityFuncs::batchResizeMat(const std::vector<cv::Mat> &im
     }
     stream.waitForCompletion();
 #else
-    progressBar->setRange(0, static_cast<int>(images.size()));
-    progressBar->setValue(0);
-    progressBar->setVisible(true);
+    if (progressBar != nullptr)
+    {
+        progressBar->setMaximum(static_cast<int>(images.size()));
+        progressBar->setValue(0);
+        progressBar->setVisible(true);
+    }
 
     for (size_t i = 0; i < images.size(); ++i)
     {
-        result.at(i) = UtilityFuncs::resizeImage(images.at(i), t_targetHeight, t_targetWidth, t_type);
-        progressBar->setValue(progressBar->value() + 1);
+        result.at(i) = UtilityFuncs::resizeImage(images.at(i), t_targetHeight, t_targetWidth,
+                                                 t_type);
+        if (progressBar != nullptr)
+            progressBar->setValue(progressBar->value() + 1);
     }
 #endif
     progressBar->setVisible(false);

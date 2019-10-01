@@ -45,7 +45,8 @@ CONFIG( debug, debug|release ) {
 	-lopencv_features2d411d \
 	-lopencv_calib3d411d \
 	-lopencv_cudaarithm411d \
-	-lopencv_cudawarping411d
+	-lopencv_cudawarping411d \
+	-lopencv_cudaimgproc411d
 } else {
 	# release
 	LIBS += -L$$(OPENCV_DIR)/lib \
@@ -56,7 +57,8 @@ CONFIG( debug, debug|release ) {
 	-lopencv_features2d411 \
 	-lopencv_calib3d411 \
 	-lopencv_cudaarithm411 \
-	-lopencv_cudawarping411
+	-lopencv_cudawarping411 \
+	-lopencv_cudaimgproc411
 }
 
 # Default rules for deployment.

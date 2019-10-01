@@ -421,18 +421,19 @@ void MainWindow::generatePhotomosaic()
 
     //Generate Photomosaic
     PhotomosaicGenerator generator(this);
+    generator.setMainImage(mainImage);
+    generator.setLibrary(library);
+    generator.setDetail(ui->spinDetail->value());
     if (ui->comboMode->currentText() == "RGB Euclidean")
-        generator.m_mode = PhotomosaicGenerator::Mode::RGB_EUCLIDEAN;
+        generator.setMode(PhotomosaicGenerator::Mode::RGB_EUCLIDEAN);
     else if (ui->comboMode->currentText() == "CIE76")
-        generator.m_mode = PhotomosaicGenerator::Mode::CIE76;
+        generator.setMode(PhotomosaicGenerator::Mode::CIE76);
     else if (ui->comboMode->currentText() == "CIEDE2000")
-        generator.m_mode = PhotomosaicGenerator::Mode::CIEDE2000;
-
-    generator.m_repeatRange = ui->spinRepeatRange->value();
-    generator.m_repeatAddition = ui->spinRepeatAddition->value();
+        generator.setMode(PhotomosaicGenerator::Mode::CIEDE2000);
+    generator.setRepeat(ui->spinRepeatRange->value(), ui->spinRepeatAddition->value());
 
     auto t1 = std::chrono::high_resolution_clock::now();
-    cv::Mat mosaic = generator.generate(mainImage, library);
+    cv::Mat mosaic = generator.generate();
     qDebug() << "Generator time: " << std::chrono::duration_cast<std::chrono::seconds>(
                     std::chrono::high_resolution_clock::now() - t1).count() << "s";
 

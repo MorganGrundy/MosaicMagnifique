@@ -12,36 +12,56 @@
 #include <opencv2/imgproc.hpp>
 #include <QDebug>
 
+#include "utilityfuncs.h"
+
+#ifdef OPENCV_WITH_CUDA
+#include <opencv2/cudawarping.hpp>
+#include <opencv2/cudaimgproc.hpp>
+#endif
+
 PhotomosaicGenerator::PhotomosaicGenerator(QWidget *t_parent)
-    : QProgressDialog{t_parent}, m_mode{Mode::RGB_EUCLIDEAN}, m_repeatRange{0}, m_repeatAddition{0}
+    : QProgressDialog{t_parent}, m_img{}, m_lib{}, m_detail{100}, m_mode{Mode::RGB_EUCLIDEAN},
+      m_repeatRange{0}, m_repeatAddition{0}
 {
     setWindowModality(Qt::WindowModal);
 }
 
 PhotomosaicGenerator::~PhotomosaicGenerator() {}
 
-//Returns a Photomosaic of the main image made of the library images
-cv::Mat PhotomosaicGenerator::generate(cv::Mat &mainImage, const std::vector<cv::Mat> &library)
+void PhotomosaicGenerator::setMainImage(const cv::Mat &t_img)
 {
-    //If using a CIE mode converts all images to Lab colour space
-    if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
-    {
-        setMaximum(static_cast<int>(library.size()) + 1);
-        setValue(0);
-        setLabelText("Converting images to LAB colour space...");
+    m_img = t_img;
+}
 
-        cv::cvtColor(mainImage, mainImage, cv::COLOR_BGR2Lab);
-        setValue(value() + 1);
+void PhotomosaicGenerator::setLibrary(const std::vector<cv::Mat> &t_lib)
+{
+    m_lib = t_lib;
+}
 
-        for (auto image: library)
-        {
-            cv::cvtColor(image, image, cv::COLOR_BGR2Lab);
-            setValue(value() + 1);
-        }
-    }
+void PhotomosaicGenerator::setDetail(const int t_detail)
+{
+    m_detail = (t_detail < 1) ? 0.01 : t_detail / 100.0;
+}
 
-    const cv::Point cellSize(library.front().cols, library.front().rows);
-    const cv::Point gridSize(mainImage.cols / cellSize.x, mainImage.rows / cellSize.y);
+void PhotomosaicGenerator::setMode(const Mode t_mode)
+{
+    m_mode = t_mode;
+}
+
+void PhotomosaicGenerator::setRepeat(int t_repeatRange, int t_repeatAddition)
+{
+    m_repeatRange = t_repeatRange;
+    m_repeatAddition = t_repeatAddition;
+}
+
+//Returns a Photomosaic of the main image made of the library images
+cv::Mat PhotomosaicGenerator::generate()
+{
+    //Resizes main image and library based on detail level and converts colour space
+    auto tmp = resizeAndCvtColor();
+
+    const cv::Point cellSize(tmp.second.front().cols, tmp.second.front().rows);
+    const cv::Point gridSize(tmp.first.cols / cellSize.x, tmp.first.rows / cellSize.y);
 
     setMaximum(gridSize.x * gridSize.y);
     setValue(0);
@@ -52,7 +72,7 @@ cv::Mat PhotomosaicGenerator::generate(cv::Mat &mainImage, const std::vector<cv:
     std::vector<std::vector<cv::Mat>> result(static_cast<size_t>(gridSize.x),
                                              std::vector<cv::Mat>(static_cast<size_t>(gridSize.y)));
     std::vector<std::vector<size_t>> grid(static_cast<size_t>(gridSize.x),
-                                             std::vector<size_t>(static_cast<size_t>(gridSize.y), 0));
+                                          std::vector<size_t>(static_cast<size_t>(gridSize.y), 0));
     for (int x = 0; x < gridSize.x; ++x)
     {
         for (int y = 0; y < gridSize.y; ++y)
@@ -60,7 +80,7 @@ cv::Mat PhotomosaicGenerator::generate(cv::Mat &mainImage, const std::vector<cv:
             const cv::Point cellStart(x * cellSize.x, y * cellSize.y);
             const cv::Point cellEnd((x+1) * cellSize.x, (y+1) * cellSize.y);
 
-            const cv::Mat cell = mainImage(cv::Range(cellStart.y, cellEnd.y),
+            const cv::Mat cell = tmp.first(cv::Range(cellStart.y, cellEnd.y),
                                      cv::Range(cellStart.x, cellEnd.x));
 
             //Calculate number of each library image in repeat range
@@ -68,10 +88,10 @@ cv::Mat PhotomosaicGenerator::generate(cv::Mat &mainImage, const std::vector<cv:
 
             int index;
             if (m_mode == Mode::CIEDE2000)
-                index = findBestFitCIEDE2000(cell, library, repeats);
+                index = findBestFitCIEDE2000(cell, tmp.second, repeats);
             else
-                index = findBestFitEuclidean(cell, library, repeats);
-            if (index < 0 || index >= static_cast<int>(library.size()))
+                index = findBestFitEuclidean(cell, tmp.second, repeats);
+            if (index < 0 || index >= static_cast<int>(tmp.second.size()))
             {
                 qDebug() << "Failed to find a best fit";
                 index = 0;
@@ -79,7 +99,7 @@ cv::Mat PhotomosaicGenerator::generate(cv::Mat &mainImage, const std::vector<cv:
 
             grid.at(static_cast<size_t>(x)).at(static_cast<size_t>(y)) = static_cast<size_t>(index);
             result.at(static_cast<size_t>(x)).at(static_cast<size_t>(y)) =
-                    library.at(static_cast<size_t>(index));
+                    m_lib.at(static_cast<size_t>(index));
             setValue(value() + 1);
             if (wasCanceled())
                 return cv::Mat();
@@ -93,9 +113,64 @@ cv::Mat PhotomosaicGenerator::generate(cv::Mat &mainImage, const std::vector<cv:
         cv::vconcat(result.at(x), mosaicRows.at(x));
     cv::hconcat(mosaicRows, mosaic);
 
-    if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
-        cv::cvtColor(mosaic, mosaic, cv::COLOR_Lab2BGR);
     return mosaic;
+}
+
+//Resizes main image and library images based on detail level
+//Also converts images to Lab colour space if needed
+//Returns results
+std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGenerator::resizeAndCvtColor()
+{
+    cv::Mat resultMain;
+    std::vector<cv::Mat> result(m_lib.size(), cv::Mat());
+
+    //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
+    cv::InterpolationFlags flags = (m_detail < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
+
+#ifdef OPENCV_WITH_CUDA
+    cv::cuda::Stream stream;
+    //Main image
+    cv::cuda::GpuMat mainSrc, mainDst;
+    mainSrc.upload(m_img, stream);
+    cv::cuda::resize(mainSrc, mainDst, cv::Size(static_cast<int>(m_detail * mainSrc.cols),
+                                                static_cast<int>(m_detail * mainSrc.rows)),
+                     0, 0, flags, stream);
+    if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
+        cv::cuda::cvtColor(mainDst, mainDst, cv::COLOR_BGR2Lab, 0, stream);
+    mainDst.download(resultMain, stream);
+
+    //Library image
+    std::vector<cv::cuda::GpuMat> src(m_lib.size()), dst(m_lib.size());
+    for (size_t i = 0; i < m_lib.size(); ++i)
+    {
+        //Resize image
+        src.at(i).upload(m_lib.at(i), stream);
+        cv::cuda::resize(src.at(i), dst.at(i),
+                         cv::Size(static_cast<int>(m_detail * src.at(i).cols),
+                                  static_cast<int>(m_detail * src.at(i).rows)),
+                         0, 0, flags, stream);
+        if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
+            cv::cuda::cvtColor(dst.at(i), dst.at(i), cv::COLOR_BGR2Lab, 0, stream);
+        dst.at(i).download(result.at(i), stream);
+    }
+    stream.waitForCompletion();
+#else
+    //Main image
+    cv::resize(m_img, resultMain, cv::Size(static_cast<int>(m_detail * m_img.cols),
+                                                   static_cast<int>(m_detail * m_img.rows)),
+                                          0, 0, flags);
+    cv::cvtColor(resultMain, resultMain, cv::COLOR_BGR2Lab);
+    //Library image
+    for (size_t i = 0; i < m_lib.size(); ++i)
+    {
+        cv::resize(m_lib.at(i), result.at(i), cv::Size(static_cast<int>(m_detail * m_lib.at(i).cols),
+                                                       static_cast<int>(m_detail * m_lib.at(i).rows)),
+                                              0, 0, flags);
+        cv::cvtColor(result.at(i), result.at(i), cv::COLOR_BGR2Lab);
+    }
+#endif
+
+    return std::make_pair(resultMain, result);
 }
 
 //Compares pixels in the cell against the library images

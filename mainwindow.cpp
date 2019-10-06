@@ -9,6 +9,7 @@
 #include <QImageReader>
 #include <QDebug>
 #include <QMessageBox>
+#include <QPainter>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
@@ -45,6 +46,11 @@ MainWindow::MainWindow(QWidget *t_parent)
     ui->statusbar->addPermanentWidget(progressBar);
     ui->statusbar->setSizeGripEnabled(false);
 
+    //Connects custom cell shapes tab buttons to appropriate methods
+    connect(ui->buttonSaveCustomCell, SIGNAL(released()), this, SLOT(saveCellShape()));
+    connect(ui->buttonLoadCustomCell, SIGNAL(released()), this, SLOT(loadCellShape()));
+    connect(ui->buttonCellMask, SIGNAL(released()), this, SLOT(selectCellMask()));
+
     //Setup image library list
     ui->listPhoto->setResizeMode(QListWidget::ResizeMode::Adjust);
     ui->listPhoto->setIconSize(ui->listPhoto->gridSize() - QSize(14, 14));
@@ -78,6 +84,114 @@ MainWindow::MainWindow(QWidget *t_parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+//Saves the custom cell shape to a file
+void MainWindow::saveCellShape()
+{
+    if (cellMask.empty())
+    {
+        QMessageBox::information(this, tr("Failed to save custom cell shape"),
+                                 tr("No cell mask was provided"));
+        return;
+    }
+
+    //mcs = Mosaic Cell Shape
+    QString filename = QFileDialog::getExistingDirectory(this, tr("Save custom cell shape"));
+    filename += '/' + ui->lineCustomCellName->text() + ".mcs";
+    qDebug() << filename;
+    QFile file(filename);
+    file.open(QIODevice::WriteOnly);
+    if (file.isWritable())
+    {
+        QDataStream out(&file);
+        //Write header with "magic number" and version
+        out << static_cast<quint32>(0x87AECFB1);
+        out << static_cast<qint32>(UtilityFuncs::FILE_VERSION);
+
+        out.setVersion(QDataStream::Qt_5_13);
+
+        //Write cell mask and offsets
+        out << cellMask;
+        out << ui->spinCustomCellOffsetX->value() << ui->spinCustomCellOffsetY->value();
+
+        file.close();
+    }
+}
+
+//Loads a custom cell shape from a file for editing
+void MainWindow::loadCellShape()
+{
+    //mcs = Mosaic Cell Shape
+    QString filename = QFileDialog::getOpenFileName(this, tr("Select custom cell shape to load"),
+                                                    "", tr("Mosaic Cell Shape") + " (*.mcs)");
+    QFile file(filename);
+    file.open(QIODevice::ReadOnly);
+    if (file.isReadable())
+    {
+        QDataStream in(&file);
+
+        //Read and check magic number
+        quint32 magic;
+        in >> magic;
+        if (magic != 0x87AECFB1)
+        {
+            QMessageBox msgBox;
+            msgBox.setText(filename + tr(" is not a valid .mcs file"));
+            msgBox.exec();
+            return;
+        }
+
+        //Read the version
+        qint32 version;
+        in >> version;
+        if (version == UtilityFuncs::FILE_VERSION)
+            in.setVersion(QDataStream::Qt_5_13);
+        else
+        {
+            QMessageBox msgBox;
+            if (version < UtilityFuncs::VERSION_NO)
+                msgBox.setText(filename + tr(" uses an outdated file version"));
+            else
+                msgBox.setText(filename + tr(" uses a newer file version"));
+            msgBox.exec();
+            return;
+        }
+
+        //Read cell mask and offsets
+        in >> cellMask;
+        int offsetX, offsetY;
+        in >> offsetX >> offsetY;
+        ui->spinCustomCellOffsetX->setValue(offsetX);
+        ui->spinCustomCellOffsetY->setValue(offsetY);
+
+        //Extract cell name from filename
+        QString cellName = filename.right(filename.size() - filename.lastIndexOf('/') - 1);
+        cellName.chop(4);
+        ui->lineCustomCellName->setText(cellName);
+
+        file.close();
+    }
+}
+
+//Prompts user for a cell mask image
+//If an image is given converts to a binary image
+void MainWindow::selectCellMask()
+{
+    QString filename = QFileDialog::getOpenFileName(this, tr("Select cell mask"), "",
+                                                    "Image Files (*.bmp *.dib *.jpeg *.jpg "
+                                                    "*.jpe *.jp2 *.png *.pbm *.pgm *.ppm "
+                                                    "*.pxm *.pnm *.sr *.ras *.tiff *.tif "
+                                                    "*.hdr *.pic)");
+    cv::Mat tmp = cv::imread(filename.toStdString(), cv::IMREAD_GRAYSCALE);
+    if (!tmp.empty())
+    {
+        cv::threshold(tmp, cellMask, 127.0, 255.0, cv::THRESH_BINARY);
+        ui->lineCellMask->setText(filename);
+        ui->spinCustomCellOffsetX->setValue(cellMask.cols);
+        ui->spinCustomCellOffsetY->setValue(cellMask.rows);
+        updateCellShapeViewer();
+    }
 }
 
 //Used to add images to the image library
@@ -193,9 +307,9 @@ void MainWindow::updateCellSize()
 //Saves the image library to a file
 void MainWindow::saveLibrary()
 {
-    // mil = Mosaic Image Library
+    //mil = Mosaic Image Library
     QString filename = QFileDialog::getSaveFileName(this, tr("Save image library"), "",
-                                                    tr("Image Files") + " (*.mil)");
+                                                    tr("Mosaic Image Library") + " (*.mil)");
     QFile file(filename);
     file.open(QIODevice::WriteOnly);
     if (file.isWritable())
@@ -228,7 +342,7 @@ void MainWindow::loadLibrary()
 {
     // mil = Mosaic Image Library
     QString filename = QFileDialog::getOpenFileName(this, tr("Select image library to load"), "",
-                                                    tr("Image Files") + " (*.mil)");
+                                                    tr("Mosaic Image Library") + " (*.mil)");
     QFile file(filename);
     file.open(QIODevice::ReadOnly);
     if (file.isReadable())
@@ -439,6 +553,12 @@ void MainWindow::generatePhotomosaic()
 
     if (!mosaic.empty())
         cv::imshow("Mosaic", mosaic);
+}
+
+//Updates the cell shape viewer in the Custom Cell Shapes tab
+void MainWindow::updateCellShapeViewer()
+{
+
 }
 
 //Outputs a OpenCV mat to a QDataStream

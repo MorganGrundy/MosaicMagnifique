@@ -21,12 +21,19 @@ public:
     ~MainWindow();
 
 public slots:
+    //Custom Cell Shapes tab
+    void saveCellShape();
+    void loadCellShape();
+    void selectCellMask();
+
+    //Image Library tab
     void addImages();
     void deleteImages();
     void updateCellSize();
     void saveLibrary();
     void loadLibrary();
 
+    //Generator Settings tab
     void selectMainImage();
     void photomosaicSizeLink();
     void photomosaicWidthChanged(int i);
@@ -38,8 +45,12 @@ public slots:
     void generatePhotomosaic();
 
 private:
+    void updateCellShapeViewer();
+
     Ui::MainWindow *ui;
     QProgressBar *progressBar;
+
+    cv::Mat cellMask;
 
     double photomosaicSizeRatio;
 

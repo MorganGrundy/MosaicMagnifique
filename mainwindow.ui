@@ -288,7 +288,7 @@ border: 1px solid dimgray;
             <number>0</number>
            </property>
            <item row="1" column="1">
-            <widget class="QSpinBox" name="spinCustomCellOffsetX">
+            <widget class="QSpinBox" name="spinCustomCellRowOffsetX">
              <property name="styleSheet">
               <string notr="true">QSpinBox {
 border: 1px solid dimgray;
@@ -301,38 +301,13 @@ border: 1px solid dimgray;
               <string>px</string>
              </property>
              <property name="minimum">
-              <number>1</number>
+              <number>0</number>
              </property>
              <property name="maximum">
               <number>10000</number>
              </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QSpinBox" name="spinCustomCellOffsetY">
-             <property name="styleSheet">
-              <string notr="true">QSpinBox {
-border: 1px solid dimgray;
-}</string>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::PlusMinus</enum>
-             </property>
-             <property name="suffix">
-              <string>px</string>
-             </property>
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <number>10000</number>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLabel" name="label_14">
-             <property name="text">
-              <string>X</string>
+             <property name="singleStep">
+              <number>0</number>
              </property>
             </widget>
            </item>
@@ -343,16 +318,34 @@ border: 1px solid dimgray;
              </property>
             </widget>
            </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_12">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
+           <item row="1" column="2">
+            <widget class="QSpinBox" name="spinCustomCellRowOffsetY">
+             <property name="styleSheet">
+              <string notr="true">QSpinBox {
+border: 1px solid dimgray;
+}</string>
              </property>
+             <property name="buttonSymbols">
+              <enum>QAbstractSpinBox::PlusMinus</enum>
+             </property>
+             <property name="suffix">
+              <string>px</string>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>10000</number>
+             </property>
+             <property name="singleStep">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="label_14">
              <property name="text">
-              <string>Cell Offset:</string>
+              <string>X</string>
              </property>
             </widget>
            </item>
@@ -369,6 +362,80 @@ border: 1px solid dimgray;
              </property>
             </spacer>
            </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_12">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Cell Row Offset:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_16">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Cell Column Offset:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QSpinBox" name="spinCustomCellColOffsetX">
+             <property name="styleSheet">
+              <string notr="true">QSpinBox {
+border: 1px solid dimgray;
+}</string>
+             </property>
+             <property name="buttonSymbols">
+              <enum>QAbstractSpinBox::PlusMinus</enum>
+             </property>
+             <property name="suffix">
+              <string>px</string>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>10000</number>
+             </property>
+             <property name="singleStep">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QSpinBox" name="spinCustomCellColOffsetY">
+             <property name="styleSheet">
+              <string notr="true">QSpinBox {
+border: 1px solid dimgray;
+}</string>
+             </property>
+             <property name="buttonSymbols">
+              <enum>QAbstractSpinBox::PlusMinus</enum>
+             </property>
+             <property name="suffix">
+              <string>px</string>
+             </property>
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>10000</number>
+             </property>
+             <property name="singleStep">
+              <number>0</number>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
@@ -380,7 +447,7 @@ border: 1px solid dimgray;
          </widget>
         </item>
         <item>
-         <widget class="QWidget" name="widgetCellShapeViewer" native="true">
+         <widget class="GridViewer" name="widgetCellShapeViewer" native="true">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -1482,6 +1549,14 @@ border: 1px solid dimgray;
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>GridViewer</class>
+   <extends>QWidget</extends>
+   <header>gridviewer.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="ui.qrc"/>
  </resources>

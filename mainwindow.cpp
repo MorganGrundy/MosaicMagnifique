@@ -107,13 +107,14 @@ void MainWindow::saveCellShape()
         QDataStream out(&file);
         //Write header with "magic number" and version
         out << static_cast<quint32>(0x87AECFB1);
-        out << static_cast<qint32>(UtilityFuncs::FILE_VERSION);
+        out << static_cast<qint32>(UtilityFuncs::MCS_VERSION);
 
         out.setVersion(QDataStream::Qt_5_13);
 
         //Write cell mask and offsets
         out << cellMask;
-        out << ui->spinCustomCellOffsetX->value() << ui->spinCustomCellOffsetY->value();
+        out << ui->spinCustomCellRowOffsetX->value() << ui->spinCustomCellRowOffsetY->value();
+        out << ui->spinCustomCellColOffsetX->value() << ui->spinCustomCellColOffsetY->value();
 
         file.close();
     }
@@ -145,7 +146,7 @@ void MainWindow::loadCellShape()
         //Read the version
         qint32 version;
         in >> version;
-        if (version == UtilityFuncs::FILE_VERSION)
+        if (version == UtilityFuncs::MCS_VERSION)
             in.setVersion(QDataStream::Qt_5_13);
         else
         {
@@ -162,8 +163,11 @@ void MainWindow::loadCellShape()
         in >> cellMask;
         int offsetX, offsetY;
         in >> offsetX >> offsetY;
-        ui->spinCustomCellOffsetX->setValue(offsetX);
-        ui->spinCustomCellOffsetY->setValue(offsetY);
+        ui->spinCustomCellRowOffsetX->setValue(offsetX);
+        ui->spinCustomCellRowOffsetY->setValue(offsetY);
+        in >> offsetX >> offsetY;
+        ui->spinCustomCellColOffsetX->setValue(offsetX);
+        ui->spinCustomCellColOffsetY->setValue(offsetY);
 
         //Extract cell name from filename
         QString cellName = filename.right(filename.size() - filename.lastIndexOf('/') - 1);
@@ -188,8 +192,10 @@ void MainWindow::selectCellMask()
     {
         cv::threshold(tmp, cellMask, 127.0, 255.0, cv::THRESH_BINARY);
         ui->lineCellMask->setText(filename);
-        ui->spinCustomCellOffsetX->setValue(cellMask.cols);
-        ui->spinCustomCellOffsetY->setValue(cellMask.rows);
+        ui->spinCustomCellColOffsetX->setValue(cellMask.cols);
+        ui->spinCustomCellColOffsetY->setValue(0);
+        ui->spinCustomCellRowOffsetX->setValue(0);
+        ui->spinCustomCellRowOffsetY->setValue(cellMask.rows);
         updateCellShapeViewer();
     }
 }
@@ -317,7 +323,7 @@ void MainWindow::saveLibrary()
         QDataStream out(&file);
         //Write header with "magic number" and version
         out << static_cast<quint32>(0xADBE2480);
-        out << static_cast<qint32>(UtilityFuncs::FILE_VERSION);
+        out << static_cast<qint32>(UtilityFuncs::MIL_VERSION);
 
         out.setVersion(QDataStream::Qt_5_13);
         //Write images and names
@@ -363,7 +369,7 @@ void MainWindow::loadLibrary()
         //Read the version
         qint32 version;
         in >> version;
-        if (version == UtilityFuncs::FILE_VERSION)
+        if (version == UtilityFuncs::MIL_VERSION)
             in.setVersion(QDataStream::Qt_5_13);
         else
         {

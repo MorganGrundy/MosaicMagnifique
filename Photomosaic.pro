@@ -16,12 +16,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    gridviewer.cpp \
     main.cpp \
     mainwindow.cpp \
     photomosaicgenerator.cpp \
     utilityfuncs.cpp
 
 HEADERS += \
+    gridviewer.h \
     mainwindow.h \
     photomosaicgenerator.h \
     utilityfuncs.h

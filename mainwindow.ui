@@ -307,7 +307,7 @@ border: 1px solid dimgray;
               <number>10000</number>
              </property>
              <property name="singleStep">
-              <number>0</number>
+              <number>1</number>
              </property>
             </widget>
            </item>
@@ -432,7 +432,7 @@ border: 1px solid dimgray;
               <number>10000</number>
              </property>
              <property name="singleStep">
-              <number>0</number>
+              <number>1</number>
              </property>
             </widget>
            </item>

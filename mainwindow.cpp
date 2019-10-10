@@ -50,6 +50,14 @@ MainWindow::MainWindow(QWidget *t_parent)
     connect(ui->buttonSaveCustomCell, SIGNAL(released()), this, SLOT(saveCellShape()));
     connect(ui->buttonLoadCustomCell, SIGNAL(released()), this, SLOT(loadCellShape()));
     connect(ui->buttonCellMask, SIGNAL(released()), this, SLOT(selectCellMask()));
+    connect(ui->spinCustomCellColOffsetX, SIGNAL(valueChanged(int)), this,
+            SLOT(cellColOffsetXChanged(int)));
+    connect(ui->spinCustomCellColOffsetY, SIGNAL(valueChanged(int)), this,
+            SLOT(cellColOffsetYChanged(int)));
+    connect(ui->spinCustomCellRowOffsetX, SIGNAL(valueChanged(int)), this,
+            SLOT(cellRowOffsetXChanged(int)));
+    connect(ui->spinCustomCellRowOffsetY, SIGNAL(valueChanged(int)), this,
+            SLOT(cellRowOffsetYChanged(int)));
 
     //Setup image library list
     ui->listPhoto->setResizeMode(QListWidget::ResizeMode::Adjust);
@@ -163,11 +171,20 @@ void MainWindow::loadCellShape()
         in >> cellMask;
         int offsetX, offsetY;
         in >> offsetX >> offsetY;
+        //Blocks signals to prevent grid update until all values loaded
+        ui->spinCustomCellColOffsetX->blockSignals(true);
+        ui->spinCustomCellColOffsetY->blockSignals(true);
+        ui->spinCustomCellRowOffsetX->blockSignals(true);
+        ui->spinCustomCellRowOffsetY->blockSignals(true);
         ui->spinCustomCellRowOffsetX->setValue(offsetX);
         ui->spinCustomCellRowOffsetY->setValue(offsetY);
         in >> offsetX >> offsetY;
         ui->spinCustomCellColOffsetX->setValue(offsetX);
         ui->spinCustomCellColOffsetY->setValue(offsetY);
+        ui->spinCustomCellColOffsetX->blockSignals(false);
+        ui->spinCustomCellColOffsetY->blockSignals(false);
+        ui->spinCustomCellRowOffsetX->blockSignals(false);
+        ui->spinCustomCellRowOffsetY->blockSignals(false);
 
         //Extract cell name from filename
         QString cellName = filename.right(filename.size() - filename.lastIndexOf('/') - 1);
@@ -175,6 +192,14 @@ void MainWindow::loadCellShape()
         ui->lineCustomCellName->setText(cellName);
 
         file.close();
+
+        ui->widgetCellShapeViewer->setCellMask(cellMask);
+        ui->widgetCellShapeViewer->colOffset = cv::Point(ui->spinCustomCellColOffsetX->value(),
+                                                         ui->spinCustomCellColOffsetY->value());
+        ui->widgetCellShapeViewer->rowOffset = cv::Point(ui->spinCustomCellRowOffsetX->value(),
+                                                         ui->spinCustomCellRowOffsetY->value());
+        ui->widgetCellShapeViewer->updatePreview();
+
     }
 }
 
@@ -192,12 +217,54 @@ void MainWindow::selectCellMask()
     {
         cv::threshold(tmp, cellMask, 127.0, 255.0, cv::THRESH_BINARY);
         ui->lineCellMask->setText(filename);
+
+        ui->spinCustomCellColOffsetX->blockSignals(true);
+        ui->spinCustomCellColOffsetY->blockSignals(true);
+        ui->spinCustomCellRowOffsetX->blockSignals(true);
+        ui->spinCustomCellRowOffsetY->blockSignals(true);
         ui->spinCustomCellColOffsetX->setValue(cellMask.cols);
         ui->spinCustomCellColOffsetY->setValue(0);
         ui->spinCustomCellRowOffsetX->setValue(0);
         ui->spinCustomCellRowOffsetY->setValue(cellMask.rows);
-        updateCellShapeViewer();
+        ui->spinCustomCellColOffsetX->blockSignals(false);
+        ui->spinCustomCellColOffsetY->blockSignals(false);
+        ui->spinCustomCellRowOffsetX->blockSignals(false);
+        ui->spinCustomCellRowOffsetY->blockSignals(false);
+
+        ui->widgetCellShapeViewer->setCellMask(cellMask);
+        ui->widgetCellShapeViewer->colOffset = cv::Point(cellMask.cols, 0);
+        ui->widgetCellShapeViewer->rowOffset = cv::Point(0, cellMask.rows);
+
+        ui->widgetCellShapeViewer->updatePreview();
     }
+}
+
+//Update custom cell column offset x
+void MainWindow::cellColOffsetXChanged(int t_value)
+{
+    ui->widgetCellShapeViewer->colOffset.x = t_value;
+    ui->widgetCellShapeViewer->updatePreview();
+}
+
+//Update custom cell column offset y
+void MainWindow::cellColOffsetYChanged(int t_value)
+{
+    ui->widgetCellShapeViewer->colOffset.y = t_value;
+    ui->widgetCellShapeViewer->updatePreview();
+}
+
+//Update custom cell row offset x
+void MainWindow::cellRowOffsetXChanged(int t_value)
+{
+    ui->widgetCellShapeViewer->rowOffset.x = t_value;
+    ui->widgetCellShapeViewer->updatePreview();
+}
+
+//Update custom cell row offset y
+void MainWindow::cellRowOffsetYChanged(int t_value)
+{
+    ui->widgetCellShapeViewer->rowOffset.y = t_value;
+    ui->widgetCellShapeViewer->updatePreview();
 }
 
 //Used to add images to the image library
@@ -559,12 +626,6 @@ void MainWindow::generatePhotomosaic()
 
     if (!mosaic.empty())
         cv::imshow("Mosaic", mosaic);
-}
-
-//Updates the cell shape viewer in the Custom Cell Shapes tab
-void MainWindow::updateCellShapeViewer()
-{
-
 }
 
 //Outputs a OpenCV mat to a QDataStream

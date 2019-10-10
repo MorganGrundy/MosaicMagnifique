@@ -25,6 +25,10 @@ public slots:
     void saveCellShape();
     void loadCellShape();
     void selectCellMask();
+    void cellColOffsetXChanged(int t_value);
+    void cellColOffsetYChanged(int t_value);
+    void cellRowOffsetXChanged(int t_value);
+    void cellRowOffsetYChanged(int t_value);
 
     //Image Library tab
     void addImages();
@@ -45,8 +49,6 @@ public slots:
     void generatePhotomosaic();
 
 private:
-    void updateCellShapeViewer();
-
     Ui::MainWindow *ui;
     QProgressBar *progressBar;
 

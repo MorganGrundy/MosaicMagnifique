@@ -9,11 +9,17 @@ class GridViewer : public QWidget
     Q_OBJECT
 public:
     explicit GridViewer(QWidget *parent = nullptr);
+    void setCellMask(const cv::Mat &t_mask);
+    void updatePreview();
+
+    cv::Point colOffset, rowOffset;
+    QImage grid;
+
 
 protected:
-    void paintEvent(QPaintEvent *event);
+    void paintEvent(QPaintEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
-private:
     cv::Mat cellMask;
 };
 

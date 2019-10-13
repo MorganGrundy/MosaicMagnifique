@@ -5,9 +5,42 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <QWheelEvent>
 
 GridViewer::GridViewer(QWidget *parent)
-    : QWidget(parent) {}
+    : QWidget(parent), MIN_ZOOM{0.1}, MAX_ZOOM{10}, zoom{1}
+{
+    layout = new QGridLayout(this);
+
+    label = new QLabel("Zoom:", this);
+    label->setStyleSheet("QWidget {"
+                         "background-color: rgb(60, 60, 60);"
+                         "color: rgb(255, 255, 255);"
+                         "border-color: rgb(0, 0, 0);"
+                         "}");
+    layout->addWidget(label, 0, 0);
+
+    spinBox = new QDoubleSpinBox(this);
+    spinBox->setStyleSheet("QWidget {"
+                           "background-color: rgb(60, 60, 60);"
+                           "color: rgb(255, 255, 255);"
+                           "}"
+                           "QDoubleSpinBox {"
+                           "border: 1px solid dimgray;"
+                           "}");
+    spinBox->setRange(MIN_ZOOM * 100, MAX_ZOOM * 100);
+    spinBox->setValue(zoom * 100);
+    spinBox->setSuffix("%");
+    spinBox->setButtonSymbols(QDoubleSpinBox::PlusMinus);
+    connect(spinBox, SIGNAL(valueChanged(double)), this, SLOT(zoomChanged(double)));
+    layout->addWidget(spinBox, 0, 1);
+
+    hSpacer = new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    layout->addItem(hSpacer, 0, 2);
+
+    vSpacer = new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    layout->addItem(vSpacer, 1, 0);
+}
 
 //Sets the cell mask
 void GridViewer::setCellMask(const cv::Mat &t_mask)
@@ -59,7 +92,7 @@ void GridViewer::updatePreview()
         return;
     }
 
-    cv::Mat result(height(), width(), CV_8UC4, cv::Scalar(0, 0, 0, 0));
+    cv::Mat result(height() / zoom, width() / zoom, CV_8UC4, cv::Scalar(0, 0, 0, 0));
     const cv::Point gridSize(result.cols / colOffset.x + 1, result.rows / rowOffset.y + 1);
 
     //Create all cells in grid
@@ -81,6 +114,13 @@ void GridViewer::updatePreview()
     update();
 }
 
+//Called when the spinbox value is changed, updates grid zoom
+void GridViewer::zoomChanged(double t_value)
+{
+    zoom = t_value / 100.0;
+    updatePreview();
+}
+
 //Displays grid
 void GridViewer::paintEvent(QPaintEvent *event)
 {
@@ -93,5 +133,19 @@ void GridViewer::paintEvent(QPaintEvent *event)
 //Generate new grid with new size
 void GridViewer::resizeEvent(QResizeEvent *event)
 {
+    updatePreview();
+}
+
+//Change zoom of grid preview based on mouse scrollwheel movement
+//Ctrl is a modifier key that allows for faster zooming (x10)
+void GridViewer::wheelEvent(QWheelEvent *event)
+{
+    zoom += event->delta() / ((event->modifiers().testFlag(Qt::ControlModifier)) ? 1200.0 : 12000.0);
+    zoom = std::clamp(zoom, MIN_ZOOM, MAX_ZOOM);
+
+    spinBox->blockSignals(true);
+    spinBox->setValue(zoom * 100);
+    spinBox->blockSignals(false);
+
     updatePreview();
 }

@@ -8,16 +8,16 @@
 #include <QDoubleSpinBox>
 #include <QSpacerItem>
 
+#include "cellshape.h"
+
 class GridViewer : public QWidget
 {
     Q_OBJECT
 public:
     explicit GridViewer(QWidget *parent = nullptr);
-    void setCellMask(const cv::Mat &t_mask);
     void updatePreview();
 
-    cv::Point colOffset, rowOffset;
-    QImage grid;
+    CellShape cellShape;
 
 public slots:
     void zoomChanged(double t_value);
@@ -33,7 +33,7 @@ private:
     QDoubleSpinBox *spinBox;
     QSpacerItem *hSpacer, *vSpacer;
 
-    cv::Mat cellMask;
+    QImage grid;
 
     const double MIN_ZOOM, MAX_ZOOM;
     double zoom;

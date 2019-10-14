@@ -48,6 +48,14 @@ void PhotomosaicGenerator::setMode(const Mode t_mode)
     m_mode = t_mode;
 }
 
+void PhotomosaicGenerator::setCellShape(const cv::Mat &t_cellMask, const cv::Point &t_rowOffset,
+                                        const cv::Point &t_colOffset)
+{
+    m_cellMask = t_cellMask;
+    m_rowOffset = t_rowOffset;
+    m_colOffset = t_colOffset;
+}
+
 void PhotomosaicGenerator::setRepeat(int t_repeatRange, int t_repeatAddition)
 {
     m_repeatRange = t_repeatRange;

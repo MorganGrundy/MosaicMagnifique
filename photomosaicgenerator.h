@@ -17,6 +17,8 @@ public:
     void setLibrary(const std::vector<cv::Mat> &t_lib);
     void setDetail(const int t_detail = 100);
     void setMode(const Mode t_mode = Mode::RGB_EUCLIDEAN);
+    void setCellShape(const cv::Mat &t_cellMask, const cv::Point &t_rowOffset,
+                      const cv::Point &t_colOffset);
     void setRepeat(int t_repeatRange = 0, int t_repeatAddition = 0);
 
     cv::Mat generate();
@@ -27,6 +29,10 @@ private:
 
     double m_detail;
     Mode m_mode;
+
+    cv::Mat m_cellMask;
+    cv::Point m_rowOffset, m_colOffset;
+
     int m_repeatRange, m_repeatAddition;
 
 

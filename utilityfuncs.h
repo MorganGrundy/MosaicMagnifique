@@ -13,7 +13,7 @@ public:
     //Current version number
     static const int VERSION_NO = 100;
     static const int MIL_VERSION = 2;
-    static const int MCS_VERSION = 1;
+    static const int MCS_VERSION = 2;
 
     //Enum class that represents the two different resize types, used in resizeImage
     enum class ResizeType {INCLUSIVE, EXCLUSIVE};
@@ -39,7 +39,17 @@ public:
                                                const int t_targetHeight, const int t_targetWidth,
                                                const ResizeType t_type,
                                                QProgressBar *progressBar = nullptr);
+
 private:
     UtilityFuncs() {}
 };
+
+//Outputs a OpenCV mat to a QDataStream
+//Can be used to save a OpenCV mat to a file
+QDataStream &operator<<(QDataStream &t_out, const cv::Mat &t_mat);
+
+//Inputs a OpenCV mat from a QDataStream
+//Can be used to load a OpenCV mat from a file
+QDataStream &operator>>(QDataStream &t_in, cv::Mat &t_mat);
+
 #endif //SHARED_HPP_

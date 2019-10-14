@@ -42,69 +42,35 @@ GridViewer::GridViewer(QWidget *parent)
     layout->addItem(vSpacer, 1, 0);
 }
 
-//Sets the cell mask
-void GridViewer::setCellMask(const cv::Mat &t_mask)
-{
-    cv::Mat tmp = t_mask.clone();
-
-    //Mask is binary
-    if (t_mask.type() == CV_8UC1)
-    {
-        //Convert to RGBA
-        cv::cvtColor(tmp, tmp, cv::COLOR_GRAY2RGBA);
-
-        //Replace black with transparent
-        int channels = tmp.channels();
-        int nRows = tmp.rows;
-        int nCols = tmp.cols * channels;
-        if (tmp.isContinuous())
-        {
-            nCols *= nRows;
-            nRows = 1;
-        }
-
-        uchar *p;
-        for (int i = 0; i < nRows; ++i)
-        {
-            p = tmp.ptr<uchar>(i);
-            for (int j = 0; j < nCols; j += channels)
-            {
-                if (p[j] == 0)
-                    p[j+3] = 0;
-            }
-        }
-        cellMask = tmp;
-    }
-    //Mask is RGBA
-    else if (t_mask.type() == CV_8UC4)
-        cellMask = tmp;
-    else
-        qDebug() << "GridViewer::setCellMask(const cv::Mat &) unsupported mask type";
-}
-
 //Generates grid preview
 void GridViewer::updatePreview()
 {
     //No cell mask, no grid
-    if (cellMask.empty())
+    if (cellShape.getCellMask().empty())
     {
         grid = QImage();
         return;
     }
 
     cv::Mat result(height() / zoom, width() / zoom, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-    const cv::Point gridSize(result.cols / colOffset.x + 1, result.rows / rowOffset.y + 1);
+    const cv::Point gridSize(result.cols / cellShape.getColSpacing() + 1,
+                             result.rows / cellShape.getRowSpacing() + 1);
 
     //Create all cells in grid
     for (int x = 0; x < gridSize.x; ++x)
     {
         for (int y = 0; y < gridSize.y; ++y)
         {
-            const cv::Rect roi = cv::Rect(x * colOffset.x + (y % 2 == 1) * rowOffset.x,
-                         y * rowOffset.y + (x % 2 == 1) * colOffset.y,
-                         cellMask.cols, cellMask.rows) & cv::Rect(0, 0, result.cols, result.rows);
+            const cv::Rect roi = cv::Rect(x * cellShape.getColSpacing() +
+                                          (y % 2 == 1) * cellShape.getAlternateRowOffset(),
+                                          y * cellShape.getRowSpacing() +
+                                          (x % 2 == 1) * cellShape.getAlternateColOffset(),
+                                          cellShape.getCellMask().cols,
+                                          cellShape.getCellMask().rows) & cv::Rect(0, 0,
+                                                                                   result.cols,
+                                                                                   result.rows);
             cv::Mat part(result, roi);
-            cv::Mat mask(cellMask, cv::Rect(0, 0, part.cols, part.rows));
+            cv::Mat mask(cellShape.getCellMask(), cv::Rect(0, 0, part.cols, part.rows));
             cv::bitwise_or(part, mask, part);
         }
     }

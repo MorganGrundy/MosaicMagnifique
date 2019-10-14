@@ -133,4 +133,32 @@ std::vector<cv::Mat> UtilityFuncs::batchResizeMat(const std::vector<cv::Mat> &im
     return result;
 }
 
+//Outputs a OpenCV mat to a QDataStream
+//Can be used to save a OpenCV mat to a file
+QDataStream &operator<<(QDataStream &t_out, const cv::Mat &t_mat)
+{
+    t_out << t_mat.type() << t_mat.rows << t_mat.cols;
+
+    const int dataSize = t_mat.cols * t_mat.rows * static_cast<int>(t_mat.elemSize());
+    QByteArray data = QByteArray::fromRawData(reinterpret_cast<const char *>(t_mat.ptr()),
+                                              dataSize);
+    t_out << data;
+
+    return t_out;
+}
+
+//Inputs a OpenCV mat from a QDataStream
+//Can be used to load a OpenCV mat from a file
+QDataStream &operator>>(QDataStream &t_in, cv::Mat &t_mat)
+{
+    int type, rows, cols;
+    QByteArray data;
+    t_in >> type >> rows >> cols;
+    t_in >> data;
+
+    t_mat = cv::Mat(rows, cols, type, data.data()).clone();
+
+    return t_in;
+}
+
 #endif //SHARED_CPP_

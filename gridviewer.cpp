@@ -12,34 +12,50 @@ GridViewer::GridViewer(QWidget *parent)
 {
     layout = new QGridLayout(this);
 
-    label = new QLabel("Zoom:", this);
-    label->setStyleSheet("QWidget {"
-                         "background-color: rgb(60, 60, 60);"
-                         "color: rgb(255, 255, 255);"
-                         "border-color: rgb(0, 0, 0);"
-                         "}");
-    layout->addWidget(label, 0, 0);
+    labelZoom = new QLabel("Zoom:", this);
+    labelZoom->setStyleSheet("QWidget {"
+                             "background-color: rgb(60, 60, 60);"
+                             "color: rgb(255, 255, 255);"
+                             "border-color: rgb(0, 0, 0);"
+                             "}");
+    layout->addWidget(labelZoom, 0, 0);
 
-    spinBox = new QDoubleSpinBox(this);
-    spinBox->setStyleSheet("QWidget {"
+    spinZoom = new QDoubleSpinBox(this);
+    spinZoom->setStyleSheet("QWidget {"
                            "background-color: rgb(60, 60, 60);"
                            "color: rgb(255, 255, 255);"
                            "}"
                            "QDoubleSpinBox {"
                            "border: 1px solid dimgray;"
                            "}");
-    spinBox->setRange(MIN_ZOOM * 100, MAX_ZOOM * 100);
-    spinBox->setValue(zoom * 100);
-    spinBox->setSuffix("%");
-    spinBox->setButtonSymbols(QDoubleSpinBox::PlusMinus);
-    connect(spinBox, SIGNAL(valueChanged(double)), this, SLOT(zoomChanged(double)));
-    layout->addWidget(spinBox, 0, 1);
+    spinZoom->setRange(MIN_ZOOM * 100, MAX_ZOOM * 100);
+    spinZoom->setValue(zoom * 100);
+    spinZoom->setSuffix("%");
+    spinZoom->setButtonSymbols(QDoubleSpinBox::PlusMinus);
+    connect(spinZoom, SIGNAL(valueChanged(double)), this, SLOT(zoomChanged(double)));
+    layout->addWidget(spinZoom, 0, 1);
+
+    checkEdgeDetect = new QCheckBox("Edge Detect:", this);
+    checkEdgeDetect->setLayoutDirection(Qt::LayoutDirection::RightToLeft);
+    checkEdgeDetect->setStyleSheet("QWidget {"
+                                   "background-color: rgb(60, 60, 60);"
+                                   "color: rgb(255, 255, 255);"
+                                   "border-color: rgb(0, 0, 0);"
+                                   "}");
+    connect(checkEdgeDetect, SIGNAL(stateChanged(int)), this, SLOT(edgeDetectChanged(int)));
+    layout->addWidget(checkEdgeDetect, 0, 2);
 
     hSpacer = new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum);
-    layout->addItem(hSpacer, 0, 2);
+    layout->addItem(hSpacer, 0, 3);
 
     vSpacer = new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding);
     layout->addItem(vSpacer, 1, 0);
+}
+
+//Changes state of edge detection in grid preview
+void GridViewer::setEdgeDetect(bool t_state)
+{
+    checkEdgeDetect->setChecked(t_state);
 }
 
 //Generates grid preview
@@ -70,7 +86,11 @@ void GridViewer::updatePreview()
                                                                                    result.cols,
                                                                                    result.rows);
             cv::Mat part(result, roi);
-            cv::Mat mask(cellShape.getCellMask(), cv::Rect(0, 0, part.cols, part.rows));
+            cv::Mat mask;
+            if (edgeDetectedCell.empty())
+                mask = cv::Mat(cellShape.getCellMask(), cv::Rect(0, 0, part.cols, part.rows));
+            else
+                mask = cv::Mat(edgeDetectedCell, cv::Rect(0, 0, part.cols, part.rows));
             cv::bitwise_or(part, mask, part);
         }
     }
@@ -84,6 +104,49 @@ void GridViewer::updatePreview()
 void GridViewer::zoomChanged(double t_value)
 {
     zoom = t_value / 100.0;
+    updatePreview();
+}
+
+//Called when the checkbox state changes
+//If checked then edge detects cell mask and updates grid preview else forgets edge detected mask
+void GridViewer::edgeDetectChanged(int t_state)
+{
+    if (t_state && !cellShape.getCellMask().empty())
+    {
+        //Add single pixel black transparent border to mask so that Canny cannot leave open edges
+        cv::Mat maskWithBorder;
+        cv::copyMakeBorder(cellShape.getCellMask(), maskWithBorder, 1, 1, 1, 1, cv::BORDER_CONSTANT,
+                           cv::Scalar(0));
+        //Use Canny to detect edge of cell mask and convert to RGBA
+        cv::Mat result;
+        cv::Canny(maskWithBorder, result, 100.0, 155.0);
+        cv::cvtColor(result, result, cv::COLOR_GRAY2RGBA);
+
+        //Make black pixels transparent
+        int channels = result.channels();
+        int nRows = result.rows;
+        int nCols = result.cols * channels;
+        if (result.isContinuous())
+        {
+            nCols *= nRows;
+            nRows = 1;
+        }
+
+        uchar *p;
+        for (int i = 0; i < nRows; ++i)
+        {
+            p = result.ptr<uchar>(i);
+            for (int j = 0; j < nCols; j += channels)
+            {
+                if (p[j] == 0)
+                    p[j+3] = 0;
+            }
+        }
+        edgeDetectedCell = result;
+    }
+    else
+        edgeDetectedCell.release();
+
     updatePreview();
 }
 
@@ -109,9 +172,9 @@ void GridViewer::wheelEvent(QWheelEvent *event)
     zoom += event->delta() / ((event->modifiers().testFlag(Qt::ControlModifier)) ? 1200.0 : 12000.0);
     zoom = std::clamp(zoom, MIN_ZOOM, MAX_ZOOM);
 
-    spinBox->blockSignals(true);
-    spinBox->setValue(zoom * 100);
-    spinBox->blockSignals(false);
+    spinZoom->blockSignals(true);
+    spinZoom->setValue(zoom * 100);
+    spinZoom->blockSignals(false);
 
     updatePreview();
 }

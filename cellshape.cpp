@@ -40,17 +40,16 @@ void CellShape::setCellMask(const cv::Mat &t_cellMask)
     //Mask is grayscale
     if (t_cellMask.type() == CV_8UC1)
     {
-        cv::Mat tmp = t_cellMask;
-        //Threshold to create binary mask
-        cv::threshold(tmp, tmp, 127.0, 255.0, cv::THRESH_BINARY);
-        //Convert to RGBA
-        cv::cvtColor(tmp, tmp, cv::COLOR_GRAY2RGBA);
+        cv::Mat result;
+        //Threshold to create binary mask and convert to RGBA
+        cv::threshold(t_cellMask, result, 127.0, 255.0, cv::THRESH_BINARY);
+        cv::cvtColor(result, result, cv::COLOR_GRAY2RGBA);
 
-        //Replace black with transparent
-        int channels = tmp.channels();
-        int nRows = tmp.rows;
-        int nCols = tmp.cols * channels;
-        if (tmp.isContinuous())
+        //Make black pixels transparent
+        int channels = result.channels();
+        int nRows = result.rows;
+        int nCols = result.cols * channels;
+        if (result.isContinuous())
         {
             nCols *= nRows;
             nRows = 1;
@@ -59,14 +58,14 @@ void CellShape::setCellMask(const cv::Mat &t_cellMask)
         uchar *p;
         for (int i = 0; i < nRows; ++i)
         {
-            p = tmp.ptr<uchar>(i);
+            p = result.ptr<uchar>(i);
             for (int j = 0; j < nCols; j += channels)
             {
                 if (p[j] == 0)
                     p[j+3] = 0;
             }
         }
-        m_cellMask = tmp;
+        m_cellMask = result;
     }
     //Mask is RGBA
     else if (t_cellMask.type() == CV_8UC4)

@@ -191,7 +191,7 @@ void MainWindow::loadCellShape()
         file.close();
 
         ui->widgetCellShapeViewer->cellShape = cellShape;
-        ui->widgetCellShapeViewer->updatePreview();
+        ui->widgetCellShapeViewer->setEdgeDetect(false);
 
     }
 }
@@ -226,7 +226,7 @@ void MainWindow::selectCellMask()
         ui->spinCustomCellAlternateColOffset->blockSignals(false);
         ui->spinCustomCellAlternateRowOffset->blockSignals(false);
 
-        ui->widgetCellShapeViewer->updatePreview();
+        ui->widgetCellShapeViewer->setEdgeDetect(false);
     }
 }
 

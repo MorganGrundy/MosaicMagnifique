@@ -44,18 +44,37 @@ cv::Mat UtilityFuncs::resizeImage(const cv::Mat &t_img,
     return result;
 }
 
-//Ensures image rows == cols, result image focus at centre of original
-void UtilityFuncs::imageToSquare(cv::Mat& t_img)
+//Ensures image rows == cols
+//method = PAD:
+//Pads the image's smaller dimension with black pixels
+//method = CROP:
+//Crops the image's larger dimension with focus at image centre
+void UtilityFuncs::imageToSquare(cv::Mat& t_img, const SquareMethod t_method)
 {
-    if (t_img.cols < t_img.rows)
+    //Already square
+    if (t_img.cols == t_img.rows)
+        return;
+
+    if (t_method == SquareMethod::CROP)
     {
-        int diff = (t_img.rows - t_img.cols)/2;
-        t_img = t_img(cv::Range(diff, t_img.cols + diff), cv::Range(0, t_img.cols));
+        if (t_img.cols < t_img.rows)
+        {
+            int diff = (t_img.rows - t_img.cols)/2;
+            t_img = t_img(cv::Range(diff, t_img.cols + diff), cv::Range(0, t_img.cols));
+        }
+        else if (t_img.cols > t_img.rows)
+        {
+            int diff = (t_img.cols - t_img.rows)/2;
+            t_img = t_img(cv::Range(0, t_img.rows), cv::Range(diff, t_img.rows + diff));
+        }
     }
-    else if (t_img.cols > t_img.rows)
+    else if (t_method == SquareMethod::PAD)
     {
-        int diff = (t_img.cols - t_img.rows)/2;
-        t_img = t_img(cv::Range(0, t_img.rows), cv::Range(diff, t_img.rows + diff));
+        int newSize = (t_img.cols > t_img.rows) ? t_img.cols : t_img.rows;
+        cv::Mat result(newSize, newSize, t_img.type());
+        cv::copyMakeBorder(t_img, result, 0, newSize - t_img.rows, 0, newSize - t_img.cols,
+                           cv::BORDER_CONSTANT, cv::Scalar(0));
+        t_img = result;
     }
 }
 

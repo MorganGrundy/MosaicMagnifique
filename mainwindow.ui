@@ -69,14 +69,14 @@ border: 0px;
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideNone</enum>
       </property>
-      <widget class="QWidget" name="CustomCellShapes">
+      <widget class="QWidget" name="CellShape">
        <attribute name="title">
-        <string>Custom Cell Shapes</string>
+        <string>Cell Shape</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_7">
         <item>
@@ -1299,28 +1299,6 @@ QLineEdit:disabled {
                 </property>
                 <property name="readOnly">
                  <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="buttonCellShape">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton:disabled {
-	background-color: rgb(30, 30, 30);
-	color: rgb(60, 60, 60);
-}</string>
-                </property>
-                <property name="text">
-                 <string>Browse</string>
                 </property>
                </widget>
               </item>

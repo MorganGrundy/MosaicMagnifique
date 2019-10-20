@@ -4,6 +4,8 @@
 #include <QProgressDialog>
 #include <opencv2/core/mat.hpp>
 
+#include "cellshape.h"
+
 class PhotomosaicGenerator : private QProgressDialog
 {
     Q_OBJECT
@@ -17,8 +19,7 @@ public:
     void setLibrary(const std::vector<cv::Mat> &t_lib);
     void setDetail(const int t_detail = 100);
     void setMode(const Mode t_mode = Mode::RGB_EUCLIDEAN);
-    void setCellShape(const cv::Mat &t_cellMask, const cv::Point &t_rowOffset,
-                      const cv::Point &t_colOffset);
+    void setCellShape(const CellShape &t_cellShape);
     void setRepeat(int t_repeatRange = 0, int t_repeatAddition = 0);
 
     cv::Mat generate();
@@ -30,17 +31,22 @@ private:
     double m_detail;
     Mode m_mode;
 
-    cv::Mat m_cellMask;
-    cv::Point m_rowOffset, m_colOffset;
+    CellShape m_cellShape;
 
     int m_repeatRange, m_repeatAddition;
 
 
     std::pair<cv::Mat, std::vector<cv::Mat>> resizeAndCvtColor();
-    int findBestFitEuclidean(const cv::Mat &cell, const std::vector<cv::Mat> &library,
-                             const std::map<size_t, int> &repeats) const;
-    int findBestFitCIEDE2000(const cv::Mat &cell, const std::vector<cv::Mat> &library,
-                             const std::map<size_t, int> &repeats) const;
+    int findBestFitEuclidean(const cv::Mat &cell, const cv::Mat &mask,
+                             const std::vector<cv::Mat> &library,
+                             const std::map<size_t, int> &repeats,
+                             const int yStart, const int yEnd,
+                             const int xStart, const int xEnd) const;
+    int findBestFitCIEDE2000(const cv::Mat &cell, const cv::Mat &mask,
+                             const std::vector<cv::Mat> &library,
+                             const std::map<size_t, int> &repeats,
+                             const int yStart, const int yEnd,
+                             const int xStart, const int xEnd) const;
 
     std::map<size_t, int> calculateRepeats(const std::vector<std::vector<size_t>> &grid,
                                            const cv::Point &gridSize, const int x, const int y) const;

@@ -13,7 +13,7 @@ public:
     //Current version number
     static const int VERSION_NO = 100;
     static const int MIL_VERSION = 2;
-    static const int MCS_VERSION = 2;
+    static const int MCS_VERSION = 3;
 
     //Enum class that represents the two different resize types, used in resizeImage
     enum class ResizeType {INCLUSIVE, EXCLUSIVE};
@@ -29,8 +29,15 @@ public:
                                const int t_targetHeight, const int t_targetWidth,
                                const ResizeType t_type);
 
-    //Ensures image rows == cols, result image focus at centre of original
-    static void imageToSquare(cv::Mat& t_img);
+    //Enum class that represents the two different methods of squaring an image
+    enum class SquareMethod {PAD, CROP};
+
+    //Ensures image rows == cols
+    //method = PAD:
+    //Pads the image's smaller dimension with black pixels
+    //method = CROP:
+    //Crops the image's larger dimension with focus at image centre
+    static void imageToSquare(cv::Mat& t_img, const SquareMethod t_method);
 
     //Converts an OpenCV Mat to a QPixmap and returns
     static QPixmap matToQPixmap(const cv::Mat &t_mat);

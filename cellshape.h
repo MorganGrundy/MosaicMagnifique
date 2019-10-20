@@ -10,6 +10,7 @@ public:
     //Constructors
     CellShape();
     CellShape(const cv::Mat &t_cellMask);
+    CellShape(const CellShape &t_cellShape);
 
     //Operators
     friend QDataStream &operator<<(QDataStream &t_out, const CellShape &t_cellShape);
@@ -29,6 +30,12 @@ public:
 
     void setAlternateColOffset(const int t_alternateColOffset);
     int getAlternateColOffset() const;
+
+    CellShape resized(const int t_cols, const int t_rows) const;
+
+    bool empty() const;
+
+    cv::Rect getRectAt(const int x, const int y) const;
 
 private:
     cv::Mat m_cellMask;

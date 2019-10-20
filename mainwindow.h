@@ -26,6 +26,7 @@ public slots:
     //Custom Cell Shapes tab
     void saveCellShape();
     void loadCellShape();
+    void cellNameChanged(const QString &text);
     void selectCellMask();
     void cellSpacingColChanged(int t_value);
     void cellSpacingRowChanged(int t_value);
@@ -46,16 +47,12 @@ public slots:
     void photomosaicHeightChanged(int i);
     void loadImageSize();
     void enableCellShape(int t_state);
-    void selectCellShape();
 
     void generatePhotomosaic();
 
 private:
     Ui::MainWindow *ui;
     QProgressBar *progressBar;
-
-    //cv::Mat cellMask;
-    //CellShape cellShape;
 
     double photomosaicSizeRatio;
 

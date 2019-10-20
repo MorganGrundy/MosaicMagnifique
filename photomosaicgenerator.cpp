@@ -48,12 +48,9 @@ void PhotomosaicGenerator::setMode(const Mode t_mode)
     m_mode = t_mode;
 }
 
-void PhotomosaicGenerator::setCellShape(const cv::Mat &t_cellMask, const cv::Point &t_rowOffset,
-                                        const cv::Point &t_colOffset)
+void PhotomosaicGenerator::setCellShape(const CellShape &t_cellShape)
 {
-    m_cellMask = t_cellMask;
-    m_rowOffset = t_rowOffset;
-    m_colOffset = t_colOffset;
+    m_cellShape = t_cellShape;
 }
 
 void PhotomosaicGenerator::setRepeat(int t_repeatRange, int t_repeatAddition)
@@ -66,10 +63,21 @@ void PhotomosaicGenerator::setRepeat(int t_repeatRange, int t_repeatAddition)
 cv::Mat PhotomosaicGenerator::generate()
 {
     //Resizes main image and library based on detail level and converts colour space
-    auto tmp = resizeAndCvtColor();
+    auto [resizedImg, resizedLib] = resizeAndCvtColor();
 
-    const cv::Point cellSize(tmp.second.front().cols, tmp.second.front().rows);
-    const cv::Point gridSize(tmp.first.cols / cellSize.x, tmp.first.rows / cellSize.y);
+    //If no cell shape provided then use default square cell, else resize given cell shape
+    CellShape resizedCellShape;
+    if (m_cellShape.empty())
+        resizedCellShape = CellShape(cv::Mat(resizedLib.front().rows,
+                                             resizedLib.front().cols,
+                                             CV_8UC1, cv::Scalar(255)));
+    else
+        resizedCellShape = m_cellShape.resized(resizedLib.front().cols,
+                                               resizedLib.front().rows);
+
+    const cv::Point cellSize(resizedLib.front().cols, resizedLib.front().rows);
+    const cv::Point gridSize(resizedImg.cols / resizedCellShape.getColSpacing(),
+                             resizedImg.rows / resizedCellShape.getRowSpacing());
 
     setMaximum(gridSize.x * gridSize.y);
     setValue(0);
@@ -81,45 +89,118 @@ cv::Mat PhotomosaicGenerator::generate()
                                              std::vector<cv::Mat>(static_cast<size_t>(gridSize.y)));
     std::vector<std::vector<size_t>> grid(static_cast<size_t>(gridSize.x),
                                           std::vector<size_t>(static_cast<size_t>(gridSize.y), 0));
+    cv::Mat cell(cellSize.y, cellSize.x, m_img.type(), cv::Scalar(0));
     for (int x = 0; x < gridSize.x; ++x)
     {
         for (int y = 0; y < gridSize.y; ++y)
         {
-            const cv::Point cellStart(x * cellSize.x, y * cellSize.y);
-            const cv::Point cellEnd((x+1) * cellSize.x, (y+1) * cellSize.y);
+            //If user hits cancel in QProgressDialog then return empty mat
+            if (wasCanceled())
+                return cv::Mat();
 
-            const cv::Mat cell = tmp.first(cv::Range(cellStart.y, cellEnd.y),
-                                     cv::Range(cellStart.x, cellEnd.x));
+            const cv::Rect unboundedRect = resizedCellShape.getRectAt(x, y);
+
+            //Cell bounded positions (in mosaic area)
+            const int yStart = std::clamp(unboundedRect.tl().y, 0, resizedImg.rows - 1);
+            const int yEnd = std::clamp(unboundedRect.br().y, 0, resizedImg.rows - 1);
+            const int xStart = std::clamp(unboundedRect.tl().x, 0, resizedImg.cols - 1);
+            const int xEnd = std::clamp(unboundedRect.br().x, 0, resizedImg.cols - 1);
+
+            //Cell completely out of bounds, just skip
+            if (yStart == yEnd || xStart == xEnd)
+            {
+                result.at(static_cast<size_t>(x)).at(static_cast<size_t>(y)) = m_lib.front();
+                setValue(value() + 1);
+                continue;
+            }
+
+            //Copies visible part of main image to cell
+            resizedImg(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)).
+                    copyTo(cell(cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                                cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x)));
 
             //Calculate number of each library image in repeat range
             const std::map<size_t, int> repeats = calculateRepeats(grid, gridSize, x, y);
 
-            int index;
+            int index = -1;
             if (m_mode == Mode::CIEDE2000)
-                index = findBestFitCIEDE2000(cell, tmp.second, repeats);
+                index = findBestFitCIEDE2000(cell, resizedCellShape.getCellMask(), resizedLib,
+                                             repeats,
+                                             yStart - unboundedRect.y, yEnd - unboundedRect.y,
+                                             xStart - unboundedRect.x, xEnd - unboundedRect.x);
             else
-                index = findBestFitEuclidean(cell, tmp.second, repeats);
-            if (index < 0 || index >= static_cast<int>(tmp.second.size()))
+                index = findBestFitEuclidean(cell, resizedCellShape.getCellMask(), resizedLib,
+                                             repeats,
+                                             yStart - unboundedRect.y, yEnd - unboundedRect.y,
+                                             xStart - unboundedRect.x, xEnd - unboundedRect.x);
+            if (index < 0 || index >= static_cast<int>(resizedLib.size()))
             {
                 qDebug() << "Failed to find a best fit";
-                index = 0;
+                result.at(static_cast<size_t>(y)).at(static_cast<size_t>(x)) = m_lib.front();
+                setValue(value() + 1);
+                continue;
             }
 
             grid.at(static_cast<size_t>(x)).at(static_cast<size_t>(y)) = static_cast<size_t>(index);
             result.at(static_cast<size_t>(x)).at(static_cast<size_t>(y)) =
                     m_lib.at(static_cast<size_t>(index));
             setValue(value() + 1);
-            if (wasCanceled())
-                return cv::Mat();
         }
     }
 
     //Combines all results into single image (mosaic)
     cv::Mat mosaic;
-    std::vector<cv::Mat> mosaicRows(static_cast<size_t>(gridSize.x));
-    for (size_t x = 0; x < static_cast<size_t>(gridSize.x); ++x)
-        cv::vconcat(result.at(x), mosaicRows.at(x));
-    cv::hconcat(mosaicRows, mosaic);
+    if (m_cellShape.empty())
+    {
+        std::vector<cv::Mat> mosaicRows(static_cast<size_t>(gridSize.x));
+        for (size_t x = 0; x < static_cast<size_t>(gridSize.x); ++x)
+            cv::vconcat(result.at(x), mosaicRows.at(x));
+        cv::hconcat(mosaicRows, mosaic);
+    }
+    else
+    {
+        //Resizes cell shape to size of library images
+        resizedCellShape = m_cellShape.resized(m_lib.front().cols, m_lib.front().rows);
+        //Convert cell mask to grayscale (need single channel for use in copyTo()
+        cv::Mat cellMask;
+        cv::cvtColor(resizedCellShape.getCellMask(), cellMask, cv::COLOR_RGBA2GRAY);
+
+        mosaic = cv::Mat(gridSize.y * resizedCellShape.getRowSpacing(),
+                         gridSize.x * resizedCellShape.getColSpacing(), m_img.type(), cv::Scalar(0));
+
+        //For all cells
+        for (int y = 0; y < gridSize.y; ++y)
+        {
+            for (int x = 0; x < gridSize.x; ++x)
+            {
+                const cv::Rect unboundedRect = resizedCellShape.getRectAt(x, y);
+
+                //Cell bounded positions (in mosaic area)
+                const int yStart = std::clamp(unboundedRect.tl().y, 0, mosaic.rows - 1);
+                const int yEnd = std::clamp(unboundedRect.br().y, 0, mosaic.rows - 1);
+                const int xStart = std::clamp(unboundedRect.tl().x, 0, mosaic.cols - 1);
+                const int xEnd = std::clamp(unboundedRect.br().x, 0, mosaic.cols - 1);
+
+                //Cell completely out of bounds, just skip
+                if (yStart == yEnd || xStart == xEnd)
+                    continue;
+
+                //Creates a mat that is the cell area actually visible in mosaic
+                cv::Mat cellBounded(result.at(static_cast<size_t>(x)).at(static_cast<size_t>(y)),
+                                    cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                                    cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+
+                //Creates mask bounded same as cell
+                cv::Mat maskBounded(cellMask,
+                                    cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                                    cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+
+                //Copys cell to mosaic using mask
+                cellBounded.copyTo(mosaic(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)),
+                                   maskBounded);
+            }
+        }
+    }
 
     return mosaic;
 }
@@ -185,9 +266,11 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGenerator::resizeAndCvtColor
 //Returns the index of the library image with the smallest difference
 //Used for mode RGB_EUCLIDEAN and CIE76
 //(CIE76 is just a euclidean formulae in a different colour space)
-int PhotomosaicGenerator::findBestFitEuclidean(const cv::Mat &cell,
+int PhotomosaicGenerator::findBestFitEuclidean(const cv::Mat &cell, const cv::Mat &mask,
                                                const std::vector<cv::Mat> &library,
-                                               const std::map<size_t, int> &repeats) const
+                                               const std::map<size_t, int> &repeats,
+                                               const int yStart, const int yEnd,
+                                               const int xStart, const int xEnd) const
 {
     int bestFit = -1;
     long double bestVariant = LDBL_MAX;
@@ -199,17 +282,21 @@ int PhotomosaicGenerator::findBestFitEuclidean(const cv::Mat &cell,
 
         //For cell and library image compare the corresponding pixels
         //Sum all pixel differences for total image difference
-        const uchar *p_main, *p_im;
-        for(int row = 0; row < cell.rows && variant < bestVariant; ++row)
+        const uchar *p_main, *p_im, *p_mask;
+        for (int row = yStart; row < yEnd && row < cell.rows && variant < bestVariant; ++row)
         {
             p_main = cell.ptr<uchar>(row);
             p_im = library.at(i).ptr<uchar>(row);
-            for (int col = 0; col < cell.cols * cell.channels() && variant < bestVariant;
-                 ++col)
+            p_mask = mask.ptr<uchar>(row);
+            for (int col = xStart * cell.channels();
+                 col < xEnd * cell.channels() && variant < bestVariant;
+                 col += cell.channels())
             {
-                variant += static_cast<long double>(sqrt(pow(p_main[col] - p_im[col], 2) +
-                                                         pow(p_main[col + 1] - p_im[col + 1], 2) +
-                                                         pow(p_main[col + 2] - p_im[col + 2], 2)));
+                if (p_mask[col / cell.channels()] != 0)
+                    variant += static_cast<long double>(
+                                sqrt(pow(p_main[col] - p_im[col], 2) +
+                                     pow(p_main[col + 1] - p_im[col + 1], 2) +
+                                     pow(p_main[col + 2] - p_im[col + 2], 2)));
             }
         }
 
@@ -226,9 +313,11 @@ int PhotomosaicGenerator::findBestFitEuclidean(const cv::Mat &cell,
 //Compares pixels in the cell against the library images
 //Returns the index of the library image with the smallest difference
 //Used for mode CIEDE2000
-int PhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell,
+int PhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell, const cv::Mat &mask,
                                                const std::vector<cv::Mat> &library,
-                                               const std::map<size_t, int> &repeats) const
+                                               const std::map<size_t, int> &repeats,
+                                               const int yStart, const int yEnd,
+                                               const int xStart, const int xEnd) const
 {
     int bestFit = -1;
     long double bestVariant = LDBL_MAX;
@@ -240,22 +329,28 @@ int PhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell,
 
         //For cell and library image compare the corresponding pixels
         //Sum all pixel differences for total image difference
-        const uchar *p_main, *p_im;
-        for(int row = 0; row < cell.rows && variant < bestVariant; ++row)
+        const uchar *p_main, *p_im, *p_mask;
+        for (int row = yStart; row < yEnd && row < cell.rows && variant < bestVariant; ++row)
         {
             p_main = cell.ptr<uchar>(row);
             p_im = library.at(i).ptr<uchar>(row);
-            for (int col = 0; col < cell.cols * cell.channels() && variant < bestVariant;
-                 ++col)
+            p_mask = mask.ptr<uchar>(row);
+            for (int col = xStart * cell.channels();
+                 col < xEnd * cell.channels() && variant < bestVariant;
+                 col += cell.channels())
             {
+                if (p_mask[col / cell.channels()] == 0)
+                    continue;
+
                 const double k_L = 1.0, k_C = 1.0, k_H = 1.0;
                 const double deg360InRad = degToRad(360.0);
                 const double deg180InRad = degToRad(180.0);
                 const double pow25To7 = 6103515625.0; //pow(25, 7)
 
-                const double C1 = sqrt((p_main[col + 1] * p_main[col + 1]) + (p_main[col + 2] *
-                        p_main[col + 2]));
-                const double C2 = sqrt((p_im[col + 1] * p_im[col + 1]) + (p_im[col + 2] * p_im[col + 2]));
+                const double C1 = sqrt((p_main[col + 1] * p_main[col + 1]) +
+                        (p_main[col + 2] * p_main[col + 2]));
+                const double C2 = sqrt((p_im[col + 1] * p_im[col + 1]) +
+                        (p_im[col + 2] * p_im[col + 2]));
                 const double barC = (C1 + C2) / 2.0;
 
                 const double G = 0.5 * (1 - sqrt(pow(barC, 7) / (pow(barC, 7) + pow25To7)));
@@ -263,8 +358,9 @@ int PhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell,
                 const double a1Prime = (1.0 + G) * p_main[col + 1];
                 const double a2Prime = (1.0 + G) * p_im[col + 1];
 
-                const double CPrime1 = sqrt((a1Prime * a1Prime) + (p_main[col + 2] * p_main[col + 2]));
-                const double CPrime2 = sqrt((a2Prime * a2Prime) + (p_im[col + 2] * p_im[col + 2]));
+                const double CPrime1 = sqrt((a1Prime * a1Prime) +
+                                            (p_main[col + 2] * p_main[col + 2]));
+                const double CPrime2 = sqrt((a2Prime * a2Prime) +(p_im[col + 2] * p_im[col + 2]));
 
                 double hPrime1;
                 if (p_main[col + 2] == 0 && a1Prime == 0.0)
@@ -337,10 +433,11 @@ int PhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell,
                 const double deltaTheta = degToRad(30.0) *
                         exp(-pow((barhPrime - degToRad(275.0)) / degToRad(25.0), 2.0));
 
-                const double R_C = 2.0 * sqrt(pow(barCPrime, 7.0) / (pow(barCPrime, 7.0) + pow25To7));
+                const double R_C = 2.0 * sqrt(pow(barCPrime, 7.0) /
+                                              (pow(barCPrime, 7.0) + pow25To7));
 
-                const double S_L = 1 +((0.015 * pow(barLPrime - 50.0, 2.0)) /
-                                 sqrt(20 + pow(barLPrime - 50.0, 2.0)));
+                const double S_L = 1 + ((0.015 * pow(barLPrime - 50.0, 2.0)) /
+                                        sqrt(20 + pow(barLPrime - 50.0, 2.0)));
                 const double S_C = 1 + (0.045 * barCPrime);
                 const double S_H = 1 + (0.015 * barCPrime * T);
 

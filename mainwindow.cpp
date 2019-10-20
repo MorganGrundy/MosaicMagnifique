@@ -49,6 +49,8 @@ MainWindow::MainWindow(QWidget *t_parent)
     //Connects custom cell shapes tab buttons to appropriate methods
     connect(ui->buttonSaveCustomCell, SIGNAL(released()), this, SLOT(saveCellShape()));
     connect(ui->buttonLoadCustomCell, SIGNAL(released()), this, SLOT(loadCellShape()));
+    connect(ui->lineCustomCellName, SIGNAL(textChanged(const QString &)), this,
+            SLOT(cellNameChanged(const QString &)));
     connect(ui->buttonCellMask, SIGNAL(released()), this, SLOT(selectCellMask()));
     connect(ui->spinCustomCellSpacingCol, SIGNAL(valueChanged(int)), this,
             SLOT(cellSpacingColChanged(int)));
@@ -83,7 +85,6 @@ MainWindow::MainWindow(QWidget *t_parent)
             SLOT(photomosaicHeightChanged(int)));
     connect(ui->buttonPhotomosaicSize, SIGNAL(released()), this, SLOT(loadImageSize()));
 
-    connect(ui->buttonCellShape, SIGNAL(released()), this, SLOT(selectCellShape()));
     connect(ui->checkCellShape, SIGNAL(stateChanged(int)), this, SLOT(enableCellShape(int)));
 
     connect(ui->buttonGenerate, SIGNAL(released()), this, SLOT(generatePhotomosaic()));
@@ -192,8 +193,14 @@ void MainWindow::loadCellShape()
 
         ui->widgetCellShapeViewer->cellShape = cellShape;
         ui->widgetCellShapeViewer->setEdgeDetect(false);
-
+        ui->widgetCellShapeViewer->updatePreview();
     }
+}
+
+//Copies cell name from cell shape tab to generator settings tab
+void MainWindow::cellNameChanged(const QString &text)
+{
+    ui->lineCellShape->setText(text);
 }
 
 //Prompts user for a cell mask image
@@ -285,7 +292,7 @@ void MainWindow::addImages()
         }
 
         //Square image with focus on center and resize to image size
-        UtilityFuncs::imageToSquare(image);
+        UtilityFuncs::imageToSquare(image, UtilityFuncs::SquareMethod::CROP);
         originalImages.push_back(image);
 
         //Extracts filename and extension from full path
@@ -550,22 +557,6 @@ void MainWindow::loadImageSize()
 void MainWindow::enableCellShape(int t_state)
 {
     ui->lineCellShape->setEnabled(t_state == Qt::Checked);
-    ui->buttonCellShape->setEnabled(t_state == Qt::Checked);
-}
-
-//Prompts user for a cell folder
-void MainWindow::selectCellShape()
-{
-    //mcs = Mosaic Cell Shape
-    QString filename = QFileDialog::getOpenFileName(this, tr("Select custom cell shape to load"),
-                                                    "", tr("Mosaic Cell Shape") + " (*.mcs)");
-    QFile file(filename);
-    file.open(QIODevice::ReadOnly);
-    if (file.isReadable())
-    {
-        ui->lineCellShape->setText(filename);
-        file.close();
-    }
 }
 
 //Attempts to generate and display a Photomosaic for current settings
@@ -614,6 +605,10 @@ void MainWindow::generatePhotomosaic()
         generator.setMode(PhotomosaicGenerator::Mode::CIE76);
     else if (ui->comboMode->currentText() == "CIEDE2000")
         generator.setMode(PhotomosaicGenerator::Mode::CIEDE2000);
+
+    if (ui->checkCellShape->isChecked())
+        generator.setCellShape(ui->widgetCellShapeViewer->cellShape);
+
     generator.setRepeat(ui->spinRepeatRange->value(), ui->spinRepeatAddition->value());
 
     auto t1 = std::chrono::high_resolution_clock::now();

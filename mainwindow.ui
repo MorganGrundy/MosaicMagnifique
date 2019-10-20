@@ -69,7 +69,7 @@ border: 0px;
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideNone</enum>
@@ -107,16 +107,16 @@ border: 0px;
             <number>0</number>
            </property>
            <item>
-            <widget class="QPushButton" name="buttonLoadCustomCell">
+            <widget class="QPushButton" name="buttonSaveCustomCell">
              <property name="text">
-              <string>Load Custom Cell Shape</string>
+              <string>Save Custom Cell Shape</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="buttonSaveCustomCell">
+            <widget class="QPushButton" name="buttonLoadCustomCell">
              <property name="text">
-              <string>Save Custom Cell Shape</string>
+              <string>Load Custom Cell Shape</string>
              </property>
             </widget>
            </item>
@@ -481,6 +481,33 @@ border: 1px solid dimgray;
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
+           <widget class="QPushButton" name="buttonSave">
+            <property name="text">
+             <string>Save Library</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="buttonLoad">
+            <property name="text">
+             <string>Load Library</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
            <widget class="QPushButton" name="buttonAdd">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -569,33 +596,6 @@ border: 1px solid dimgray;
               <width>16</width>
               <height>16</height>
              </size>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QPushButton" name="buttonSave">
-            <property name="text">
-             <string>Save Library</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="buttonLoad">
-            <property name="text">
-             <string>Load Library</string>
             </property>
            </widget>
           </item>

@@ -62,6 +62,7 @@ void PhotomosaicGenerator::setRepeat(int t_repeatRange, int t_repeatAddition)
 //Returns a Photomosaic of the main image made of the library images
 cv::Mat PhotomosaicGenerator::generate()
 {
+    bool padGrid = !m_cellShape.empty();
     //Resizes main image and library based on detail level and converts colour space
     auto [resizedImg, resizedLib] = resizeAndCvtColor();
 
@@ -76,8 +77,8 @@ cv::Mat PhotomosaicGenerator::generate()
                                                resizedLib.front().rows);
 
     const cv::Point cellSize(resizedLib.front().cols, resizedLib.front().rows);
-    const cv::Point gridSize(resizedImg.cols / resizedCellShape.getColSpacing(),
-                             resizedImg.rows / resizedCellShape.getRowSpacing());
+    const cv::Point gridSize(resizedImg.cols / resizedCellShape.getColSpacing() + padGrid,
+                             resizedImg.rows / resizedCellShape.getRowSpacing() + padGrid);
 
     setMaximum(gridSize.x * gridSize.y);
     setValue(0);
@@ -90,9 +91,9 @@ cv::Mat PhotomosaicGenerator::generate()
     std::vector<std::vector<size_t>> grid(static_cast<size_t>(gridSize.x),
                                           std::vector<size_t>(static_cast<size_t>(gridSize.y), 0));
     cv::Mat cell(cellSize.y, cellSize.x, m_img.type(), cv::Scalar(0));
-    for (int x = 0; x < gridSize.x; ++x)
+    for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
     {
-        for (int y = 0; y < gridSize.y; ++y)
+        for (int y = -padGrid; y < gridSize.y - padGrid; ++y)
         {
             //If user hits cancel in QProgressDialog then return empty mat
             if (wasCanceled())
@@ -101,10 +102,10 @@ cv::Mat PhotomosaicGenerator::generate()
             const cv::Rect unboundedRect = resizedCellShape.getRectAt(x, y);
 
             //Cell bounded positions (in mosaic area)
-            const int yStart = std::clamp(unboundedRect.tl().y, 0, resizedImg.rows - 1);
-            const int yEnd = std::clamp(unboundedRect.br().y, 0, resizedImg.rows - 1);
-            const int xStart = std::clamp(unboundedRect.tl().x, 0, resizedImg.cols - 1);
-            const int xEnd = std::clamp(unboundedRect.br().x, 0, resizedImg.cols - 1);
+            const int yStart = std::clamp(unboundedRect.tl().y, 0, resizedImg.rows);
+            const int yEnd = std::clamp(unboundedRect.br().y, 0, resizedImg.rows);
+            const int xStart = std::clamp(unboundedRect.tl().x, 0, resizedImg.cols);
+            const int xEnd = std::clamp(unboundedRect.br().x, 0, resizedImg.cols);
 
             //Cell completely out of bounds, just skip
             if (yStart == yEnd || xStart == xEnd)
@@ -120,7 +121,8 @@ cv::Mat PhotomosaicGenerator::generate()
                                 cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x)));
 
             //Calculate number of each library image in repeat range
-            const std::map<size_t, int> repeats = calculateRepeats(grid, gridSize, x, y);
+            const std::map<size_t, int> repeats = calculateRepeats(grid, gridSize, x + padGrid,
+                                                                   y + padGrid);
 
             int index = -1;
             if (m_mode == Mode::CIEDE2000)
@@ -136,13 +138,15 @@ cv::Mat PhotomosaicGenerator::generate()
             if (index < 0 || index >= static_cast<int>(resizedLib.size()))
             {
                 qDebug() << "Failed to find a best fit";
-                result.at(static_cast<size_t>(y)).at(static_cast<size_t>(x)) = m_lib.front();
+                result.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) =
+                        m_lib.front();
                 setValue(value() + 1);
                 continue;
             }
 
-            grid.at(static_cast<size_t>(x)).at(static_cast<size_t>(y)) = static_cast<size_t>(index);
-            result.at(static_cast<size_t>(x)).at(static_cast<size_t>(y)) =
+            grid.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) =
+                    static_cast<size_t>(index);
+            result.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) =
                     m_lib.at(static_cast<size_t>(index));
             setValue(value() + 1);
         }
@@ -165,28 +169,30 @@ cv::Mat PhotomosaicGenerator::generate()
         cv::Mat cellMask;
         cv::cvtColor(resizedCellShape.getCellMask(), cellMask, cv::COLOR_RGBA2GRAY);
 
-        mosaic = cv::Mat(gridSize.y * resizedCellShape.getRowSpacing(),
-                         gridSize.x * resizedCellShape.getColSpacing(), m_img.type(), cv::Scalar(0));
+        mosaic = cv::Mat((gridSize.y - padGrid) * resizedCellShape.getRowSpacing(),
+                         (gridSize.x - padGrid) * resizedCellShape.getColSpacing(), m_img.type(),
+                         cv::Scalar(0));
 
         //For all cells
-        for (int y = 0; y < gridSize.y; ++y)
+        for (int y = -padGrid; y < gridSize.y - padGrid; ++y)
         {
-            for (int x = 0; x < gridSize.x; ++x)
+            for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
             {
                 const cv::Rect unboundedRect = resizedCellShape.getRectAt(x, y);
 
                 //Cell bounded positions (in mosaic area)
-                const int yStart = std::clamp(unboundedRect.tl().y, 0, mosaic.rows - 1);
-                const int yEnd = std::clamp(unboundedRect.br().y, 0, mosaic.rows - 1);
-                const int xStart = std::clamp(unboundedRect.tl().x, 0, mosaic.cols - 1);
-                const int xEnd = std::clamp(unboundedRect.br().x, 0, mosaic.cols - 1);
+                const int yStart = std::clamp(unboundedRect.tl().y, 0, mosaic.rows);
+                const int yEnd = std::clamp(unboundedRect.br().y, 0, mosaic.rows);
+                const int xStart = std::clamp(unboundedRect.tl().x, 0, mosaic.cols);
+                const int xEnd = std::clamp(unboundedRect.br().x, 0, mosaic.cols);
 
                 //Cell completely out of bounds, just skip
                 if (yStart == yEnd || xStart == xEnd)
                     continue;
 
                 //Creates a mat that is the cell area actually visible in mosaic
-                cv::Mat cellBounded(result.at(static_cast<size_t>(x)).at(static_cast<size_t>(y)),
+                cv::Mat cellBounded(result.at(static_cast<size_t>(x + padGrid)).
+                                    at(static_cast<size_t>(y + padGrid)),
                                     cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                                     cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
@@ -252,9 +258,9 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGenerator::resizeAndCvtColor
     //Library image
     for (size_t i = 0; i < m_lib.size(); ++i)
     {
-        cv::resize(m_lib.at(i), result.at(i), cv::Size(static_cast<int>(m_detail * m_lib.at(i).cols),
-                                                       static_cast<int>(m_detail * m_lib.at(i).rows)),
-                                              0, 0, flags);
+        cv::resize(m_lib.at(i), result.at(i),
+                   cv::Size(static_cast<int>(m_detail * m_lib.at(i).cols),
+                            static_cast<int>(m_detail * m_lib.at(i).rows)), 0, 0, flags);
         cv::cvtColor(result.at(i), result.at(i), cv::COLOR_BGR2Lab);
     }
 #endif

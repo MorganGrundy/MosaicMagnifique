@@ -110,7 +110,8 @@ cv::Mat PhotomosaicGenerator::generate()
             //Cell completely out of bounds, just skip
             if (yStart == yEnd || xStart == xEnd)
             {
-                result.at(static_cast<size_t>(x)).at(static_cast<size_t>(y)) = m_lib.front();
+                result.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) =
+                        m_lib.front();
                 setValue(value() + 1);
                 continue;
             }

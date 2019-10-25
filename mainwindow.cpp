@@ -88,6 +88,11 @@ MainWindow::MainWindow(QWidget *t_parent)
     connect(ui->checkCellShape, SIGNAL(stateChanged(int)), this, SLOT(enableCellShape(int)));
 
     connect(ui->buttonGenerate, SIGNAL(released()), this, SLOT(generatePhotomosaic()));
+
+    //Sets grid preview to default square cell
+    ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(ui->spinCellSize->value(),
+                                                          ui->spinCellSize->value(),
+                                                          CV_8UC1, cv::Scalar(255))));
 }
 
 MainWindow::~MainWindow()
@@ -98,7 +103,7 @@ MainWindow::~MainWindow()
 //Saves the custom cell shape to a file
 void MainWindow::saveCellShape()
 {
-    CellShape cellShape = ui->widgetCellShapeViewer->cellShape;
+    CellShape cellShape = ui->widgetCellShapeViewer->getCellShape();
     if (cellShape.getCellMask().empty())
     {
         QMessageBox::information(this, tr("Failed to save custom cell shape"),
@@ -191,9 +196,7 @@ void MainWindow::loadCellShape()
 
         file.close();
 
-        ui->widgetCellShapeViewer->cellShape = cellShape;
-        ui->widgetCellShapeViewer->setEdgeDetect(false);
-        ui->widgetCellShapeViewer->updatePreview();
+        ui->widgetCellShapeViewer->setCellShape(cellShape);
     }
 }
 
@@ -217,7 +220,7 @@ void MainWindow::selectCellMask()
     {
         CellShape cellShape(tmp);
 
-        ui->widgetCellShapeViewer->cellShape = cellShape;
+        ui->widgetCellShapeViewer->setCellShape(cellShape);
         ui->lineCellMask->setText(filename);
 
         ui->spinCustomCellSpacingCol->blockSignals(true);
@@ -232,37 +235,35 @@ void MainWindow::selectCellMask()
         ui->spinCustomCellSpacingRow->blockSignals(false);
         ui->spinCustomCellAlternateColOffset->blockSignals(false);
         ui->spinCustomCellAlternateRowOffset->blockSignals(false);
-
-        ui->widgetCellShapeViewer->setEdgeDetect(false);
     }
 }
 
 //Update custom cell column spacing
 void MainWindow::cellSpacingColChanged(int t_value)
 {
-    ui->widgetCellShapeViewer->cellShape.setColSpacing(t_value);
-    ui->widgetCellShapeViewer->updatePreview();
+    ui->widgetCellShapeViewer->getCellShape().setColSpacing(t_value);
+    ui->widgetCellShapeViewer->updateGrid();
 }
 
 //Update custom cell column offset y
 void MainWindow::cellSpacingRowChanged(int t_value)
 {
-    ui->widgetCellShapeViewer->cellShape.setRowSpacing(t_value);
-    ui->widgetCellShapeViewer->updatePreview();
+    ui->widgetCellShapeViewer->getCellShape().setRowSpacing(t_value);
+    ui->widgetCellShapeViewer->updateGrid();
 }
 
 //Update custom cell row offset x
 void MainWindow::cellAlternateColOffsetChanged(int t_value)
 {
-    ui->widgetCellShapeViewer->cellShape.setAlternateColOffset(t_value);
-    ui->widgetCellShapeViewer->updatePreview();
+    ui->widgetCellShapeViewer->getCellShape().setAlternateColOffset(t_value);
+    ui->widgetCellShapeViewer->updateGrid();
 }
 
 //Update custom cell row offset y
 void MainWindow::cellAlternateRowOffsetChanged(int t_value)
 {
-    ui->widgetCellShapeViewer->cellShape.setAlternateRowOffset(t_value);
-    ui->widgetCellShapeViewer->updatePreview();
+    ui->widgetCellShapeViewer->getCellShape().setAlternateRowOffset(t_value);
+    ui->widgetCellShapeViewer->updateGrid();
 }
 
 //Used to add images to the image library
@@ -491,7 +492,36 @@ void MainWindow::selectMainImage()
                                                     "*.pxm *.pnm *.sr *.ras *.tiff *.tif "
                                                     "*.hdr *.pic)");
     if (!filename.isNull())
+    {
         ui->lineMainImage->setText(filename);
+
+        //Load main image and check is valid
+        mainImage = cv::imread(filename.toStdString());
+        if (mainImage.empty())
+        {
+            ui->widgetGridPreview->setBackground(cv::Mat());
+            QMessageBox msgBox;
+            msgBox.setText(tr("The main image \"") + ui->lineMainImage->text() +
+                           tr("\" failed to load"));
+            msgBox.exec();
+            return;
+        }
+
+        ui->spinPhotomosaicHeight->blockSignals(true);
+        ui->spinPhotomosaicWidth->blockSignals(true);
+        ui->spinPhotomosaicHeight->setValue(mainImage.rows);
+        ui->spinPhotomosaicWidth->setValue(mainImage.cols);
+        ui->spinPhotomosaicHeight->blockSignals(false);
+        ui->spinPhotomosaicWidth->blockSignals(false);
+        photomosaicSizeRatio = static_cast<double>(mainImage.cols) / mainImage.rows;
+
+        //Gives main image to grid preview
+        ui->widgetGridPreview->setBackground(
+                    UtilityFuncs::resizeImage(mainImage, mainImage.rows, mainImage.cols,
+                                              UtilityFuncs::ResizeType::INCLUSIVE));
+    }
+    else
+        ui->widgetGridPreview->setBackground(cv::Mat());
 }
 
 //Changes icon of photomosaic size link button and saves ratio
@@ -518,6 +548,12 @@ void MainWindow::photomosaicWidthChanged(int i)
         ui->spinPhotomosaicHeight->blockSignals(true);
         ui->spinPhotomosaicHeight->setValue(static_cast<int>(i / photomosaicSizeRatio));
         ui->spinPhotomosaicHeight->blockSignals(false);
+
+        //Updates image size in grid preview
+        ui->widgetGridPreview->setBackground(
+                    UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
+                                              ui->spinPhotomosaicWidth->value(),
+                                              UtilityFuncs::ResizeType::INCLUSIVE));
     }
 }
 
@@ -530,14 +566,18 @@ void MainWindow::photomosaicHeightChanged(int i)
         ui->spinPhotomosaicWidth->blockSignals(true);
         ui->spinPhotomosaicWidth->setValue(static_cast<int>(i * photomosaicSizeRatio));
         ui->spinPhotomosaicWidth->blockSignals(false);
+
+        //Updates image size in grid preview
+        ui->widgetGridPreview->setBackground(
+                    UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
+                                              ui->spinPhotomosaicWidth->value(),
+                                              UtilityFuncs::ResizeType::INCLUSIVE));
     }
 }
 
 //If a main image has been entered sets the Photomosaic size spinboxes to the image size
 void MainWindow::loadImageSize()
 {
-    //Load main image and check is valid
-    cv::Mat mainImage = cv::imread(ui->lineMainImage->text().toStdString());
     if (!mainImage.empty())
     {
         //Blocks signals while changing value
@@ -550,13 +590,32 @@ void MainWindow::loadImageSize()
         //Update size ratio
         photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) /
                 ui->spinPhotomosaicHeight->value();
+
+
+        //Resize main image to user entered size
+        ui->widgetGridPreview->setBackground(
+                    UtilityFuncs::resizeImage(mainImage, mainImage.rows, mainImage.cols,
+                                              UtilityFuncs::ResizeType::INCLUSIVE));
     }
 }
 
 //Enables/disables non-square cell shapes, GUI widgets for choosing
 void MainWindow::enableCellShape(int t_state)
 {
-    ui->lineCellShape->setEnabled(t_state == Qt::Checked);
+    if (t_state == Qt::Checked)
+    {
+        ui->lineCellShape->setEnabled(true);
+        ui->widgetGridPreview->setCellShape(ui->widgetCellShapeViewer->getCellShape().
+                                            resized(ui->spinCellSize->value(),
+                                                    ui->spinCellSize->value()));
+    }
+    else
+    {
+        ui->lineCellShape->setEnabled(false);
+        ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(ui->spinCellSize->value(),
+                                                              ui->spinCellSize->value(),
+                                                              CV_8UC1, cv::Scalar(255))));
+    }
 }
 
 //Attempts to generate and display a Photomosaic for current settings
@@ -607,7 +666,7 @@ void MainWindow::generatePhotomosaic()
         generator.setMode(PhotomosaicGenerator::Mode::CIEDE2000);
 
     if (ui->checkCellShape->isChecked())
-        generator.setCellShape(ui->widgetCellShapeViewer->cellShape);
+        generator.setCellShape(ui->widgetCellShapeViewer->getCellShape());
 
     generator.setRepeat(ui->spinRepeatRange->value(), ui->spinRepeatAddition->value());
 

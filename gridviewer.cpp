@@ -42,6 +42,7 @@ GridViewer::GridViewer(QWidget *parent)
                                    "color: rgb(255, 255, 255);"
                                    "border-color: rgb(0, 0, 0);"
                                    "}");
+    checkEdgeDetect->setCheckState(Qt::Checked);
     connect(checkEdgeDetect, SIGNAL(stateChanged(int)), this, SLOT(edgeDetectChanged(int)));
     layout->addWidget(checkEdgeDetect, 0, 2);
 
@@ -59,7 +60,7 @@ void GridViewer::setEdgeDetect(bool t_state)
 }
 
 //Generates grid preview
-void GridViewer::updatePreview()
+void GridViewer::updateGrid()
 {
     //No cell mask, no grid
     if (cellShape.getCellMask().empty())
@@ -68,9 +69,13 @@ void GridViewer::updatePreview()
         return;
     }
 
-    cv::Mat result(height() / zoom, width() / zoom, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-    const cv::Point gridSize(result.cols / cellShape.getColSpacing() + 1,
-                             result.rows / cellShape.getRowSpacing() + 1);
+    cv::Mat newGrid(static_cast<int>(height() / MIN_ZOOM), static_cast<int>(width() / MIN_ZOOM),
+                    CV_8UC4, cv::Scalar(0, 0, 0, 0));
+    cv::Mat newEdgeGrid(static_cast<int>(height() / MIN_ZOOM), static_cast<int>(width() / MIN_ZOOM),
+                        CV_8UC4, cv::Scalar(0, 0, 0, 0));
+
+    const cv::Point gridSize(newGrid.cols / cellShape.getColSpacing() + 1,
+                             newGrid.rows / cellShape.getRowSpacing() + 1);
 
     //Create all cells in grid
     for (int x = 0; x < gridSize.x; ++x)
@@ -83,35 +88,33 @@ void GridViewer::updatePreview()
                                           (x % 2 == 1) * cellShape.getAlternateColOffset(),
                                           cellShape.getCellMask().cols,
                                           cellShape.getCellMask().rows) & cv::Rect(0, 0,
-                                                                                   result.cols,
-                                                                                   result.rows);
-            cv::Mat part(result, roi);
-            cv::Mat mask;
-            if (edgeDetectedCell.empty())
-                mask = cv::Mat(cellShape.getCellMask(), cv::Rect(0, 0, part.cols, part.rows));
-            else
-                mask = cv::Mat(edgeDetectedCell, cv::Rect(0, 0, part.cols, part.rows));
-            cv::bitwise_or(part, mask, part);
+                                                                                   newGrid.cols,
+                                                                                   newGrid.rows);
+
+            cv::Mat gridPart(newGrid, roi), edgeGridPart(newEdgeGrid, roi);
+
+            cv::Mat mask(cellShape.getCellMask(), cv::Rect(0, 0, gridPart.cols, gridPart.rows));
+            cv::Mat edgeMask(edgeDetectedCell, cv::Rect(0, 0, edgeGridPart.cols,
+                                                        edgeGridPart.rows));
+
+            cv::bitwise_or(gridPart, mask, gridPart);
+            cv::bitwise_or(edgeGridPart, edgeMask, edgeGridPart);
         }
     }
 
-    grid = QImage(result.data, result.cols, result.rows, static_cast<int>(result.step),
+    grid = QImage(newGrid.data, newGrid.cols, newGrid.rows, static_cast<int>(newGrid.step),
                   QImage::Format_RGBA8888).copy();
+    edgeGrid = QImage(newEdgeGrid.data, newEdgeGrid.cols, newEdgeGrid.rows,
+                      static_cast<int>(newEdgeGrid.step), QImage::Format_RGBA8888).copy();
     update();
 }
 
-//Called when the spinbox value is changed, updates grid zoom
-void GridViewer::zoomChanged(double t_value)
+//Sets the cell shape
+void GridViewer::setCellShape(const CellShape &t_cellShape)
 {
-    zoom = t_value / 100.0;
-    updatePreview();
-}
+    cellShape = t_cellShape;
 
-//Called when the checkbox state changes
-//If checked then edge detects cell mask and updates grid preview else forgets edge detected mask
-void GridViewer::edgeDetectChanged(int t_state)
-{
-    if (t_state && !cellShape.getCellMask().empty())
+    if (!cellShape.getCellMask().empty())
     {
         //Add single pixel black transparent border to mask so that Canny cannot leave open edges
         cv::Mat maskWithBorder;
@@ -147,7 +150,41 @@ void GridViewer::edgeDetectChanged(int t_state)
     else
         edgeDetectedCell.release();
 
-    updatePreview();
+    updateGrid();
+}
+
+//Returns a reference to the cell shape
+CellShape &GridViewer::getCellShape()
+{
+    return cellShape;
+}
+
+//Sets the background image in grid
+void GridViewer::setBackground(const cv::Mat &t_background)
+{
+    if (t_background.empty())
+        background = QImage();
+    else
+    {
+        cv::Mat inverted(t_background.rows, t_background.cols, t_background.type());
+        cv::cvtColor(t_background, inverted, cv::COLOR_BGR2RGB);
+        background = QImage(inverted.data, inverted.cols, inverted.rows,
+                            static_cast<int>(inverted.step), QImage::Format_RGB888).copy();
+    }
+    update();
+}
+
+//Called when the spinbox value is changed, updates grid zoom
+void GridViewer::zoomChanged(double t_value)
+{
+    zoom = t_value / 100.0;
+    update();
+}
+
+//Called when the checkbox state changes
+void GridViewer::edgeDetectChanged(int t_state)
+{
+    update();
 }
 
 //Displays grid
@@ -155,14 +192,39 @@ void GridViewer::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
 
-    if (!grid.isNull())
-        painter.drawImage(QRectF(QPointF(0,0), QSizeF(width(), height())), grid);
+    double ratio;
+    QRectF sourceRect(0, 0, 0, 0);
+
+    if (!background.isNull())
+    {
+        ratio = background.width() / width();
+        if (height() * ratio < background.height())
+            ratio = background.height() / height();
+
+        sourceRect.setSize(QSizeF((ratio * width()) / zoom, (ratio * height()) / zoom));
+
+        painter.drawImage(QRectF(QPointF(0,0), QSizeF(width(), height())), background, sourceRect);
+    }
+    else
+    {
+        sourceRect.setSize(QSizeF(width() / zoom, height() / zoom));
+    }
+
+    if (checkEdgeDetect->isChecked())
+    {
+        if (!edgeGrid.isNull())
+                painter.drawImage(QRectF(QPointF(0,0), QSizeF(width(), height())),
+                                  edgeGrid, sourceRect);
+    }
+    else if (!grid.isNull())
+        painter.drawImage(QRectF(QPointF(0,0), QSizeF(width(), height())),
+                          grid, sourceRect);
 }
 
 //Generate new grid with new size
 void GridViewer::resizeEvent(QResizeEvent *event)
 {
-    updatePreview();
+    updateGrid();
 }
 
 //Change zoom of grid preview based on mouse scrollwheel movement
@@ -176,5 +238,5 @@ void GridViewer::wheelEvent(QWheelEvent *event)
     spinZoom->setValue(zoom * 100);
     spinZoom->blockSignals(false);
 
-    updatePreview();
+    update();
 }

@@ -17,9 +17,13 @@ class GridViewer : public QWidget
 public:
     explicit GridViewer(QWidget *parent = nullptr);
     void setEdgeDetect(bool t_state);
-    void updatePreview();
+    void updateGrid();
 
-    CellShape cellShape;
+    void setCellShape(const CellShape &t_cellShape);
+    CellShape &getCellShape();
+
+    void setBackground(const cv::Mat &t_background);
+
 
 public slots:
     void zoomChanged(double t_value);
@@ -37,8 +41,11 @@ private:
     QCheckBox *checkEdgeDetect;
     QSpacerItem *hSpacer, *vSpacer;
 
+    CellShape cellShape;
+    QImage background;
+
     cv::Mat edgeDetectedCell;
-    QImage grid;
+    QImage grid, edgeGrid;
 
     const double MIN_ZOOM, MAX_ZOOM;
     double zoom;

@@ -58,5 +58,7 @@ private:
 
     int imageSize;
     QMap<QListWidgetItem, std::pair<cv::Mat, cv::Mat>> allImages;
+
+    cv::Mat mainImage;
 };
 #endif // MAINWINDOW_H

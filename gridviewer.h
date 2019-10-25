@@ -24,7 +24,6 @@ public:
 
     void setBackground(const cv::Mat &t_background);
 
-
 public slots:
     void zoomChanged(double t_value);
     void edgeDetectChanged(int t_state);

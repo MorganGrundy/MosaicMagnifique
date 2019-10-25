@@ -62,6 +62,7 @@ void GridViewer::setEdgeDetect(bool t_state)
 //Generates grid preview
 void GridViewer::updateGrid()
 {
+    qDebug() << "updateGrid()";
     //No cell mask, no grid
     if (cellShape.getCellMask().empty())
     {
@@ -69,10 +70,20 @@ void GridViewer::updateGrid()
         return;
     }
 
-    cv::Mat newGrid(static_cast<int>(height() / MIN_ZOOM), static_cast<int>(width() / MIN_ZOOM),
-                    CV_8UC4, cv::Scalar(0, 0, 0, 0));
-    cv::Mat newEdgeGrid(static_cast<int>(height() / MIN_ZOOM), static_cast<int>(width() / MIN_ZOOM),
-                        CV_8UC4, cv::Scalar(0, 0, 0, 0));
+    int gridHeight = static_cast<int>(height() / MIN_ZOOM);
+    int gridWidth = static_cast<int>(width() / MIN_ZOOM);
+
+    if (!background.isNull())
+    {
+        if (background.height() > gridHeight)
+            gridHeight = background.height();
+
+        if (background.width() > gridWidth)
+            gridWidth = background.width();
+    }
+
+    cv::Mat newGrid(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+    cv::Mat newEdgeGrid(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0));
 
     const cv::Point gridSize(newGrid.cols / cellShape.getColSpacing() + 1,
                              newGrid.rows / cellShape.getRowSpacing() + 1);
@@ -168,8 +179,13 @@ void GridViewer::setBackground(const cv::Mat &t_background)
     {
         cv::Mat inverted(t_background.rows, t_background.cols, t_background.type());
         cv::cvtColor(t_background, inverted, cv::COLOR_BGR2RGB);
+
         background = QImage(inverted.data, inverted.cols, inverted.rows,
                             static_cast<int>(inverted.step), QImage::Format_RGB888).copy();
+
+        if ((grid.height() < background.height()) ||
+                (grid.width() < background.width()))
+            updateGrid();
     }
     update();
 }
@@ -213,12 +229,17 @@ void GridViewer::paintEvent(QPaintEvent *event)
     if (checkEdgeDetect->isChecked())
     {
         if (!edgeGrid.isNull())
-                painter.drawImage(QRectF(QPointF(0,0), QSizeF(width(), height())),
-                                  edgeGrid, sourceRect);
+        {
+            QImage croppedGrid = edgeGrid.copy(0, 0, background.width(), background.height());
+            painter.drawImage(QRectF(QPointF(0,0), QSizeF(width(), height())),
+                              croppedGrid, sourceRect);
+        }
     }
     else if (!grid.isNull())
-        painter.drawImage(QRectF(QPointF(0,0), QSizeF(width(), height())),
-                          grid, sourceRect);
+    {
+        QImage croppedGrid = edgeGrid.copy(0, 0, background.width(), background.height());
+        painter.drawImage(QRectF(QPointF(0,0), QSizeF(width(), height())), croppedGrid, sourceRect);
+    }
 }
 
 //Generate new grid with new size

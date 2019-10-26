@@ -70,9 +70,10 @@ void GridViewer::updateGrid()
         return;
     }
 
+    //Calculate grid size
     int gridHeight = static_cast<int>(height() / MIN_ZOOM);
     int gridWidth = static_cast<int>(width() / MIN_ZOOM);
-
+    //If background larger then change grid size
     if (!background.isNull())
     {
         if (background.height() > gridHeight)
@@ -183,6 +184,7 @@ void GridViewer::setBackground(const cv::Mat &t_background)
         background = QImage(inverted.data, inverted.cols, inverted.rows,
                             static_cast<int>(inverted.step), QImage::Format_RGB888).copy();
 
+        //Grid too small for background, recreate
         if ((grid.height() < background.height()) ||
                 (grid.width() < background.width()))
             updateGrid();
@@ -211,21 +213,22 @@ void GridViewer::paintEvent(QPaintEvent *event)
     double ratio;
     QRectF sourceRect(0, 0, 0, 0);
 
+    //Draw background
     if (!background.isNull())
     {
-        ratio = background.width() / width();
+        //Calculate ratio between background and GridViewer size
+        ratio = background.width() / static_cast<double>(width());
         if (height() * ratio < background.height())
-            ratio = background.height() / height();
+            ratio = background.height() / static_cast<double>(height());
 
         sourceRect.setSize(QSizeF((ratio * width()) / zoom, (ratio * height()) / zoom));
 
         painter.drawImage(QRectF(QPointF(0,0), QSizeF(width(), height())), background, sourceRect);
     }
     else
-    {
         sourceRect.setSize(QSizeF(width() / zoom, height() / zoom));
-    }
 
+    //Draw grid
     if (checkEdgeDetect->isChecked())
     {
         if (!edgeGrid.isNull())

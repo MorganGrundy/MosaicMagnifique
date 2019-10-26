@@ -748,7 +748,7 @@ padding: 0 3px 0 3px;
           <item>
            <widget class="QGroupBox" name="groupPhotomosaic">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+             <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -821,7 +821,7 @@ border: 1px solid dimgray;
                 <item>
                  <widget class="QPushButton" name="buttonMainImage">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -874,26 +874,6 @@ border: 1px solid dimgray;
                 <property name="spacing">
                  <number>6</number>
                 </property>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="label_3">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="text">
-                   <string>Size:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="4">
-                 <widget class="QPushButton" name="buttonPhotomosaicSize">
-                  <property name="text">
-                   <string>From Main Image</string>
-                  </property>
-                 </widget>
-                </item>
                 <item row="1" column="3">
                  <widget class="QPushButton" name="buttonPhotomosaicSizeLink">
                   <property name="text">
@@ -911,18 +891,12 @@ border: 1px solid dimgray;
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="5">
-                 <spacer name="horizontalSpacer_3">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                <item row="1" column="4">
+                 <widget class="QPushButton" name="buttonPhotomosaicSize">
+                  <property name="text">
+                   <string>From Main Image</string>
                   </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
+                 </widget>
                 </item>
                 <item row="1" column="1">
                  <widget class="QSpinBox" name="spinPhotomosaicWidth">
@@ -982,36 +956,6 @@ border: 1px solid dimgray;
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="2">
-                 <widget class="QSpinBox" name="spinPhotomosaicHeight">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="styleSheet">
-                   <string notr="true">QSpinBox {
-border: 1px solid dimgray;
-}</string>
-                  </property>
-                  <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::PlusMinus</enum>
-                  </property>
-                  <property name="suffix">
-                   <string>px</string>
-                  </property>
-                  <property name="prefix">
-                   <string/>
-                  </property>
-                  <property name="minimum">
-                   <number>10</number>
-                  </property>
-                  <property name="maximum">
-                   <number>100000</number>
-                  </property>
-                 </widget>
-                </item>
                 <item row="0" column="1">
                  <widget class="QLabel" name="label_4">
                   <property name="sizePolicy">
@@ -1032,6 +976,19 @@ border: 1px solid dimgray;
                  <widget class="QLabel" name="label_10">
                   <property name="text">
                    <string>Detail:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="label_3">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Size:</string>
                   </property>
                  </widget>
                 </item>
@@ -1064,6 +1021,49 @@ border: 1px solid dimgray;
                    <number>50</number>
                   </property>
                  </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QSpinBox" name="spinPhotomosaicHeight">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">QSpinBox {
+border: 1px solid dimgray;
+}</string>
+                  </property>
+                  <property name="buttonSymbols">
+                   <enum>QAbstractSpinBox::PlusMinus</enum>
+                  </property>
+                  <property name="suffix">
+                   <string>px</string>
+                  </property>
+                  <property name="prefix">
+                   <string/>
+                  </property>
+                  <property name="minimum">
+                   <number>10</number>
+                  </property>
+                  <property name="maximum">
+                   <number>100000</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="5">
+                 <spacer name="horizontalSpacer_3">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
                 </item>
                </layout>
               </widget>
@@ -1166,7 +1166,7 @@ border: 1px solid dimgray;
           <item>
            <widget class="QGroupBox" name="groupCells">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+             <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -1341,7 +1341,7 @@ QLineEdit:disabled {
           <item>
            <widget class="QGroupBox" name="groupRepeats">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+             <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -1537,8 +1537,8 @@ border: 1px solid dimgray;
         <item>
          <widget class="GridViewer" name="widgetGridPreview" native="true">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-            <horstretch>0</horstretch>
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>2</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>

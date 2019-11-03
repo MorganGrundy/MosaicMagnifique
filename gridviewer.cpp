@@ -62,7 +62,6 @@ void GridViewer::setEdgeDetect(bool t_state)
 //Generates grid preview
 void GridViewer::updateGrid()
 {
-    qDebug() << "updateGrid()";
     //No cell mask, no grid
     if (cellShape.getCellMask().empty())
     {

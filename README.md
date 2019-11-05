@@ -11,4 +11,7 @@ A GUI based application for generating Photomosaics.
 * OpenCV + Contrib 4.1.1 w/ CUDA
 * Boost 1.71.0
 
-Note: CUDA usage is controlled by line '#define OPENCV_WITH_CUDA' in UtilityFuncs.h
+Note: CUDA usage is controlled by following line in UtilityFuncs.h:
+```
+#define OPENCV_WITH_CUDA
+```

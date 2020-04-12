@@ -5,6 +5,7 @@
 #include <opencv2/core/mat.hpp>
 
 #include "cellshape.h"
+#include "utilityfuncs.h"
 
 class PhotomosaicGenerator : private QProgressDialog
 {
@@ -23,6 +24,10 @@ public:
     void setRepeat(int t_repeatRange = 0, int t_repeatAddition = 0);
 
     cv::Mat generate();
+
+#ifdef CUDA
+    cv::Mat cudaGenerate();
+#endif
 
 private:
     cv::Mat m_img;

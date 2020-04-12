@@ -671,7 +671,11 @@ void MainWindow::generatePhotomosaic()
     generator.setRepeat(ui->spinRepeatRange->value(), ui->spinRepeatAddition->value());
 
     auto t1 = std::chrono::high_resolution_clock::now();
+#ifdef CUDA
+    cv::Mat mosaic = generator.cudaGenerate();
+#else
     cv::Mat mosaic = generator.generate();
+#endif
     qDebug() << "Generator time: " << std::chrono::duration_cast<std::chrono::seconds>(
                     std::chrono::high_resolution_clock::now() - t1).count() << "s";
 

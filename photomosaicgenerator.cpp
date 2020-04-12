@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <cmath>
+#include <math_constants.h>
 #include <climits>
 #include <algorithm>
 #include <opencv2/core/mat.hpp>
@@ -211,6 +212,200 @@ cv::Mat PhotomosaicGenerator::generate()
 
     return mosaic;
 }
+
+#ifdef CUDA
+
+extern "C"
+int euclideanDifferenceGPU(uchar *t_main_im, uchar **t_lib_im, int noLibIm, uchar *t_mask_im,
+                            int im_size[3], int target_area[4], int *t_repeats);
+
+extern "C"
+int CIEDE2000DifferenceGPU(uchar *t_main_im, uchar **t_lib_im, int noLibIm, uchar *t_mask_im,
+                           int im_size[3], int target_area[4], int *t_repeats);
+
+//Returns a Photomosaic of the main image made of the library images
+//Generates using CUDA
+cv::Mat PhotomosaicGenerator::cudaGenerate()
+{
+    bool padGrid = !m_cellShape.empty();
+    //Resizes main image and library based on detail level and converts colour space
+    auto [resizedImg, resizedLib] = resizeAndCvtColor();
+
+    //If no cell shape provided then use default square cell, else resize given cell shape
+    CellShape resizedCellShape;
+    if (m_cellShape.empty())
+        resizedCellShape = CellShape(cv::Mat(resizedLib.front().rows,
+                                             resizedLib.front().cols,
+                                             CV_8UC1, cv::Scalar(255)));
+    else
+        resizedCellShape = m_cellShape.resized(resizedLib.front().cols,
+                                               resizedLib.front().rows);
+
+    const cv::Point cellSize(resizedLib.front().cols, resizedLib.front().rows);
+    const cv::Point gridSize(resizedImg.cols / resizedCellShape.getColSpacing() + padGrid,
+                             resizedImg.rows / resizedCellShape.getRowSpacing() + padGrid);
+
+    setMaximum(gridSize.x * gridSize.y);
+    setValue(0);
+    setLabelText("Finding best fits...");
+
+    //Split main image into grid
+    //Find best match for each cell in grid
+    std::vector<std::vector<cv::Mat>> result(static_cast<size_t>(gridSize.x),
+                                             std::vector<cv::Mat>(static_cast<size_t>(gridSize.y)));
+    std::vector<std::vector<size_t>> grid(static_cast<size_t>(gridSize.x),
+                                          std::vector<size_t>(static_cast<size_t>(gridSize.y), 0));
+    cv::Mat cell(cellSize.y, cellSize.x, m_img.type(), cv::Scalar(0));
+    for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
+    {
+        for (int y = -padGrid; y < gridSize.y - padGrid; ++y)
+        {
+            //If user hits cancel in QProgressDialog then return empty mat
+            if (wasCanceled())
+                return cv::Mat();
+
+            const cv::Rect unboundedRect = resizedCellShape.getRectAt(x, y);
+
+            //Cell bounded positions (in mosaic area)
+            const int yStart = std::clamp(unboundedRect.tl().y, 0, resizedImg.rows);
+            const int yEnd = std::clamp(unboundedRect.br().y, 0, resizedImg.rows);
+            const int xStart = std::clamp(unboundedRect.tl().x, 0, resizedImg.cols);
+            const int xEnd = std::clamp(unboundedRect.br().x, 0, resizedImg.cols);
+
+            //Cell completely out of bounds, just skip
+            if (yStart == yEnd || xStart == xEnd)
+            {
+                result.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) =
+                        m_lib.front();
+                setValue(value() + 1);
+                continue;
+            }
+
+            //Copies visible part of main image to cell
+            resizedImg(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)).
+                    copyTo(cell(cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                                cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x)));
+
+            //Calculate number of each library image in repeat range
+            const std::map<size_t, int> repeats = calculateRepeats(grid, gridSize, x + padGrid,
+                                                                   y + padGrid);
+
+            int index = -1;
+            if (m_mode == Mode::CIEDE2000)
+            {
+                uchar **lib_im = (uchar **) malloc(resizedLib.size() * sizeof(uchar *));
+                for (size_t i = 0; i < resizedLib.size(); ++i)
+                {
+                    lib_im[i] = resizedLib.at(i).data;
+                }
+                int imageSize[3] = {cellSize.x, cellSize.y, cell.channels()};
+                int targetArea[4] = {yStart - unboundedRect.y, yEnd - unboundedRect.y,
+                                     xStart - unboundedRect.x, xEnd - unboundedRect.x};
+                int *repeatData = (int *) malloc(resizedLib.size() * sizeof(int));
+                for (auto it = repeats.begin(); it != repeats.end(); ++it)
+                {
+                    repeatData[it->first] = it->second;
+                }
+                index = CIEDE2000DifferenceGPU(cell.data, lib_im, resizedLib.size(),
+                                               resizedCellShape.getCellMask().data,
+                                               imageSize, targetArea, repeatData);
+            }
+            else
+            {
+                uchar **lib_im = (uchar **) malloc(resizedLib.size() * sizeof(uchar *));
+                for (size_t i = 0; i < resizedLib.size(); ++i)
+                {
+                    lib_im[i] = resizedLib.at(i).data;
+                }
+                int imageSize[3] = {cellSize.x, cellSize.y, cell.channels()};
+                int targetArea[4] = {yStart - unboundedRect.y, yEnd - unboundedRect.y,
+                                     xStart - unboundedRect.x, xEnd - unboundedRect.x};
+                int *repeatData = (int *) malloc(resizedLib.size() * sizeof(int));
+                for (auto it = repeats.begin(); it != repeats.end(); ++it)
+                {
+                    repeatData[it->first] = it->second;
+                }
+                index = euclideanDifferenceGPU(cell.data, lib_im, resizedLib.size(),
+                                               resizedCellShape.getCellMask().data,
+                                               imageSize, targetArea, repeatData);
+            }
+
+            if (index < 0 || index >= static_cast<int>(resizedLib.size()))
+            {
+                qDebug() << "Failed to find a best fit";
+                result.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) =
+                        m_lib.front();
+                setValue(value() + 1);
+                continue;
+            }
+
+            grid.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) =
+                    static_cast<size_t>(index);
+            result.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) =
+                    m_lib.at(static_cast<size_t>(index));
+            setValue(value() + 1);
+        }
+    }
+
+    //Combines all results into single image (mosaic)
+    cv::Mat mosaic;
+    if (m_cellShape.empty())
+    {
+        std::vector<cv::Mat> mosaicRows(static_cast<size_t>(gridSize.x));
+        for (size_t x = 0; x < static_cast<size_t>(gridSize.x); ++x)
+            cv::vconcat(result.at(x), mosaicRows.at(x));
+        cv::hconcat(mosaicRows, mosaic);
+    }
+    else
+    {
+        //Resizes cell shape to size of library images
+        resizedCellShape = m_cellShape.resized(m_lib.front().cols, m_lib.front().rows);
+        //Convert cell mask to grayscale (need single channel for use in copyTo()
+        cv::Mat cellMask;
+        cv::cvtColor(resizedCellShape.getCellMask(), cellMask, cv::COLOR_RGBA2GRAY);
+
+        mosaic = cv::Mat((gridSize.y - padGrid) * resizedCellShape.getRowSpacing(),
+                         (gridSize.x - padGrid) * resizedCellShape.getColSpacing(), m_img.type(),
+                         cv::Scalar(0));
+
+        //For all cells
+        for (int y = -padGrid; y < gridSize.y - padGrid; ++y)
+        {
+            for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
+            {
+                const cv::Rect unboundedRect = resizedCellShape.getRectAt(x, y);
+
+                //Cell bounded positions (in mosaic area)
+                const int yStart = std::clamp(unboundedRect.tl().y, 0, mosaic.rows);
+                const int yEnd = std::clamp(unboundedRect.br().y, 0, mosaic.rows);
+                const int xStart = std::clamp(unboundedRect.tl().x, 0, mosaic.cols);
+                const int xEnd = std::clamp(unboundedRect.br().x, 0, mosaic.cols);
+
+                //Cell completely out of bounds, just skip
+                if (yStart == yEnd || xStart == xEnd)
+                    continue;
+
+                //Creates a mat that is the cell area actually visible in mosaic
+                cv::Mat cellBounded(result.at(static_cast<size_t>(x + padGrid)).
+                                    at(static_cast<size_t>(y + padGrid)),
+                                    cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                                    cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+
+                //Creates mask bounded same as cell
+                cv::Mat maskBounded(cellMask,
+                                    cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                                    cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+
+                //Copys cell to mosaic using mask
+                cellBounded.copyTo(mosaic(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)),
+                                   maskBounded);
+            }
+        }
+    }
+
+    return mosaic;
+}
+#endif
 
 //Resizes main image and library images based on detail level
 //Also converts images to Lab colour space if needed
@@ -512,5 +707,5 @@ std::map<size_t, int> PhotomosaicGenerator::calculateRepeats(
 
 double PhotomosaicGenerator::degToRad(const double deg) const
 {
-    return (deg * M_PI) / 180;
+    return (deg * CUDART_PI) / 180;
 }

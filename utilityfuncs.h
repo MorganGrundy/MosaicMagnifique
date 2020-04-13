@@ -5,9 +5,6 @@
 #include <QPixmap>
 #include <QProgressBar>
 
-#define OPENCV_WITH_CUDA
-#define CUDA
-
 class UtilityFuncs
 {
 public:

@@ -12,7 +12,7 @@
 #include <string>
 #include <cmath>
 
-#ifdef OPENCV_WITH_CUDA
+#ifdef OPENCV_W_CUDA
 #include <opencv2/cudawarping.hpp>
 #endif
 
@@ -99,7 +99,7 @@ std::vector<cv::Mat> UtilityFuncs::batchResizeMat(const std::vector<cv::Mat> &im
 {
     std::vector<cv::Mat> result(images.size(), cv::Mat());
 
-#ifdef OPENCV_WITH_CUDA
+#ifdef OPENCV_W_CUDA
     if (progressBar != nullptr)
     {
         progressBar->setMaximum(0);

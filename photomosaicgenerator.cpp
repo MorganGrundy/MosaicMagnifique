@@ -1,10 +1,7 @@
 #include "photomosaicgenerator.h"
 
-#define _USE_MATH_DEFINES
-
-#include <vector>
 #include <cmath>
-#include <math_constants.h>
+#include <vector>
 #include <climits>
 #include <algorithm>
 #include <opencv2/core/mat.hpp>
@@ -13,11 +10,13 @@
 #include <opencv2/imgproc.hpp>
 #include <QDebug>
 
-#include "utilityfuncs.h"
-
-#ifdef OPENCV_WITH_CUDA
+#ifdef OPENCV_W_CUDA
 #include <opencv2/cudawarping.hpp>
 #include <opencv2/cudaimgproc.hpp>
+#endif
+
+#ifdef CUDA
+#include <math_constants.h>
 #endif
 
 PhotomosaicGenerator::PhotomosaicGenerator(QWidget *t_parent)
@@ -418,7 +417,7 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGenerator::resizeAndCvtColor
     //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
     cv::InterpolationFlags flags = (m_detail < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
 
-#ifdef OPENCV_WITH_CUDA
+#ifdef OPENCV_W_CUDA
     cv::cuda::Stream stream;
     //Main image
     cv::cuda::GpuMat mainSrc, mainDst;
@@ -707,5 +706,9 @@ std::map<size_t, int> PhotomosaicGenerator::calculateRepeats(
 
 double PhotomosaicGenerator::degToRad(const double deg) const
 {
+#ifdef CUDA
     return (deg * CUDART_PI) / 180;
+#else
+    return (deg * M_PI) / 180;
+#endif
 }

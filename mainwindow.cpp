@@ -19,7 +19,7 @@
 #include "utilityfuncs.h"
 #include "photomosaicgenerator.h"
 
-#ifdef OPENCV_WITH_CUDA
+#ifdef OPENCV_W_CUDA
 #include <opencv2/cudawarping.hpp>
 #endif
 

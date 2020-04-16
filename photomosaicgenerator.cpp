@@ -213,7 +213,7 @@ cv::Mat PhotomosaicGenerator::generate()
                                 cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x)));
             cudaMemcpy(main_im, cell.data, fullSize * sizeof(uchar), cudaMemcpyHostToDevice);
 
-            //Calculate number of each library image in repeat range and copy to GPU
+            //Calculate repeat value of each library image in repeat range and copy to GPU
             memset(repeats, 0, resizedLib.size() * sizeof(size_t));
             calculateRepeats(grid, gridSize, repeats, x + padGrid, y + padGrid);
             cudaMemcpy(repeats_GPU, repeats, resizedLib.size() * sizeof(size_t), cudaMemcpyHostToDevice);
@@ -254,7 +254,7 @@ cv::Mat PhotomosaicGenerator::generate()
     return combineResults(gridSize, result);
 }
 
-//Calculates the number of each library image in repeat range around x,y
+//Calculates the repeat value of each library image in repeat range around x,y
 //Only needs to look at first half of cells as the latter half are not yet used
 void PhotomosaicGenerator::calculateRepeats(const std::vector<std::vector<size_t>> &grid,
                                             const cv::Point &gridSize, size_t *repeats,
@@ -344,7 +344,7 @@ cv::Mat PhotomosaicGenerator::generate()
                     copyTo(cell(cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                                 cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x)));
 
-            //Calculate number of each library image in repeat range
+            //Calculate repeat value of each library image in repeat range
             const std::map<size_t, int> repeats = calculateRepeats(grid, gridSize, x + padGrid,
                                                                    y + padGrid);
 
@@ -380,7 +380,7 @@ cv::Mat PhotomosaicGenerator::generate()
     return combineResults(gridSize, result);
 }
 
-//Calculates the number of each library image in repeat range around x,y
+//Calculates the repeat value of each library image in repeat range around x,y
 //Only needs to look at first half of cells as the latter half are not yet used
 std::map<size_t, int> PhotomosaicGenerator::calculateRepeats(
         const std::vector<std::vector<size_t>> &grid, const cv::Point &gridSize,
@@ -399,10 +399,10 @@ std::map<size_t, int> PhotomosaicGenerator::calculateRepeats(
             const auto it = repeats.find(grid.at(static_cast<size_t>(repeatX)).
                                    at(static_cast<size_t>(repeatY)));
             if (it != repeats.end())
-                ++it->second;
+                it->second += m_repeatAddition;
             else
                 repeats.emplace(grid.at(static_cast<size_t>(repeatX)).
-                                at(static_cast<size_t>(repeatY)), 1);
+                                at(static_cast<size_t>(repeatY)), m_repeatAddition);
         }
     }
 
@@ -412,10 +412,10 @@ std::map<size_t, int> PhotomosaicGenerator::calculateRepeats(
         const auto it = repeats.find(grid.at(static_cast<size_t>(repeatX)).
                                at(static_cast<size_t>(y)));
         if (it != repeats.end())
-            ++it->second;
+            it->second += m_repeatAddition;
         else
             repeats.emplace(grid.at(static_cast<size_t>(repeatX)).
-                            at(static_cast<size_t>(y)), 1);
+                            at(static_cast<size_t>(y)), m_repeatAddition);
     }
     return repeats;
 }
@@ -436,7 +436,7 @@ int PhotomosaicGenerator::findBestFitEuclidean(const cv::Mat &cell, const cv::Ma
     for (size_t i = 0; i < library.size(); ++i)
     {
         const auto it = repeats.find(i);
-        long double variant = (it != repeats.end()) ? it->second * m_repeatAddition : 0;
+        long double variant = (it != repeats.end()) ? it->second : 0;
 
         //For cell and library image compare the corresponding pixels
         //Sum all pixel differences for total image difference
@@ -483,7 +483,7 @@ int PhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell, const cv::Ma
     for (size_t i = 0; i < library.size(); ++i)
     {
         const auto it = repeats.find(i);
-        long double variant = (it != repeats.end()) ? it->second * m_repeatAddition : 0;
+        long double variant = (it != repeats.end()) ? it->second : 0;
 
         //For cell and library image compare the corresponding pixels
         //Sum all pixel differences for total image difference

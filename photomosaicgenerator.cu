@@ -171,9 +171,9 @@ void compareKernel(double *lowestVariant, size_t *bestFit, double *newVariant, s
 }
 
 __global__
-void tmpAddKernel(double *dst, size_t *src, size_t srcI)
+void addSingleKernel(double *dst, size_t *src)
 {
-    dst[0] += src[srcI];
+    *dst += *src;
 }
 
 extern "C"
@@ -211,7 +211,8 @@ size_t differenceGPU(uchar *main_im, uchar **t_lib_im, size_t noLibIm, uchar *t_
             CIEDE2000DifferenceKernel<<<numBlocks, blockSize>>>(main_im, t_lib_im[i], pixelCount,
                                                                 im_size[2], variants);
 
-        tmpAddKernel<<<1,1>>>(variants, t_repeats, i);
+        //Adds repeat value to first difference value
+        addSingleKernel<<<1,1>>>(variants, t_repeats+i);
         //Calculate sum of differences
         int reduceSize = pixelCount;
         while (reduceSize > 1)

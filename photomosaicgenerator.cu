@@ -1,4 +1,6 @@
 #include <cuda.h>
+#include <cuda_runtime_api.h>
+#include <device_launch_parameters.h>
 #include <math_constants.h>
 #include <limits>
 
@@ -159,7 +161,7 @@ void reduceStep(double *data, int N, int halfN)
 }
 
 __global__
-void compareKernel(double *lowestVariant, int *bestFit, double *newVariant, int index)
+void compareKernel(double *lowestVariant, size_t *bestFit, double *newVariant, size_t index)
 {
     if (*newVariant < *lowestVariant)
     {
@@ -168,142 +170,48 @@ void compareKernel(double *lowestVariant, int *bestFit, double *newVariant, int 
     }
 }
 
-extern "C"
-int euclideanDifferenceGPU(uchar *t_main_im, uchar **t_lib_im, int noLibIm, uchar *t_mask_im,
-                            int im_size[3], int target_area[4], int *t_repeats)
+__global__
+void tmpAddKernel(double *dst, size_t *src, size_t srcI)
 {
-    int pixelCount = im_size[0] * im_size[1];
-    int fullSize = im_size[0] * im_size[1] * im_size[2];
-
-    //Allocate memory on GPU and copy data from CPU to GPU
-    //Move main image to GPU
-    uchar *main_im;
-    cudaMalloc(&main_im, fullSize * sizeof(uchar));
-    cudaMemcpy(main_im, t_main_im, fullSize * sizeof(uchar), cudaMemcpyHostToDevice);
-
-    //Host pointer to array of device pointers
-    //Move library images to GPU
-    uchar **lib_im;
-    lib_im = (uchar **) malloc(noLibIm * sizeof(uchar *));
-    for (int i = 0; i < noLibIm; ++i)
-    {
-        cudaMalloc(lib_im + i, fullSize * sizeof(uchar));
-        cudaMemcpy(lib_im[i], t_lib_im[i], fullSize * sizeof(uchar), cudaMemcpyHostToDevice);
-    }
-
-    //Move mask image to GPU
-    uchar *mask_im;
-    cudaMalloc(&mask_im, fullSize * sizeof(uchar));
-    cudaMemcpy(mask_im, t_mask_im, fullSize * sizeof(uchar), cudaMemcpyHostToDevice);
-
-    //Allocate list of variants (for each pixel)
-    double *variants, *lowestVariant;
-    cudaMalloc(&variants, pixelCount * sizeof(double));
-    //Initialise lowestVariant with largest possible value
-    cudaMalloc(&lowestVariant, sizeof(double));
-    double doubleMax = std::numeric_limits<double>::max();
-    cudaMemcpy(lowestVariant, &doubleMax, sizeof(double), cudaMemcpyHostToDevice);
-
-    int *bestFit;
-    cudaMalloc(&bestFit, sizeof(int));
-
-    cudaDeviceProp deviceProp;
-    cudaGetDeviceProperties(&deviceProp, 0);
-    const int maxThreadsPerBlock = deviceProp.maxThreadsPerBlock;
-    for (int i = 0; i < noLibIm; ++i)
-    {
-        int blockSize = maxThreadsPerBlock;
-        int numBlocks = (pixelCount + blockSize - 1) / blockSize;
-
-        //Calculate euclidean differences
-        euclideanDifferenceKernel<<<numBlocks, blockSize>>>(main_im, lib_im[i], pixelCount, im_size[2], variants);
-
-        //Calculate sum of differences
-        int reduceSize = pixelCount;
-        while (reduceSize > 1)
-        {
-            int halfSize = (reduceSize + 1) / 2;
-
-            blockSize = (maxThreadsPerBlock <= halfSize) ? maxThreadsPerBlock : halfSize;
-            numBlocks = (halfSize + blockSize - 1) / blockSize;
-
-            reduceStep<<<numBlocks, blockSize>>>(variants, reduceSize, halfSize);
-            reduceSize = halfSize;
-        }
-
-        compareKernel<<<1,1>>>(lowestVariant, bestFit, variants, i);
-    }
-    cudaDeviceSynchronize();
-
-    //Copy result from GPU to CPU
-    int result;
-    cudaMemcpy(&result, bestFit, sizeof(int), cudaMemcpyDeviceToHost);
-
-    //Free memory on GPU
-    cudaFree(main_im);
-    cudaFree(variants);
-    cudaFree(lowestVariant);
-    cudaFree(bestFit);
-    for (int i = 0; i < noLibIm; ++i)
-    {
-        cudaFree(lib_im[i]);
-    }
-    free(lib_im);
-    cudaFree(variants);
-
-    return result;
+    dst[0] += src[srcI];
 }
 
 extern "C"
-int CIEDE2000DifferenceGPU(uchar *t_main_im, uchar **t_lib_im, int noLibIm, uchar *t_mask_im,
-                           int im_size[3], int target_area[4], int *t_repeats)
+size_t differenceGPU(uchar *main_im, uchar **t_lib_im, size_t noLibIm, uchar *t_mask_im,
+                     int im_size[3], int target_area[4], size_t *t_repeats, int repeatAddition, bool euclidean)
 {
     int pixelCount = im_size[0] * im_size[1];
-    int fullSize = im_size[0] * im_size[1] * im_size[2];
-
-    //Allocate memory on GPU and copy data from CPU to GPU
-    //Move main image to GPU
-    uchar *main_im;
-    cudaMalloc(&main_im, fullSize * sizeof(uchar));
-    cudaMemcpy(main_im, t_main_im, fullSize * sizeof(uchar), cudaMemcpyHostToDevice);
-
-    //Host pointer to array of device pointers
-    //Move library images to GPU
-    uchar **lib_im;
-    lib_im = (uchar **) malloc(noLibIm * sizeof(uchar *));
-    for (int i = 0; i < noLibIm; ++i)
-    {
-        cudaMalloc(lib_im + i, fullSize * sizeof(uchar));
-        cudaMemcpy(lib_im[i], t_lib_im[i], fullSize * sizeof(uchar), cudaMemcpyHostToDevice);
-    }
-
-    //Move mask image to GPU
-    uchar *mask_im;
-    cudaMalloc(&mask_im, fullSize * sizeof(uchar));
-    cudaMemcpy(mask_im, t_mask_im, fullSize * sizeof(uchar), cudaMemcpyHostToDevice);
 
     //Allocate list of variants (for each pixel)
     double *variants, *lowestVariant;
-    cudaMalloc(&variants, pixelCount * sizeof(double));
+    cudaMalloc((void **)&variants, pixelCount * sizeof(double));
+
     //Initialise lowestVariant with largest possible value
-    cudaMalloc(&lowestVariant, sizeof(double));
+    cudaMalloc((void **)&lowestVariant, sizeof(double));
     double doubleMax = std::numeric_limits<double>::max();
     cudaMemcpy(lowestVariant, &doubleMax, sizeof(double), cudaMemcpyHostToDevice);
 
-    int *bestFit;
-    cudaMalloc(&bestFit, sizeof(int));
+    size_t *bestFit;
+    cudaMalloc((void **)&bestFit, sizeof(size_t));
+    cudaMemset(bestFit, 0, sizeof(size_t));
 
     cudaDeviceProp deviceProp;
     cudaGetDeviceProperties(&deviceProp, 0);
     const int maxThreadsPerBlock = deviceProp.maxThreadsPerBlock;
-    for (int i = 0; i < noLibIm; ++i)
+    for (size_t i = 0; i < noLibIm; ++i)
     {
         int blockSize = maxThreadsPerBlock;
         int numBlocks = (pixelCount + blockSize - 1) / blockSize;
 
         //Calculate euclidean differences
-        CIEDE2000DifferenceKernel<<<numBlocks, blockSize>>>(main_im, lib_im[i], pixelCount, im_size[2], variants);
+        if (euclidean)
+            euclideanDifferenceKernel<<<numBlocks, blockSize>>>(main_im, t_lib_im[i], pixelCount,
+                                                                im_size[2], variants);
+        else
+            CIEDE2000DifferenceKernel<<<numBlocks, blockSize>>>(main_im, t_lib_im[i], pixelCount,
+                                                                im_size[2], variants);
 
+        tmpAddKernel<<<1,1>>>(variants, t_repeats, i);
         //Calculate sum of differences
         int reduceSize = pixelCount;
         while (reduceSize > 1)
@@ -322,20 +230,13 @@ int CIEDE2000DifferenceGPU(uchar *t_main_im, uchar **t_lib_im, int noLibIm, ucha
     cudaDeviceSynchronize();
 
     //Copy result from GPU to CPU
-    int result;
-    cudaMemcpy(&result, bestFit, sizeof(int), cudaMemcpyDeviceToHost);
+    size_t result;
+    cudaMemcpy(&result, bestFit, sizeof(size_t), cudaMemcpyDeviceToHost);
 
     //Free memory on GPU
-    cudaFree(main_im);
     cudaFree(variants);
     cudaFree(lowestVariant);
     cudaFree(bestFit);
-    for (int i = 0; i < noLibIm; ++i)
-    {
-        cudaFree(lib_im[i]);
-    }
-    free(lib_im);
-    cudaFree(variants);
 
     return result;
 }

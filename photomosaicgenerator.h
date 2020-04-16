@@ -25,10 +25,6 @@ public:
 
     cv::Mat generate();
 
-#ifdef CUDA
-    cv::Mat cudaGenerate();
-#endif
-
 private:
     cv::Mat m_img;
     std::vector<cv::Mat> m_lib;
@@ -40,8 +36,13 @@ private:
 
     int m_repeatRange, m_repeatAddition;
 
-
     std::pair<cv::Mat, std::vector<cv::Mat>> resizeAndCvtColor();
+
+#ifdef CUDA
+    void calculateRepeats(const std::vector<std::vector<size_t>> &grid, const cv::Point &gridSize,
+                          size_t *repeats, const int x, const int y) const;
+#else
+
     int findBestFitEuclidean(const cv::Mat &cell, const cv::Mat &mask,
                              const std::vector<cv::Mat> &library,
                              const std::map<size_t, int> &repeats,
@@ -55,8 +56,11 @@ private:
 
     std::map<size_t, int> calculateRepeats(const std::vector<std::vector<size_t>> &grid,
                                            const cv::Point &gridSize, const int x, const int y) const;
+#endif
 
     double degToRad(const double deg) const;
+    cv::Mat combineResults(const cv::Point gridSize,
+                           const std::vector<std::vector<cv::Mat>> &result);
 };
 
 #endif // PHOTOMOSAICGENERATOR_H

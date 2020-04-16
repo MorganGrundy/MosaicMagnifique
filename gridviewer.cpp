@@ -199,13 +199,13 @@ void GridViewer::zoomChanged(double t_value)
 }
 
 //Called when the checkbox state changes
-void GridViewer::edgeDetectChanged(int t_state)
+void GridViewer::edgeDetectChanged(int /*t_state*/)
 {
     update();
 }
 
 //Displays grid
-void GridViewer::paintEvent(QPaintEvent *event)
+void GridViewer::paintEvent(QPaintEvent * /*event*/)
 {
     QPainter painter(this);
 
@@ -245,7 +245,7 @@ void GridViewer::paintEvent(QPaintEvent *event)
 }
 
 //Generate new grid with new size
-void GridViewer::resizeEvent(QResizeEvent *event)
+void GridViewer::resizeEvent(QResizeEvent * /*event*/)
 {
     updateGrid();
 }

@@ -216,7 +216,7 @@ cv::Mat PhotomosaicGenerator::generate()
             //Calculate number of each library image in repeat range and copy to GPU
             memset(repeats, 0, resizedLib.size() * sizeof(size_t));
             calculateRepeats(grid, gridSize, repeats, x + padGrid, y + padGrid);
-            cudaMemcpy(repeats_GPU, repeats, resizedLib.size(), cudaMemcpyHostToDevice);
+            cudaMemcpy(repeats_GPU, repeats, resizedLib.size() * sizeof(size_t), cudaMemcpyHostToDevice);
 
             int imageSize[3] = {cellSize.x, cellSize.y, resizedImg.channels()};
             int targetArea[4] = {yStart - unboundedRect.y, yEnd - unboundedRect.y,

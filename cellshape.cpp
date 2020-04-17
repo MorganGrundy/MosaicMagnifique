@@ -47,35 +47,10 @@ void CellShape::setCellMask(const cv::Mat &t_cellMask)
     if (t_cellMask.type() == CV_8UC1)
     {
         cv::Mat result;
-        //Threshold to create binary mask and convert to RGBA
+        //Threshold to create binary mask
         cv::threshold(t_cellMask, result, 127.0, 255.0, cv::THRESH_BINARY);
-        cv::cvtColor(result, result, cv::COLOR_GRAY2RGBA);
-
-        //Make black pixels transparent
-        int channels = result.channels();
-        int nRows = result.rows;
-        int nCols = result.cols * channels;
-        if (result.isContinuous())
-        {
-            nCols *= nRows;
-            nRows = 1;
-        }
-
-        uchar *p;
-        for (int i = 0; i < nRows; ++i)
-        {
-            p = result.ptr<uchar>(i);
-            for (int j = 0; j < nCols; j += channels)
-            {
-                if (p[j] == 0)
-                    p[j+3] = 0;
-            }
-        }
         m_cellMask = result;
     }
-    //Mask is RGBA
-    else if (t_cellMask.type() == CV_8UC4)
-        m_cellMask = t_cellMask.clone();
     else
         qDebug() << "CellShape::setCellMask(const cv::Mat &) unsupported mask type";
 

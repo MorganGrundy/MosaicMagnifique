@@ -43,7 +43,7 @@ private:
     CellShape cellShape;
     QImage background;
 
-    cv::Mat edgeDetectedCell;
+    cv::Mat edgeCell, edgeDetectedCell;
     QImage grid, edgeGrid;
 
     const double MIN_ZOOM, MAX_ZOOM;

@@ -104,7 +104,7 @@ void GridViewer::updateGrid()
 
             cv::Mat gridPart(newGrid, roi), edgeGridPart(newEdgeGrid, roi);
 
-            cv::Mat mask(cellShape.getCellMask(), cv::Rect(0, 0, gridPart.cols, gridPart.rows));
+            cv::Mat mask(edgeCell, cv::Rect(0, 0, gridPart.cols, gridPart.rows));
             cv::Mat edgeMask(edgeDetectedCell, cv::Rect(0, 0, edgeGridPart.cols,
                                                         edgeGridPart.rows));
 
@@ -127,15 +127,9 @@ void GridViewer::setCellShape(const CellShape &t_cellShape)
 
     if (!cellShape.getCellMask().empty())
     {
-        //Add single pixel black transparent border to mask so that Canny cannot leave open edges
-        cv::Mat maskWithBorder;
-        cv::copyMakeBorder(cellShape.getCellMask(), maskWithBorder, 1, 1, 1, 1, cv::BORDER_CONSTANT,
-                           cv::Scalar(0));
-        //Use Canny to detect edge of cell mask and convert to RGBA
+        //Converts cell mask to RGBA
         cv::Mat result;
-        cv::Canny(maskWithBorder, result, 100.0, 155.0);
-        cv::cvtColor(result, result, cv::COLOR_GRAY2RGBA);
-
+        cv::cvtColor(cellShape.getCellMask(), result, cv::COLOR_GRAY2RGBA);
         //Make black pixels transparent
         int channels = result.channels();
         int nRows = result.rows;
@@ -145,7 +139,6 @@ void GridViewer::setCellShape(const CellShape &t_cellShape)
             nCols *= nRows;
             nRows = 1;
         }
-
         uchar *p;
         for (int i = 0; i < nRows; ++i)
         {
@@ -156,10 +149,43 @@ void GridViewer::setCellShape(const CellShape &t_cellShape)
                     p[j+3] = 0;
             }
         }
-        edgeDetectedCell = result;
+        edgeCell = result;
+
+
+        //Add single pixel black transparent border to mask so that Canny cannot leave open edges
+        cv::Mat maskWithBorder;
+        cv::copyMakeBorder(result, maskWithBorder, 1, 1, 1, 1, cv::BORDER_CONSTANT,
+                           cv::Scalar(0));
+        //Use Canny to detect edge of cell mask and convert to RGBA
+        cv::Mat edgeResult;
+        cv::Canny(maskWithBorder, edgeResult, 100.0, 155.0);
+        cv::cvtColor(edgeResult, edgeResult, cv::COLOR_GRAY2RGBA);
+
+        //Make black pixels transparent
+        channels = edgeResult.channels();
+        nRows = edgeResult.rows;
+        nCols = edgeResult.cols * channels;
+        if (edgeResult.isContinuous())
+        {
+            nCols *= nRows;
+            nRows = 1;
+        }
+        for (int i = 0; i < nRows; ++i)
+        {
+            p = edgeResult.ptr<uchar>(i);
+            for (int j = 0; j < nCols; j += channels)
+            {
+                if (p[j] == 0)
+                    p[j+3] = 0;
+            }
+        }
+        edgeDetectedCell = edgeResult;
     }
     else
+    {
+        edgeCell.release();
         edgeDetectedCell.release();
+    }
 
     updateGrid();
 }
@@ -239,7 +265,7 @@ void GridViewer::paintEvent(QPaintEvent * /*event*/)
     }
     else if (!grid.isNull())
     {
-        QImage croppedGrid = edgeGrid.copy(0, 0, background.width(), background.height());
+        QImage croppedGrid = grid.copy(0, 0, background.width(), background.height());
         painter.drawImage(QRectF(QPointF(0,0), QSizeF(width(), height())), croppedGrid, sourceRect);
     }
 }

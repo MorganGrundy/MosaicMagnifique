@@ -150,7 +150,8 @@ cv::Mat PhotomosaicGenerator::generate()
     setValue(0);
     setLabelText("Finding best fits...");
 
-    const size_t fullSize = static_cast<size_t>(cellSize.x * cellSize.y * resizedImg.channels());
+    const size_t pixelCount = static_cast<size_t>(cellSize.x * cellSize.y);
+    const size_t fullSize = static_cast<size_t>(cellSize.x * cellSize.y * resizedLib.front().channels());
     //Allocate memory on GPU and copy data from CPU to GPU
     //Move main image to GPU
     uchar *main_im;
@@ -167,8 +168,8 @@ cv::Mat PhotomosaicGenerator::generate()
 
     //Move mask image to GPU
     uchar *mask_im;
-    cudaMalloc((void **)&mask_im, fullSize * sizeof(uchar));
-    cudaMemcpy(mask_im, resizedCellShape.getCellMask().data, fullSize * sizeof(uchar), cudaMemcpyHostToDevice);
+    cudaMalloc((void **)&mask_im, pixelCount * sizeof(uchar));
+    cudaMemcpy(mask_im, resizedCellShape.getCellMask().data, pixelCount * sizeof(uchar), cudaMemcpyHostToDevice);
 
     //Allocate memory for repeats
     size_t *repeats = static_cast<size_t *>(malloc(resizedLib.size() * sizeof(size_t)));
@@ -218,7 +219,7 @@ cv::Mat PhotomosaicGenerator::generate()
             calculateRepeats(grid, gridSize, repeats, x + padGrid, y + padGrid);
             cudaMemcpy(repeats_GPU, repeats, resizedLib.size() * sizeof(size_t), cudaMemcpyHostToDevice);
 
-            int imageSize[3] = {cellSize.x, cellSize.y, resizedImg.channels()};
+            int imageSize[3] = {cellSize.x, cellSize.y, resizedLib.front().channels()};
             int targetArea[4] = {yStart - unboundedRect.y, yEnd - unboundedRect.y,
                                  xStart - unboundedRect.x, xEnd - unboundedRect.x};
 
@@ -647,8 +648,6 @@ cv::Mat PhotomosaicGenerator::combineResults(const cv::Point gridSize,
         //Resizes cell shape to size of library images
         CellShape resizedCellShape = m_cellShape.resized(m_lib.front().cols, m_lib.front().rows);
         //Convert cell mask to grayscale (need single channel for use in copyTo()
-        cv::Mat cellMask;
-        cv::cvtColor(resizedCellShape.getCellMask(), cellMask, cv::COLOR_RGBA2GRAY);
 
         mosaic = cv::Mat((gridSize.y - padGrid) * resizedCellShape.getRowSpacing(),
                          (gridSize.x - padGrid) * resizedCellShape.getColSpacing(), m_img.type(),
@@ -678,7 +677,7 @@ cv::Mat PhotomosaicGenerator::combineResults(const cv::Point gridSize,
                                     cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
                 //Creates mask bounded same as cell
-                cv::Mat maskBounded(cellMask,
+                cv::Mat maskBounded(resizedCellShape.getCellMask(),
                                     cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                                     cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
@@ -688,5 +687,6 @@ cv::Mat PhotomosaicGenerator::combineResults(const cv::Point gridSize,
             }
         }
     }
+
     return mosaic;
 }

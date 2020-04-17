@@ -11,7 +11,7 @@ public:
     //Current version number
     static const int VERSION_NO = 100;
     static const int MIL_VERSION = 2;
-    static const int MCS_VERSION = 3;
+    static const int MCS_VERSION = 4;
 
     //Enum class that represents the two different resize types, used in resizeImage
     enum class ResizeType {INCLUSIVE, EXCLUSIVE};

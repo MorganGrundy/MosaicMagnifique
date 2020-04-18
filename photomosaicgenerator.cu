@@ -9,13 +9,22 @@
 //Kernel that calculates the euclidean difference between two images for each corresponding pixel
 __global__
 void euclideanDifferenceKernel(uchar *im_1, uchar *im_2, uchar *mask_im, int size, int channels,
-                               double *variants)
+                               int *target_area, double *variants)
 {
     int index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
     int stride = blockDim.x * gridDim.x * channels;
-    for (int i = index; i < size * channels; i += stride)
+    for (int i = index; i < size * size * channels; i += stride)
     {
-        if (mask_im[i / channels] != 0)
+        int grayscaleIndex = i / channels;
+        int row = grayscaleIndex / size;
+        if (row < target_area[0] || row >= target_area[1])
+            continue;
+
+        int col = grayscaleIndex % size;
+        if (col < target_area[2] || col >= target_area[3])
+            continue;
+
+        if (mask_im[grayscaleIndex] != 0)
             variants[i / channels] = sqrt(pow((double) im_1[i] - im_2[i], 2.0) +
                                           pow((double) im_1[i + 1] - im_2[i + 1], 2.0) +
                                           pow((double) im_1[i + 2] - im_2[i + 2], 2.0));
@@ -32,13 +41,22 @@ constexpr double degToRadKernel(const double deg)
 //Kernel that calculates the CIEDE2000 difference between two images for each corresponding pixel
 __global__
 void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, uchar *mask_im, int size, int channels,
-                               double *variants)
+                               int *target_area, double *variants)
 {
     int index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
     int stride = blockDim.x * gridDim.x * channels;
-    for (int i = index; i < size * channels; i += stride)
+    for (int i = index; i < size * size * channels; i += stride)
     {
-        if (mask_im[i / channels] != 0)
+        int grayscaleIndex = i / channels;
+        int row = grayscaleIndex / size;
+        if (row < target_area[0] || row >= target_area[1])
+            continue;
+
+        int col = grayscaleIndex % size;
+        if (col < target_area[2] || col >= target_area[3])
+            continue;
+
+        if (mask_im[grayscaleIndex] != 0)
         {
             const double k_L = 1.0, k_C = 1.0, k_H = 1.0;
             constexpr double deg360InRad = degToRadKernel(360.0);
@@ -184,9 +202,9 @@ void addSingleKernel(double *dst, size_t *src)
 
 extern "C"
 size_t differenceGPU(uchar *main_im, uchar **t_lib_im, size_t noLibIm, uchar *t_mask_im,
-                     int im_size[3], int target_area[4], size_t *t_repeats, int repeatAddition, bool euclidean)
+                     int im_size[2], int *target_area, size_t *t_repeats, int repeatAddition, bool euclidean)
 {
-    int pixelCount = im_size[0] * im_size[1];
+    int pixelCount = im_size[0] * im_size[0];
 
     //Allocate list of variants (for each pixel)
     double *variants, *lowestVariant;
@@ -214,10 +232,10 @@ size_t differenceGPU(uchar *main_im, uchar **t_lib_im, size_t noLibIm, uchar *t_
         //Calculate euclidean differences
         if (euclidean)
             euclideanDifferenceKernel<<<numBlocks, blockSize>>>(main_im, t_lib_im[i], t_mask_im,
-                                                                pixelCount, im_size[2], variants);
+                                                                im_size[0], im_size[1], target_area, variants);
         else
             CIEDE2000DifferenceKernel<<<numBlocks, blockSize>>>(main_im, t_lib_im[i], t_mask_im,
-                                                                pixelCount, im_size[2], variants);
+                                                                im_size[0], im_size[1], target_area, variants);
 
         //Adds repeat value to first difference value
         addSingleKernel<<<1,1>>>(variants, t_repeats+i);

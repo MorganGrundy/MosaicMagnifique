@@ -142,7 +142,8 @@ cv::Mat PhotomosaicGenerator::generate()
     else
         resizedCellShape = m_cellShape.resized(resizedLib.front().cols, resizedLib.front().rows);
 
-    const cv::Point cellSize(resizedLib.front().cols, resizedLib.front().rows);
+    //Library images are square so rows == cols
+    const int cellSize = resizedLib.front().cols;
     const cv::Point gridSize(resizedImg.cols / resizedCellShape.getColSpacing() + padGrid,
                              resizedImg.rows / resizedCellShape.getRowSpacing() + padGrid);
 
@@ -150,8 +151,8 @@ cv::Mat PhotomosaicGenerator::generate()
     setValue(0);
     setLabelText("Finding best fits...");
 
-    const size_t pixelCount = static_cast<size_t>(cellSize.x * cellSize.y);
-    const size_t fullSize = static_cast<size_t>(cellSize.x * cellSize.y * resizedLib.front().channels());
+    const size_t pixelCount = static_cast<size_t>(cellSize * cellSize);
+    const size_t fullSize = static_cast<size_t>(cellSize * cellSize * resizedLib.front().channels());
     //Allocate memory on GPU and copy data from CPU to GPU
     //Move main image to GPU
     uchar *main_im;
@@ -176,13 +177,17 @@ cv::Mat PhotomosaicGenerator::generate()
     size_t *repeats_GPU;
     cudaMalloc((void **)&repeats_GPU, resizedLib.size() * sizeof(size_t));
 
+    //Allocate memory for target area
+    int *targetArea_GPU;
+    cudaMalloc((void **)&targetArea_GPU, 4 * sizeof(int));
+
     //Split main image into grid
     //Find best match for each cell in grid
     std::vector<std::vector<cv::Mat>> result(static_cast<size_t>(gridSize.x),
                                              std::vector<cv::Mat>(static_cast<size_t>(gridSize.y)));
     std::vector<std::vector<size_t>> grid(static_cast<size_t>(gridSize.x),
                                           std::vector<size_t>(static_cast<size_t>(gridSize.y), 0));
-    cv::Mat cell(cellSize.y, cellSize.x, m_img.type(), cv::Scalar(0));
+    cv::Mat cell(cellSize, cellSize, m_img.type(), cv::Scalar(0));
     for (int x = -static_cast<int>(padGrid); x < gridSize.x - padGrid; ++x)
     {
         for (int y = -static_cast<int>(padGrid); y < gridSize.y - padGrid; ++y)
@@ -208,10 +213,15 @@ cv::Mat PhotomosaicGenerator::generate()
                 continue;
             }
 
+
+            int targetArea[4] = {yStart - unboundedRect.y, yEnd - unboundedRect.y,
+                                 xStart - unboundedRect.x, xEnd - unboundedRect.x};
+            cudaMemcpy(targetArea_GPU, targetArea, 4 * sizeof(int), cudaMemcpyHostToDevice);
+
             //Copies visible part of main image to cell
             resizedImg(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)).
-                    copyTo(cell(cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
-                                cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x)));
+                    copyTo(cell(cv::Range(targetArea[0], targetArea[1]),
+                                cv::Range(targetArea[2], targetArea[3])));
             cudaMemcpy(main_im, cell.data, fullSize * sizeof(uchar), cudaMemcpyHostToDevice);
 
             //Calculate repeat value of each library image in repeat range and copy to GPU
@@ -219,12 +229,11 @@ cv::Mat PhotomosaicGenerator::generate()
             calculateRepeats(grid, gridSize, repeats, x + padGrid, y + padGrid);
             cudaMemcpy(repeats_GPU, repeats, resizedLib.size() * sizeof(size_t), cudaMemcpyHostToDevice);
 
-            int imageSize[3] = {cellSize.x, cellSize.y, resizedLib.front().channels()};
-            int targetArea[4] = {yStart - unboundedRect.y, yEnd - unboundedRect.y,
-                                 xStart - unboundedRect.x, xEnd - unboundedRect.x};
+            int imageSize[2] = {cellSize, resizedLib.front().channels()};
 
             size_t index = differenceGPU(main_im, lib_im, resizedLib.size(), mask_im, imageSize,
-                                         targetArea, repeats_GPU, m_repeatAddition, (m_mode != Mode::CIEDE2000));
+                                         targetArea_GPU, repeats_GPU, m_repeatAddition,
+                                         (m_mode != Mode::CIEDE2000));
 
             if (index >= resizedLib.size())
             {

@@ -672,8 +672,8 @@ void MainWindow::generatePhotomosaic()
 
     auto t1 = std::chrono::high_resolution_clock::now();
     cv::Mat mosaic = generator.generate();
-    qDebug() << "Generator time: " << std::chrono::duration_cast<std::chrono::seconds>(
-                    std::chrono::high_resolution_clock::now() - t1).count() << "s";
+    qDebug() << "Generator time: " << std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::high_resolution_clock::now() - t1).count() / 1000.0 << "s";
 
     if (!mosaic.empty())
         cv::imshow("Mosaic", mosaic);

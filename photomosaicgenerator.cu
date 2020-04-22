@@ -6,28 +6,30 @@
 
 #define uchar unsigned char
 
-//Kernel that calculates the euclidean difference between two images for each corresponding pixel
+//Calculates the euclidean difference between main image and library images
 __global__
-void euclideanDifferenceKernel(uchar *im_1, uchar *im_2, uchar *mask_im, int size, int channels,
-                               int *target_area, double *variants)
+void euclideanDifferenceKernel(uchar *im_1, uchar *im_2, int noLibIm, uchar *mask_im,
+                               int size, int channels, int *target_area, double *variants)
 {
-    int index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
-    int stride = blockDim.x * gridDim.x * channels;
-    for (int i = index; i < size * size * channels; i += stride)
+    const size_t index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
+    const size_t stride = blockDim.x * gridDim.x * channels;
+    for (size_t i = index; i < size * size * channels * noLibIm; i += stride)
     {
-        int grayscaleIndex = i / channels;
-        int row = grayscaleIndex / size;
+        const size_t im_1_index = i % (size * size * channels);
+        const size_t grayscaleIndex = im_1_index / channels;
+
+        const size_t row = grayscaleIndex / size;
         if (row < target_area[0] || row >= target_area[1])
             continue;
 
-        int col = grayscaleIndex % size;
+        const size_t col = grayscaleIndex % size;
         if (col < target_area[2] || col >= target_area[3])
             continue;
 
         if (mask_im[grayscaleIndex] != 0)
-            variants[i / channels] = sqrt(pow((double) im_1[i] - im_2[i], 2.0) +
-                                          pow((double) im_1[i + 1] - im_2[i + 1], 2.0) +
-                                          pow((double) im_1[i + 2] - im_2[i + 2], 2.0));
+            variants[i / channels] = sqrt(pow((double) im_1[im_1_index] - im_2[i], 2.0) +
+                                          pow((double) im_1[im_1_index + 1] - im_2[i + 1], 2.0) +
+                                          pow((double) im_1[im_1_index + 2] - im_2[i + 2], 2.0));
     }
 }
 
@@ -40,19 +42,21 @@ constexpr double degToRadKernel(const double deg)
 
 //Kernel that calculates the CIEDE2000 difference between two images for each corresponding pixel
 __global__
-void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, uchar *mask_im, int size, int channels,
-                               int *target_area, double *variants)
+void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, size_t noLibIm, uchar *mask_im,
+                               int size, int channels, int *target_area, double *variants)
 {
-    int index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
-    int stride = blockDim.x * gridDim.x * channels;
-    for (int i = index; i < size * size * channels; i += stride)
+    const size_t index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
+    const size_t stride = blockDim.x * gridDim.x * channels;
+    for (size_t i = index; i < size * size * channels * noLibIm; i += stride)
     {
-        int grayscaleIndex = i / channels;
-        int row = grayscaleIndex / size;
+        const size_t im_1_index = i % (size * size * channels);
+        const size_t grayscaleIndex = im_1_index / channels;
+
+        const size_t row = grayscaleIndex / size;
         if (row < target_area[0] || row >= target_area[1])
             continue;
 
-        int col = grayscaleIndex % size;
+        const size_t col = grayscaleIndex % size;
         if (col < target_area[2] || col >= target_area[3])
             continue;
 
@@ -63,27 +67,27 @@ void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, uchar *mask_im, int siz
             constexpr double deg180InRad = degToRadKernel(180.0);
             const double pow25To7 = 6103515625.0; //pow(25, 7)
 
-            const double C1 = sqrt((double) (im_1[i + 1] * im_1[i + 1]) +
-                    (im_1[i + 2] * im_1[i + 2]));
+            const double C1 = sqrt((double) (im_1[im_1_index + 1] * im_1[im_1_index + 1]) +
+                    (im_1[im_1_index + 2] * im_1[im_1_index + 2]));
             const double C2 = sqrt((double) (im_2[i + 1] * im_2[i + 1]) +
                     (im_2[i + 2] * im_2[i + 2]));
             const double barC = (C1 + C2) / 2.0;
 
             const double G = 0.5 * (1 - sqrt(pow(barC, 7) / (pow(barC, 7) + pow25To7)));
 
-            const double a1Prime = (1.0 + G) * im_1[i + 1];
+            const double a1Prime = (1.0 + G) * im_1[im_1_index + 1];
             const double a2Prime = (1.0 + G) * im_2[i + 1];
 
             const double CPrime1 = sqrt((a1Prime * a1Prime) +
-                                        (im_1[i + 2] * im_1[i + 2]));
+                                        (im_1[im_1_index + 2] * im_1[im_1_index + 2]));
             const double CPrime2 = sqrt((a2Prime * a2Prime) +(im_2[i + 2] * im_2[i + 2]));
 
             double hPrime1;
-            if (im_1[i + 2] == 0 && a1Prime == 0.0)
+            if (im_1[im_1_index + 2] == 0 && a1Prime == 0.0)
                 hPrime1 = 0.0;
             else
             {
-                hPrime1 = atan2((double) im_1[i + 2], a1Prime);
+                hPrime1 = atan2((double) im_1[im_1_index + 2], a1Prime);
                 //This must be converted to a hue angle in degrees between 0 and 360 by
                 //addition of 2 pi to negative hue angles.
                 if (hPrime1 < 0)
@@ -102,7 +106,7 @@ void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, uchar *mask_im, int siz
                     hPrime2 += deg360InRad;
             }
 
-            const double deltaLPrime = im_2[i] - im_1[i];
+            const double deltaLPrime = im_2[i] - im_1[im_1_index];
             const double deltaCPrime = CPrime2 - CPrime1;
 
             double deltahPrime;
@@ -121,7 +125,7 @@ void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, uchar *mask_im, int siz
 
             const double deltaHPrime = 2.0 * sqrt(CPrimeProduct) * sin(deltahPrime / 2.0);
 
-            const double barLPrime = (im_1[i] + im_2[i]) / 2.0;
+            const double barLPrime = (im_1[im_1_index] + im_2[i]) / 2.0;
             const double barCPrime = (CPrime1 + CPrime2) / 2.0;
 
             double barhPrime;
@@ -184,33 +188,41 @@ void reduceStep(double *data, int N, int halfN)
     }
 }
 
+//Finds lowest value in variants
 __global__
-void compareKernel(double *lowestVariant, size_t *bestFit, double *newVariant, size_t index)
+void findLowestKernel(double *lowestVariant, size_t *bestFit, double *variants,
+                      size_t offset, size_t noLibIm)
 {
-    if (*newVariant < *lowestVariant)
+    for (size_t i = 0; i < noLibIm; ++i)
     {
-        *lowestVariant = *newVariant;
-        *bestFit = index;
+        if (variants[i * offset] < *lowestVariant)
+        {
+            *lowestVariant = variants[i * offset];
+            *bestFit = i;
+        }
     }
 }
 
+//Adds repeat values to variants
 __global__
-void addSingleKernel(double *dst, size_t *src)
+void addRepeatsKernel(double *variants, size_t *repeats, size_t offset, size_t noLibIm)
 {
-    *dst += *src;
+    const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
+    const size_t stride = blockDim.x * gridDim.x;
+    for (size_t i = index; i < noLibIm; i += stride)
+        variants[offset * i] += repeats[i];
 }
 
 extern "C"
-size_t differenceGPU(uchar *main_im, uchar **t_lib_im, size_t noLibIm, uchar *t_mask_im,
-                     int im_size[2], int *target_area, size_t *t_repeats, int repeatAddition, bool euclidean)
+size_t differenceGPU(uchar *main_im, uchar *t_lib_im, size_t noLibIm, uchar *t_mask_im,
+                     int im_size[2], int *target_area, size_t *t_repeats, int repeatAddition,
+                     bool euclidean, double *variants)
 {
     int pixelCount = im_size[0] * im_size[0];
-
-    //Allocate list of variants (for each pixel)
-    double *variants, *lowestVariant;
-    cudaMalloc((void **)&variants, pixelCount * sizeof(double));
+    int fullSize = pixelCount * im_size[1];
 
     //Initialise lowestVariant with largest possible value
+    double *lowestVariant;
     cudaMalloc((void **)&lowestVariant, sizeof(double));
     double doubleMax = std::numeric_limits<double>::max();
     cudaMemcpy(lowestVariant, &doubleMax, sizeof(double), cudaMemcpyHostToDevice);
@@ -221,39 +233,39 @@ size_t differenceGPU(uchar *main_im, uchar **t_lib_im, size_t noLibIm, uchar *t_
 
     cudaDeviceProp deviceProp;
     cudaGetDeviceProperties(&deviceProp, 0);
-    const int maxThreadsPerBlock = deviceProp.maxThreadsPerBlock;
+    const int blockSize = deviceProp.maxThreadsPerBlock;
+    int numBlocks = (pixelCount * noLibIm + blockSize - 1) / blockSize;
+
+    if (euclidean)
+        euclideanDifferenceKernel<<<numBlocks, blockSize>>>(main_im, t_lib_im, noLibIm, t_mask_im,
+                                                            im_size[0], im_size[1], target_area,
+                                                            variants);
+    else
+        CIEDE2000DifferenceKernel<<<numBlocks, blockSize>>>(main_im, t_lib_im, noLibIm, t_mask_im,
+                                                            im_size[0], im_size[1], target_area,
+                                                            variants);
+
+    //Adds repeat value to first difference value
+    numBlocks = ((int)noLibIm + blockSize - 1) / blockSize;
+    addRepeatsKernel<<<numBlocks, blockSize>>>(variants, t_repeats, pixelCount, noLibIm);
+
     for (size_t i = 0; i < noLibIm; ++i)
     {
-        cudaMemset(variants, 0, pixelCount * sizeof(double));
-
-        int blockSize = maxThreadsPerBlock;
-        int numBlocks = (pixelCount + blockSize - 1) / blockSize;
-
-        //Calculate euclidean differences
-        if (euclidean)
-            euclideanDifferenceKernel<<<numBlocks, blockSize>>>(main_im, t_lib_im[i], t_mask_im,
-                                                                im_size[0], im_size[1], target_area, variants);
-        else
-            CIEDE2000DifferenceKernel<<<numBlocks, blockSize>>>(main_im, t_lib_im[i], t_mask_im,
-                                                                im_size[0], im_size[1], target_area, variants);
-
-        //Adds repeat value to first difference value
-        addSingleKernel<<<1,1>>>(variants, t_repeats+i);
         //Calculate sum of differences
         int reduceSize = pixelCount;
         while (reduceSize > 1)
         {
             int halfSize = (reduceSize + 1) / 2;
-
-            blockSize = (maxThreadsPerBlock <= halfSize) ? maxThreadsPerBlock : halfSize;
             numBlocks = (halfSize + blockSize - 1) / blockSize;
 
-            reduceStep<<<numBlocks, blockSize>>>(variants, reduceSize, halfSize);
+            reduceStep<<<numBlocks, blockSize>>>(variants + i * pixelCount, reduceSize, halfSize);
             reduceSize = halfSize;
         }
-
-        compareKernel<<<1,1>>>(lowestVariant, bestFit, variants, i);
     }
+
+    //Find lowest variant
+    findLowestKernel<<<1,1>>>(lowestVariant, bestFit, variants, pixelCount, noLibIm);
+
     cudaDeviceSynchronize();
 
     //Copy result from GPU to CPU
@@ -261,7 +273,6 @@ size_t differenceGPU(uchar *main_im, uchar **t_lib_im, size_t noLibIm, uchar *t_
     cudaMemcpy(&result, bestFit, sizeof(size_t), cudaMemcpyDeviceToHost);
 
     //Free memory on GPU
-    cudaFree(variants);
     cudaFree(lowestVariant);
     cudaFree(bestFit);
 

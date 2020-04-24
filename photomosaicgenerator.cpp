@@ -124,7 +124,8 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGenerator::resizeAndCvtColor
 
 extern "C"
 size_t differenceGPU(uchar *main_im, uchar *t_lib_im, size_t noLibIm, uchar *t_mask_im,
-                     int im_size[2], int target_area[4], size_t *t_repeats, int repeatAddition,
+                     size_t im_size[2], size_t target_area[4],
+                     size_t *t_repeats, size_t repeatAddition,
                      bool euclidean, double *variants);
 
 //Returns a Photomosaic of the main image made of the library images
@@ -179,8 +180,8 @@ cv::Mat PhotomosaicGenerator::generate()
     cudaMalloc((void **)&repeats_GPU, resizedLib.size() * sizeof(size_t));
 
     //Allocate memory for target area
-    int *targetArea_GPU;
-    cudaMalloc((void **)&targetArea_GPU, 4 * sizeof(int));
+    size_t *targetArea_GPU;
+    cudaMalloc((void **)&targetArea_GPU, 4 * sizeof(size_t));
 
     //Allocate memory for variants
     double *variants;
@@ -218,10 +219,11 @@ cv::Mat PhotomosaicGenerator::generate()
                 continue;
             }
 
-
-            int targetArea[4] = {yStart - unboundedRect.y, yEnd - unboundedRect.y,
-                                 xStart - unboundedRect.x, xEnd - unboundedRect.x};
-            cudaMemcpy(targetArea_GPU, targetArea, 4 * sizeof(int), cudaMemcpyHostToDevice);
+            size_t targetArea[4] = {static_cast<size_t>(yStart - unboundedRect.y),
+                                    static_cast<size_t>(yEnd - unboundedRect.y),
+                                    static_cast<size_t>(xStart - unboundedRect.x),
+                                    static_cast<size_t>(xEnd - unboundedRect.x)};
+            cudaMemcpy(targetArea_GPU, targetArea, 4 * sizeof(size_t), cudaMemcpyHostToDevice);
 
             //Copies visible part of main image to cell
             resizedImg(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)).
@@ -236,7 +238,8 @@ cv::Mat PhotomosaicGenerator::generate()
 
             cudaMemset(variants, 0, pixelCount * resizedLib.size() * sizeof(double));
 
-            int imageSize[2] = {cellSize, resizedLib.front().channels()};
+            size_t imageSize[2] = {static_cast<size_t>(cellSize),
+                                   static_cast<size_t>(resizedLib.front().channels())};
 
             size_t index = differenceGPU(main_im, lib_im, resizedLib.size(), mask_im, imageSize,
                                          targetArea_GPU, repeats_GPU, m_repeatAddition,

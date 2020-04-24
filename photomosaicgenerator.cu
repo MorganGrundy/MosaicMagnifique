@@ -8,8 +8,8 @@
 
 //Calculates the euclidean difference between main image and library images
 __global__
-void euclideanDifferenceKernel(uchar *im_1, uchar *im_2, int noLibIm, uchar *mask_im,
-                               int size, int channels, int *target_area, double *variants)
+void euclideanDifferenceKernel(uchar *im_1, uchar *im_2, size_t noLibIm, uchar *mask_im,
+                               size_t size, size_t channels, size_t *target_area, double *variants)
 {
     const size_t index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
     const size_t stride = blockDim.x * gridDim.x * channels;
@@ -43,7 +43,7 @@ constexpr double degToRadKernel(const double deg)
 //Kernel that calculates the CIEDE2000 difference between two images for each corresponding pixel
 __global__
 void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, size_t noLibIm, uchar *mask_im,
-                               int size, int channels, int *target_area, double *variants)
+                               size_t size, size_t channels, size_t *target_area, double *variants)
 {
     const size_t index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
     const size_t stride = blockDim.x * gridDim.x * channels;
@@ -178,11 +178,11 @@ void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, size_t noLibIm, uchar *
 //If N is even then will sum half the elements in data
 //If N is odd then will sum half-1 the elements in data
 __global__
-void reduceStep(double *data, int N, int halfN)
+void reduceStep(double *data, size_t N, size_t halfN)
 {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
-    for (int i = index; i + halfN < N; i += stride)
+    for (size_t i = index; i + halfN < N; i += stride)
     {
         data[i] += data[i + halfN];
     }
@@ -215,11 +215,11 @@ void addRepeatsKernel(double *variants, size_t *repeats, size_t offset, size_t n
 
 extern "C"
 size_t differenceGPU(uchar *main_im, uchar *t_lib_im, size_t noLibIm, uchar *t_mask_im,
-                     int im_size[2], int *target_area, size_t *t_repeats, int repeatAddition,
+                     size_t im_size[2], size_t *target_area, size_t *t_repeats, size_t repeatAddition,
                      bool euclidean, double *variants)
 {
-    int pixelCount = im_size[0] * im_size[0];
-    int fullSize = pixelCount * im_size[1];
+    size_t pixelCount = im_size[0] * im_size[0];
+    size_t fullSize = pixelCount * im_size[1];
 
     //Initialise lowestVariant with largest possible value
     double *lowestVariant;
@@ -229,36 +229,41 @@ size_t differenceGPU(uchar *main_im, uchar *t_lib_im, size_t noLibIm, uchar *t_m
 
     size_t *bestFit;
     cudaMalloc((void **)&bestFit, sizeof(size_t));
-    cudaMemset(bestFit, noLibIm, sizeof(size_t));
+    cudaMemset(bestFit, static_cast<int>(noLibIm), sizeof(size_t));
 
     cudaDeviceProp deviceProp;
     cudaGetDeviceProperties(&deviceProp, 0);
-    const int blockSize = deviceProp.maxThreadsPerBlock;
-    int numBlocks = (pixelCount * noLibIm + blockSize - 1) / blockSize;
+    const size_t blockSize = deviceProp.maxThreadsPerBlock;
+    size_t numBlocks = (pixelCount * noLibIm + blockSize - 1) / blockSize;
 
     if (euclidean)
-        euclideanDifferenceKernel<<<numBlocks, blockSize>>>(main_im, t_lib_im, noLibIm, t_mask_im,
-                                                            im_size[0], im_size[1], target_area,
-                                                            variants);
+        euclideanDifferenceKernel<<<static_cast<unsigned int>(numBlocks),
+                static_cast<unsigned int>(blockSize)>>>(main_im, t_lib_im, noLibIm, t_mask_im,
+                                                        im_size[0], im_size[1], target_area,
+                                                        variants);
     else
-        CIEDE2000DifferenceKernel<<<numBlocks, blockSize>>>(main_im, t_lib_im, noLibIm, t_mask_im,
-                                                            im_size[0], im_size[1], target_area,
-                                                            variants);
+        CIEDE2000DifferenceKernel<<<static_cast<unsigned int>(numBlocks),
+                static_cast<unsigned int>(blockSize)>>>(main_im, t_lib_im, noLibIm, t_mask_im,
+                                                        im_size[0], im_size[1], target_area,
+                                                        variants);
 
     //Adds repeat value to first difference value
-    numBlocks = ((int)noLibIm + blockSize - 1) / blockSize;
-    addRepeatsKernel<<<numBlocks, blockSize>>>(variants, t_repeats, pixelCount, noLibIm);
+    numBlocks = (noLibIm + blockSize - 1) / blockSize;
+    addRepeatsKernel<<<static_cast<unsigned int>(numBlocks),
+            static_cast<unsigned int>(blockSize)>>>(variants, t_repeats, pixelCount, noLibIm);
 
     for (size_t i = 0; i < noLibIm; ++i)
     {
         //Calculate sum of differences
-        int reduceSize = pixelCount;
+        size_t reduceSize = pixelCount;
         while (reduceSize > 1)
         {
-            int halfSize = (reduceSize + 1) / 2;
+            size_t halfSize = (reduceSize + 1) / 2;
             numBlocks = (halfSize + blockSize - 1) / blockSize;
 
-            reduceStep<<<numBlocks, blockSize>>>(variants + i * pixelCount, reduceSize, halfSize);
+            reduceStep<<<static_cast<unsigned int>(numBlocks),
+                    static_cast<unsigned int>(blockSize)>>>(variants + i * pixelCount,
+                                                            reduceSize, halfSize);
             reduceSize = halfSize;
         }
     }

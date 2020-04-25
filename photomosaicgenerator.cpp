@@ -125,8 +125,7 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGenerator::resizeAndCvtColor
 extern "C"
 size_t differenceGPU(uchar *main_im, uchar *t_lib_im, size_t noLibIm, uchar *t_mask_im,
                      size_t im_size[2], size_t target_area[4],
-                     size_t *t_repeats, size_t repeatAddition,
-                     bool euclidean, double *variants);
+                     size_t *t_repeats, bool euclidean, double *variants);
 
 //Returns a Photomosaic of the main image made of the library images
 //Generates using CUDA
@@ -227,8 +226,10 @@ cv::Mat PhotomosaicGenerator::generate()
 
             //Copies visible part of main image to cell
             resizedImg(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)).
-                    copyTo(cell(cv::Range(targetArea[0], targetArea[1]),
-                                cv::Range(targetArea[2], targetArea[3])));
+                    copyTo(cell(cv::Range(static_cast<int>(targetArea[0]),
+                                          static_cast<int>(targetArea[1])),
+                                cv::Range(static_cast<int>(targetArea[2]),
+                                          static_cast<int>(targetArea[3]))));
             cudaMemcpy(main_im, cell.data, fullSize * sizeof(uchar), cudaMemcpyHostToDevice);
 
             //Calculate repeat value of each library image in repeat range and copy to GPU
@@ -242,7 +243,7 @@ cv::Mat PhotomosaicGenerator::generate()
                                    static_cast<size_t>(resizedLib.front().channels())};
 
             size_t index = differenceGPU(main_im, lib_im, resizedLib.size(), mask_im, imageSize,
-                                         targetArea_GPU, repeats_GPU, m_repeatAddition,
+                                         targetArea_GPU, repeats_GPU,
                                          (m_mode != Mode::CIEDE2000), variants);
 
             if (index >= resizedLib.size())

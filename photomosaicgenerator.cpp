@@ -19,6 +19,8 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <math_constants.h>
+
+#include "cudaphotomosaicdata.h"
 #endif
 
 PhotomosaicGenerator::PhotomosaicGenerator(QWidget *t_parent)
@@ -123,9 +125,7 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGenerator::resizeAndCvtColor
 #ifdef CUDA
 
 extern "C"
-size_t differenceGPU(uchar *main_im, uchar *t_lib_im, size_t noLibIm, uchar *t_mask_im,
-                     size_t im_size[2], size_t target_area[4],
-                     size_t *t_repeats, bool euclidean, double *variants);
+size_t differenceGPU(CUDAPhotomosaicData &photomosaicData);
 
 //Returns a Photomosaic of the main image made of the library images
 //Generates using CUDA
@@ -152,39 +152,23 @@ cv::Mat PhotomosaicGenerator::generate()
     setValue(0);
     setLabelText("Finding best fits...");
 
-    const size_t pixelCount = static_cast<size_t>(cellSize * cellSize);
-    const size_t fullSize = static_cast<size_t>(cellSize * cellSize * resizedLib.front().channels());
     //Allocate memory on GPU and copy data from CPU to GPU
-    //Move main image to GPU
-    uchar *main_im;
-    cudaMalloc((void **)&main_im, fullSize * sizeof(uchar));
-
-    //Move library images to GPU
-    uchar *lib_im;
-    cudaMalloc((void **)&lib_im, fullSize * resizedLib.size() * sizeof(uchar));
-    for (size_t i = 0; i < resizedLib.size(); ++i)
+    CUDAPhotomosaicData photomosaicData(cellSize, resizedLib.front().channels(), resizedLib.size(),
+            m_mode != PhotomosaicGenerator::Mode::CIEDE2000);
+    if (photomosaicData.mallocData() != cudaSuccess)
     {
-        const size_t offset = i * fullSize;
-        cudaMemcpy(lib_im+offset, resizedLib.at(i).data, fullSize * sizeof(uchar), cudaMemcpyHostToDevice);
+        qDebug() << "Failed to allocate sufficient memory on GPU";
+        return cv::Mat();
     }
 
+    //Move library images to GPU
+    photomosaicData.setLibraryImages(resizedLib);
+
     //Move mask image to GPU
-    uchar *mask_im;
-    cudaMalloc((void **)&mask_im, pixelCount * sizeof(uchar));
-    cudaMemcpy(mask_im, resizedCellShape.getCellMask().data, pixelCount * sizeof(uchar), cudaMemcpyHostToDevice);
+    photomosaicData.setMaskImage(resizedCellShape.getCellMask());
 
     //Allocate memory for repeats
     size_t *repeats = static_cast<size_t *>(malloc(resizedLib.size() * sizeof(size_t)));
-    size_t *repeats_GPU;
-    cudaMalloc((void **)&repeats_GPU, resizedLib.size() * sizeof(size_t));
-
-    //Allocate memory for target area
-    size_t *targetArea_GPU;
-    cudaMalloc((void **)&targetArea_GPU, 4 * sizeof(size_t));
-
-    //Allocate memory for variants
-    double *variants;
-    cudaMalloc((void **)&variants, pixelCount * resizedLib.size() * sizeof(double));
 
     //Split main image into grid
     //Find best match for each cell in grid
@@ -222,7 +206,7 @@ cv::Mat PhotomosaicGenerator::generate()
                                     static_cast<size_t>(yEnd - unboundedRect.y),
                                     static_cast<size_t>(xStart - unboundedRect.x),
                                     static_cast<size_t>(xEnd - unboundedRect.x)};
-            cudaMemcpy(targetArea_GPU, targetArea, 4 * sizeof(size_t), cudaMemcpyHostToDevice);
+            photomosaicData.setTargetArea(targetArea);
 
             //Copies visible part of main image to cell
             resizedImg(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)).
@@ -230,21 +214,18 @@ cv::Mat PhotomosaicGenerator::generate()
                                           static_cast<int>(targetArea[1])),
                                 cv::Range(static_cast<int>(targetArea[2]),
                                           static_cast<int>(targetArea[3]))));
-            cudaMemcpy(main_im, cell.data, fullSize * sizeof(uchar), cudaMemcpyHostToDevice);
+            photomosaicData.setCellImage(cell);
 
             //Calculate repeat value of each library image in repeat range and copy to GPU
             memset(repeats, 0, resizedLib.size() * sizeof(size_t));
             calculateRepeats(grid, gridSize, repeats, x + padGrid, y + padGrid);
-            cudaMemcpy(repeats_GPU, repeats, resizedLib.size() * sizeof(size_t), cudaMemcpyHostToDevice);
+            photomosaicData.setRepeats(repeats);
 
-            cudaMemset(variants, 0, pixelCount * resizedLib.size() * sizeof(double));
+            photomosaicData.clearVariants();
+            photomosaicData.resetBestFit();
+            photomosaicData.resetLowestVariant();
 
-            size_t imageSize[2] = {static_cast<size_t>(cellSize),
-                                   static_cast<size_t>(resizedLib.front().channels())};
-
-            size_t index = differenceGPU(main_im, lib_im, resizedLib.size(), mask_im, imageSize,
-                                         targetArea_GPU, repeats_GPU,
-                                         (m_mode != Mode::CIEDE2000), variants);
+            size_t index = differenceGPU(photomosaicData);
 
             if (index >= resizedLib.size())
             {
@@ -263,11 +244,10 @@ cv::Mat PhotomosaicGenerator::generate()
     }
 
     //Deallocate memory on GPU and CPU
-    cudaFree(main_im);
-    cudaFree(lib_im);
-    cudaFree(mask_im);
-    cudaFree(repeats_GPU);
-    cudaFree(variants);
+    if (photomosaicData.freeData() != cudaSuccess)
+        qDebug() << "Failed to free memory on GPU";
+
+    //Deallocate memory on GPU and CPU
     free(repeats);
 
     //Combines all results into single image (mosaic)

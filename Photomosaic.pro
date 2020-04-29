@@ -7,13 +7,69 @@ DEFINES += _USE_MATH_DEFINES
 
 TARGET = Photomosaic
 
+# The following define makes your compiler emit warnings if you use
+# any Qt feature that has been marked deprecated (the exact warnings
+# depend on your compiler). Please consult the documentation of the
+# deprecated API in order to know how to port your code away from it.
+DEFINES += QT_DEPRECATED_WARNINGS
+
+SOURCES += \
+    cellshape.cpp \
+    cudaphotomosaicdata.cpp \
+    gridviewer.cpp \
+    main.cpp \
+    mainwindow.cpp \
+    photomosaicgenerator.cpp \
+    utilityfuncs.cpp
+
+HEADERS += \
+    cellshape.h \
+    cudaphotomosaicdata.h \
+    gridviewer.h \
+    mainwindow.h \
+    photomosaicgenerator.h \
+    utilityfuncs.h
+
+FORMS += \
+    mainwindow.ui
+
+# Boost libraries
+INCLUDEPATH += $$(BOOST_ROOT)
+LIBS += -L$$(BOOST_ROOT)/stage/lib
+
+# OpenCV libraries
+INCLUDEPATH += $$(OPENCV_SDK_DIR)/include
+CONFIG( debug, debug|release ) {
+	# debug
+	LIBS += -L$$(OPENCV_DIR)/lib \
+	-lopencv_core411d \
+	-lopencv_highgui411d \
+	-lopencv_imgcodecs411d \
+	-lopencv_imgproc411d \
+	-lopencv_features2d411d \
+	-lopencv_calib3d411d
+} else {
+	# release
+	LIBS += -L$$(OPENCV_DIR)/lib \
+	-lopencv_core411 \
+	-lopencv_highgui411 \
+	-lopencv_imgcodecs411 \
+	-lopencv_imgproc411 \
+	-lopencv_features2d411 \
+	-lopencv_calib3d411
+}
+
 CUDA {
 DEFINES += CUDA
 # Define output directories
 CUDA_OBJECTS_DIR = OBJECTS_DIR/../cuda
 
 CUDA_SOURCES += \
-	photomosaicgenerator.cu
+	photomosaicgenerator.cu \
+	reduction.cu
+
+CUDA_HEADERS += \
+	reduction.cuh
 
 # MSVCRT link option (static or dynamic, it must be the same with your Qt SDK link option)
 MSVCRT_LINK_FLAG_DEBUG   = "/MDd"
@@ -75,56 +131,6 @@ else {
 	cuda.dependency_type = TYPE_C
 	QMAKE_EXTRA_COMPILERS += cuda
 }
-}
-
-# The following define makes your compiler emit warnings if you use
-# any Qt feature that has been marked deprecated (the exact warnings
-# depend on your compiler). Please consult the documentation of the
-# deprecated API in order to know how to port your code away from it.
-DEFINES += QT_DEPRECATED_WARNINGS
-
-SOURCES += \
-    cellshape.cpp \
-    gridviewer.cpp \
-    main.cpp \
-    mainwindow.cpp \
-    photomosaicgenerator.cpp \
-    utilityfuncs.cpp
-
-HEADERS += \
-    cellshape.h \
-    gridviewer.h \
-    mainwindow.h \
-    photomosaicgenerator.h \
-    utilityfuncs.h
-
-FORMS += \
-    mainwindow.ui
-
-# Boost libraries
-INCLUDEPATH += $$(BOOST_ROOT)
-LIBS += -L$$(BOOST_ROOT)/stage/lib
-
-# OpenCV libraries
-INCLUDEPATH += $$(OPENCV_SDK_DIR)/include
-CONFIG( debug, debug|release ) {
-	# debug
-	LIBS += -L$$(OPENCV_DIR)/lib \
-	-lopencv_core411d \
-	-lopencv_highgui411d \
-	-lopencv_imgcodecs411d \
-	-lopencv_imgproc411d \
-	-lopencv_features2d411d \
-	-lopencv_calib3d411d
-} else {
-	# release
-	LIBS += -L$$(OPENCV_DIR)/lib \
-	-lopencv_core411 \
-	-lopencv_highgui411 \
-	-lopencv_imgcodecs411 \
-	-lopencv_imgproc411 \
-	-lopencv_features2d411 \
-	-lopencv_calib3d411
 }
 
 OPENCV_W_CUDA {

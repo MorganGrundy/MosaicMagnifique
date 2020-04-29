@@ -2,9 +2,9 @@
 #include <cuda_runtime_api.h>
 #include <device_launch_parameters.h>
 #include <math_constants.h>
-#include <limits>
 
-#define uchar unsigned char
+#include "cudaphotomosaicdata.h"
+#include "reduction.cuh"
 
 //Calculates the euclidean difference between main image and library images
 __global__
@@ -173,198 +173,6 @@ void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, size_t noLibIm, uchar *
     }
 }
 
-//Performs sum reduction in a single warp
-template <size_t blockSize>
-__device__
-void warpReduce(volatile double *sdata, const size_t tid)
-{
-    if (blockSize >= 64)
-        sdata[tid] += sdata[tid + 32];
-    if (blockSize >= 32)
-        sdata[tid] += sdata[tid + 16];
-    if (blockSize >= 16)
-        sdata[tid] += sdata[tid + 8];
-    if (blockSize >= 8)
-        sdata[tid] += sdata[tid + 4];
-    if (blockSize >= 4)
-        sdata[tid] += sdata[tid + 2];
-    if (blockSize >= 2)
-        sdata[tid] += sdata[tid + 1];
-
-}
-
-//Performs sum reduction
-template <size_t blockSize>
-__global__
-void reduce(double *g_idata, double *g_odata, const size_t N, const size_t noLibIm)
-{
-    extern __shared__ double sdata[];
-
-    for (size_t libI = 0; libI < noLibIm; ++libI)
-    {
-        size_t offset = libI * N;
-        //Each thread loads atleast one element from global to shared memory
-        size_t tid = threadIdx.x;
-        size_t i = blockIdx.x * blockSize * 2 + threadIdx.x;
-        size_t gridSize = blockSize * 2 * gridDim.x;
-        sdata[tid] = 0;
-
-        while (i < N)
-        {
-            sdata[tid] += (i + blockSize < N) ?
-                        g_idata[i + offset] + g_idata[i + blockSize + offset] : g_idata[i + offset];
-            i += gridSize;
-        }
-        __syncthreads();
-
-        //Do reduction in shared memory
-        if (blockSize >= 2048)
-        {
-            if (tid < 1024)
-                sdata[tid] += sdata[tid + 1024];
-            __syncthreads();
-        }
-        if (blockSize >= 1024)
-        {
-            if (tid < 512)
-                sdata[tid] += sdata[tid + 512];
-            __syncthreads();
-        }
-        if (blockSize >= 512)
-        {
-            if (tid < 256)
-                sdata[tid] += sdata[tid + 256];
-            __syncthreads();
-        }
-        if (blockSize >= 256)
-        {
-            if (tid < 128)
-                sdata[tid] += sdata[tid + 128];
-            __syncthreads();
-        }
-        if (blockSize >= 128)
-        {
-            if (tid < 64)
-                sdata[tid] += sdata[tid + 64];
-            __syncthreads();
-        }
-
-        if (tid < 32)
-            warpReduce<blockSize>(sdata, tid);
-
-        //Write result for this block to global memory
-        if (tid == 0)
-            g_odata[blockIdx.x + libI * gridDim.x] = sdata[0];
-    }
-}
-
-void reduceData(double *data, double *output, const size_t N, const size_t maxBlockSize, const size_t noLibIm)
-{
-    size_t reduceDataSize = N;
-
-    //Number of blocks needed assuming max block size
-    size_t numBlocks = ((reduceDataSize + maxBlockSize - 1) / maxBlockSize + 1) / 2;
-
-    //Minimum number of threads per block
-    size_t reduceBlockSize;
-
-    //Stores number of threads to use per block (power of 2)
-    size_t threads = maxBlockSize;
-
-    do
-    {
-        //Calculate new number of blocks and threads
-        numBlocks = ((reduceDataSize + maxBlockSize - 1) / maxBlockSize + 1) / 2;
-        reduceBlockSize = (reduceDataSize + numBlocks - 1) / numBlocks;
-        while (threads > reduceBlockSize * 2)
-            threads >>= 1;
-
-        //Reduce
-        switch (threads)
-        {
-        case 2048:
-            reduce<2048><<<static_cast<unsigned int>(numBlocks),
-                    static_cast<unsigned int>(threads),
-                    static_cast<unsigned int>(threads * sizeof(double))
-                    >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 1024:
-            reduce<1024><<<static_cast<unsigned int>(numBlocks),
-                    static_cast<unsigned int>(threads),
-                    static_cast<unsigned int>(threads * sizeof(double))
-                    >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 512:
-            reduce<512><<<static_cast<unsigned int>(numBlocks),
-                    static_cast<unsigned int>(threads),
-                    static_cast<unsigned int>(threads * sizeof(double))
-                    >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 256:
-            reduce<256><<<static_cast<unsigned int>(numBlocks),
-                    static_cast<unsigned int>(threads),
-                    static_cast<unsigned int>(threads * sizeof(double))
-                    >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 128:
-            reduce<128><<<static_cast<unsigned int>(numBlocks),
-                    static_cast<unsigned int>(threads),
-                    static_cast<unsigned int>(threads * sizeof(double))
-                    >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 64:
-            reduce<64><<<static_cast<unsigned int>(numBlocks),
-                    static_cast<unsigned int>(threads),
-                    static_cast<unsigned int>(threads * sizeof(double))
-                    >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 32:
-            reduce<32><<<static_cast<unsigned int>(numBlocks),
-                    static_cast<unsigned int>(threads),
-                    static_cast<unsigned int>(threads * sizeof(double))
-                    >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 16:
-            reduce<16><<<static_cast<unsigned int>(numBlocks),
-                    static_cast<unsigned int>(threads),
-                    static_cast<unsigned int>(threads * sizeof(double))
-                    >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 8:
-            reduce<8><<<static_cast<unsigned int>(numBlocks),
-                    static_cast<unsigned int>(threads),
-                    static_cast<unsigned int>(threads * sizeof(double))
-                    >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 4:
-            reduce<4><<<static_cast<unsigned int>(numBlocks),
-                    static_cast<unsigned int>(threads),
-                    static_cast<unsigned int>(threads * sizeof(double))
-                    >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 2:
-            reduce<2><<<static_cast<unsigned int>(numBlocks),
-                    static_cast<unsigned int>(threads),
-                    static_cast<unsigned int>(threads * sizeof(double))
-                    >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 1:
-            reduce<1><<<static_cast<unsigned int>(numBlocks),
-                    static_cast<unsigned int>(threads),
-                    static_cast<unsigned int>(threads * sizeof(double))
-                    >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        }
-
-        //Copy results back to data
-        cudaMemcpy(data, output, numBlocks * noLibIm * sizeof(double), cudaMemcpyDeviceToDevice);
-
-        //New data length is equal to number of blocks
-        reduceDataSize = numBlocks;
-    }
-    while (numBlocks > 1); //Keep reducing until only 1 block was used
-}
-
 //Adds repeat values to variants
 __global__
 void addRepeatsKernel(double *variants, size_t *repeats, size_t noLibIm)
@@ -390,63 +198,57 @@ void findLowestKernel(double *lowestVariant, size_t *bestFit, double *variants, 
 }
 
 extern "C"
-size_t differenceGPU(uchar *main_im, uchar *t_lib_im, size_t noLibIm, uchar *t_mask_im,
-                     size_t im_size[2], size_t *target_area,
-                     size_t *t_repeats, bool euclidean, double *variants)
+size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
 {
-    size_t pixelCount = im_size[0] * im_size[0];
-
-    //Initialise lowestVariant with largest possible value
-    double *lowestVariant;
-    cudaMalloc((void **)&lowestVariant, sizeof(double));
-    double doubleMax = std::numeric_limits<double>::max();
-    cudaMemcpy(lowestVariant, &doubleMax, sizeof(double), cudaMemcpyHostToDevice);
-
-    size_t *bestFit;
-    cudaMalloc((void **)&bestFit, sizeof(size_t));
-    cudaMemcpy(bestFit, &noLibIm, sizeof(size_t), cudaMemcpyHostToDevice);
+    size_t pixelCount = photomosaicData.imageSize * photomosaicData.imageSize;
 
     cudaDeviceProp deviceProp;
     cudaGetDeviceProperties(&deviceProp, 0);
     const size_t blockSize = deviceProp.maxThreadsPerBlock;
 
-    double *reduceTmpMemory;
-    const size_t reduceMemSize = (pixelCount + blockSize - 1) / blockSize;
-    cudaMalloc((void **)&reduceTmpMemory, reduceMemSize * noLibIm * sizeof(double));
+    size_t numBlocks = (pixelCount * photomosaicData.noLibraryImages + blockSize - 1) / blockSize;
 
-    size_t numBlocks = (pixelCount * noLibIm + blockSize - 1) / blockSize;
-
-    if (euclidean)
+    if (photomosaicData.euclidean)
         euclideanDifferenceKernel<<<static_cast<unsigned int>(numBlocks),
-                static_cast<unsigned int>(blockSize)>>>(main_im, t_lib_im, noLibIm, t_mask_im,
-                                                        im_size[0], im_size[1], target_area,
-                                                        variants);
+                static_cast<unsigned int>(blockSize)>>>(photomosaicData.cellImage,
+                                                        photomosaicData.libraryImages,
+                                                        photomosaicData.noLibraryImages,
+                                                        photomosaicData.maskImage,
+                                                        photomosaicData.imageSize,
+                                                        photomosaicData.imageChannels,
+                                                        photomosaicData.targetArea,
+                                                        photomosaicData.variants);
     else
         CIEDE2000DifferenceKernel<<<static_cast<unsigned int>(numBlocks),
-                static_cast<unsigned int>(blockSize)>>>(main_im, t_lib_im, noLibIm, t_mask_im,
-                                                        im_size[0], im_size[1], target_area,
-                                                        variants);
+                static_cast<unsigned int>(blockSize)>>>(photomosaicData.cellImage,
+                                                        photomosaicData.libraryImages,
+                                                        photomosaicData.noLibraryImages,
+                                                        photomosaicData.maskImage,
+                                                        photomosaicData.imageSize,
+                                                        photomosaicData.imageChannels,
+                                                        photomosaicData.targetArea,
+                                                        photomosaicData.variants);
 
     //Perform sum reduction on all image variants
-    reduceData(variants, reduceTmpMemory, pixelCount, blockSize, noLibIm);
+    reduceAddData(photomosaicData.variants, photomosaicData.reductionMemory, pixelCount, blockSize,
+                  photomosaicData.noLibraryImages);
 
     //Adds repeat value to first difference value
-    numBlocks = (noLibIm + blockSize - 1) / blockSize;
+    numBlocks = (photomosaicData.noLibraryImages + blockSize - 1) / blockSize;
     addRepeatsKernel<<<static_cast<unsigned int>(numBlocks),
-            static_cast<unsigned int>(blockSize)>>>(variants, t_repeats, noLibIm);
+            static_cast<unsigned int>(blockSize)>>>(photomosaicData.variants,
+                                                    photomosaicData.repeats,
+                                                    photomosaicData.noLibraryImages);
 
     //Find lowest variant
-    findLowestKernel<<<1,1>>>(lowestVariant, bestFit, variants, noLibIm);
+    findLowestKernel<<<1,1>>>(photomosaicData.lowestVariant, photomosaicData.bestFit,
+                              photomosaicData.variants, photomosaicData.noLibraryImages);
 
     cudaDeviceSynchronize();
 
     //Copy result from GPU to CPU
     size_t result;
-    cudaMemcpy(&result, bestFit, sizeof(size_t), cudaMemcpyDeviceToHost);
-
-    //Free memory on GPU
-    cudaFree(lowestVariant);
-    cudaFree(bestFit);
+    cudaMemcpy(&result, photomosaicData.bestFit, sizeof(size_t), cudaMemcpyDeviceToHost);
 
     return result;
 }

@@ -24,6 +24,9 @@ public:
     void setRepeat(int t_repeatRange = 0, int t_repeatAddition = 0);
 
     cv::Mat generate();
+#ifdef CUDA
+    cv::Mat cudaGenerate();
+#endif
 
 private:
     cv::Mat m_img;
@@ -38,11 +41,6 @@ private:
 
     std::pair<cv::Mat, std::vector<cv::Mat>> resizeAndCvtColor();
 
-#ifdef CUDA
-    void calculateRepeats(const std::vector<std::vector<size_t>> &grid, const cv::Point &gridSize,
-                          size_t *repeats, const int x, const int y) const;
-#else
-
     int findBestFitEuclidean(const cv::Mat &cell, const cv::Mat &mask,
                              const std::vector<cv::Mat> &library,
                              const std::map<size_t, int> &repeats,
@@ -56,6 +54,9 @@ private:
 
     std::map<size_t, int> calculateRepeats(const std::vector<std::vector<size_t>> &grid,
                                            const cv::Point &gridSize, const int x, const int y) const;
+#ifdef CUDA
+    void calculateRepeats(const std::vector<std::vector<size_t>> &grid, const cv::Point &gridSize,
+                          size_t *repeats, const int x, const int y) const;
 #endif
 
     double degToRad(const double deg) const;

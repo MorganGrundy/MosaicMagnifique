@@ -88,6 +88,9 @@ MainWindow::MainWindow(QWidget *t_parent)
     connect(ui->checkCellShape, SIGNAL(stateChanged(int)), this, SLOT(enableCellShape(int)));
 
     connect(ui->buttonGenerate, SIGNAL(released()), this, SLOT(generatePhotomosaic()));
+#ifndef CUDA
+    ui->checkCUDA->hide();
+#endif
 
     //Sets grid preview to default square cell
     ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(ui->spinCellSize->value(),
@@ -326,8 +329,8 @@ void MainWindow::addImages()
         ++imageIt;
     }
 
-    //Update status bar with new number of images
-    ui->statusbar->showMessage(QString::number(allImages.size()) + tr(" images"));
+    //Update tab widget to show new image count next to Image Library
+    ui->tabWidget->setTabText(1, tr("Image Library (") + QString::number(allImages.size()) + ")");
 }
 
 //Deletes selected images
@@ -339,8 +342,8 @@ void MainWindow::deleteImages()
 
     qDeleteAll(selectedItems);
 
-    //Update status bar with new number of images
-    ui->statusbar->showMessage(QString::number(allImages.size()) + tr(" images"));
+    //Update tab widget to show new image count next to Image Library
+    ui->tabWidget->setTabText(1, tr("Image Library (") + QString::number(allImages.size()) + ")");
 }
 
 //Reads the cell size from ui spin box, then resizes all images
@@ -479,8 +482,8 @@ void MainWindow::loadLibrary()
 
         file.close();
     }
-    //Update status bar with new number of images
-    ui->statusbar->showMessage(QString::number(allImages.size()) + tr(" images"));
+    //Update tab widget to show new image count next to Image Library
+    ui->tabWidget->setTabText(1, tr("Image Library (") + QString::number(allImages.size()) + ")");
 }
 
 //Prompts user for a main image
@@ -671,7 +674,11 @@ void MainWindow::generatePhotomosaic()
     generator.setRepeat(ui->spinRepeatRange->value(), ui->spinRepeatAddition->value());
 
     auto t1 = std::chrono::high_resolution_clock::now();
+#ifdef CUDA
+    cv::Mat mosaic = (ui->checkCUDA->isChecked()) ? generator.cudaGenerate() : generator.generate();
+#else
     cv::Mat mosaic = generator.generate();
+#endif
     qDebug() << "Generator time: " << std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::high_resolution_clock::now() - t1).count() / 1000.0 << "s";
 

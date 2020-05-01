@@ -475,7 +475,7 @@ border: 1px solid dimgray;
         <string notr="true"/>
        </property>
        <attribute name="title">
-        <string>Image Library</string>
+        <string>Image Library (0)</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
@@ -1516,21 +1516,44 @@ border: 1px solid dimgray;
             </layout>
            </widget>
           </item>
-          <item alignment="Qt::AlignRight">
-           <widget class="QPushButton" name="buttonGenerate">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::LeftToRight</enum>
-            </property>
-            <property name="text">
-             <string>Generate Photomosaic</string>
-            </property>
-           </widget>
+          <item>
+           <layout class="QHBoxLayout" name="groupGenerate">
+            <item alignment="Qt::AlignRight">
+             <widget class="QCheckBox" name="checkCUDA">
+              <property name="statusTip">
+               <string>Controls CUDA usage</string>
+              </property>
+              <property name="whatsThis">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enabling CUDA allows a GPU to be used to generate the Photomosaic.&lt;/p&gt;&lt;p&gt;This will generally result in much faster results, depending on your system.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="layoutDirection">
+               <enum>Qt::RightToLeft</enum>
+              </property>
+              <property name="text">
+               <string>CUDA:</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item alignment="Qt::AlignRight">
+             <widget class="QPushButton" name="buttonGenerate">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="layoutDirection">
+               <enum>Qt::LeftToRight</enum>
+              </property>
+              <property name="text">
+               <string>Generate Photomosaic</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </item>

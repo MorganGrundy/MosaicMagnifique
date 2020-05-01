@@ -129,7 +129,7 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData);
 
 //Returns a Photomosaic of the main image made of the library images
 //Generates using CUDA
-cv::Mat PhotomosaicGenerator::generate()
+cv::Mat PhotomosaicGenerator::cudaGenerate()
 {
     const bool padGrid = !m_cellShape.empty();
     //Resizes main image and library based on detail level and converts colour space
@@ -279,8 +279,7 @@ void PhotomosaicGenerator::calculateRepeats(const std::vector<std::vector<size_t
         repeats[grid.at(static_cast<size_t>(repeatX)).at(static_cast<size_t>(y))] += m_repeatAddition;
     }
 }
-
-#else
+#endif
 
 //Returns a Photomosaic of the main image made of the library images
 cv::Mat PhotomosaicGenerator::generate()
@@ -620,7 +619,6 @@ int PhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell, const cv::Ma
     }
     return bestFit;
 }
-#endif
 
 //Converts degrees to radians
 double PhotomosaicGenerator::degToRad(const double deg) const

@@ -14,8 +14,7 @@ TARGET = Photomosaic
 DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
-    cellshape.cpp \
-    cudaphotomosaicdata.cpp \
+	cellshape.cpp \
     gridviewer.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -23,8 +22,7 @@ SOURCES += \
     utilityfuncs.cpp
 
 HEADERS += \
-    cellshape.h \
-    cudaphotomosaicdata.h \
+	cellshape.h \
     gridviewer.h \
     mainwindow.h \
     photomosaicgenerator.h \
@@ -69,6 +67,15 @@ CUDA_SOURCES += \
 	reduction.cu
 
 CUDA_HEADERS += \
+	reduction.cuh
+
+SOURCES += \
+	cudaphotomosaicdata.cpp
+
+HEADERS += \
+	cudaphotomosaicdata.h
+
+DISTFILES += \
 	reduction.cuh
 
 # MSVCRT link option (static or dynamic, it must be the same with your Qt SDK link option)

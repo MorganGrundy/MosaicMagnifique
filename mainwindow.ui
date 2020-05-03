@@ -75,7 +75,7 @@ border: 0px;
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideNone</enum>
@@ -938,6 +938,9 @@ padding: 0 3px 0 3px;
                    <string notr="true">QLineEdit {
 border: 1px solid dimgray;
 }</string>
+                  </property>
+                  <property name="readOnly">
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>

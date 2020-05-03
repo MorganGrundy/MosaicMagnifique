@@ -15,7 +15,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
 	cellshape.cpp \
+	customgraphicsview.cpp \
     gridviewer.cpp \
+	imageviewer.cpp \
     main.cpp \
     mainwindow.cpp \
     photomosaicgenerator.cpp \
@@ -23,12 +25,15 @@ SOURCES += \
 
 HEADERS += \
 	cellshape.h \
+	customgraphicsview.h \
     gridviewer.h \
+	imageviewer.h \
     mainwindow.h \
     photomosaicgenerator.h \
     utilityfuncs.h
 
 FORMS += \
+    imageviewer.ui \
     mainwindow.ui
 
 # Boost libraries

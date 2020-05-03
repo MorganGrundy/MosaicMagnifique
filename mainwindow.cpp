@@ -18,6 +18,7 @@
 
 #include "utilityfuncs.h"
 #include "photomosaicgenerator.h"
+#include "imageviewer.h"
 
 #ifdef OPENCV_W_CUDA
 #include <opencv2/cudawarping.hpp>
@@ -96,6 +97,9 @@ MainWindow::MainWindow(QWidget *t_parent)
     ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(ui->spinCellSize->value(),
                                                           ui->spinCellSize->value(),
                                                           CV_8UC1, cv::Scalar(255))));
+
+    //tabWidget starts on Generator Settings tab
+    ui->tabWidget->setCurrentIndex(2);
 }
 
 MainWindow::~MainWindow()
@@ -679,15 +683,21 @@ void MainWindow::generatePhotomosaic()
 
     generator.setRepeat(ui->spinRepeatRange->value(), ui->spinRepeatAddition->value());
 
-    auto t1 = std::chrono::high_resolution_clock::now();
+    const auto startTime = std::chrono::high_resolution_clock::now();
 #ifdef CUDA
-    cv::Mat mosaic = (ui->checkCUDA->isChecked()) ? generator.cudaGenerate() : generator.generate();
+    const cv::Mat mosaic = (ui->checkCUDA->isChecked()) ? generator.cudaGenerate()
+                                                        : generator.generate();
 #else
-    cv::Mat mosaic = generator.generate();
+    const cv::Mat mosaic = generator.generate();
 #endif
-    qDebug() << "Generator time: " << std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::high_resolution_clock::now() - t1).count() / 1000.0 << "s";
+    const double duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::high_resolution_clock::now() - startTime).count() / 1000.0;
+    qDebug() << "Generator time: " << duration << "s";
 
-    if (!mosaic.empty())
-        cv::imshow("Mosaic", mosaic);
+    //Displays Photomosaic
+    ImageViewer imageViewer(this, mosaic, duration);
+    imageViewer.show();
+    QEventLoop loop;
+    connect(this, SIGNAL(destroyed()), & loop, SLOT(quit()));
+    loop.exec();
 }

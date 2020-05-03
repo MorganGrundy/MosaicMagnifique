@@ -553,10 +553,13 @@ void MainWindow::photomosaicWidthChanged(int i)
         ui->spinPhotomosaicHeight->blockSignals(false);
 
         //Updates image size in grid preview
-        ui->widgetGridPreview->setBackground(
-                    UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
-                                              ui->spinPhotomosaicWidth->value(),
-                                              UtilityFuncs::ResizeType::INCLUSIVE));
+        if (!mainImage.empty())
+        {
+            ui->widgetGridPreview->setBackground(
+                        UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
+                                                  ui->spinPhotomosaicWidth->value(),
+                                                  UtilityFuncs::ResizeType::INCLUSIVE));
+        }
     }
 }
 
@@ -571,10 +574,13 @@ void MainWindow::photomosaicHeightChanged(int i)
         ui->spinPhotomosaicWidth->blockSignals(false);
 
         //Updates image size in grid preview
-        ui->widgetGridPreview->setBackground(
-                    UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
-                                              ui->spinPhotomosaicWidth->value(),
-                                              UtilityFuncs::ResizeType::INCLUSIVE));
+        if (!mainImage.empty())
+        {
+            ui->widgetGridPreview->setBackground(
+                        UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
+                                                  ui->spinPhotomosaicWidth->value(),
+                                                  UtilityFuncs::ResizeType::INCLUSIVE));
+        }
     }
 }
 

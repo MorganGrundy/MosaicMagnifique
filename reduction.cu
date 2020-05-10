@@ -4,6 +4,8 @@
 #include <cuda_runtime_api.h>
 #include <device_launch_parameters.h>
 
+#include "cudaphotomosaicdata.h"
+
 //Performs sum reduction in a single warp
 template <size_t blockSize>
 __device__
@@ -188,8 +190,11 @@ void reduceAddData(double *data, double *output, const size_t N, const size_t ma
             break;
         }
 
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
         //Copy results back to data
-        cudaMemcpy(data, output, numBlocks * noLibIm * sizeof(double), cudaMemcpyDeviceToDevice);
+        gpuErrchk(cudaMemcpy(data, output, numBlocks * noLibIm * sizeof(double),
+                             cudaMemcpyDeviceToDevice));
 
         //New data length is equal to number of blocks
         reduceDataSize = numBlocks;

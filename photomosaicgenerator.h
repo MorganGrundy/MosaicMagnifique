@@ -53,7 +53,8 @@ private:
                              const int xStart, const int xEnd) const;
 
     std::map<size_t, int> calculateRepeats(const std::vector<std::vector<size_t>> &grid,
-                                           const cv::Point &gridSize, const int x, const int y) const;
+                                           const cv::Point &gridSize,
+                                           const int x, const int y) const;
 #ifdef CUDA
     void calculateRepeats(const std::vector<std::vector<size_t>> &grid, const cv::Point &gridSize,
                           size_t *repeats, const int x, const int y) const;

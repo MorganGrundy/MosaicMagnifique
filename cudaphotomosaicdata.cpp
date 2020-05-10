@@ -4,11 +4,14 @@
 
 CUDAPhotomosaicData::CUDAPhotomosaicData(const size_t t_imageSize, const size_t t_imageChannels,
                                          const size_t t_noLibraryImages, const bool t_euclidean)
-    : imageSize{t_imageSize}, imageChannels{t_imageChannels}, noLibraryImages{t_noLibraryImages},
-      euclidean{t_euclidean}
+    : imageSize{t_imageSize}, imageChannels{t_imageChannels},
+      pixelCount{t_imageSize * t_imageSize}, fullSize{t_imageSize * t_imageSize * t_imageChannels},
+      noLibraryImages{t_noLibraryImages},
+      euclidean{t_euclidean},
+      dataIsAllocated{false}
 {
     cudaDeviceProp deviceProp;
-    cudaGetDeviceProperties(&deviceProp, 0);
+    gpuErrchk(cudaGetDeviceProperties(&deviceProp, 0));
     blockSize = deviceProp.maxThreadsPerBlock;
 }
 
@@ -18,149 +21,164 @@ CUDAPhotomosaicData::~CUDAPhotomosaicData()
 }
 
 //Allocates memory on GPU for Photomosaic data
-cudaError_t CUDAPhotomosaicData::mallocData()
+void CUDAPhotomosaicData::mallocData()
 {
-    cudaError_t result;
-
-    const size_t pixelCount = imageSize * imageSize;
-    const size_t fullSize = pixelCount * imageChannels;
-
     void *mem;
     //Batch allocate memory for cell image, library images, and mask image
-    if ((result = cudaMalloc(&mem, (fullSize + fullSize * noLibraryImages + pixelCount)
-                             * sizeof(uchar))) != cudaSuccess)
-        return result;
-
-    //Cell image
+    gpuErrchk(cudaMalloc(&mem, (fullSize + fullSize * noLibraryImages + pixelCount)
+                         * sizeof(uchar)));
     cellImage = static_cast<uchar *>(mem);
-    //Library images
     libraryImages = cellImage + fullSize;
-    //Mask images
     maskImage = libraryImages + fullSize * noLibraryImages;
 
     const size_t reduceMemSize = (pixelCount + blockSize - 1) / blockSize;
     //Batch allocate memory for variants, reduce memory, and lowest variant
-    if ((result = cudaMalloc(&mem, (pixelCount * noLibraryImages + reduceMemSize * noLibraryImages
-                                    + 1) * sizeof(double))) != cudaSuccess)
-        return result;
-
-    //Variants
+    gpuErrchk(cudaMalloc(&mem, (pixelCount * noLibraryImages + reduceMemSize * noLibraryImages + 1)
+                         * sizeof(double)));
     variants = static_cast<double *>(mem);
-    //Reduction memory
     reductionMemory = variants + pixelCount * noLibraryImages;
-    //Lowest variant
     lowestVariant = reductionMemory + reduceMemSize * noLibraryImages;
 
     //Batch allocate memory for best fit, repeats, and target area
-    if ((result = cudaMalloc(&mem, (1 + noLibraryImages + 4) * sizeof(size_t))) != cudaSuccess)
-        return result;
-
-    //Best fit
+    gpuErrchk(cudaMalloc(&mem, (1 + noLibraryImages + 4) * sizeof(size_t)));
     bestFit = static_cast<size_t *>(mem);
-    //Repeats
     repeats = bestFit + 1;
-    //Target area
     targetArea = repeats + noLibraryImages;
 
-    return result;
+    dataIsAllocated = true;
 }
 
 //Frees memory on GPU
-cudaError_t CUDAPhotomosaicData::freeData()
+void CUDAPhotomosaicData::freeData()
 {
-    cudaError_t result;
+    if (dataIsAllocated)
+    {
+        //Free uchar memory (cell image, library images, and mask image)
+        gpuErrchk(cudaFree(cellImage));
 
-    //Free uchar memory (cell image, library images, and mask image)
-    if ((result = cudaFree(cellImage)) != cudaSuccess)
-        return result;
+        //Free double memory (variants, reduction memory, lowest variant)
+        gpuErrchk(cudaFree(variants));
 
-    //Free double memory (variants, reduction memory, lowest variant)
-    if ((result = cudaFree(variants)) != cudaSuccess)
-        return result;
+        //Free size_t memory (best fit, repeats, target
+        gpuErrchk(cudaFree(bestFit));
 
-    //Free size_t memory (best fit, repeats, target
-    if ((result = cudaFree(bestFit)) != cudaSuccess)
-        return result;
+        dataIsAllocated = false;
+    }
+}
 
-    return result;
+//Returns block size
+size_t CUDAPhotomosaicData::getBlockSize()
+{
+    return blockSize;
 }
 
 //Copies cell image to GPU
-cudaError_t CUDAPhotomosaicData::setCellImage(const cv::Mat &t_cellImage)
+void CUDAPhotomosaicData::setCellImage(const cv::Mat &t_cellImage)
 {
-    cudaError_t result;
+    gpuErrchk(cudaMemcpy(cellImage, t_cellImage.data, fullSize * sizeof(uchar),
+                         cudaMemcpyHostToDevice));
+}
 
-    const size_t fullSize = imageSize * imageSize * imageChannels;
-    result = cudaMemcpy(cellImage, t_cellImage.data, fullSize * sizeof(uchar),
-                        cudaMemcpyHostToDevice);
-    return result;
+//Returns pointer to cell image on GPU
+uchar *CUDAPhotomosaicData::getCellImage()
+{
+    return cellImage;
 }
 
 //Copies library images to GPU
-cudaError_t CUDAPhotomosaicData::setLibraryImages(const std::vector<cv::Mat> &t_libraryImages)
+void CUDAPhotomosaicData::setLibraryImages(const std::vector<cv::Mat> &t_libraryImages)
 {
-    cudaError_t result;
-
-    const size_t fullSize = imageSize * imageSize * imageChannels;
     for (size_t i = 0; i < noLibraryImages; ++i)
     {
         const size_t offset = i * fullSize;
-        if ((result = cudaMemcpy(libraryImages+offset, t_libraryImages.at(i).data,
-                                 fullSize * sizeof(uchar), cudaMemcpyHostToDevice)) != cudaSuccess)
-            return result;
+        gpuErrchk(cudaMemcpy(libraryImages + offset, t_libraryImages.at(i).data,
+                             fullSize * sizeof(uchar), cudaMemcpyHostToDevice));
     }
-    return result;
+}
+
+//Returns pointer to library images on GPU
+uchar *CUDAPhotomosaicData::getLibraryImages()
+{
+    return libraryImages;
 }
 
 //Copies mask image to GPU
-cudaError_t CUDAPhotomosaicData::setMaskImage(const cv::Mat &t_maskImage)
+void CUDAPhotomosaicData::setMaskImage(const cv::Mat &t_maskImage)
 {
-    cudaError_t result;
-    const size_t pixelCount = imageSize * imageSize;
-    result = cudaMemcpy(maskImage, t_maskImage.data, pixelCount * sizeof(uchar),
-                        cudaMemcpyHostToDevice);
-    return result;
+    gpuErrchk(cudaMemcpy(maskImage, t_maskImage.data, pixelCount * sizeof(uchar),
+                         cudaMemcpyHostToDevice));
+}
+
+//Returns pointer to mask image on GPU
+uchar *CUDAPhotomosaicData::getMaskImage()
+{
+    return maskImage;
 }
 
 //Copies target area to GPU
-cudaError_t CUDAPhotomosaicData::setTargetArea(const size_t (&t_targetArea)[4])
+void CUDAPhotomosaicData::setTargetArea(const size_t (&t_targetArea)[4])
 {
-    cudaError_t result;
-    result = cudaMemcpy(targetArea, t_targetArea, 4 * sizeof(size_t), cudaMemcpyHostToDevice);
-    return result;
+    gpuErrchk(cudaMemcpy(targetArea, t_targetArea, 4 * sizeof(size_t), cudaMemcpyHostToDevice));
+}
+
+//Returns pointer to target area on GPU
+size_t *CUDAPhotomosaicData::getTargetArea()
+{
+    return targetArea;
 }
 
 //Copies repeats to GPU
-cudaError_t CUDAPhotomosaicData::setRepeats(const size_t *t_repeats)
+void CUDAPhotomosaicData::setRepeats(const size_t *t_repeats)
 {
-    cudaError_t result;
-    result = cudaMemcpy(repeats, t_repeats, noLibraryImages * sizeof(size_t),
-                        cudaMemcpyHostToDevice);
-    return result;
+    gpuErrchk(cudaMemcpy(repeats, t_repeats, noLibraryImages * sizeof(size_t),
+                         cudaMemcpyHostToDevice));
+}
+
+//Returns pointer to repeats on GPU
+size_t *CUDAPhotomosaicData::getRepeats()
+{
+    return repeats;
 }
 
 //Sets variants to 0
-cudaError_t CUDAPhotomosaicData::clearVariants()
+void CUDAPhotomosaicData::clearVariants()
 {
-    cudaError_t result;
-    const size_t pixelCount = imageSize * imageSize;
-    result = cudaMemset(variants, 0, pixelCount * noLibraryImages * sizeof(double));
-    return result;
+    gpuErrchk(cudaMemset(variants, 0, pixelCount * noLibraryImages * sizeof(double)));
+}
+
+//Returns pointer to variants on GPU
+double *CUDAPhotomosaicData::getVariants()
+{
+    return variants;
 }
 
 //Sets best fit to number of library images
-cudaError_t CUDAPhotomosaicData::resetBestFit()
+void CUDAPhotomosaicData::resetBestFit()
 {
-    cudaError_t result;
-    result = cudaMemcpy(bestFit, &noLibraryImages, sizeof(size_t), cudaMemcpyHostToDevice);
-    return result;
+    gpuErrchk(cudaMemcpy(bestFit, &noLibraryImages, sizeof(size_t), cudaMemcpyHostToDevice));
+}
+
+//Returns pointer to best fit on GPU
+size_t *CUDAPhotomosaicData::getBestFit()
+{
+    return bestFit;
 }
 
 //Sets lowest variant to max double
-cudaError_t CUDAPhotomosaicData::resetLowestVariant()
+void CUDAPhotomosaicData::resetLowestVariant()
 {
-    cudaError_t result;
     double doubleMax = std::numeric_limits<double>::max();
-    result = cudaMemcpy(lowestVariant, &doubleMax, sizeof(double), cudaMemcpyHostToDevice);
-    return result;
+    gpuErrchk(cudaMemcpy(lowestVariant, &doubleMax, sizeof(double), cudaMemcpyHostToDevice));
+}
+
+//Returns pointer to lowest variant on GPU
+double *CUDAPhotomosaicData::getLowestVariant()
+{
+    return lowestVariant;
+}
+
+//Returns pointer to reduction memory on GPU
+double *CUDAPhotomosaicData::getReductionMemory()
+{
+    return reductionMemory;
 }

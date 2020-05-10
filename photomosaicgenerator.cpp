@@ -155,11 +155,7 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
     //Allocate memory on GPU and copy data from CPU to GPU
     CUDAPhotomosaicData photomosaicData(cellSize, resizedLib.front().channels(), resizedLib.size(),
             m_mode != PhotomosaicGenerator::Mode::CIEDE2000);
-    if (photomosaicData.mallocData() != cudaSuccess)
-    {
-        qDebug() << "Failed to allocate sufficient memory on GPU";
-        return cv::Mat();
-    }
+    photomosaicData.mallocData();
 
     //Move library images to GPU
     photomosaicData.setLibraryImages(resizedLib);
@@ -244,10 +240,6 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
     }
 
     //Deallocate memory on GPU and CPU
-    if (photomosaicData.freeData() != cudaSuccess)
-        qDebug() << "Failed to free memory on GPU";
-
-    //Deallocate memory on GPU and CPU
     free(repeats);
 
     //Combines all results into single image (mosaic)
@@ -269,14 +261,16 @@ void PhotomosaicGenerator::calculateRepeats(const std::vector<std::vector<size_t
     {
         for (int repeatX = repeatStartX; repeatX < repeatEndX; ++repeatX)
         {
-            repeats[grid.at(static_cast<size_t>(repeatX)).at(static_cast<size_t>(repeatY))] += m_repeatAddition;
+            repeats[grid.at(static_cast<size_t>(repeatX)).at(static_cast<size_t>(repeatY))]
+                    += m_repeatAddition;
         }
     }
 
     //Looks at cells directly to the left of current cell
     for (int repeatX = repeatStartX; repeatX < x; ++repeatX)
     {
-        repeats[grid.at(static_cast<size_t>(repeatX)).at(static_cast<size_t>(y))] += m_repeatAddition;
+        repeats[grid.at(static_cast<size_t>(repeatX)).at(static_cast<size_t>(y))]
+                += m_repeatAddition;
     }
 }
 #endif

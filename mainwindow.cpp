@@ -648,7 +648,8 @@ void MainWindow::generatePhotomosaic()
     if (mainImage.empty())
     {
         QMessageBox msgBox;
-        msgBox.setText(tr("The main image \"") + ui->lineMainImage->text() + tr("\" failed to load"));
+        msgBox.setText(tr("The main image \"") + ui->lineMainImage->text()
+                       + tr("\" failed to load"));
         msgBox.exec();
         return;
     }

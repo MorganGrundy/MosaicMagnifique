@@ -7,6 +7,17 @@
 
 #include <opencv2/core/mat.hpp>
 
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true)
+{
+   if (code != cudaSuccess)
+   {
+      fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort)
+          exit(code);
+   }
+}
+
 class CUDAPhotomosaicData
 {
 public:
@@ -15,50 +26,86 @@ public:
     ~CUDAPhotomosaicData();
 
     //Allocates memory on GPU for Photomosaic data
-    cudaError_t mallocData();
+    void mallocData();
 
     //Frees memory on GPU
-    cudaError_t freeData();
+    void freeData();
+
+    //Returns block size
+    size_t getBlockSize();
 
     //Copies cell image to GPU
-    cudaError_t setCellImage(const cv::Mat &t_cellImage);
+    void setCellImage(const cv::Mat &t_cellImage);
+    //Returns pointer to cell image on GPU
+    uchar *getCellImage();
 
     //Copies library images to GPU
-    cudaError_t setLibraryImages(const std::vector<cv::Mat> &t_libraryImages);
+    void setLibraryImages(const std::vector<cv::Mat> &t_libraryImages);
+    //Returns pointer to library images on GPU
+    uchar *getLibraryImages();
 
     //Copies mask image to GPU
-    cudaError_t setMaskImage(const cv::Mat &t_maskImage);
+    void setMaskImage(const cv::Mat &t_maskImage);
+    //Returns pointer to mask image on GPU
+    uchar *getMaskImage();
 
     //Copies target area to GPU
-    cudaError_t setTargetArea(const size_t (&t_targetArea)[4]);
+    void setTargetArea(const size_t (&t_targetArea)[4]);
+    //Returns pointer to target area on GPU
+    size_t *getTargetArea();
 
     //Copies repeats to GPU
-    cudaError_t setRepeats(const size_t *t_repeats);
+    void setRepeats(const size_t *t_repeats);
+    //Returns pointer to repeats on GPU
+    size_t *getRepeats();
 
     //Sets variants to 0
-    cudaError_t clearVariants();
+    void clearVariants();
+    //Returns pointer to variants on GPU
+    double *getVariants();
 
     //Sets best fit to number of library images
-    cudaError_t resetBestFit();
+    void resetBestFit();
+    //Returns pointer to best fit on GPU
+    size_t *getBestFit();
 
     //Sets lowest variant to max double
-    cudaError_t resetLowestVariant();
+    void resetLowestVariant();
+    //Returns pointer to lowest variant on GPU
+    double *getLowestVariant();
+
+    //Returns pointer to reduction memory on GPU
+    double *getReductionMemory();
 
     //-------------------------------------
-    size_t blockSize;
+    const size_t imageSize; //Size of images (width == height)
+    const size_t imageChannels; //Channels in main and library images
 
-    //Stores image data
-    uchar *cellImage, *libraryImages, *maskImage;
+    const size_t pixelCount; //Number of pixels in images (width * height)
+    const size_t fullSize; //Number of uchar in images (width * height * channels)
 
-    double *variants, *reductionMemory, *lowestVariant;
-    size_t *bestFit;
+    const size_t noLibraryImages; //Number of library images
 
-    size_t *targetArea;
-    const size_t imageSize, imageChannels, noLibraryImages;
+    const bool euclidean; //Which difference formula to use euclidean (true) or CIEDE2000 (false)
 
-    size_t *repeats;
+private:
+    bool dataIsAllocated; //Stores if any data has been allocated on GPU
 
-    const bool euclidean;
+    size_t blockSize; //Number of threads per block
+
+    uchar *cellImage; //Stores a cell from the main image
+    uchar *libraryImages; //Stores all library images
+    uchar *maskImage; //Stores mask image
+
+    size_t *targetArea; //Stores bounds of cell (as custom cell shapes can exceed image bounds)
+
+    double *variants; //Stores results of difference formula for each pixel
+    double *reductionMemory; //Memory used to perform sum reduction on variants
+
+    double *lowestVariant; //Stores the lowest variant seen
+    size_t *bestFit; //Stores the index of the lowest variant seen
+
+    size_t *repeats; //Stores for each library image the value to add to variant for current cell
 };
 
 #endif // CUDAPHOTOMOSAICDATA_H

@@ -124,7 +124,6 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGenerator::resizeAndCvtColor
 
 #ifdef CUDA
 
-extern "C"
 size_t differenceGPU(CUDAPhotomosaicData &photomosaicData);
 
 //Returns a Photomosaic of the main image made of the library images
@@ -153,18 +152,18 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
     setLabelText("Finding best fits...");
 
     //Allocate memory on GPU and copy data from CPU to GPU
-    CUDAPhotomosaicData photomosaicData(cellSize, resizedLib.front().channels(), resizedLib.size(),
-            m_mode != PhotomosaicGenerator::Mode::CIEDE2000);
-    photomosaicData.mallocData();
+    CUDAPhotomosaicData photomosaicData(cellSize, resizedLib.front().channels(),
+                                        gridSize.x, gridSize.y, resizedLib.size(),
+                                        m_mode != PhotomosaicGenerator::Mode::CIEDE2000,
+                                        m_repeatRange, m_repeatAddition);
+    if (!photomosaicData.mallocData())
+        return cv::Mat();
 
     //Move library images to GPU
     photomosaicData.setLibraryImages(resizedLib);
 
     //Move mask image to GPU
     photomosaicData.setMaskImage(resizedCellShape.getCellMask());
-
-    //Allocate memory for repeats
-    size_t *repeats = static_cast<size_t *>(malloc(resizedLib.size() * sizeof(size_t)));
 
     //Split main image into grid
     //Find best match for each cell in grid
@@ -197,12 +196,13 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
                 setValue(value() + 1);
                 continue;
             }
+            const size_t index = (y + padGrid) * gridSize.x + (x + padGrid);
 
             size_t targetArea[4] = {static_cast<size_t>(yStart - unboundedRect.y),
                                     static_cast<size_t>(yEnd - unboundedRect.y),
                                     static_cast<size_t>(xStart - unboundedRect.x),
                                     static_cast<size_t>(xEnd - unboundedRect.x)};
-            photomosaicData.setTargetArea(targetArea);
+            photomosaicData.setTargetArea(targetArea, index);
 
             //Copies visible part of main image to cell
             resizedImg(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)).
@@ -210,68 +210,38 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
                                           static_cast<int>(targetArea[1])),
                                 cv::Range(static_cast<int>(targetArea[2]),
                                           static_cast<int>(targetArea[3]))));
-            photomosaicData.setCellImage(cell);
+            photomosaicData.setCellImage(cell, index);
+        }
+    }
 
-            //Calculate repeat value of each library image in repeat range and copy to GPU
-            memset(repeats, 0, resizedLib.size() * sizeof(size_t));
-            calculateRepeats(grid, gridSize, repeats, x + padGrid, y + padGrid);
-            photomosaicData.setRepeats(repeats);
+    //Calculate differences
+    differenceGPU(photomosaicData);
+    size_t *results = photomosaicData.getResults();
 
-            photomosaicData.clearVariants();
-            photomosaicData.resetBestFit();
-            photomosaicData.resetLowestVariant();
-
-            size_t index = differenceGPU(photomosaicData);
-
-            if (index >= resizedLib.size())
+    for (size_t x = 0; x < static_cast<size_t>(gridSize.x); ++x)
+    {
+        for (size_t y = 0; y < static_cast<size_t>(gridSize.y); ++y)
+        {
+            const size_t index = y * gridSize.x + x;
+            if (results[index] >= resizedLib.size())
             {
                 qDebug() << "Error: Failed to find a best fit";
-                result.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) =
-                        m_lib.front();
+                result.at(x).at(y) = m_lib.front();
                 setValue(value() + 1);
                 continue;
             }
 
-            grid.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) = index;
-            result.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) =
-                    m_lib.at(index);
+            grid.at(x).at(y) = results[index];
+            result.at(x).at(y) = m_lib.at(results[index]);
             setValue(value() + 1);
         }
     }
 
     //Deallocate memory on GPU and CPU
-    free(repeats);
+    photomosaicData.freeData();
 
     //Combines all results into single image (mosaic)
     return combineResults(gridSize, result);
-}
-
-//Calculates the repeat value of each library image in repeat range around x,y
-//Only needs to look at first half of cells as the latter half are not yet used
-void PhotomosaicGenerator::calculateRepeats(const std::vector<std::vector<size_t>> &grid,
-                                            const cv::Point &gridSize, size_t *repeats,
-                                            const int x, const int y) const
-{
-    const int repeatStartX = std::clamp(x - m_repeatRange, 0, gridSize.x);
-    const int repeatStartY = std::clamp(y - m_repeatRange, 0, gridSize.y);
-    const int repeatEndX = std::clamp(x + m_repeatRange, 0, gridSize.x);
-
-    //Looks at cells above the current cell
-    for (int repeatY = repeatStartY; repeatY < std::clamp(y, 0, gridSize.y); ++repeatY)
-    {
-        for (int repeatX = repeatStartX; repeatX < repeatEndX; ++repeatX)
-        {
-            repeats[grid.at(static_cast<size_t>(repeatX)).at(static_cast<size_t>(repeatY))]
-                    += m_repeatAddition;
-        }
-    }
-
-    //Looks at cells directly to the left of current cell
-    for (int repeatX = repeatStartX; repeatX < x; ++repeatX)
-    {
-        repeats[grid.at(static_cast<size_t>(repeatX)).at(static_cast<size_t>(y))]
-                += m_repeatAddition;
-    }
 }
 #endif
 
@@ -382,12 +352,12 @@ std::map<size_t, int> PhotomosaicGenerator::calculateRepeats(
     std::map<size_t, int> repeats;
     const int repeatStartX = std::clamp(x - m_repeatRange, 0, gridSize.x);
     const int repeatStartY = std::clamp(y - m_repeatRange, 0, gridSize.y);
-    const int repeatEndX = std::clamp(x + m_repeatRange, 0, gridSize.x);
+    const int repeatEndX = std::clamp(x + m_repeatRange, 0, gridSize.x - 1);
 
     //Looks at cells above the current cell
     for (int repeatY = repeatStartY; repeatY < std::clamp(y, 0, gridSize.y); ++repeatY)
     {
-        for (int repeatX = repeatStartX; repeatX < repeatEndX; ++repeatX)
+        for (int repeatX = repeatStartX; repeatX <= repeatEndX; ++repeatX)
         {
             const auto it = repeats.find(grid.at(static_cast<size_t>(repeatX)).
                                    at(static_cast<size_t>(repeatY)));
@@ -424,7 +394,7 @@ int PhotomosaicGenerator::findBestFitEuclidean(const cv::Mat &cell, const cv::Ma
                                                const int xStart, const int xEnd) const
 {
     int bestFit = -1;
-    long double bestVariant = LDBL_MAX;
+    long double bestVariant = std::numeric_limits<long double>::max();
 
     for (size_t i = 0; i < library.size(); ++i)
     {
@@ -471,7 +441,7 @@ int PhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell, const cv::Ma
                                                const int xStart, const int xEnd) const
 {
     int bestFit = -1;
-    long double bestVariant = LDBL_MAX;
+    long double bestVariant = std::numeric_limits<long double>::max();
 
     for (size_t i = 0; i < library.size(); ++i)
     {

@@ -22,20 +22,29 @@ class CUDAPhotomosaicData
 {
 public:
     CUDAPhotomosaicData(const size_t t_imageSize, const size_t t_imageChannels,
-                        const size_t t_noLibraryImages, const bool t_euclidean);
+                        const size_t t_noXCellImages, const size_t t_noYCellImages,
+                        const size_t t_noLibraryImages,
+                        const bool t_euclidean,
+                        const size_t t_repeatRange, const size_t t_repeatAddition);
     ~CUDAPhotomosaicData();
 
     //Allocates memory on GPU for Photomosaic data
-    void mallocData();
+    bool mallocData();
 
     //Frees memory on GPU
     void freeData();
 
+    //Copies next batch of host data to device, returns batch index
+    int copyNextBatchToDevice();
+
+    //Copies best fits from device to host and returns pointer
+    size_t *getResults();
+
     //Returns block size
     size_t getBlockSize();
 
-    //Copies cell image to GPU
-    void setCellImage(const cv::Mat &t_cellImage);
+    //Copies cell image to host memory at index i
+    void setCellImage(const cv::Mat &t_cellImage, const size_t i);
     //Returns pointer to cell image on GPU
     uchar *getCellImage();
 
@@ -49,13 +58,15 @@ public:
     //Returns pointer to mask image on GPU
     uchar *getMaskImage();
 
-    //Copies target area to GPU
-    void setTargetArea(const size_t (&t_targetArea)[4]);
+    //Copies target area to host memory at index i
+    void setTargetArea(const size_t (&t_targetArea)[4], const size_t i);
     //Returns pointer to target area on GPU
     size_t *getTargetArea();
 
     //Copies repeats to GPU
     void setRepeats(const size_t *t_repeats);
+    //Sets repeats to 0
+    void clearRepeats();
     //Returns pointer to repeats on GPU
     size_t *getRepeats();
 
@@ -84,26 +95,35 @@ public:
     const size_t pixelCount; //Number of pixels in images (width * height)
     const size_t fullSize; //Number of uchar in images (width * height * channels)
 
+    const size_t noXCellImages, noYCellImages; //Number of cell images per row and column
+    const size_t noCellImages; //Number of cell images
     const size_t noLibraryImages; //Number of library images
 
     const bool euclidean; //Which difference formula to use euclidean (true) or CIEDE2000 (false)
 
+    const size_t repeatRange; //Range to look for repeats
+    const size_t repeatAddition; //Value to add to variants based on number of repeats in range
+
 private:
     bool dataIsAllocated; //Stores if any data has been allocated on GPU
+    int currentBatchIndex; //Stores index of current batch of data loaded on device
 
     size_t blockSize; //Number of threads per block
 
+    uchar *HOST_cellImages; //Stores on host all cells from main image
     uchar *cellImage; //Stores a cell from the main image
     uchar *libraryImages; //Stores all library images
     uchar *maskImage; //Stores mask image
 
+    size_t *HOST_targetAreas; //Stores on host bounds of all cells
     size_t *targetArea; //Stores bounds of cell (as custom cell shapes can exceed image bounds)
 
     double *variants; //Stores results of difference formula for each pixel
     double *reductionMemory; //Memory used to perform sum reduction on variants
 
     double *lowestVariant; //Stores the lowest variant seen
-    size_t *bestFit; //Stores the index of the lowest variant seen
+    size_t *HOST_bestFit; //Stores on host the lowest variant seen for each cell
+    size_t *bestFit; //Stores the index of the lowest variant seen for each cell
 
     size_t *repeats; //Stores for each library image the value to add to variant for current cell
 };

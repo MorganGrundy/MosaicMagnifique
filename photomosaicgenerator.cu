@@ -200,9 +200,9 @@ void findLowestKernel(double *lowestVariant, size_t *bestFit, double *variants, 
 //Calculates repeats in range
 __global__
 void calculateRepeats(size_t *bestFit, size_t *repeats,
-                      const size_t noXCell, const size_t noYCell,
-                      const size_t leftRange, const size_t rightRange,
-                      const size_t upRange,
+                      const int noXCell,
+                      const int leftRange, const int rightRange,
+                      const int upRange,
                       const size_t repeatAddition)
 {
     for (int y = -upRange; y < 0; ++y)
@@ -221,7 +221,7 @@ void calculateRepeats(size_t *bestFit, size_t *repeats,
 size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
 {
     size_t numBlocks;
-    size_t batchIndex;
+    int batchIndex;
 
     photomosaicData.resetBestFit();
     while ((batchIndex = photomosaicData.copyNextBatchToDevice()) != -1)
@@ -254,15 +254,15 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
                       photomosaicData.noLibraryImages);
 
         //Calculate repeats
-        const size_t batchX = batchIndex % photomosaicData.noXCellImages;
-        const size_t batchY = batchIndex / photomosaicData.noXCellImages;
+        const int x = batchIndex % static_cast<int>(photomosaicData.noXCellImages);
+        const int y = batchIndex / static_cast<int>(photomosaicData.noXCellImages);
 
-        const size_t leftRange = std::min(photomosaicData.repeatRange, batchX);
-        const size_t rightRange = std::min(photomosaicData.repeatRange,
-                                           photomosaicData.noXCellImages - batchX - 1);
-        const size_t upRange = std::min(photomosaicData.repeatRange, batchY);
+        const int leftRange = std::min(static_cast<int>(photomosaicData.repeatRange), x);
+        const int rightRange = std::min(static_cast<int>(photomosaicData.repeatRange),
+                                        static_cast<int>(photomosaicData.noXCellImages) - x - 1);
+        const int upRange = std::min(static_cast<int>(photomosaicData.repeatRange), y);
         calculateRepeats<<<1, 1>>>(photomosaicData.getBestFit(), photomosaicData.getRepeats(),
-                                   photomosaicData.noXCellImages, photomosaicData.noYCellImages,
+                                   static_cast<int>(photomosaicData.noXCellImages),
                                    leftRange, rightRange, upRange,
                                    photomosaicData.repeatAddition);
         

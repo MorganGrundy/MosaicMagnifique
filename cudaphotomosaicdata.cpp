@@ -222,13 +222,6 @@ size_t *CUDAPhotomosaicData::getTargetArea()
     return targetArea;
 }
 
-//Copies repeats to GPU
-void CUDAPhotomosaicData::setRepeats(const size_t *t_repeats)
-{
-    gpuErrchk(cudaMemcpy(repeats, t_repeats, noLibraryImages * sizeof(size_t),
-                         cudaMemcpyHostToDevice));
-}
-
 //Sets repeats to 0
 void CUDAPhotomosaicData::clearRepeats()
 {

@@ -172,10 +172,11 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
     std::vector<std::vector<size_t>> grid(static_cast<size_t>(gridSize.x),
                                           std::vector<size_t>(static_cast<size_t>(gridSize.y), 0));
     cv::Mat cell(cellSize, cellSize, m_img.type(), cv::Scalar(0));
-    for (int x = -static_cast<int>(padGrid); x < gridSize.x - padGrid; ++x)
+    for (int y = -static_cast<int>(padGrid); y < gridSize.y - padGrid; ++y)
     {
-        for (int y = -static_cast<int>(padGrid); y < gridSize.y - padGrid; ++y)
+        for (int x = -static_cast<int>(padGrid); x < gridSize.x - padGrid; ++x)
         {
+
             //If user hits cancel in QProgressDialog then return empty mat
             if (wasCanceled())
                 return cv::Mat();
@@ -277,9 +278,9 @@ cv::Mat PhotomosaicGenerator::generate()
     std::vector<std::vector<size_t>> grid(static_cast<size_t>(gridSize.x),
                                           std::vector<size_t>(static_cast<size_t>(gridSize.y), 0));
     cv::Mat cell(cellSize.y, cellSize.x, m_img.type(), cv::Scalar(0));
-    for (int x = -static_cast<int>(padGrid); x < gridSize.x - padGrid; ++x)
+    for (int y = -static_cast<int>(padGrid); y < gridSize.y - padGrid; ++y)
     {
-        for (int y = -static_cast<int>(padGrid); y < gridSize.y - padGrid; ++y)
+        for (int x = -static_cast<int>(padGrid); x < gridSize.x - padGrid; ++x)
         {
             //If user hits cancel in QProgressDialog then return empty mat
             if (wasCanceled())
@@ -355,7 +356,7 @@ std::map<size_t, int> PhotomosaicGenerator::calculateRepeats(
     const int repeatEndX = std::clamp(x + m_repeatRange, 0, gridSize.x - 1);
 
     //Looks at cells above the current cell
-    for (int repeatY = repeatStartY; repeatY < std::clamp(y, 0, gridSize.y); ++repeatY)
+    for (int repeatY = repeatStartY; repeatY < y; ++repeatY)
     {
         for (int repeatX = repeatStartX; repeatX <= repeatEndX; ++repeatX)
         {

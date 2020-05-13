@@ -63,8 +63,6 @@ public:
     //Returns pointer to target area on GPU
     size_t *getTargetArea();
 
-    //Copies repeats to GPU
-    void setRepeats(const size_t *t_repeats);
     //Sets repeats to 0
     void clearRepeats();
     //Returns pointer to repeats on GPU

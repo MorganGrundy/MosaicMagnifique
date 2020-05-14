@@ -40,13 +40,16 @@ public:
     //Copies best fits from device to host and returns pointer
     size_t *getResults();
 
+    //Returns batch size
+    size_t getBatchSize();
+
     //Returns block size
     size_t getBlockSize();
 
     //Copies cell image to host memory at index i
     void setCellImage(const cv::Mat &t_cellImage, const size_t i);
     //Returns pointer to cell image on GPU
-    uchar *getCellImage();
+    uchar *getCellImage(const size_t i);
 
     //Copies library images to GPU
     void setLibraryImages(const std::vector<cv::Mat> &t_libraryImages);
@@ -61,7 +64,7 @@ public:
     //Copies target area to host memory at index i
     void setTargetArea(const size_t (&t_targetArea)[4], const size_t i);
     //Returns pointer to target area on GPU
-    size_t *getTargetArea();
+    size_t *getTargetArea(const size_t i);
 
     //Sets repeats to 0
     void clearRepeats();
@@ -76,12 +79,12 @@ public:
     //Sets best fit to number of library images
     void resetBestFit();
     //Returns pointer to best fit on GPU
-    size_t *getBestFit();
+    size_t *getBestFit(const size_t i);
 
     //Sets lowest variant to max double
     void resetLowestVariant();
     //Returns pointer to lowest variant on GPU
-    double *getLowestVariant();
+    double *getLowestVariant(const size_t i);
 
     //Returns pointer to reduction memory on GPU
     double *getReductionMemory();
@@ -105,21 +108,23 @@ public:
 private:
     bool dataIsAllocated; //Stores if any data has been allocated on GPU
     int currentBatchIndex; //Stores index of current batch of data loaded on device
+    size_t batchSize; //Number of cells in each batch
 
     size_t blockSize; //Number of threads per block
 
     uchar *HOST_cellImages; //Stores on host all cells from main image
-    uchar *cellImage; //Stores a cell from the main image
+    uchar *cellImage; //Stores cells from the main image
     uchar *libraryImages; //Stores all library images
     uchar *maskImage; //Stores mask image
 
     size_t *HOST_targetAreas; //Stores on host bounds of all cells
-    size_t *targetArea; //Stores bounds of cell (as custom cell shapes can exceed image bounds)
+    size_t *targetArea; //Stores bounds of cells (as custom cell shapes can exceed image bounds)
 
     double *variants; //Stores results of difference formula for each pixel
     double *reductionMemory; //Memory used to perform sum reduction on variants
 
-    double *lowestVariant; //Stores the lowest variant seen
+    double *maxVariant; //Stores maximum variant value
+    double *lowestVariant; //Stores the lowest variants seen
     size_t *HOST_bestFit; //Stores on host the lowest variant seen for each cell
     size_t *bestFit; //Stores the index of the lowest variant seen for each cell
 

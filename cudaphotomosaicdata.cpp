@@ -19,6 +19,7 @@ CUDAPhotomosaicData::CUDAPhotomosaicData(const size_t t_imageSize, const size_t 
     cudaDeviceProp deviceProp;
     gpuErrchk(cudaGetDeviceProperties(&deviceProp, 0));
     blockSize = deviceProp.maxThreadsPerBlock;
+    batchSize = 0;
 }
 
 CUDAPhotomosaicData::~CUDAPhotomosaicData()
@@ -41,18 +42,27 @@ bool CUDAPhotomosaicData::mallocData()
     const size_t variantsSize = pixelCount * noLibraryImages;
     const size_t reductionMemorySize = noLibraryImages * ((pixelCount + blockSize - 1) / blockSize
                                                           + 1) / 2;
+    const size_t maxVariantSize = 1;
     const size_t lowestVariantSize = 1;
 
     const size_t bestFitSize = noCellImages;
     const size_t repeatsSize = noLibraryImages;
     const size_t targetAreaSize = 4;
 
-    //Calculate total memory needed on GPU
-    totalMem = (cellImageSize + libraryImagesSize + maskImageSize) * sizeof(uchar)
-            + (variantsSize + reductionMemorySize + lowestVariantSize) * sizeof(double)
-            + (bestFitSize + repeatsSize + targetAreaSize) * sizeof(size_t);
+    const size_t staticMemory = (libraryImagesSize + maskImageSize) * sizeof(uchar)
+            + (variantsSize + reductionMemorySize + maxVariantSize) * sizeof(double)
+            + (bestFitSize + repeatsSize) * sizeof(size_t);
+
+    const size_t batchScalingMemory = (cellImageSize) * sizeof(uchar)
+            + (lowestVariantSize) * sizeof(double)
+            + (targetAreaSize) * sizeof(size_t);
+
+    //Calculate max batch size possible with given memory
+    batchSize = noCellImages;
+    while (staticMemory + batchScalingMemory * batchSize >= freeMem && batchSize != 0)
+        --batchSize;
     //If memory needed exceeds available memory then exit
-    if (totalMem >= freeMem)
+    if (batchSize == 0)
     {
         fprintf(stderr, "Not enough memory available on GPU to generate Photomosaic\n");
         return false;
@@ -81,25 +91,31 @@ bool CUDAPhotomosaicData::mallocData()
     }
 
     void *mem;
-    //Batch allocate memory for cell image, library images, and mask image
-    gpuErrchk(cudaMalloc(&mem, (cellImageSize + libraryImagesSize + maskImageSize)
+    //Batch allocate memory for cell images, library images, and mask image
+    gpuErrchk(cudaMalloc(&mem, (cellImageSize * batchSize + libraryImagesSize + maskImageSize)
                          * sizeof(uchar)));
     cellImage = static_cast<uchar *>(mem);
-    libraryImages = cellImage + cellImageSize;
+    libraryImages = cellImage + cellImageSize * batchSize;
     maskImage = libraryImages + libraryImagesSize;
 
-    //Batch allocate memory for variants, reduce memory, and lowest variant
-    gpuErrchk(cudaMalloc(&mem, (variantsSize + reductionMemorySize + lowestVariantSize)
-                         * sizeof(double)));
+    //Batch allocate memory for variants, reduce memory, max variant and lowest variants
+    gpuErrchk(cudaMalloc(&mem, (variantsSize + reductionMemorySize + maxVariantSize
+                                + lowestVariantSize * batchSize) * sizeof(double)));
     variants = static_cast<double *>(mem);
     reductionMemory = variants + variantsSize;
-    lowestVariant = reductionMemory + reductionMemorySize;
+    maxVariant = reductionMemory + reductionMemorySize;
+    lowestVariant = maxVariant + maxVariantSize;
 
-    //Batch allocate memory for best fit, repeats, and target area
-    gpuErrchk(cudaMalloc(&mem, (bestFitSize + repeatsSize + targetAreaSize) * sizeof(size_t)));
+    //Batch allocate memory for best fits, repeats, and target areas
+    gpuErrchk(cudaMalloc(&mem, (bestFitSize + repeatsSize + targetAreaSize * batchSize)
+                         * sizeof(size_t)));
     bestFit = static_cast<size_t *>(mem);
     repeats = bestFit + bestFitSize;
     targetArea = repeats + repeatsSize;
+
+    //Set max variant
+    const double doubleMax = std::numeric_limits<double>::max();
+    gpuErrchk(cudaMemcpy(maxVariant, &doubleMax, sizeof(double), cudaMemcpyHostToDevice));
 
     dataIsAllocated = true;
     currentBatchIndex = -1;
@@ -137,20 +153,23 @@ int CUDAPhotomosaicData::copyNextBatchToDevice()
         return -1;
 
     ++currentBatchIndex;
-    if (static_cast<size_t>(currentBatchIndex) >= noCellImages)
+    if (static_cast<size_t>(currentBatchIndex * batchSize) >= noCellImages)
     {
         currentBatchIndex = -1;
         return -1;
     }
 
-    //Copy cell image and target area
-    gpuErrchk(cudaMemcpy(cellImage, HOST_cellImages + currentBatchIndex * fullSize,
-                         fullSize * sizeof(uchar), cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(targetArea, HOST_targetAreas + currentBatchIndex * 4,
-                         4 * sizeof(size_t), cudaMemcpyHostToDevice));
+    if (currentBatchIndex == 0)
+        resetBestFit();
 
-    clearVariants();
-    clearRepeats();
+    //Copy cell image and target area
+    const size_t startOffset = batchSize * currentBatchIndex;
+    const size_t offset = std::min(noCellImages - startOffset, batchSize);
+    gpuErrchk(cudaMemcpy(cellImage, HOST_cellImages + startOffset * fullSize,
+                         offset * fullSize * sizeof(uchar), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(targetArea, HOST_targetAreas + startOffset * 4,
+                         offset * 4 * sizeof(size_t), cudaMemcpyHostToDevice));
+
     resetLowestVariant();
 
     return currentBatchIndex;
@@ -161,6 +180,12 @@ size_t *CUDAPhotomosaicData::getResults()
 {
     gpuErrchk(cudaMemcpy(HOST_bestFit, bestFit, noCellImages * sizeof(size_t), cudaMemcpyDeviceToHost));
     return HOST_bestFit;
+}
+
+//Returns batch size
+size_t CUDAPhotomosaicData::getBatchSize()
+{
+    return batchSize;
 }
 
 //Returns block size
@@ -175,10 +200,10 @@ void CUDAPhotomosaicData::setCellImage(const cv::Mat &t_cellImage, const size_t 
     memcpy(HOST_cellImages + i * fullSize, t_cellImage.data, fullSize * sizeof(uchar));
 }
 
-//Returns pointer to cell image on GPU
-uchar *CUDAPhotomosaicData::getCellImage()
+//Returns pointer to cell image i on GPU
+uchar *CUDAPhotomosaicData::getCellImage(const size_t i)
 {
-    return cellImage;
+    return cellImage + i * fullSize;
 }
 
 //Copies library images to GPU
@@ -216,10 +241,10 @@ void CUDAPhotomosaicData::setTargetArea(const size_t (&t_targetArea)[4], const s
     memcpy(HOST_targetAreas + i * 4, t_targetArea, 4 * sizeof(size_t));
 }
 
-//Returns pointer to target area on GPU
-size_t *CUDAPhotomosaicData::getTargetArea()
+//Returns pointer to target area i on GPU
+size_t *CUDAPhotomosaicData::getTargetArea(const size_t i)
 {
-    return targetArea;
+    return targetArea + i * 4;
 }
 
 //Sets repeats to 0
@@ -251,27 +276,27 @@ void CUDAPhotomosaicData::resetBestFit()
 {
     gpuErrchk(cudaMemcpy(bestFit, &noLibraryImages, sizeof(size_t), cudaMemcpyHostToDevice));
     for (size_t i = 1; i < noCellImages; ++i)
-        gpuErrchk(cudaMemcpy(bestFit + i, bestFit, sizeof(size_t),
-                             cudaMemcpyDeviceToDevice));
+        gpuErrchk(cudaMemcpy(bestFit + i, bestFit, sizeof(size_t), cudaMemcpyDeviceToDevice));
 }
 
 //Returns pointer to best fit on GPU
-size_t *CUDAPhotomosaicData::getBestFit()
+size_t *CUDAPhotomosaicData::getBestFit(const size_t i)
 {
-    return bestFit + currentBatchIndex;
+    return bestFit + currentBatchIndex * batchSize + i;
 }
 
 //Sets lowest variant to max double
 void CUDAPhotomosaicData::resetLowestVariant()
 {
-    double doubleMax = std::numeric_limits<double>::max();
-    gpuErrchk(cudaMemcpy(lowestVariant, &doubleMax, sizeof(double), cudaMemcpyHostToDevice));
+    for (size_t i = 0; i < batchSize; ++i)
+        gpuErrchk(cudaMemcpy(lowestVariant + i, maxVariant, sizeof(double),
+                             cudaMemcpyDeviceToDevice));
 }
 
-//Returns pointer to lowest variant on GPU
-double *CUDAPhotomosaicData::getLowestVariant()
+//Returns pointer to lowest variant i on GPU
+double *CUDAPhotomosaicData::getLowestVariant(const size_t i)
 {
-    return lowestVariant;
+    return lowestVariant + i;
 }
 
 //Returns pointer to reduction memory on GPU

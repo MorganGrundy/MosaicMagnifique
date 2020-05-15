@@ -50,11 +50,11 @@ bool CUDAPhotomosaicData::mallocData()
     const size_t targetAreaSize = 4;
 
     const size_t staticMemory = (libraryImagesSize + maskImageSize) * sizeof(uchar)
-            + (variantsSize + reductionMemorySize + maxVariantSize) * sizeof(double)
+            + (maxVariantSize) * sizeof(double)
             + (bestFitSize + repeatsSize) * sizeof(size_t);
 
     const size_t batchScalingMemory = (cellImageSize) * sizeof(uchar)
-            + (lowestVariantSize) * sizeof(double)
+            + (variantsSize + reductionMemorySize + lowestVariantSize) * sizeof(double)
             + (targetAreaSize) * sizeof(size_t);
 
     //Calculate max batch size possible with given memory
@@ -99,11 +99,12 @@ bool CUDAPhotomosaicData::mallocData()
     maskImage = libraryImages + libraryImagesSize;
 
     //Batch allocate memory for variants, reduce memory, max variant and lowest variants
-    gpuErrchk(cudaMalloc(&mem, (variantsSize + reductionMemorySize + maxVariantSize
-                                + lowestVariantSize * batchSize) * sizeof(double)));
+    gpuErrchk(cudaMalloc(&mem, (maxVariantSize
+                                + (variantsSize + reductionMemorySize + lowestVariantSize)
+                                * batchSize) * sizeof(double)));
     variants = static_cast<double *>(mem);
-    reductionMemory = variants + variantsSize;
-    maxVariant = reductionMemory + reductionMemorySize;
+    reductionMemory = variants + variantsSize * batchSize;
+    maxVariant = reductionMemory + reductionMemorySize * batchSize;
     lowestVariant = maxVariant + maxVariantSize;
 
     //Batch allocate memory for best fits, repeats, and target areas
@@ -178,7 +179,8 @@ int CUDAPhotomosaicData::copyNextBatchToDevice()
 //Copies best fits from device to host and returns pointer
 size_t *CUDAPhotomosaicData::getResults()
 {
-    gpuErrchk(cudaMemcpy(HOST_bestFit, bestFit, noCellImages * sizeof(size_t), cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(HOST_bestFit, bestFit, noCellImages * sizeof(size_t),
+                         cudaMemcpyDeviceToHost));
     return HOST_bestFit;
 }
 
@@ -259,16 +261,10 @@ size_t *CUDAPhotomosaicData::getRepeats()
     return repeats;
 }
 
-//Sets variants to 0
-void CUDAPhotomosaicData::clearVariants()
-{
-    gpuErrchk(cudaMemset(variants, 0, pixelCount * noLibraryImages * sizeof(double)));
-}
-
 //Returns pointer to variants on GPU
-double *CUDAPhotomosaicData::getVariants()
+double *CUDAPhotomosaicData::getVariants(const size_t i)
 {
-    return variants;
+    return variants + i * pixelCount * noLibraryImages;
 }
 
 //Sets best fit to number of library images
@@ -300,7 +296,8 @@ double *CUDAPhotomosaicData::getLowestVariant(const size_t i)
 }
 
 //Returns pointer to reduction memory on GPU
-double *CUDAPhotomosaicData::getReductionMemory()
+double *CUDAPhotomosaicData::getReductionMemory(const size_t i)
 {
-    return reductionMemory;
+    return reductionMemory + i * noLibraryImages * ((pixelCount + blockSize - 1) / blockSize
+                                                    + 1) / 2;
 }

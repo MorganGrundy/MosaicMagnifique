@@ -26,7 +26,9 @@ void euclideanDifferenceKernel(uchar *im_1, uchar *im_2, size_t noLibIm, uchar *
         if (col < target_area[2] || col >= target_area[3])
             continue;
 
-        if (mask_im[grayscaleIndex] != 0)
+        if (mask_im[grayscaleIndex] == 0)
+            variants[i / channels] = 0;
+        else
             variants[i / channels] = sqrt(pow((double) im_1[im_1_index] - im_2[i], 2.0) +
                                           pow((double) im_1[im_1_index + 1] - im_2[i + 1], 2.0) +
                                           pow((double) im_1[im_1_index + 2] - im_2[i + 2], 2.0));
@@ -60,7 +62,9 @@ void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, size_t noLibIm, uchar *
         if (col < target_area[2] || col >= target_area[3])
             continue;
 
-        if (mask_im[grayscaleIndex] != 0)
+        if (mask_im[grayscaleIndex] == 0)
+            variants[i / channels] = 0;
+        else
         {
             const double k_L = 1.0, k_C = 1.0, k_H = 1.0;
             constexpr double deg360InRad = degToRadKernel(360.0);
@@ -173,6 +177,27 @@ void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, size_t noLibIm, uchar *
     }
 }
 
+//Calculates repeats in range
+__global__
+void calculateRepeats(size_t *bestFit, size_t *repeats,
+                      const int noXCell,
+                      const int leftRange, const int rightRange,
+                      const int upRange,
+                      const size_t repeatAddition)
+{
+    for (int y = -upRange; y < 0; ++y)
+    {
+        for (int x = -leftRange; x <= rightRange; ++x)
+        {
+            repeats[bestFit[y * noXCell + x]] += repeatAddition;
+        }
+    }
+    for (int x = -leftRange; x < 0; ++x)
+    {
+        repeats[bestFit[x]] += repeatAddition;
+    }
+}
+
 //Adds repeat values to variants
 __global__
 void addRepeatsKernel(double *variants, size_t *repeats, size_t noLibIm)
@@ -197,32 +222,19 @@ void findLowestKernel(double *lowestVariant, size_t *bestFit, double *variants, 
     }
 }
 
-//Calculates repeats in range
-__global__
-void calculateRepeats(size_t *bestFit, size_t *repeats,
-                      const int noXCell,
-                      const int leftRange, const int rightRange,
-                      const int upRange,
-                      const size_t repeatAddition)
-{
-    for (int y = -upRange; y < 0; ++y)
-    {
-        for (int x = -leftRange; x <= rightRange; ++x)
-        {
-            repeats[bestFit[y * noXCell + x]] += repeatAddition;
-        }
-    }
-    for (int x = -leftRange; x < 0; ++x)
-    {
-        repeats[bestFit[x]] += repeatAddition;
-    }
-}
-
 size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
 {
     size_t numBlocks;
     const int batchSize = static_cast<int>(photomosaicData.getBatchSize());
     int batchIndex;
+
+    //Create streams
+    const static size_t maxStreams = 8;
+    const size_t noOfStreams = std::min(maxStreams, photomosaicData.getBatchSize());
+    size_t curStream = 0;
+    cudaStream_t streams[maxStreams];
+    for (size_t i = 0; i < noOfStreams; ++i)
+        gpuErrchk(cudaStreamCreate(&streams[i]));
 
     //Loop over all batches
     while ((batchIndex = photomosaicData.copyNextBatchToDevice()) != -1)
@@ -232,33 +244,45 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
              && batchIndex * batchSize + i < photomosaicData.noCellImages; ++i)
         {
             //Calculate differences
-            photomosaicData.clearVariants();
             numBlocks = (photomosaicData.pixelCount * photomosaicData.noLibraryImages
                          + photomosaicData.getBlockSize() - 1) / photomosaicData.getBlockSize();
             if (photomosaicData.euclidean)
                 euclideanDifferenceKernel<<<static_cast<unsigned int>(numBlocks),
-                        static_cast<unsigned int>(photomosaicData.getBlockSize())>>>(
+                        static_cast<unsigned int>(photomosaicData.getBlockSize()),
+                        0, streams[curStream]>>>(
                                 photomosaicData.getCellImage(i),
                                 photomosaicData.getLibraryImages(), photomosaicData.noLibraryImages,
                                 photomosaicData.getMaskImage(),
                                 photomosaicData.imageSize, photomosaicData.imageChannels,
                                 photomosaicData.getTargetArea(i),
-                                photomosaicData.getVariants());
+                                photomosaicData.getVariants(i));
             else
                 CIEDE2000DifferenceKernel<<<static_cast<unsigned int>(numBlocks),
-                        static_cast<unsigned int>(photomosaicData.getBlockSize())>>>(
+                        static_cast<unsigned int>(photomosaicData.getBlockSize()),
+                        0, streams[curStream]>>>(
                                 photomosaicData.getCellImage(i),
                                 photomosaicData.getLibraryImages(), photomosaicData.noLibraryImages,
                                 photomosaicData.getMaskImage(),
                                 photomosaicData.imageSize, photomosaicData.imageChannels,
                                 photomosaicData.getTargetArea(i),
-                                photomosaicData.getVariants());
+                                photomosaicData.getVariants(i));
 
             //Perform sum reduction on all image variants
-            reduceAddData(photomosaicData.getVariants(), photomosaicData.getReductionMemory(),
+            reduceAddData(photomosaicData.getVariants(i), photomosaicData.getReductionMemory(i),
                           photomosaicData.pixelCount, photomosaicData.getBlockSize(),
-                          photomosaicData.noLibraryImages);
+                          photomosaicData.noLibraryImages, streams[curStream]);
 
+            //Move to next stream
+            ++curStream;
+            if (curStream == noOfStreams)
+                curStream = 0;
+        }
+        //gpuErrchk(cudaDeviceSynchronize());
+
+        //Loop over all data in batch
+        for (size_t i = 0; i < batchSize
+             && batchIndex * batchSize + i < photomosaicData.noCellImages; ++i)
+        {
             //Calculate repeats
             photomosaicData.clearRepeats();
             const int x = (batchIndex * batchSize + static_cast<int>(i))
@@ -281,19 +305,23 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
                          + photomosaicData.getBlockSize() - 1) / photomosaicData.getBlockSize();
             addRepeatsKernel<<<static_cast<unsigned int>(numBlocks),
                     static_cast<unsigned int>(photomosaicData.getBlockSize())>>>(
-                            photomosaicData.getVariants(),
+                            photomosaicData.getVariants(i),
                             photomosaicData.getRepeats(),
                             photomosaicData.noLibraryImages);
 
             //Find lowest variant
             findLowestKernel<<<1, 1>>>(photomosaicData.getLowestVariant(i),
                                        photomosaicData.getBestFit(i),
-                                       photomosaicData.getVariants(),
+                                       photomosaicData.getVariants(i),
                                        photomosaicData.noLibraryImages);
         }
     }
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
+
+    //Destroy streams
+    for (size_t i = 0; i < noOfStreams; ++i)
+        gpuErrchk(cudaStreamDestroy(streams[i]));
 
     return 0;
 }

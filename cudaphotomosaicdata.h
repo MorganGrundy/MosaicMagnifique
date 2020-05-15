@@ -71,10 +71,8 @@ public:
     //Returns pointer to repeats on GPU
     size_t *getRepeats();
 
-    //Sets variants to 0
-    void clearVariants();
     //Returns pointer to variants on GPU
-    double *getVariants();
+    double *getVariants(const size_t i);
 
     //Sets best fit to number of library images
     void resetBestFit();
@@ -87,7 +85,7 @@ public:
     double *getLowestVariant(const size_t i);
 
     //Returns pointer to reduction memory on GPU
-    double *getReductionMemory();
+    double *getReductionMemory(const size_t i);
 
     //-------------------------------------
     const size_t imageSize; //Size of images (width == height)

@@ -2,6 +2,7 @@
 #define CUDA_REDUCTION
 
 #include <cuda.h>
+#include <cuda_runtime_api.h>
 
 //Performs sum reduction in a single warp
 template <size_t blockSize>
@@ -14,5 +15,5 @@ __global__
 void reduceAdd(double *g_idata, double *g_odata, const size_t N, const size_t noLibIm);
 
 void reduceAddData(double *data, double *output, const size_t N, const size_t maxBlockSize,
-				   const size_t noLibIm);
+                   const size_t noLibIm, const cudaStream_t &stream);
 #endif

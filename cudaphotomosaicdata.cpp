@@ -190,6 +190,12 @@ size_t CUDAPhotomosaicData::getBatchSize()
     return batchSize;
 }
 
+//Returns current batch index
+size_t CUDAPhotomosaicData::getBatchIndex()
+{
+    return currentBatchIndex;
+}
+
 //Returns block size
 size_t CUDAPhotomosaicData::getBlockSize()
 {

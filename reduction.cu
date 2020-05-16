@@ -91,108 +91,141 @@ void reduceAdd(double *g_idata, double *g_odata, const size_t N, const size_t no
     }
 }
 
-void reduceAddData(double *data, double *output, const size_t N, const size_t maxBlockSize,
-                   const size_t noLibIm, const cudaStream_t &stream)
+void reduceAddData(CUDAPhotomosaicData &photomosaicData, cudaStream_t stream[8],
+                   const size_t noOfStreams)
 {
-    size_t reduceDataSize = N;
+    size_t curStream = 0;
+    size_t reduceDataSize = photomosaicData.pixelCount;
 
     //Number of blocks needed assuming max block size
-    size_t numBlocks = ((reduceDataSize + maxBlockSize - 1) / maxBlockSize + 1) / 2;
+    size_t numBlocks = ((reduceDataSize + photomosaicData.getBlockSize() - 1)
+                        / photomosaicData.getBlockSize() + 1) / 2;
 
     //Minimum number of threads per block
     size_t reduceBlockSize;
 
     //Stores number of threads to use per block (power of 2)
-    size_t threads = maxBlockSize;
+    size_t threads = photomosaicData.getBlockSize();
 
     do
     {
         //Calculate new number of blocks and threads
-        numBlocks = ((reduceDataSize + maxBlockSize - 1) / maxBlockSize + 1) / 2;
+        numBlocks = ((reduceDataSize + photomosaicData.getBlockSize() - 1)
+                     / photomosaicData.getBlockSize() + 1) / 2;
         reduceBlockSize = (reduceDataSize + numBlocks - 1) / numBlocks;
         while (threads > reduceBlockSize * 2)
             threads >>= 1;
 
-        //Reduce
-        switch (threads)
+        //Loop over all data in batch
+        for (size_t i = 0; i < photomosaicData.getBatchSize()
+             && photomosaicData.getBatchIndex() * photomosaicData.getBatchSize() + i
+             < photomosaicData.noCellImages; ++i)
         {
-        case 2048:
-            reduceAdd<2048><<<static_cast<unsigned int>(numBlocks),
-                              static_cast<unsigned int>(threads),
-                              static_cast<unsigned int>(threads * sizeof(double)), stream
-                           >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 1024:
-            reduceAdd<1024><<<static_cast<unsigned int>(numBlocks),
-                              static_cast<unsigned int>(threads),
-                              static_cast<unsigned int>(threads * sizeof(double)), stream
-                           >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 512:
-            reduceAdd<512><<<static_cast<unsigned int>(numBlocks),
-                             static_cast<unsigned int>(threads),
-                             static_cast<unsigned int>(threads * sizeof(double)), stream
-                          >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 256:
-            reduceAdd<256><<<static_cast<unsigned int>(numBlocks),
-                             static_cast<unsigned int>(threads),
-                             static_cast<unsigned int>(threads * sizeof(double)), stream
-                          >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 128:
-            reduceAdd<128><<<static_cast<unsigned int>(numBlocks),
-                             static_cast<unsigned int>(threads),
-                             static_cast<unsigned int>(threads * sizeof(double)), stream
-                          >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 64:
-            reduceAdd<64><<<static_cast<unsigned int>(numBlocks),
-                            static_cast<unsigned int>(threads),
-                            static_cast<unsigned int>(threads * sizeof(double)), stream
-                         >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 32:
-            reduceAdd<32><<<static_cast<unsigned int>(numBlocks),
-                            static_cast<unsigned int>(threads),
-                            static_cast<unsigned int>(threads * sizeof(double)), stream
-                         >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 16:
-            reduceAdd<16><<<static_cast<unsigned int>(numBlocks),
-                            static_cast<unsigned int>(threads),
-                            static_cast<unsigned int>(threads * sizeof(double)), stream
-                         >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 8:
-            reduceAdd<8><<<static_cast<unsigned int>(numBlocks),
-                           static_cast<unsigned int>(threads),
-                           static_cast<unsigned int>(threads * sizeof(double)), stream
-                        >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 4:
-            reduceAdd<4><<<static_cast<unsigned int>(numBlocks),
-                           static_cast<unsigned int>(threads),
-                           static_cast<unsigned int>(threads * sizeof(double)), stream
-                        >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 2:
-            reduceAdd<2><<<static_cast<unsigned int>(numBlocks),
-                           static_cast<unsigned int>(threads),
-                           static_cast<unsigned int>(threads * sizeof(double)), stream
-                        >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        case 1:
-            reduceAdd<1><<<static_cast<unsigned int>(numBlocks),
-                           static_cast<unsigned int>(threads),
-                           static_cast<unsigned int>(threads * sizeof(double)), stream
-                        >>>(data, output, reduceDataSize, noLibIm);
-            break;
-        }
+            //Reduce
+            switch (threads)
+            {
+            case 2048:
+                reduceAdd<2048><<<static_cast<unsigned int>(numBlocks),
+                        static_cast<unsigned int>(threads),
+                        static_cast<unsigned int>(threads * sizeof(double)), stream[curStream]
+                        >>>(photomosaicData.getVariants(i), photomosaicData.getReductionMemory(i),
+                            reduceDataSize, photomosaicData.noLibraryImages);
+                break;
+            case 1024:
+                reduceAdd<1024><<<static_cast<unsigned int>(numBlocks),
+                        static_cast<unsigned int>(threads),
+                        static_cast<unsigned int>(threads * sizeof(double)), stream[curStream]
+                        >>>(photomosaicData.getVariants(i), photomosaicData.getReductionMemory(i),
+                            reduceDataSize, photomosaicData.noLibraryImages);
+                break;
+            case 512:
+                reduceAdd<512><<<static_cast<unsigned int>(numBlocks),
+                        static_cast<unsigned int>(threads),
+                        static_cast<unsigned int>(threads * sizeof(double)), stream[curStream]
+                        >>>(photomosaicData.getVariants(i), photomosaicData.getReductionMemory(i),
+                            reduceDataSize, photomosaicData.noLibraryImages);
+                break;
+            case 256:
+                reduceAdd<256><<<static_cast<unsigned int>(numBlocks),
+                        static_cast<unsigned int>(threads),
+                        static_cast<unsigned int>(threads * sizeof(double)), stream[curStream]
+                        >>>(photomosaicData.getVariants(i), photomosaicData.getReductionMemory(i),
+                            reduceDataSize, photomosaicData.noLibraryImages);
+                break;
+            case 128:
+                reduceAdd<128><<<static_cast<unsigned int>(numBlocks),
+                        static_cast<unsigned int>(threads),
+                        static_cast<unsigned int>(threads * sizeof(double)), stream[curStream]
+                        >>>(photomosaicData.getVariants(i), photomosaicData.getReductionMemory(i),
+                            reduceDataSize, photomosaicData.noLibraryImages);
+                break;
+            case 64:
+                reduceAdd<64><<<static_cast<unsigned int>(numBlocks),
+                        static_cast<unsigned int>(threads),
+                        static_cast<unsigned int>(threads * sizeof(double)), stream[curStream]
+                        >>>(photomosaicData.getVariants(i), photomosaicData.getReductionMemory(i),
+                            reduceDataSize, photomosaicData.noLibraryImages);
+                break;
+            case 32:
+                reduceAdd<32><<<static_cast<unsigned int>(numBlocks),
+                        static_cast<unsigned int>(threads),
+                        static_cast<unsigned int>(threads * sizeof(double)), stream[curStream]
+                        >>>(photomosaicData.getVariants(i), photomosaicData.getReductionMemory(i),
+                            reduceDataSize, photomosaicData.noLibraryImages);
+                break;
+            case 16:
+                reduceAdd<16><<<static_cast<unsigned int>(numBlocks),
+                        static_cast<unsigned int>(threads),
+                        static_cast<unsigned int>(threads * sizeof(double)), stream[curStream]
+                        >>>(photomosaicData.getVariants(i), photomosaicData.getReductionMemory(i),
+                            reduceDataSize, photomosaicData.noLibraryImages);
+                break;
+            case 8:
+                reduceAdd<8><<<static_cast<unsigned int>(numBlocks),
+                        static_cast<unsigned int>(threads),
+                        static_cast<unsigned int>(threads * sizeof(double)), stream[curStream]
+                        >>>(photomosaicData.getVariants(i), photomosaicData.getReductionMemory(i),
+                            reduceDataSize, photomosaicData.noLibraryImages);
+                break;
+            case 4:
+                reduceAdd<4><<<static_cast<unsigned int>(numBlocks),
+                        static_cast<unsigned int>(threads),
+                        static_cast<unsigned int>(threads * sizeof(double)), stream[curStream]
+                        >>>(photomosaicData.getVariants(i), photomosaicData.getReductionMemory(i),
+                            reduceDataSize, photomosaicData.noLibraryImages);
+                break;
+            case 2:
+                reduceAdd<2><<<static_cast<unsigned int>(numBlocks),
+                        static_cast<unsigned int>(threads),
+                        static_cast<unsigned int>(threads * sizeof(double)), stream[curStream]
+                        >>>(photomosaicData.getVariants(i), photomosaicData.getReductionMemory(i),
+                            reduceDataSize, photomosaicData.noLibraryImages);
+                break;
+            case 1:
+                reduceAdd<1><<<static_cast<unsigned int>(numBlocks),
+                        static_cast<unsigned int>(threads),
+                        static_cast<unsigned int>(threads * sizeof(double)), stream[curStream]
+                        >>>(photomosaicData.getVariants(i), photomosaicData.getReductionMemory(i),
+                            reduceDataSize, photomosaicData.noLibraryImages);
+                break;
+            }
 
-        //Copy results back to data
-        gpuErrchk(cudaMemcpy(data, output, numBlocks * noLibIm * sizeof(double),
-                             cudaMemcpyDeviceToDevice));
+            //Move to next stream
+            ++curStream;
+            if (curStream == noOfStreams)
+                curStream = 0;
+        }
+        //Loop over all data in batch
+        for (size_t i = 0; i < photomosaicData.getBatchSize()
+             && photomosaicData.getBatchIndex() * photomosaicData.getBatchSize() + i
+             < photomosaicData.noCellImages; ++i)
+        {
+            //Copy results back to data
+            gpuErrchk(cudaMemcpy(photomosaicData.getVariants(i),
+                                 photomosaicData.getReductionMemory(i),
+                                 numBlocks * photomosaicData.noLibraryImages * sizeof(double),
+                                 cudaMemcpyDeviceToDevice));
+        }
 
         //New data length is equal to number of blocks
         reduceDataSize = numBlocks;

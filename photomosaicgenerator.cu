@@ -267,17 +267,13 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
                                 photomosaicData.getTargetArea(i),
                                 photomosaicData.getVariants(i));
 
-            //Perform sum reduction on all image variants
-            reduceAddData(photomosaicData.getVariants(i), photomosaicData.getReductionMemory(i),
-                          photomosaicData.pixelCount, photomosaicData.getBlockSize(),
-                          photomosaicData.noLibraryImages, streams[curStream]);
-
             //Move to next stream
             ++curStream;
             if (curStream == noOfStreams)
                 curStream = 0;
         }
-        //gpuErrchk(cudaDeviceSynchronize());
+        //Perform sum reduction on all image variants
+        reduceAddData(photomosaicData, streams, noOfStreams);
 
         //Loop over all data in batch
         for (size_t i = 0; i < batchSize
@@ -300,7 +296,7 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
                                        leftRange, rightRange, upRange,
                                        photomosaicData.repeatAddition);
 
-            //Adds repeat value to first difference value
+            //Adds repeat values to differences
             numBlocks = (photomosaicData.noLibraryImages
                          + photomosaicData.getBlockSize() - 1) / photomosaicData.getBlockSize();
             addRepeatsKernel<<<static_cast<unsigned int>(numBlocks),

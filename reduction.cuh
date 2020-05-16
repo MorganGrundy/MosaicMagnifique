@@ -4,6 +4,8 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 
+#include "cudaphotomosaicdata.h"
+
 //Performs sum reduction in a single warp
 template <size_t blockSize>
 __device__
@@ -14,6 +16,6 @@ template <size_t blockSize>
 __global__
 void reduceAdd(double *g_idata, double *g_odata, const size_t N, const size_t noLibIm);
 
-void reduceAddData(double *data, double *output, const size_t N, const size_t maxBlockSize,
-                   const size_t noLibIm, const cudaStream_t &stream);
+void reduceAddData(CUDAPhotomosaicData &photomosaicData, cudaStream_t stream[8],
+                   const size_t noOfStreams);
 #endif

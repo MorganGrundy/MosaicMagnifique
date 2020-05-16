@@ -43,6 +43,9 @@ public:
     //Returns batch size
     size_t getBatchSize();
 
+    //Returns current batch index
+    size_t getBatchIndex();
+
     //Returns block size
     size_t getBlockSize();
 

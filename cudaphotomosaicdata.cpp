@@ -40,8 +40,7 @@ bool CUDAPhotomosaicData::mallocData()
     const size_t maskImageSize = pixelCount;
 
     const size_t variantsSize = pixelCount * noLibraryImages;
-    const size_t reductionMemorySize = noLibraryImages * ((pixelCount + blockSize - 1) / blockSize
-                                                          + 1) / 2;
+    reductionMemorySize = noLibraryImages * ((pixelCount + blockSize - 1) / blockSize + 1) / 2;
     const size_t maxVariantSize = 1;
     const size_t lowestVariantSize = 1;
 
@@ -304,6 +303,5 @@ double *CUDAPhotomosaicData::getLowestVariant(const size_t i)
 //Returns pointer to reduction memory on GPU
 double *CUDAPhotomosaicData::getReductionMemory(const size_t i)
 {
-    return reductionMemory + i * noLibraryImages * ((pixelCount + blockSize - 1) / blockSize
-                                                    + 1) / 2;
+    return reductionMemory + i * reductionMemorySize;
 }

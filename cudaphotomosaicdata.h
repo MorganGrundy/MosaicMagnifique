@@ -122,6 +122,7 @@ private:
     size_t *targetArea; //Stores bounds of cells (as custom cell shapes can exceed image bounds)
 
     double *variants; //Stores results of difference formula for each pixel
+    size_t reductionMemorySize; //Size of reductionMemory
     double *reductionMemory; //Memory used to perform sum reduction on variants
 
     double *maxVariant; //Stores maximum variant value

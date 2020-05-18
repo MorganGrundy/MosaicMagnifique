@@ -20,11 +20,17 @@ void euclideanDifferenceKernel(uchar *im_1, uchar *im_2, size_t noLibIm, uchar *
 
         const size_t row = grayscaleIndex / size;
         if (row < target_area[0] || row >= target_area[1])
+        {
+            variants[i / channels] = 0;
             continue;
+        }
 
         const size_t col = grayscaleIndex % size;
         if (col < target_area[2] || col >= target_area[3])
+        {
+            variants[i / channels] = 0;
             continue;
+        }
 
         if (mask_im[grayscaleIndex] == 0)
             variants[i / channels] = 0;
@@ -56,11 +62,17 @@ void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, size_t noLibIm, uchar *
 
         const size_t row = grayscaleIndex / size;
         if (row < target_area[0] || row >= target_area[1])
+        {
+            variants[i / channels] = 0;
             continue;
+        }
 
         const size_t col = grayscaleIndex % size;
         if (col < target_area[2] || col >= target_area[3])
+        {
+            variants[i / channels] = 0;
             continue;
+        }
 
         if (mask_im[grayscaleIndex] == 0)
             variants[i / channels] = 0;

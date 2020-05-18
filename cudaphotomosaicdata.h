@@ -109,6 +109,7 @@ public:
 private:
     bool dataIsAllocated; //Stores if any data has been allocated on GPU
     int currentBatchIndex; //Stores index of current batch of data loaded on device
+    size_t noOfBatch; //Number of data batches
     size_t batchSize; //Number of cells in each batch
 
     size_t blockSize; //Number of threads per block

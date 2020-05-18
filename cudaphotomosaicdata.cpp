@@ -66,6 +66,9 @@ bool CUDAPhotomosaicData::mallocData()
         fprintf(stderr, "Not enough memory available on GPU to generate Photomosaic\n");
         return false;
     }
+    //Calculate batch size <= max batch size such that the data load is evenly spread
+    noOfBatch = (noCellImages + batchSize - 1) / batchSize;
+    batchSize = (noCellImages + noOfBatch - 1) / noOfBatch;
 
     //Allocate host memory for cell images, target areas, and best fits
     if (!(HOST_cellImages = static_cast<uchar *>(malloc(cellImageSize * noCellImages
@@ -153,7 +156,7 @@ int CUDAPhotomosaicData::copyNextBatchToDevice()
         return -1;
 
     ++currentBatchIndex;
-    if (static_cast<size_t>(currentBatchIndex * batchSize) >= noCellImages)
+    if (static_cast<size_t>(currentBatchIndex) == noOfBatch)
     {
         currentBatchIndex = -1;
         return -1;

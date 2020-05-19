@@ -6,6 +6,8 @@
 #include <iostream>
 #include <cuda_runtime.h>
 
+#include "cudaphotomosaicdata.h"
+
 int checkCUDAState()
 {
     int deviceCount, device;
@@ -39,7 +41,7 @@ int main(int argc, char *argv[])
 
     //Initialise CUDA
     int *deviceInit;
-    cudaMalloc(&deviceInit, 0 * sizeof(int));
+    gpuErrchk(cudaMalloc(&deviceInit, 0 * sizeof(int)));
 #endif
 
     QApplication a(argc, argv);

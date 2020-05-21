@@ -7,11 +7,13 @@
 
 CellShape::CellShape()
     : m_cellMask{}, m_rowSpacing{0}, m_colSpacing{0},
-      m_alternateRowOffset{0}, m_alternateColOffset{0} {}
+      m_alternateRowOffset{0}, m_alternateColOffset{0},
+      m_horizontalFlipping{false}, m_verticalFlipping{false} {}
 
 CellShape::CellShape(const cv::Mat &t_cellMask)
     : m_rowSpacing{t_cellMask.rows}, m_colSpacing{t_cellMask.cols},
-      m_alternateRowOffset{0}, m_alternateColOffset{0}
+      m_alternateRowOffset{0}, m_alternateColOffset{0},
+      m_horizontalFlipping{false}, m_verticalFlipping{false}
 {
     setCellMask(t_cellMask);
 }
@@ -20,7 +22,9 @@ CellShape::CellShape(const CellShape &t_cellShape)
     : m_cellMask{t_cellShape.getCellMask()}, m_rowSpacing{t_cellShape.getRowSpacing()},
       m_colSpacing{t_cellShape.getColSpacing()},
       m_alternateRowOffset{t_cellShape.getAlternateRowOffset()},
-      m_alternateColOffset{t_cellShape.getAlternateColOffset()} {}
+      m_alternateColOffset{t_cellShape.getAlternateColOffset()},
+      m_horizontalFlipping{t_cellShape.getHorizontalFlipping()},
+      m_verticalFlipping{t_cellShape.getVerticalFlipping()} {}
 
 //Writes the CellShape to a QDataStream
 QDataStream &operator<<(QDataStream &t_out, const CellShape &t_cellShape)
@@ -28,15 +32,19 @@ QDataStream &operator<<(QDataStream &t_out, const CellShape &t_cellShape)
     t_out << t_cellShape.m_cellMask;
     t_out << t_cellShape.m_rowSpacing << t_cellShape.m_colSpacing;
     t_out << t_cellShape.m_alternateRowOffset << t_cellShape.m_alternateColOffset;
+    t_out << t_cellShape.m_horizontalFlipping << t_cellShape.m_verticalFlipping;
     return t_out;
 }
 
 //Reads the CellShape from a QDataStream
-QDataStream &operator>>(QDataStream &t_in, CellShape &t_cellShape)
+QDataStream &operator>>(QDataStream &t_in, std::pair<CellShape &, const int> t_cellShape)
 {
-    t_in >> t_cellShape.m_cellMask;
-    t_in >> t_cellShape.m_rowSpacing >> t_cellShape.m_colSpacing;
-    t_in >> t_cellShape.m_alternateRowOffset >> t_cellShape.m_alternateColOffset;
+    t_in >> t_cellShape.first.m_cellMask;
+    t_in >> t_cellShape.first.m_rowSpacing >> t_cellShape.first.m_colSpacing;
+    t_in >> t_cellShape.first.m_alternateRowOffset >> t_cellShape.first.m_alternateColOffset;
+    if (t_cellShape.second > 4)
+        t_in >> t_cellShape.first.m_horizontalFlipping >> t_cellShape.first.m_verticalFlipping;
+
     return t_in;
 }
 
@@ -109,6 +117,30 @@ void CellShape::setAlternateColOffset(const int t_alternateColOffset)
 int CellShape::getAlternateColOffset() const
 {
     return m_alternateColOffset;
+}
+
+//Sets the alternate horizontal flipping
+void CellShape::setHorizontalFlipping(const bool t_horizontalFlipping)
+{
+    m_horizontalFlipping = t_horizontalFlipping;
+}
+
+//Returns the alternate horizontal flipping
+bool CellShape::getHorizontalFlipping() const
+{
+    return m_horizontalFlipping;
+}
+
+//Sets the alternate vertical flipping
+void CellShape::setVerticalFlipping(const bool t_verticalFlipping)
+{
+    m_verticalFlipping = t_verticalFlipping;
+}
+
+//Returns the alternate vertical flipping
+bool CellShape::getVerticalFlipping() const
+{
+    return m_verticalFlipping;
 }
 
 //Returns the cell shape resized to the given size

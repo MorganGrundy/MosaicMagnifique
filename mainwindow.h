@@ -32,6 +32,8 @@ public slots:
     void cellSpacingRowChanged(int t_value);
     void cellAlternateColOffsetChanged(int t_value);
     void cellAlternateRowOffsetChanged(int t_value);
+    void cellFlipHorizontalChanged(bool t_state);
+    void cellFlipVerticalChanged(bool t_state);
 
     //Image Library tab
     void addImages();
@@ -46,7 +48,7 @@ public slots:
     void photomosaicWidthChanged(int i);
     void photomosaicHeightChanged(int i);
     void loadImageSize();
-    void enableCellShape(int t_state);
+    void enableCellShape(bool t_state);
 
     void generatePhotomosaic();
 

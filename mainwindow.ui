@@ -309,6 +309,13 @@ border: 1px solid dimgray;
          </widget>
         </item>
         <item>
+         <widget class="Line" name="line_8">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QFrame" name="frame_10">
           <property name="frameShape">
            <enum>QFrame::StyledPanel</enum>
@@ -329,19 +336,42 @@ border: 1px solid dimgray;
            <property name="bottomMargin">
             <number>0</number>
            </property>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_16">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
+           <item row="0" column="6">
+            <widget class="QLabel" name="label_19">
              <property name="statusTip">
-              <string>Controls the offset applied to every other cell</string>
+              <string>Controls vertical cell shape flipping</string>
              </property>
              <property name="text">
-              <string>Alternate Offset:</string>
+              <string>Vertical</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="6" alignment="Qt::AlignHCenter">
+            <widget class="QCheckBox" name="checkCellFlipV">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="statusTip">
+              <string>Controls vertical cell shape flipping</string>
+             </property>
+             <property name="whatsThis">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Every other cell will use a cell shape flipped vertically.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="3" rowspan="3">
+            <widget class="Line" name="line_6">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
              </property>
             </widget>
            </item>
@@ -352,39 +382,18 @@ border: 1px solid dimgray;
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
-            <widget class="QLabel" name="label_14">
-             <property name="text">
-              <string>Row</string>
+           <item row="1" column="8">
+            <spacer name="horizontalSpacer_8">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
              </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QSpinBox" name="spinCustomCellSpacingCol">
-             <property name="statusTip">
-              <string>Controls spacing between columns of cells in pixels</string>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
              </property>
-             <property name="styleSheet">
-              <string notr="true">QSpinBox {
-border: 1px solid dimgray;
-}</string>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::PlusMinus</enum>
-             </property>
-             <property name="suffix">
-              <string>px</string>
-             </property>
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <number>10000</number>
-             </property>
-             <property name="singleStep">
-              <number>1</number>
-             </property>
-            </widget>
+            </spacer>
            </item>
            <item row="1" column="0">
             <widget class="QLabel" name="label_12">
@@ -402,6 +411,29 @@ border: 1px solid dimgray;
              </property>
              <property name="text">
               <string>Spacing:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_16">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="statusTip">
+              <string>Controls the offset applied to every other cell</string>
+             </property>
+             <property name="text">
+              <string>Alternate Offset:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="label_14">
+             <property name="text">
+              <string>Row</string>
              </property>
             </widget>
            </item>
@@ -435,23 +467,50 @@ border: 1px solid dimgray;
              </property>
             </widget>
            </item>
-           <item row="1" column="3">
-            <spacer name="horizontalSpacer_8">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
            <item row="1" column="1">
             <widget class="QSpinBox" name="spinCustomCellSpacingRow">
              <property name="statusTip">
               <string>Controls spacing between rows of cells in pixels</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QSpinBox {
+border: 1px solid dimgray;
+}</string>
+             </property>
+             <property name="buttonSymbols">
+              <enum>QAbstractSpinBox::PlusMinus</enum>
+             </property>
+             <property name="suffix">
+              <string>px</string>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>10000</number>
+             </property>
+             <property name="singleStep">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="4">
+            <widget class="QLabel" name="label_17">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="statusTip">
+              <string>Controls cell shape flipping</string>
+             </property>
+             <property name="text">
+              <string>Alternate Flipping:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QSpinBox" name="spinCustomCellSpacingCol">
+             <property name="statusTip">
+              <string>Controls spacing between columns of cells in pixels</string>
              </property>
              <property name="styleSheet">
               <string notr="true">QSpinBox {
@@ -499,6 +558,48 @@ border: 1px solid dimgray;
              </property>
              <property name="singleStep">
               <number>1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="5" alignment="Qt::AlignHCenter">
+            <widget class="QCheckBox" name="checkCellFlipH">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="statusTip">
+              <string>Controls horizontal cell shape flipping</string>
+             </property>
+             <property name="whatsThis">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Every other cell will use a cell shape flipped horizontally.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="5">
+            <widget class="QLabel" name="label_18">
+             <property name="statusTip">
+              <string>Controls horizontal cell shape flipping</string>
+             </property>
+             <property name="text">
+              <string>Horizontal</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="7" rowspan="3">
+            <widget class="Line" name="line_9">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
              </property>
             </widget>
            </item>
@@ -1509,6 +1610,13 @@ QLineEdit:disabled {
               </widget>
              </item>
              <item>
+              <widget class="Line" name="line_5">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
               <spacer name="verticalSpacer_2">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
@@ -1741,6 +1849,9 @@ border: 1px solid dimgray;
               </property>
               <property name="layoutDirection">
                <enum>Qt::RightToLeft</enum>
+              </property>
+              <property name="styleSheet">
+               <string notr="true"/>
               </property>
               <property name="text">
                <string>CUDA:</string>

@@ -61,8 +61,14 @@ MainWindow::MainWindow(QWidget *t_parent)
             SLOT(cellAlternateColOffsetChanged(int)));
     connect(ui->spinCustomCellAlternateRowOffset, SIGNAL(valueChanged(int)), this,
             SLOT(cellAlternateRowOffsetChanged(int)));
-    connect(ui->checkCellFlipH, SIGNAL(clicked(bool)), this, SLOT(cellFlipHorizontalChanged(bool)));
-    connect(ui->checkCellFlipV, SIGNAL(clicked(bool)), this, SLOT(cellFlipVerticalChanged(bool)));
+    connect(ui->checkCellColFlipH, SIGNAL(clicked(bool)), this,
+            SLOT(cellColumnFlipHorizontalChanged(bool)));
+    connect(ui->checkCellColFlipV, SIGNAL(clicked(bool)), this,
+            SLOT(cellColumnFlipVerticalChanged(bool)));
+    connect(ui->checkCellRowFlipH, SIGNAL(clicked(bool)), this,
+            SLOT(cellRowFlipHorizontalChanged(bool)));
+    connect(ui->checkCellRowFlipV, SIGNAL(clicked(bool)), this,
+            SLOT(cellRowFlipVerticalChanged(bool)));
 
     //Setup image library list
     ui->listPhoto->setResizeMode(QListWidget::ResizeMode::Adjust);
@@ -190,20 +196,26 @@ void MainWindow::loadCellShape()
         ui->spinCustomCellSpacingRow->blockSignals(true);
         ui->spinCustomCellAlternateColOffset->blockSignals(true);
         ui->spinCustomCellAlternateRowOffset->blockSignals(true);
-        ui->checkCellFlipH->blockSignals(true);
-        ui->checkCellFlipV->blockSignals(true);
+        ui->checkCellColFlipH->blockSignals(true);
+        ui->checkCellColFlipV->blockSignals(true);
+        ui->checkCellRowFlipH->blockSignals(true);
+        ui->checkCellRowFlipV->blockSignals(true);
         ui->spinCustomCellSpacingCol->setValue(cellShape.getColSpacing());
         ui->spinCustomCellSpacingRow->setValue(cellShape.getRowSpacing());
         ui->spinCustomCellAlternateColOffset->setValue(cellShape.getAlternateColOffset());
         ui->spinCustomCellAlternateRowOffset->setValue(cellShape.getAlternateRowOffset());
-        ui->checkCellFlipH->setChecked(cellShape.getHorizontalFlipping());
-        ui->checkCellFlipV->setChecked(cellShape.getVerticalFlipping());
+        ui->checkCellColFlipH->setChecked(cellShape.getColFlipHorizontal());
+        ui->checkCellColFlipV->setChecked(cellShape.getColFlipVertical());
+        ui->checkCellRowFlipH->setChecked(cellShape.getRowFlipHorizontal());
+        ui->checkCellRowFlipV->setChecked(cellShape.getRowFlipVertical());
         ui->spinCustomCellSpacingCol->blockSignals(false);
         ui->spinCustomCellSpacingRow->blockSignals(false);
         ui->spinCustomCellAlternateColOffset->blockSignals(false);
         ui->spinCustomCellAlternateRowOffset->blockSignals(false);
-        ui->checkCellFlipH->blockSignals(false);
-        ui->checkCellFlipV->blockSignals(false);
+        ui->checkCellColFlipH->blockSignals(false);
+        ui->checkCellColFlipV->blockSignals(false);
+        ui->checkCellRowFlipH->blockSignals(false);
+        ui->checkCellRowFlipV->blockSignals(false);
 
         //Extract cell name from filename
         QString cellName = filename.right(filename.size() - filename.lastIndexOf('/') - 1);
@@ -282,16 +294,28 @@ void MainWindow::cellAlternateRowOffsetChanged(int t_value)
     ui->widgetCellShapeViewer->updateGrid();
 }
 
-//Update custom cell alternate horizontal flipping
-void MainWindow::cellFlipHorizontalChanged(bool t_state)
+//Update custom cell alternate column horizontal flipping
+void MainWindow::cellColumnFlipHorizontalChanged(bool t_state)
 {
-    ui->widgetCellShapeViewer->getCellShape().setHorizontalFlipping(t_state);
+    ui->widgetCellShapeViewer->getCellShape().setColFlipHorizontal(t_state);
 }
 
-//Update custom cell alternate vertical flipping
-void MainWindow::cellFlipVerticalChanged(bool t_state)
+//Update custom cell alternate column vertical flipping
+void MainWindow::cellColumnFlipVerticalChanged(bool t_state)
 {
-    ui->widgetCellShapeViewer->getCellShape().setVerticalFlipping(t_state);
+    ui->widgetCellShapeViewer->getCellShape().setColFlipVertical(t_state);
+}
+
+//Update custom cell alternate row horizontal flipping
+void MainWindow::cellRowFlipHorizontalChanged(bool t_state)
+{
+    ui->widgetCellShapeViewer->getCellShape().setRowFlipHorizontal(t_state);
+}
+
+//Update custom cell alternate row vertical flipping
+void MainWindow::cellRowFlipVerticalChanged(bool t_state)
+{
+    ui->widgetCellShapeViewer->getCellShape().setRowFlipVertical(t_state);
 }
 
 //Used to add images to the image library

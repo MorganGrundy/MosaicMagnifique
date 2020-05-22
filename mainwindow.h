@@ -32,8 +32,10 @@ public slots:
     void cellSpacingRowChanged(int t_value);
     void cellAlternateColOffsetChanged(int t_value);
     void cellAlternateRowOffsetChanged(int t_value);
-    void cellFlipHorizontalChanged(bool t_state);
-    void cellFlipVerticalChanged(bool t_state);
+    void cellColumnFlipHorizontalChanged(bool t_state);
+    void cellColumnFlipVerticalChanged(bool t_state);
+    void cellRowFlipHorizontalChanged(bool t_state);
+    void cellRowFlipVerticalChanged(bool t_state);
 
     //Image Library tab
     void addImages();

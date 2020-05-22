@@ -75,7 +75,7 @@ border: 0px;
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideNone</enum>
@@ -347,15 +347,15 @@ border: 1px solid dimgray;
             </widget>
            </item>
            <item row="1" column="6" alignment="Qt::AlignHCenter">
-            <widget class="QCheckBox" name="checkCellFlipV">
+            <widget class="QCheckBox" name="checkCellRowFlipV">
              <property name="enabled">
               <bool>true</bool>
              </property>
              <property name="statusTip">
-              <string>Controls vertical cell shape flipping</string>
+              <string>Controls vertical cell shape row flipping</string>
              </property>
              <property name="whatsThis">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Every other cell will use a cell shape flipped vertically.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Every other row of cells will use a cell shape flipped vertically.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="layoutDirection">
               <enum>Qt::RightToLeft</enum>
@@ -500,10 +500,10 @@ border: 1px solid dimgray;
               <bool>true</bool>
              </property>
              <property name="statusTip">
-              <string>Controls cell shape flipping</string>
+              <string>Controls cell shape row flipping</string>
              </property>
              <property name="text">
-              <string>Alternate Flipping:</string>
+              <string>Row Flipping:</string>
              </property>
             </widget>
            </item>
@@ -562,15 +562,15 @@ border: 1px solid dimgray;
             </widget>
            </item>
            <item row="1" column="5" alignment="Qt::AlignHCenter">
-            <widget class="QCheckBox" name="checkCellFlipH">
+            <widget class="QCheckBox" name="checkCellRowFlipH">
              <property name="enabled">
               <bool>true</bool>
              </property>
              <property name="statusTip">
-              <string>Controls horizontal cell shape flipping</string>
+              <string>Controls horizontal cell shape row flipping</string>
              </property>
              <property name="whatsThis">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Every other cell will use a cell shape flipped horizontally.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Every other row of cells will use a cell shape flipped horizontally.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="layoutDirection">
               <enum>Qt::RightToLeft</enum>
@@ -600,6 +600,63 @@ border: 1px solid dimgray;
             <widget class="Line" name="line_9">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="4">
+            <widget class="QLabel" name="label_20">
+             <property name="statusTip">
+              <string>Controls cell shape column flipping</string>
+             </property>
+             <property name="text">
+              <string>Column Flipping:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="5" alignment="Qt::AlignHCenter">
+            <widget class="QCheckBox" name="checkCellColFlipH">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="statusTip">
+              <string>Controls horizontal cell shape column flipping</string>
+             </property>
+             <property name="whatsThis">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Every other column of cells will use a cell shape flipped horizontally.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="6" alignment="Qt::AlignHCenter">
+            <widget class="QCheckBox" name="checkCellColFlipV">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="statusTip">
+              <string>Controls vertical cell shape column flipping</string>
+             </property>
+             <property name="whatsThis">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Every other column of cells will use a cell shape flipped vertically.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string/>
              </property>
             </widget>
            </item>

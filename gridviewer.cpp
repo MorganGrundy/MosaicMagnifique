@@ -104,10 +104,24 @@ void GridViewer::updateGrid()
 
             cv::Mat gridPart(newGrid, roi), edgeGridPart(newEdgeGrid, roi);
 
-            cv::Mat mask(edgeCell, cv::Rect(0, 0, gridPart.cols, gridPart.rows));
-            cv::Mat edgeMask(edgeDetectedCell, cv::Rect(0, 0, edgeGridPart.cols,
-                                                        edgeGridPart.rows));
+            //Calculate if and how current cell is flipped
+            bool flipHorizontal = false, flipVertical = false;
+            if (cellShape.getColFlipHorizontal() && x % 2 == 1)
+                flipHorizontal = !flipHorizontal;
+            if (cellShape.getRowFlipHorizontal() && y % 2 == 1)
+                flipHorizontal = !flipHorizontal;
+            if (cellShape.getColFlipVertical() && x % 2 == 1)
+                flipVertical = !flipVertical;
+            if (cellShape.getRowFlipVertical() && y % 2 == 1)
+                flipVertical = !flipVertical;
 
+            //Copy cell to grid
+            cv::Mat mask(flipHorizontal ? (flipVertical ? cellFlippedHV : cellFlippedH)
+                                        : (flipVertical ? cellFlippedV : cell),
+                         cv::Rect(0, 0, gridPart.cols, gridPart.rows));
+            cv::Mat edgeMask(flipHorizontal ? (flipVertical ? edgeCellFlippedHV : edgeCellFlippedH)
+                                            : (flipVertical ? edgeCellFlippedV : edgeCell),
+                             cv::Rect(0, 0, edgeGridPart.cols, edgeGridPart.rows));
             cv::bitwise_or(gridPart, mask, gridPart);
             cv::bitwise_or(edgeGridPart, edgeMask, edgeGridPart);
         }
@@ -149,8 +163,7 @@ void GridViewer::setCellShape(const CellShape &t_cellShape)
                     p[j+3] = 0;
             }
         }
-        edgeCell = result;
-
+        cell = result;
 
         //Add single pixel black transparent border to mask so that Canny cannot leave open edges
         cv::Mat maskWithBorder;
@@ -179,12 +192,37 @@ void GridViewer::setCellShape(const CellShape &t_cellShape)
                     p[j+3] = 0;
             }
         }
-        edgeDetectedCell = edgeResult;
+        edgeCell = edgeResult;
+
+        //Create flipped cell and edge cell
+        if (cellShape.getColFlipHorizontal() || cellShape.getRowFlipHorizontal())
+        {
+            cv::flip(cell, cellFlippedH, 1);
+            cv::flip(edgeCell, edgeCellFlippedH, 1);
+        }
+        if (cellShape.getColFlipVertical() || cellShape.getRowFlipVertical())
+        {
+            cv::flip(cell, cellFlippedV, 0);
+            cv::flip(edgeCell, edgeCellFlippedV, 0);
+        }
+        if (cellShape.getColFlipHorizontal() || cellShape.getColFlipVertical()
+                || cellShape.getColFlipVertical() || cellShape.getRowFlipVertical())
+        {
+            cv::flip(cell, cellFlippedHV, -1);
+            cv::flip(edgeCell, edgeCellFlippedHV, -1);
+        }
     }
     else
     {
+        cell.release();
+        cellFlippedH.release();
+        cellFlippedV.release();
+        cellFlippedHV.release();
+
         edgeCell.release();
-        edgeDetectedCell.release();
+        edgeCellFlippedH.release();
+        edgeCellFlippedV.release();
+        edgeCellFlippedHV.release();
     }
 
     updateGrid();

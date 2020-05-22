@@ -298,24 +298,28 @@ void MainWindow::cellAlternateRowOffsetChanged(int t_value)
 void MainWindow::cellColumnFlipHorizontalChanged(bool t_state)
 {
     ui->widgetCellShapeViewer->getCellShape().setColFlipHorizontal(t_state);
+    ui->widgetCellShapeViewer->updateGrid();
 }
 
 //Update custom cell alternate column vertical flipping
 void MainWindow::cellColumnFlipVerticalChanged(bool t_state)
 {
     ui->widgetCellShapeViewer->getCellShape().setColFlipVertical(t_state);
+    ui->widgetCellShapeViewer->updateGrid();
 }
 
 //Update custom cell alternate row horizontal flipping
 void MainWindow::cellRowFlipHorizontalChanged(bool t_state)
 {
     ui->widgetCellShapeViewer->getCellShape().setRowFlipHorizontal(t_state);
+    ui->widgetCellShapeViewer->updateGrid();
 }
 
 //Update custom cell alternate row vertical flipping
 void MainWindow::cellRowFlipVerticalChanged(bool t_state)
 {
     ui->widgetCellShapeViewer->getCellShape().setRowFlipVertical(t_state);
+    ui->widgetCellShapeViewer->updateGrid();
 }
 
 //Used to add images to the image library

@@ -61,6 +61,14 @@ MainWindow::MainWindow(QWidget *t_parent)
             SLOT(cellAlternateColOffsetChanged(int)));
     connect(ui->spinCustomCellAlternateRowOffset, SIGNAL(valueChanged(int)), this,
             SLOT(cellAlternateRowOffsetChanged(int)));
+    connect(ui->checkCellColFlipH, SIGNAL(clicked(bool)), this,
+            SLOT(cellColumnFlipHorizontalChanged(bool)));
+    connect(ui->checkCellColFlipV, SIGNAL(clicked(bool)), this,
+            SLOT(cellColumnFlipVerticalChanged(bool)));
+    connect(ui->checkCellRowFlipH, SIGNAL(clicked(bool)), this,
+            SLOT(cellRowFlipHorizontalChanged(bool)));
+    connect(ui->checkCellRowFlipV, SIGNAL(clicked(bool)), this,
+            SLOT(cellRowFlipVerticalChanged(bool)));
 
     //Setup image library list
     ui->listPhoto->setResizeMode(QListWidget::ResizeMode::Adjust);
@@ -86,7 +94,7 @@ MainWindow::MainWindow(QWidget *t_parent)
             SLOT(photomosaicHeightChanged(int)));
     connect(ui->buttonPhotomosaicSize, SIGNAL(released()), this, SLOT(loadImageSize()));
 
-    connect(ui->checkCellShape, SIGNAL(stateChanged(int)), this, SLOT(enableCellShape(int)));
+    connect(ui->checkCellShape, SIGNAL(clicked(bool)), this, SLOT(enableCellShape(bool)));
 
     connect(ui->buttonGenerate, SIGNAL(released()), this, SLOT(generatePhotomosaic()));
 #ifndef CUDA
@@ -111,7 +119,7 @@ MainWindow::~MainWindow()
 void MainWindow::saveCellShape()
 {
     CellShape cellShape = ui->widgetCellShapeViewer->getCellShape();
-    if (cellShape.getCellMask().empty())
+    if (cellShape.getCellMask(0, 0).empty())
     {
         QMessageBox::information(this, tr("Failed to save custom cell shape"),
                                  tr("No cell mask was provided"));
@@ -128,7 +136,7 @@ void MainWindow::saveCellShape()
     {
         QDataStream out(&file);
         //Write header with "magic number" and version
-        out << static_cast<quint32>(0x87AECFB1);
+        out << static_cast<quint32>(UtilityFuncs::MCS_MAGIC);
         out << static_cast<qint32>(UtilityFuncs::MCS_VERSION);
 
         out.setVersion(QDataStream::Qt_5_13);
@@ -155,7 +163,7 @@ void MainWindow::loadCellShape()
         //Read and check magic number
         quint32 magic;
         in >> magic;
-        if (magic != 0x87AECFB1)
+        if (magic != UtilityFuncs::MCS_MAGIC)
         {
             QMessageBox msgBox;
             msgBox.setText(filename + tr(" is not a valid .mcs file"));
@@ -166,7 +174,7 @@ void MainWindow::loadCellShape()
         //Read the version
         qint32 version;
         in >> version;
-        if (version == UtilityFuncs::MCS_VERSION)
+        if (version == UtilityFuncs::MCS_VERSION || version == 4)
             in.setVersion(QDataStream::Qt_5_13);
         else
         {
@@ -181,20 +189,33 @@ void MainWindow::loadCellShape()
 
         //Read cell mask and offsets
         CellShape cellShape;
-        in >> cellShape;
+        std::pair<CellShape &, const int> cellAndVersion(cellShape, version);
+        in >> cellAndVersion;
         //Blocks signals to prevent grid update until all values loaded
         ui->spinCustomCellSpacingCol->blockSignals(true);
         ui->spinCustomCellSpacingRow->blockSignals(true);
         ui->spinCustomCellAlternateColOffset->blockSignals(true);
         ui->spinCustomCellAlternateRowOffset->blockSignals(true);
+        ui->checkCellColFlipH->blockSignals(true);
+        ui->checkCellColFlipV->blockSignals(true);
+        ui->checkCellRowFlipH->blockSignals(true);
+        ui->checkCellRowFlipV->blockSignals(true);
         ui->spinCustomCellSpacingCol->setValue(cellShape.getColSpacing());
         ui->spinCustomCellSpacingRow->setValue(cellShape.getRowSpacing());
         ui->spinCustomCellAlternateColOffset->setValue(cellShape.getAlternateColOffset());
         ui->spinCustomCellAlternateRowOffset->setValue(cellShape.getAlternateRowOffset());
+        ui->checkCellColFlipH->setChecked(cellShape.getColFlipHorizontal());
+        ui->checkCellColFlipV->setChecked(cellShape.getColFlipVertical());
+        ui->checkCellRowFlipH->setChecked(cellShape.getRowFlipHorizontal());
+        ui->checkCellRowFlipV->setChecked(cellShape.getRowFlipVertical());
         ui->spinCustomCellSpacingCol->blockSignals(false);
         ui->spinCustomCellSpacingRow->blockSignals(false);
         ui->spinCustomCellAlternateColOffset->blockSignals(false);
         ui->spinCustomCellAlternateRowOffset->blockSignals(false);
+        ui->checkCellColFlipH->blockSignals(false);
+        ui->checkCellColFlipV->blockSignals(false);
+        ui->checkCellRowFlipH->blockSignals(false);
+        ui->checkCellRowFlipV->blockSignals(false);
 
         //Extract cell name from filename
         QString cellName = filename.right(filename.size() - filename.lastIndexOf('/') - 1);
@@ -270,6 +291,34 @@ void MainWindow::cellAlternateColOffsetChanged(int t_value)
 void MainWindow::cellAlternateRowOffsetChanged(int t_value)
 {
     ui->widgetCellShapeViewer->getCellShape().setAlternateRowOffset(t_value);
+    ui->widgetCellShapeViewer->updateGrid();
+}
+
+//Update custom cell alternate column horizontal flipping
+void MainWindow::cellColumnFlipHorizontalChanged(bool t_state)
+{
+    ui->widgetCellShapeViewer->getCellShape().setColFlipHorizontal(t_state);
+    ui->widgetCellShapeViewer->updateGrid();
+}
+
+//Update custom cell alternate column vertical flipping
+void MainWindow::cellColumnFlipVerticalChanged(bool t_state)
+{
+    ui->widgetCellShapeViewer->getCellShape().setColFlipVertical(t_state);
+    ui->widgetCellShapeViewer->updateGrid();
+}
+
+//Update custom cell alternate row horizontal flipping
+void MainWindow::cellRowFlipHorizontalChanged(bool t_state)
+{
+    ui->widgetCellShapeViewer->getCellShape().setRowFlipHorizontal(t_state);
+    ui->widgetCellShapeViewer->updateGrid();
+}
+
+//Update custom cell alternate row vertical flipping
+void MainWindow::cellRowFlipVerticalChanged(bool t_state)
+{
+    ui->widgetCellShapeViewer->getCellShape().setRowFlipVertical(t_state);
     ui->widgetCellShapeViewer->updateGrid();
 }
 
@@ -395,7 +444,7 @@ void MainWindow::saveLibrary()
     {
         QDataStream out(&file);
         //Write header with "magic number" and version
-        out << static_cast<quint32>(0xADBE2480);
+        out << static_cast<quint32>(UtilityFuncs::MIL_MAGIC);
         out << static_cast<qint32>(UtilityFuncs::MIL_VERSION);
 
         out.setVersion(QDataStream::Qt_5_13);
@@ -431,7 +480,7 @@ void MainWindow::loadLibrary()
         //Read and check magic number
         quint32 magic;
         in >> magic;
-        if (magic != 0xADBE2480)
+        if (magic != UtilityFuncs::MIL_MAGIC)
         {
             QMessageBox msgBox;
             msgBox.setText(filename + tr(" is not a valid .mil file"));
@@ -613,9 +662,9 @@ void MainWindow::loadImageSize()
 }
 
 //Enables/disables non-square cell shapes, GUI widgets for choosing
-void MainWindow::enableCellShape(int t_state)
+void MainWindow::enableCellShape(bool t_state)
 {
-    if (t_state == Qt::Checked)
+    if (t_state)
     {
         ui->lineCellShape->setEnabled(true);
         ui->widgetGridPreview->setCellShape(ui->widgetCellShapeViewer->getCellShape().

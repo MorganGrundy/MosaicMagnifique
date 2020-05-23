@@ -37,7 +37,7 @@ bool CUDAPhotomosaicData::mallocData()
 
     const size_t cellImageSize = fullSize;
     const size_t libraryImagesSize = fullSize * noLibraryImages;
-    const size_t maskImageSize = pixelCount;
+    const size_t maskImagesSize = pixelCount * 4;
 
     const size_t variantsSize = pixelCount * noLibraryImages;
     reductionMemorySize = noLibraryImages * ((pixelCount + blockSize - 1) / blockSize + 1) / 2;
@@ -48,7 +48,7 @@ bool CUDAPhotomosaicData::mallocData()
     const size_t repeatsSize = noLibraryImages;
     const size_t targetAreaSize = 4;
 
-    const size_t staticMemory = (libraryImagesSize + maskImageSize) * sizeof(uchar)
+    const size_t staticMemory = (libraryImagesSize + maskImagesSize) * sizeof(uchar)
             + (maxVariantSize) * sizeof(double)
             + (bestFitSize + repeatsSize) * sizeof(size_t);
 
@@ -94,11 +94,11 @@ bool CUDAPhotomosaicData::mallocData()
 
     void *mem;
     //Batch allocate memory for cell images, library images, and mask image
-    gpuErrchk(cudaMalloc(&mem, (cellImageSize * batchSize + libraryImagesSize + maskImageSize)
+    gpuErrchk(cudaMalloc(&mem, (cellImageSize * batchSize + libraryImagesSize + maskImagesSize)
                          * sizeof(uchar)));
     cellImage = static_cast<uchar *>(mem);
     libraryImages = cellImage + cellImageSize * batchSize;
-    maskImage = libraryImages + libraryImagesSize;
+    maskImages = libraryImages + libraryImagesSize;
 
     //Batch allocate memory for variants, reduce memory, max variant and lowest variants
     gpuErrchk(cudaMalloc(&mem, (maxVariantSize
@@ -233,16 +233,43 @@ uchar *CUDAPhotomosaicData::getLibraryImages()
 }
 
 //Copies mask image to GPU
-void CUDAPhotomosaicData::setMaskImage(const cv::Mat &t_maskImage)
+void CUDAPhotomosaicData::setMaskImage(const cv::Mat &t_maskImage, const bool t_flippedHorizontal,
+                                       const bool t_flippedVertical)
 {
-    gpuErrchk(cudaMemcpy(maskImage, t_maskImage.data, pixelCount * sizeof(uchar),
+    gpuErrchk(cudaMemcpy(maskImages + pixelCount * (static_cast<int>(t_flippedHorizontal)
+                                                    + static_cast<int>(t_flippedVertical) * 2),
+                         t_maskImage.data, pixelCount * sizeof(uchar),
                          cudaMemcpyHostToDevice));
 }
 
-//Returns pointer to mask image on GPU
-uchar *CUDAPhotomosaicData::getMaskImage()
+//Set if and how cells should flip on alternate rows/columns
+void CUDAPhotomosaicData::setFlipStates(const bool t_colFlipHorizontal,
+                                        const bool t_colFlipVertical,
+                                        const bool t_rowFlipHorizontal,
+                                        const bool t_rowFlipVertical)
 {
-    return maskImage;
+    m_colFlipHorizontal = t_colFlipHorizontal;
+    m_colFlipVertical = t_colFlipVertical;
+    m_rowFlipHorizontal = t_rowFlipHorizontal;
+    m_rowFlipVertical = t_rowFlipVertical;
+}
+
+//Returns pointer to mask image on GPU
+uchar *CUDAPhotomosaicData::getMaskImage(const int t_gridX, const int t_gridY)
+{
+    //Calculate if and how current cell is flipped
+    bool flipHorizontal = false, flipVertical = false;
+    if (m_colFlipHorizontal && t_gridX % 2 == 1)
+        flipHorizontal = !flipHorizontal;
+    if (m_rowFlipHorizontal && t_gridY % 2 == 1)
+        flipHorizontal = !flipHorizontal;
+    if (m_colFlipVertical && t_gridX % 2 == 1)
+        flipVertical = !flipVertical;
+    if (m_rowFlipVertical && t_gridY % 2 == 1)
+        flipVertical = !flipVertical;
+
+    return maskImages + pixelCount * (static_cast<int>(flipHorizontal)
+                                      + static_cast<int>(flipVertical) * 2);
 }
 
 //Copies target area to host memory at index i

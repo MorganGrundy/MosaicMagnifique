@@ -255,6 +255,11 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
         for (size_t i = 0; i < batchSize
              && batchIndex * batchSize + i < photomosaicData.noCellImages; ++i)
         {
+            const int x = (batchIndex * batchSize + static_cast<int>(i))
+                    % static_cast<int>(photomosaicData.noXCellImages);
+            const int y = (batchIndex * batchSize + static_cast<int>(i))
+                    / static_cast<int>(photomosaicData.noXCellImages);
+
             //Calculate differences
             numBlocks = (photomosaicData.pixelCount * photomosaicData.noLibraryImages
                          + photomosaicData.getBlockSize() - 1) / photomosaicData.getBlockSize();
@@ -264,7 +269,7 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
                         0, streams[curStream]>>>(
                                 photomosaicData.getCellImage(i),
                                 photomosaicData.getLibraryImages(), photomosaicData.noLibraryImages,
-                                photomosaicData.getMaskImage(),
+                                photomosaicData.getMaskImage(x, y),
                                 photomosaicData.imageSize, photomosaicData.imageChannels,
                                 photomosaicData.getTargetArea(i),
                                 photomosaicData.getVariants(i));
@@ -274,7 +279,7 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
                         0, streams[curStream]>>>(
                                 photomosaicData.getCellImage(i),
                                 photomosaicData.getLibraryImages(), photomosaicData.noLibraryImages,
-                                photomosaicData.getMaskImage(),
+                                photomosaicData.getMaskImage(x, y),
                                 photomosaicData.imageSize, photomosaicData.imageChannels,
                                 photomosaicData.getTargetArea(i),
                                 photomosaicData.getVariants(i));

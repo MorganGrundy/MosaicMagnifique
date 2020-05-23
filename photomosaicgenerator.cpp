@@ -149,7 +149,7 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
 
     setMaximum(gridSize.x * gridSize.y);
     setValue(0);
-    setLabelText("Finding best fits...");
+    setLabelText("Moving images to GPU...");
 
     //Allocate memory on GPU and copy data from CPU to GPU
     CUDAPhotomosaicData photomosaicData(cellSize, resizedLib.front().channels(),
@@ -162,8 +162,14 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
     //Move library images to GPU
     photomosaicData.setLibraryImages(resizedLib);
 
-    //Move mask image to GPU
-    photomosaicData.setMaskImage(resizedCellShape.getCellMask(0, 0));
+    //Move mask images to GPU
+    photomosaicData.setMaskImage(resizedCellShape.getCellMask(0, 0), 0, 0);
+    photomosaicData.setMaskImage(resizedCellShape.getCellMask(1, 0), 1, 0);
+    photomosaicData.setMaskImage(resizedCellShape.getCellMask(0, 1), 0, 1);
+    photomosaicData.setMaskImage(resizedCellShape.getCellMask(1, 1), 1, 1);
+    photomosaicData.setFlipStates(resizedCellShape.getColFlipHorizontal(),
+            resizedCellShape.getColFlipVertical(), resizedCellShape.getRowFlipHorizontal(),
+            resizedCellShape.getRowFlipVertical());
 
     //Split main image into grid
     //Find best match for each cell in grid
@@ -176,7 +182,6 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
     {
         for (int x = -static_cast<int>(padGrid); x < gridSize.x - padGrid; ++x)
         {
-
             //If user hits cancel in QProgressDialog then return empty mat
             if (wasCanceled())
                 return cv::Mat();
@@ -212,6 +217,7 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
                                 cv::Range(static_cast<int>(targetArea[2]),
                                           static_cast<int>(targetArea[3]))));
             photomosaicData.setCellImage(cell, index);
+            setValue(value() + 1);
         }
     }
 
@@ -228,13 +234,11 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
             {
                 qDebug() << "Error: Failed to find a best fit";
                 result.at(x).at(y) = m_lib.front();
-                setValue(value() + 1);
                 continue;
             }
 
             grid.at(x).at(y) = results[index];
             result.at(x).at(y) = m_lib.at(results[index]);
-            setValue(value() + 1);
         }
     }
 

@@ -60,9 +60,13 @@ public:
     uchar *getLibraryImages();
 
     //Copies mask image to GPU
-    void setMaskImage(const cv::Mat &t_maskImage);
+    void setMaskImage(const cv::Mat &t_maskImage,
+                      const bool t_flippedHorizontal, const bool t_flippedVertical);
+    //Set if and how cells should flip on alternate rows/columns
+    void setFlipStates(const bool t_colFlipHorizontal, const bool t_colFlipVertical,
+                       const bool t_rowFlipHorizontal, const bool t_rowFlipVertical);
     //Returns pointer to mask image on GPU
-    uchar *getMaskImage();
+    uchar *getMaskImage(const int t_gridX, const int t_gridY);
 
     //Copies target area to host memory at index i
     void setTargetArea(const size_t (&t_targetArea)[4], const size_t i);
@@ -117,7 +121,9 @@ private:
     uchar *HOST_cellImages; //Stores on host all cells from main image
     uchar *cellImage; //Stores cells from the main image
     uchar *libraryImages; //Stores all library images
-    uchar *maskImage; //Stores mask image
+    //Controls if and how cells should flip on alternate rows/columns
+    bool m_colFlipHorizontal, m_colFlipVertical, m_rowFlipHorizontal, m_rowFlipVertical;
+    uchar *maskImages; //Stores mask images
 
     size_t *HOST_targetAreas; //Stores on host bounds of all cells
     size_t *targetArea; //Stores bounds of cells (as custom cell shapes can exceed image bounds)

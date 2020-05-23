@@ -195,6 +195,10 @@ CellShape CellShape::resized(const int t_cols, const int t_rows) const
     result.setColSpacing(static_cast<int>(m_colSpacing * hRatio));
     result.setAlternateRowOffset(static_cast<int>(m_alternateRowOffset * vRatio));
     result.setAlternateColOffset(static_cast<int>(m_alternateColOffset * hRatio));
+    result.setColFlipHorizontal(m_colFlipHorizontal);
+    result.setColFlipVertical(m_colFlipVertical);
+    result.setRowFlipHorizontal(m_rowFlipHorizontal);
+    result.setRowFlipVertical(m_rowFlipVertical);
 
     return result;
 }

@@ -119,7 +119,7 @@ MainWindow::~MainWindow()
 void MainWindow::saveCellShape()
 {
     CellShape cellShape = ui->widgetCellShapeViewer->getCellShape();
-    if (cellShape.getCellMask().empty())
+    if (cellShape.getCellMask(0, 0).empty())
     {
         QMessageBox::information(this, tr("Failed to save custom cell shape"),
                                  tr("No cell mask was provided"));

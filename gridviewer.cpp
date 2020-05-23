@@ -63,7 +63,7 @@ void GridViewer::setEdgeDetect(bool t_state)
 void GridViewer::updateGrid()
 {
     //No cell mask, no grid
-    if (cellShape.getCellMask().empty())
+    if (cellShape.getCellMask(0, 0).empty())
     {
         grid = QImage();
         return;
@@ -97,8 +97,8 @@ void GridViewer::updateGrid()
                                           (y % 2 == 1) * cellShape.getAlternateRowOffset(),
                                           y * cellShape.getRowSpacing() +
                                           (x % 2 == 1) * cellShape.getAlternateColOffset(),
-                                          cellShape.getCellMask().cols,
-                                          cellShape.getCellMask().rows) & cv::Rect(0, 0,
+                                          cellShape.getCellMask(0, 0).cols,
+                                          cellShape.getCellMask(0, 0).rows) & cv::Rect(0, 0,
                                                                                    newGrid.cols,
                                                                                    newGrid.rows);
 
@@ -139,11 +139,11 @@ void GridViewer::setCellShape(const CellShape &t_cellShape)
 {
     cellShape = t_cellShape;
 
-    if (!cellShape.getCellMask().empty())
+    if (!cellShape.getCellMask(0, 0).empty())
     {
         //Converts cell mask to RGBA
         cv::Mat result;
-        cv::cvtColor(cellShape.getCellMask(), result, cv::COLOR_GRAY2RGBA);
+        cv::cvtColor(cellShape.getCellMask(0, 0), result, cv::COLOR_GRAY2RGBA);
         //Make black pixels transparent
         int channels = result.channels();
         int nRows = result.rows;
@@ -195,22 +195,12 @@ void GridViewer::setCellShape(const CellShape &t_cellShape)
         edgeCell = edgeResult;
 
         //Create flipped cell and edge cell
-        if (cellShape.getColFlipHorizontal() || cellShape.getRowFlipHorizontal())
-        {
-            cv::flip(cell, cellFlippedH, 1);
-            cv::flip(edgeCell, edgeCellFlippedH, 1);
-        }
-        if (cellShape.getColFlipVertical() || cellShape.getRowFlipVertical())
-        {
-            cv::flip(cell, cellFlippedV, 0);
-            cv::flip(edgeCell, edgeCellFlippedV, 0);
-        }
-        if (cellShape.getColFlipHorizontal() || cellShape.getColFlipVertical()
-                || cellShape.getColFlipVertical() || cellShape.getRowFlipVertical())
-        {
-            cv::flip(cell, cellFlippedHV, -1);
-            cv::flip(edgeCell, edgeCellFlippedHV, -1);
-        }
+        cv::flip(cell, cellFlippedH, 1);
+        cv::flip(edgeCell, edgeCellFlippedH, 1);
+        cv::flip(cell, cellFlippedV, 0);
+        cv::flip(edgeCell, edgeCellFlippedV, 0);
+        cv::flip(cell, cellFlippedHV, -1);
+        cv::flip(edgeCell, edgeCellFlippedHV, -1);
     }
     else
     {

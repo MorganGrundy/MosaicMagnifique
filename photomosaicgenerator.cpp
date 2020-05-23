@@ -163,7 +163,7 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
     photomosaicData.setLibraryImages(resizedLib);
 
     //Move mask image to GPU
-    photomosaicData.setMaskImage(resizedCellShape.getCellMask());
+    photomosaicData.setMaskImage(resizedCellShape.getCellMask(0, 0));
 
     //Split main image into grid
     //Find best match for each cell in grid
@@ -312,14 +312,31 @@ cv::Mat PhotomosaicGenerator::generate()
             const std::map<size_t, int> repeats = calculateRepeats(grid, gridSize, x + padGrid,
                                                                    y + padGrid);
 
+            //Calculate if and how current cell is flipped
+            bool flipHorizontal = false, flipVertical = false;
+            if (resizedCellShape.getColFlipHorizontal() && (x + padGrid) % 2 == 1)
+                flipHorizontal = !flipHorizontal;
+            if (resizedCellShape.getRowFlipHorizontal() && (y + padGrid) % 2 == 1)
+                flipHorizontal = !flipHorizontal;
+            if (resizedCellShape.getColFlipVertical() && (x + padGrid) % 2 == 1)
+                flipVertical = !flipVertical;
+            if (resizedCellShape.getRowFlipVertical() && (y + padGrid) % 2 == 1)
+                flipVertical = !flipVertical;
+
             int index = -1;
             if (m_mode == Mode::CIEDE2000)
-                index = findBestFitCIEDE2000(cell, resizedCellShape.getCellMask(), resizedLib,
+                index = findBestFitCIEDE2000(cell,
+                                             resizedCellShape.getCellMask(flipHorizontal,
+                                                                          flipVertical),
+                                             resizedLib,
                                              repeats,
                                              yStart - unboundedRect.y, yEnd - unboundedRect.y,
                                              xStart - unboundedRect.x, xEnd - unboundedRect.x);
             else
-                index = findBestFitEuclidean(cell, resizedCellShape.getCellMask(), resizedLib,
+                index = findBestFitEuclidean(cell,
+                                             resizedCellShape.getCellMask(flipHorizontal,
+                                                                          flipVertical),
+                                             resizedLib,
                                              repeats,
                                              yStart - unboundedRect.y, yEnd - unboundedRect.y,
                                              xStart - unboundedRect.x, xEnd - unboundedRect.x);
@@ -610,16 +627,6 @@ cv::Mat PhotomosaicGenerator::combineResults(const cv::Point gridSize,
         //Resizes cell shape to size of library images
         CellShape resizedCellShape = m_cellShape.resized(m_lib.front().cols, m_lib.front().rows);
 
-        //Create flipped cell and edge cell
-        cv::Mat cellFlippedH, cellFlippedV, cellFlippedHV;
-        if (resizedCellShape.getColFlipHorizontal() || resizedCellShape.getRowFlipHorizontal())
-            cv::flip(resizedCellShape.getCellMask(), cellFlippedH, 1);
-        if (resizedCellShape.getColFlipVertical() || resizedCellShape.getRowFlipVertical())
-            cv::flip(resizedCellShape.getCellMask(), cellFlippedV, 0);
-        if (resizedCellShape.getColFlipHorizontal() || resizedCellShape.getColFlipVertical()
-                || resizedCellShape.getColFlipVertical() || resizedCellShape.getRowFlipVertical())
-            cv::flip(resizedCellShape.getCellMask(), cellFlippedHV, -1);
-
         mosaic = cv::Mat((gridSize.y - padGrid) * resizedCellShape.getRowSpacing(),
                          (gridSize.x - padGrid) * resizedCellShape.getColSpacing(), m_img.type(),
                          cv::Scalar(0));
@@ -659,9 +666,11 @@ cv::Mat PhotomosaicGenerator::combineResults(const cv::Point gridSize,
                                     cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
                 //Creates mask bounded same as cell
-                cv::Mat maskBounded(flipHorizontal ? (flipVertical ? cellFlippedHV : cellFlippedH)
-                                                   : (flipVertical ? cellFlippedV
-                                                                : resizedCellShape.getCellMask()),
+                cv::Mat maskBounded(flipHorizontal
+                                    ? (flipVertical ? resizedCellShape.getCellMask(1, 1)
+                                                    : resizedCellShape.getCellMask(1, 0))
+                                    : (flipVertical ? resizedCellShape.getCellMask(0, 1)
+                                                    : resizedCellShape.getCellMask(0, 0)),
                                     cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                                     cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 

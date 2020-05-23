@@ -21,7 +21,11 @@ CellShape::CellShape(const cv::Mat &t_cellMask)
 }
 
 CellShape::CellShape(const CellShape &t_cellShape)
-    : m_cellMask{t_cellShape.getCellMask()}, m_rowSpacing{t_cellShape.getRowSpacing()},
+    : m_cellMask{t_cellShape.getCellMask(0, 0)},
+      m_cellMaskFlippedH{t_cellShape.getCellMask(1, 0)},
+      m_cellMaskFlippedV{t_cellShape.getCellMask(0, 1)},
+      m_cellMaskFlippedHV{t_cellShape.getCellMask(1, 1)},
+      m_rowSpacing{t_cellShape.getRowSpacing()},
       m_colSpacing{t_cellShape.getColSpacing()},
       m_alternateRowOffset{t_cellShape.getAlternateRowOffset()},
       m_alternateColOffset{t_cellShape.getAlternateColOffset()},
@@ -51,6 +55,11 @@ QDataStream &operator>>(QDataStream &t_in, std::pair<CellShape &, const int> t_c
     {
         t_in >> t_cellShape.first.m_colFlipHorizontal >> t_cellShape.first.m_colFlipVertical;
         t_in >> t_cellShape.first.m_rowFlipHorizontal >> t_cellShape.first.m_rowFlipVertical;
+
+        //Create flipped cell
+        cv::flip(t_cellShape.first.m_cellMask, t_cellShape.first.m_cellMaskFlippedH, 1);
+        cv::flip(t_cellShape.first.m_cellMask, t_cellShape.first.m_cellMaskFlippedV, 0);
+        cv::flip(t_cellShape.first.m_cellMask, t_cellShape.first.m_cellMaskFlippedHV, -1);
     }
 
     return t_in;
@@ -66,17 +75,32 @@ void CellShape::setCellMask(const cv::Mat &t_cellMask)
         //Threshold to create binary mask
         cv::threshold(t_cellMask, result, 127.0, 255.0, cv::THRESH_BINARY);
         m_cellMask = result;
+
+        UtilityFuncs::imageToSquare(m_cellMask, UtilityFuncs::SquareMethod::PAD);
+
+        //Create flipped cells
+        cv::flip(m_cellMask, m_cellMaskFlippedH, 1);
+        cv::flip(m_cellMask, m_cellMaskFlippedV, 0);
+        cv::flip(m_cellMask, m_cellMaskFlippedHV, -1);
     }
     else
         qDebug() << "CellShape::setCellMask(const cv::Mat &) unsupported mask type";
-
-    UtilityFuncs::imageToSquare(m_cellMask, UtilityFuncs::SquareMethod::PAD);
 }
 
 //Returns the cell mask
-cv::Mat CellShape::getCellMask() const
+cv::Mat CellShape::getCellMask(const bool t_flippedHorizontal, const bool t_flippedVertical) const
 {
-    return m_cellMask;
+    if (t_flippedHorizontal)
+    {
+        if (t_flippedVertical)
+            return m_cellMaskFlippedHV;
+        else
+            return m_cellMaskFlippedH;
+    }
+    else if (t_flippedVertical)
+        return m_cellMaskFlippedV;
+    else
+        return m_cellMask;
 }
 
 //Sets the row spacing for tiling cell
@@ -138,7 +162,6 @@ bool CellShape::getColFlipHorizontal() const
 {
     return m_colFlipHorizontal;
 }
-
 
 //Sets if alternate columns are flipped vertically
 void CellShape::setColFlipVertical(const bool t_colFlipVertical)

@@ -17,7 +17,7 @@ public:
     friend QDataStream &operator>>(QDataStream &t_in, std::pair<CellShape &, const int> t_cellShape);
 
     void setCellMask(const cv::Mat &t_cellMask);
-    cv::Mat getCellMask() const;
+    cv::Mat getCellMask(const bool t_flippedHorizontal, const bool t_flippedVertical) const;
 
     void setRowSpacing(const int t_rowSpacing);
     int getRowSpacing() const;
@@ -51,6 +51,7 @@ public:
 
 private:
     cv::Mat m_cellMask;
+    cv::Mat m_cellMaskFlippedH, m_cellMaskFlippedV, m_cellMaskFlippedHV;
 
     int m_rowSpacing, m_colSpacing;
     //Entire row/col offset by specified value every other row/col

@@ -517,6 +517,12 @@ border: 1px solid dimgray;
              <property name="styleSheet">
               <string notr="true">QSpinBox {
 border: 1px solid dimgray;
+}
+
+QSpinBox:disabled {
+	background-color: rgb(30, 30, 30);
+	color: rgb(60, 60, 60);
+	border-color: rgb(0, 0, 0);
 }</string>
              </property>
              <property name="buttonSymbols">
@@ -655,6 +661,12 @@ border: 1px solid dimgray;
              <property name="styleSheet">
               <string notr="true">QSpinBox {
 border: 1px solid dimgray;
+}
+
+QSpinBox:disabled {
+	background-color: rgb(30, 30, 30);
+	color: rgb(60, 60, 60);
+	border-color: rgb(0, 0, 0);
 }</string>
              </property>
              <property name="buttonSymbols">

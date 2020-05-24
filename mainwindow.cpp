@@ -47,20 +47,23 @@ MainWindow::MainWindow(QWidget *t_parent)
     ui->statusbar->addPermanentWidget(progressBar);
     ui->statusbar->setSizeGripEnabled(false);
 
-    //Connects custom cell shapes tab buttons to appropriate methods
+    //Connects custom cell shapes tab to appropriate methods
     connect(ui->buttonSaveCustomCell, SIGNAL(released()), this, SLOT(saveCellShape()));
     connect(ui->buttonLoadCustomCell, SIGNAL(released()), this, SLOT(loadCellShape()));
     connect(ui->lineCustomCellName, SIGNAL(textChanged(const QString &)), this,
             SLOT(cellNameChanged(const QString &)));
     connect(ui->buttonCellMask, SIGNAL(released()), this, SLOT(selectCellMask()));
+    //Cell spacing
     connect(ui->spinCustomCellSpacingCol, SIGNAL(valueChanged(int)), this,
             SLOT(cellSpacingColChanged(int)));
     connect(ui->spinCustomCellSpacingRow, SIGNAL(valueChanged(int)), this,
             SLOT(cellSpacingRowChanged(int)));
+    //Cell alternate offset
     connect(ui->spinCustomCellAlternateColOffset, SIGNAL(valueChanged(int)), this,
             SLOT(cellAlternateColOffsetChanged(int)));
     connect(ui->spinCustomCellAlternateRowOffset, SIGNAL(valueChanged(int)), this,
             SLOT(cellAlternateRowOffsetChanged(int)));
+    //Cell flipping
     connect(ui->checkCellColFlipH, SIGNAL(clicked(bool)), this,
             SLOT(cellColumnFlipHorizontalChanged(bool)));
     connect(ui->checkCellColFlipV, SIGNAL(clicked(bool)), this,
@@ -69,6 +72,15 @@ MainWindow::MainWindow(QWidget *t_parent)
             SLOT(cellRowFlipHorizontalChanged(bool)));
     connect(ui->checkCellRowFlipV, SIGNAL(clicked(bool)), this,
             SLOT(cellRowFlipVerticalChanged(bool)));
+    //Cell alternate spacing
+    connect(ui->checkCellAlternateRowSpacing, SIGNAL(clicked(bool)), this,
+            SLOT(enableCellAlternateRowSpacing(bool)));
+    connect(ui->checkCellAlternateColSpacing, SIGNAL(clicked(bool)), this,
+            SLOT(enableCellAlternateColSpacing(bool)));
+    connect(ui->spinCellAlternateRowSpacing, SIGNAL(valueChanged(int)), this,
+            SLOT(cellAlternateRowSpacingChanged(int)));
+    connect(ui->spinCellAlternateColSpacing, SIGNAL(valueChanged(int)), this,
+            SLOT(cellAlternateColSpacingChanged(int)));
 
     //Setup image library list
     ui->listPhoto->setResizeMode(QListWidget::ResizeMode::Adjust);
@@ -269,6 +281,8 @@ void MainWindow::selectCellMask()
 //Update custom cell column spacing
 void MainWindow::cellSpacingColChanged(int t_value)
 {
+    if (!ui->spinCellAlternateColSpacing->isEnabled())
+        ui->spinCellAlternateColSpacing->setValue(t_value);
     ui->widgetCellShapeViewer->getCellShape().setColSpacing(t_value);
     ui->widgetCellShapeViewer->updateGrid();
 }
@@ -276,6 +290,8 @@ void MainWindow::cellSpacingColChanged(int t_value)
 //Update custom cell column offset y
 void MainWindow::cellSpacingRowChanged(int t_value)
 {
+    if (!ui->spinCellAlternateRowSpacing->isEnabled())
+        ui->spinCellAlternateRowSpacing->setValue(t_value);
     ui->widgetCellShapeViewer->getCellShape().setRowSpacing(t_value);
     ui->widgetCellShapeViewer->updateGrid();
 }
@@ -320,6 +336,36 @@ void MainWindow::cellRowFlipVerticalChanged(bool t_state)
 {
     ui->widgetCellShapeViewer->getCellShape().setRowFlipVertical(t_state);
     ui->widgetCellShapeViewer->updateGrid();
+}
+
+//Enables/disables cell alternate row spacing
+void MainWindow::enableCellAlternateRowSpacing(bool t_state)
+{
+    ui->spinCellAlternateRowSpacing->setEnabled(t_state);
+}
+
+//Enables/disables cell alternate column spacing
+void MainWindow::enableCellAlternateColSpacing(bool t_state)
+{
+    ui->spinCellAlternateColSpacing->setEnabled(t_state);
+}
+
+//Updates cell alternate row spacing
+void MainWindow::cellAlternateRowSpacingChanged(int t_value)
+{
+    if (ui->checkCellAlternateRowSpacing->isEnabled())
+    {
+
+    }
+}
+
+//Updates cell alternate column spacing
+void MainWindow::cellAlternateColSpacingChanged(int t_value)
+{
+    if (ui->checkCellAlternateColSpacing->isEnabled())
+    {
+
+    }
 }
 
 //Used to add images to the image library

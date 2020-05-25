@@ -73,9 +73,9 @@ MainWindow::MainWindow(QWidget *t_parent)
     connect(ui->checkCellRowFlipV, SIGNAL(clicked(bool)), this,
             SLOT(cellRowFlipVerticalChanged(bool)));
     //Cell alternate spacing
-    connect(ui->checkCellAlternateRowSpacing, SIGNAL(clicked(bool)), this,
+    connect(ui->checkCellAlternateRowSpacing, SIGNAL(toggled(bool)), this,
             SLOT(enableCellAlternateRowSpacing(bool)));
-    connect(ui->checkCellAlternateColSpacing, SIGNAL(clicked(bool)), this,
+    connect(ui->checkCellAlternateColSpacing, SIGNAL(toggled(bool)), this,
             SLOT(enableCellAlternateColSpacing(bool)));
     connect(ui->spinCellAlternateRowSpacing, SIGNAL(valueChanged(int)), this,
             SLOT(cellAlternateRowSpacingChanged(int)));
@@ -130,7 +130,7 @@ MainWindow::~MainWindow()
 //Saves the custom cell shape to a file
 void MainWindow::saveCellShape()
 {
-    CellShape cellShape = ui->widgetCellShapeViewer->getCellShape();
+    CellShape &cellShape = ui->widgetCellShapeViewer->getCellShape();
     if (cellShape.getCellMask(0, 0).empty())
     {
         QMessageBox::information(this, tr("Failed to save custom cell shape"),
@@ -148,8 +148,8 @@ void MainWindow::saveCellShape()
     {
         QDataStream out(&file);
         //Write header with "magic number" and version
-        out << static_cast<quint32>(UtilityFuncs::MCS_MAGIC);
-        out << static_cast<qint32>(UtilityFuncs::MCS_VERSION);
+        out << static_cast<quint32>(CellShape::MCS_MAGIC);
+        out << static_cast<qint32>(CellShape::MCS_VERSION);
 
         out.setVersion(QDataStream::Qt_5_13);
 
@@ -175,7 +175,7 @@ void MainWindow::loadCellShape()
         //Read and check magic number
         quint32 magic;
         in >> magic;
-        if (magic != UtilityFuncs::MCS_MAGIC)
+        if (magic != CellShape::MCS_MAGIC)
         {
             QMessageBox msgBox;
             msgBox.setText(filename + tr(" is not a valid .mcs file"));
@@ -186,7 +186,7 @@ void MainWindow::loadCellShape()
         //Read the version
         qint32 version;
         in >> version;
-        if (version == UtilityFuncs::MCS_VERSION || version == 4)
+        if (version <= CellShape::MCS_VERSION && version >= 4)
             in.setVersion(QDataStream::Qt_5_13);
         else
         {
@@ -204,30 +204,40 @@ void MainWindow::loadCellShape()
         std::pair<CellShape &, const int> cellAndVersion(cellShape, version);
         in >> cellAndVersion;
         //Blocks signals to prevent grid update until all values loaded
+        //Update cell spacing
         ui->spinCustomCellSpacingCol->blockSignals(true);
         ui->spinCustomCellSpacingRow->blockSignals(true);
-        ui->spinCustomCellAlternateColOffset->blockSignals(true);
-        ui->spinCustomCellAlternateRowOffset->blockSignals(true);
-        ui->checkCellColFlipH->blockSignals(true);
-        ui->checkCellColFlipV->blockSignals(true);
-        ui->checkCellRowFlipH->blockSignals(true);
-        ui->checkCellRowFlipV->blockSignals(true);
         ui->spinCustomCellSpacingCol->setValue(cellShape.getColSpacing());
         ui->spinCustomCellSpacingRow->setValue(cellShape.getRowSpacing());
+        ui->spinCustomCellSpacingCol->blockSignals(false);
+        ui->spinCustomCellSpacingRow->blockSignals(false);
+
+        //Update cell alternate spacing
+        ui->checkCellAlternateColSpacing->setChecked(
+                    cellShape.getAlternateColSpacing() != cellShape.getColSpacing());
+        ui->checkCellAlternateRowSpacing->setChecked(
+                    cellShape.getAlternateRowSpacing() != cellShape.getRowSpacing());
+        ui->spinCellAlternateColSpacing->blockSignals(true);
+        ui->spinCellAlternateRowSpacing->blockSignals(true);
+        ui->spinCellAlternateColSpacing->setValue(cellShape.getAlternateColSpacing());
+        ui->spinCellAlternateRowSpacing->setValue(cellShape.getAlternateRowSpacing());
+        ui->spinCellAlternateColSpacing->blockSignals(false);
+        ui->spinCellAlternateRowSpacing->blockSignals(false);
+
+        //Update cell alternate offset
+        ui->spinCustomCellAlternateColOffset->blockSignals(true);
+        ui->spinCustomCellAlternateRowOffset->blockSignals(true);
         ui->spinCustomCellAlternateColOffset->setValue(cellShape.getAlternateColOffset());
         ui->spinCustomCellAlternateRowOffset->setValue(cellShape.getAlternateRowOffset());
+        ui->spinCustomCellAlternateColOffset->blockSignals(false);
+        ui->spinCustomCellAlternateRowOffset->blockSignals(false);
+
+        //Update cell flip states
+        //No need to block signals as setChecked does not trigger clicked signal
         ui->checkCellColFlipH->setChecked(cellShape.getColFlipHorizontal());
         ui->checkCellColFlipV->setChecked(cellShape.getColFlipVertical());
         ui->checkCellRowFlipH->setChecked(cellShape.getRowFlipHorizontal());
         ui->checkCellRowFlipV->setChecked(cellShape.getRowFlipVertical());
-        ui->spinCustomCellSpacingCol->blockSignals(false);
-        ui->spinCustomCellSpacingRow->blockSignals(false);
-        ui->spinCustomCellAlternateColOffset->blockSignals(false);
-        ui->spinCustomCellAlternateRowOffset->blockSignals(false);
-        ui->checkCellColFlipH->blockSignals(false);
-        ui->checkCellColFlipV->blockSignals(false);
-        ui->checkCellRowFlipH->blockSignals(false);
-        ui->checkCellRowFlipV->blockSignals(false);
 
         //Extract cell name from filename
         QString cellName = filename.right(filename.size() - filename.lastIndexOf('/') - 1);
@@ -355,7 +365,8 @@ void MainWindow::cellAlternateRowSpacingChanged(int t_value)
 {
     if (ui->checkCellAlternateRowSpacing->isEnabled())
     {
-
+        ui->widgetCellShapeViewer->getCellShape().setAlternateRowSpacing(t_value);
+        ui->widgetCellShapeViewer->updateGrid();
     }
 }
 
@@ -364,7 +375,8 @@ void MainWindow::cellAlternateColSpacingChanged(int t_value)
 {
     if (ui->checkCellAlternateColSpacing->isEnabled())
     {
-
+        ui->widgetCellShapeViewer->getCellShape().setAlternateColSpacing(t_value);
+        ui->widgetCellShapeViewer->updateGrid();
     }
 }
 

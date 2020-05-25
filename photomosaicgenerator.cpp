@@ -130,7 +130,7 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData);
 //Generates using CUDA
 cv::Mat PhotomosaicGenerator::cudaGenerate()
 {
-    const bool padGrid = !m_cellShape.empty();
+    const int padGrid = m_cellShape.empty() ? 0 : 2;
     //Resizes main image and library based on detail level and converts colour space
     auto [resizedImg, resizedLib] = resizeAndCvtColor();
 
@@ -144,8 +144,8 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
 
     //Library images are square so rows == cols
     const int cellSize = resizedLib.front().cols;
-    const cv::Point gridSize(resizedImg.cols / resizedCellShape.getColSpacing() + padGrid,
-                             resizedImg.rows / resizedCellShape.getRowSpacing() + padGrid);
+    const cv::Point gridSize = resizedCellShape.calculateGridSize(resizedImg.cols, resizedImg.rows,
+            padGrid);
 
     setMaximum(gridSize.x * gridSize.y);
     setValue(0);
@@ -178,9 +178,9 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
     std::vector<std::vector<size_t>> grid(static_cast<size_t>(gridSize.x),
                                           std::vector<size_t>(static_cast<size_t>(gridSize.y), 0));
     cv::Mat cell(cellSize, cellSize, m_img.type(), cv::Scalar(0));
-    for (int y = -static_cast<int>(padGrid); y < gridSize.y - padGrid; ++y)
+    for (int y = -padGrid; y < gridSize.y - padGrid; ++y)
     {
-        for (int x = -static_cast<int>(padGrid); x < gridSize.x - padGrid; ++x)
+        for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
         {
             //If user hits cancel in QProgressDialog then return empty mat
             if (wasCanceled())
@@ -253,7 +253,7 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
 //Returns a Photomosaic of the main image made of the library images
 cv::Mat PhotomosaicGenerator::generate()
 {
-    bool padGrid = !m_cellShape.empty();
+    const int padGrid = m_cellShape.empty() ? 0 : 2;
     //Resizes main image and library based on detail level and converts colour space
     auto [resizedImg, resizedLib] = resizeAndCvtColor();
 
@@ -268,8 +268,8 @@ cv::Mat PhotomosaicGenerator::generate()
                                                resizedLib.front().rows);
 
     const cv::Point cellSize(resizedLib.front().cols, resizedLib.front().rows);
-    const cv::Point gridSize(resizedImg.cols / resizedCellShape.getColSpacing() + padGrid,
-                             resizedImg.rows / resizedCellShape.getRowSpacing() + padGrid);
+    const cv::Point gridSize = resizedCellShape.calculateGridSize(resizedImg.cols, resizedImg.rows,
+            padGrid);
 
     setMaximum(gridSize.x * gridSize.y);
     setValue(0);
@@ -282,9 +282,9 @@ cv::Mat PhotomosaicGenerator::generate()
     std::vector<std::vector<size_t>> grid(static_cast<size_t>(gridSize.x),
                                           std::vector<size_t>(static_cast<size_t>(gridSize.y), 0));
     cv::Mat cell(cellSize.y, cellSize.x, m_img.type(), cv::Scalar(0));
-    for (int y = -static_cast<int>(padGrid); y < gridSize.y - padGrid; ++y)
+    for (int y = -padGrid; y < gridSize.y - padGrid; ++y)
     {
-        for (int x = -static_cast<int>(padGrid); x < gridSize.x - padGrid; ++x)
+        for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
         {
             //If user hits cancel in QProgressDialog then return empty mat
             if (wasCanceled())
@@ -626,19 +626,18 @@ cv::Mat PhotomosaicGenerator::combineResults(const cv::Point gridSize,
     }
     else
     {
-        const bool padGrid = !m_cellShape.empty();
+        const int padGrid = m_cellShape.empty() ? 0 : 2;
 
         //Resizes cell shape to size of library images
         CellShape resizedCellShape = m_cellShape.resized(m_lib.front().cols, m_lib.front().rows);
 
-        mosaic = cv::Mat((gridSize.y - padGrid) * resizedCellShape.getRowSpacing(),
-                         (gridSize.x - padGrid) * resizedCellShape.getColSpacing(), m_img.type(),
+        mosaic = cv::Mat(m_img.rows, m_img.cols, m_img.type(),
                          cv::Scalar(0));
 
         //For all cells
-        for (int y = -static_cast<int>(padGrid); y < gridSize.y - padGrid; ++y)
+        for (int y = -padGrid; y < gridSize.y - padGrid; ++y)
         {
-            for (int x = -static_cast<int>(padGrid); x < gridSize.x - padGrid; ++x)
+            for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
             {
                 const cv::Rect unboundedRect = resizedCellShape.getRectAt(x, y);
 

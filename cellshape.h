@@ -7,6 +7,10 @@
 class CellShape
 {
 public:
+    //Current version number
+    static const int MCS_VERSION = 6;
+    static const unsigned int MCS_MAGIC = 0x87AECFB1;
+
     //Constructors
     CellShape();
     CellShape(const cv::Mat &t_cellMask);
@@ -24,6 +28,12 @@ public:
 
     void setColSpacing(const int t_colSpacing);
     int getColSpacing() const;
+
+    void setAlternateRowSpacing(const int t_alternateRowSpacing);
+    int getAlternateRowSpacing() const;
+
+    void setAlternateColSpacing(const int t_alternateColSpacing);
+    int getAlternateColSpacing() const;
 
     void setAlternateRowOffset(const int t_alternateRowOffset);
     int getAlternateRowOffset() const;
@@ -47,13 +57,15 @@ public:
 
     bool empty() const;
 
-    cv::Rect getRectAt(const int x, const int y) const;
+    cv::Point calculateGridSize(const int t_imageWidth, const int t_imageHeight, const int t_pad);
+    cv::Rect getRectAt(const int t_x, const int t_y) const;
 
 private:
     cv::Mat m_cellMask;
     cv::Mat m_cellMaskFlippedH, m_cellMaskFlippedV, m_cellMaskFlippedHV;
 
     int m_rowSpacing, m_colSpacing;
+    int m_alternateRowSpacing, m_alternateColSpacing;
     //Entire row/col offset by specified value every other row/col
     int m_alternateRowOffset, m_alternateColOffset;
     //Controls if and how cells should flip on alternate rows/columns

@@ -7,12 +7,14 @@
 
 CellShape::CellShape()
     : m_cellMask{}, m_rowSpacing{0}, m_colSpacing{0},
+      m_alternateRowSpacing{0}, m_alternateColSpacing{0},
       m_alternateRowOffset{0}, m_alternateColOffset{0},
       m_colFlipHorizontal{false}, m_colFlipVertical{false},
       m_rowFlipHorizontal{false}, m_rowFlipVertical{false} {}
 
 CellShape::CellShape(const cv::Mat &t_cellMask)
     : m_rowSpacing{t_cellMask.rows}, m_colSpacing{t_cellMask.cols},
+      m_alternateRowSpacing{t_cellMask.rows}, m_alternateColSpacing{t_cellMask.cols},
       m_alternateRowOffset{0}, m_alternateColOffset{0},
       m_colFlipHorizontal{false}, m_colFlipVertical{false},
       m_rowFlipHorizontal{false}, m_rowFlipVertical{false}
@@ -27,6 +29,8 @@ CellShape::CellShape(const CellShape &t_cellShape)
       m_cellMaskFlippedHV{t_cellShape.getCellMask(1, 1)},
       m_rowSpacing{t_cellShape.getRowSpacing()},
       m_colSpacing{t_cellShape.getColSpacing()},
+      m_alternateRowSpacing{t_cellShape.getAlternateRowSpacing()},
+      m_alternateColSpacing{t_cellShape.getAlternateColSpacing()},
       m_alternateRowOffset{t_cellShape.getAlternateRowOffset()},
       m_alternateColOffset{t_cellShape.getAlternateColOffset()},
       m_colFlipHorizontal{t_cellShape.getColFlipHorizontal()},
@@ -39,6 +43,7 @@ QDataStream &operator<<(QDataStream &t_out, const CellShape &t_cellShape)
 {
     t_out << t_cellShape.m_cellMask;
     t_out << t_cellShape.m_rowSpacing << t_cellShape.m_colSpacing;
+    t_out << t_cellShape.m_alternateRowSpacing << t_cellShape.m_alternateColSpacing;
     t_out << t_cellShape.m_alternateRowOffset << t_cellShape.m_alternateColOffset;
     t_out << t_cellShape.m_colFlipHorizontal << t_cellShape.m_colFlipVertical;
     t_out << t_cellShape.m_rowFlipHorizontal << t_cellShape.m_rowFlipVertical;
@@ -50,6 +55,16 @@ QDataStream &operator>>(QDataStream &t_in, std::pair<CellShape &, const int> t_c
 {
     t_in >> t_cellShape.first.m_cellMask;
     t_in >> t_cellShape.first.m_rowSpacing >> t_cellShape.first.m_colSpacing;
+    if (t_cellShape.second > 5)
+    {
+        t_in >> t_cellShape.first.m_alternateRowSpacing >> t_cellShape.first.m_alternateColSpacing;
+    }
+    else
+    {
+        t_cellShape.first.m_alternateRowSpacing = t_cellShape.first.m_rowSpacing;
+        t_cellShape.first.m_alternateColSpacing = t_cellShape.first.m_colSpacing;
+    }
+
     t_in >> t_cellShape.first.m_alternateRowOffset >> t_cellShape.first.m_alternateColOffset;
     if (t_cellShape.second > 4)
     {
@@ -125,6 +140,30 @@ void CellShape::setColSpacing(const int t_colSpacing)
 int CellShape::getColSpacing() const
 {
     return m_colSpacing;
+}
+
+//Sets the alternate row spacing for tiling cell
+void CellShape::setAlternateRowSpacing(const int t_alternateRowSpacing)
+{
+    m_alternateRowSpacing = t_alternateRowSpacing;
+}
+
+//Returns the alternate row spacing for tiling cell
+int CellShape::getAlternateRowSpacing() const
+{
+    return m_alternateRowSpacing;
+}
+
+//Sets the alternate column spacing for tiling cell
+void CellShape::setAlternateColSpacing(const int t_alternateColSpacing)
+{
+    m_alternateColSpacing = t_alternateColSpacing;
+}
+
+//Returns the alternate column spacing for tiling cell
+int CellShape::getAlternateColSpacing() const
+{
+    return m_alternateColSpacing;
 }
 
 //Sets the alternate row offset
@@ -216,6 +255,8 @@ CellShape CellShape::resized(const int t_cols, const int t_rows) const
     double hRatio = static_cast<double>(resizedMask.cols) / m_cellMask.cols;
     result.setRowSpacing(static_cast<int>(m_rowSpacing * vRatio));
     result.setColSpacing(static_cast<int>(m_colSpacing * hRatio));
+    result.setAlternateRowSpacing(static_cast<int>(m_alternateRowSpacing * vRatio));
+    result.setAlternateColSpacing(static_cast<int>(m_alternateColSpacing * hRatio));
     result.setAlternateRowOffset(static_cast<int>(m_alternateRowOffset * vRatio));
     result.setAlternateColOffset(static_cast<int>(m_alternateColOffset * hRatio));
     result.setColFlipHorizontal(m_colFlipHorizontal);
@@ -232,12 +273,49 @@ bool CellShape::empty() const
     return m_cellMask.empty();
 }
 
-//Returns rect of cell shape at the given grid position
-cv::Rect CellShape::getRectAt(const int x, const int y) const
+cv::Point CellShape::calculateGridSize(const int t_imageWidth, const int t_imageHeight,
+                                       const int t_pad)
 {
+    cv::Point gridSize;
+    if (m_colSpacing != m_alternateColSpacing)
+        gridSize.x = 2 * ((t_imageWidth + m_colSpacing + m_alternateColSpacing - 1)
+                          / (m_colSpacing + m_alternateColSpacing));
+    else
+        gridSize.x = (t_imageWidth + m_colSpacing - 1) / m_colSpacing;
+
+    if (m_rowSpacing != m_alternateRowSpacing)
+        gridSize.y = 2 * ((t_imageHeight + m_rowSpacing + m_alternateRowSpacing - 1)
+                          / (m_rowSpacing + m_alternateRowSpacing));
+    else
+        gridSize.y = (t_imageHeight + m_rowSpacing - 1) / m_rowSpacing;
+
+    gridSize.x += t_pad;
+    gridSize.y += t_pad;
+
+    return gridSize;
+}
+
+//Returns rect of cell shape at the given grid position
+cv::Rect CellShape::getRectAt(const int t_x, const int t_y) const
+{
+    const int cellsX = t_x / 2;
+    const int alternateCellsX = t_x - cellsX;
+    const int cellsY = t_y / 2;
+    const int alternateCellsY = t_y - cellsY;
+
     cv::Rect result;
-    result.x = x * m_colSpacing + ((abs(y % 2) == 1) ? m_alternateRowOffset : 0);
-    result.y = y * m_rowSpacing + ((abs(x % 2) == 1) ? m_alternateColOffset : 0);
+    if (t_x < 0)
+        result.x = alternateCellsX * m_colSpacing + cellsX * m_alternateColSpacing;
+    else
+        result.x = cellsX * m_colSpacing + alternateCellsX * m_alternateColSpacing;
+    result.x += (t_y % 2 != 0) ? m_alternateRowOffset : 0;
+
+    if (t_y < 0)
+        result.y = alternateCellsY * m_rowSpacing + cellsY * m_alternateRowSpacing;
+    else
+        result.y = cellsY * m_rowSpacing + alternateCellsY * m_alternateRowSpacing;
+    result.y += (t_x % 2 != 0) ? m_alternateColOffset : 0;
+
     result.width = m_cellMask.cols;
     result.height = m_cellMask.rows;
     return result;

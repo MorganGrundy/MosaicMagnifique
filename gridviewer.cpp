@@ -85,22 +85,15 @@ void GridViewer::updateGrid()
     cv::Mat newGrid(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0));
     cv::Mat newEdgeGrid(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0));
 
-    const cv::Point gridSize(newGrid.cols / cellShape.getColSpacing() + 1,
-                             newGrid.rows / cellShape.getRowSpacing() + 1);
+    const cv::Point gridSize = cellShape.calculateGridSize(newGrid.cols, newGrid.rows, 0);
 
     //Create all cells in grid
     for (int x = 0; x < gridSize.x; ++x)
     {
         for (int y = 0; y < gridSize.y; ++y)
         {
-            const cv::Rect roi = cv::Rect(x * cellShape.getColSpacing() +
-                                          (y % 2 == 1) * cellShape.getAlternateRowOffset(),
-                                          y * cellShape.getRowSpacing() +
-                                          (x % 2 == 1) * cellShape.getAlternateColOffset(),
-                                          cellShape.getCellMask(0, 0).cols,
-                                          cellShape.getCellMask(0, 0).rows) & cv::Rect(0, 0,
-                                                                                   newGrid.cols,
-                                                                                   newGrid.rows);
+            const cv::Rect roi = cellShape.getRectAt(x, y)
+                    & cv::Rect(0, 0, newGrid.cols, newGrid.rows);
 
             cv::Mat gridPart(newGrid, roi), edgeGridPart(newEdgeGrid, roi);
 

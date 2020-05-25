@@ -12,8 +12,6 @@ public:
     static const int VERSION_NO = 100;
     static const int MIL_VERSION = 2;
     static const unsigned int MIL_MAGIC = 0xADBE2480;
-    static const int MCS_VERSION = 5;
-    static const unsigned int MCS_MAGIC = 0x87AECFB1;
 
     //Enum class that represents the two different resize types, used in resizeImage
     enum class ResizeType {INCLUSIVE, EXCLUSIVE};

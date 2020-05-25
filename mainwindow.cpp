@@ -47,20 +47,23 @@ MainWindow::MainWindow(QWidget *t_parent)
     ui->statusbar->addPermanentWidget(progressBar);
     ui->statusbar->setSizeGripEnabled(false);
 
-    //Connects custom cell shapes tab buttons to appropriate methods
+    //Connects custom cell shapes tab to appropriate methods
     connect(ui->buttonSaveCustomCell, SIGNAL(released()), this, SLOT(saveCellShape()));
     connect(ui->buttonLoadCustomCell, SIGNAL(released()), this, SLOT(loadCellShape()));
     connect(ui->lineCustomCellName, SIGNAL(textChanged(const QString &)), this,
             SLOT(cellNameChanged(const QString &)));
     connect(ui->buttonCellMask, SIGNAL(released()), this, SLOT(selectCellMask()));
+    //Cell spacing
     connect(ui->spinCustomCellSpacingCol, SIGNAL(valueChanged(int)), this,
             SLOT(cellSpacingColChanged(int)));
     connect(ui->spinCustomCellSpacingRow, SIGNAL(valueChanged(int)), this,
             SLOT(cellSpacingRowChanged(int)));
+    //Cell alternate offset
     connect(ui->spinCustomCellAlternateColOffset, SIGNAL(valueChanged(int)), this,
             SLOT(cellAlternateColOffsetChanged(int)));
     connect(ui->spinCustomCellAlternateRowOffset, SIGNAL(valueChanged(int)), this,
             SLOT(cellAlternateRowOffsetChanged(int)));
+    //Cell flipping
     connect(ui->checkCellColFlipH, SIGNAL(clicked(bool)), this,
             SLOT(cellColumnFlipHorizontalChanged(bool)));
     connect(ui->checkCellColFlipV, SIGNAL(clicked(bool)), this,
@@ -69,6 +72,15 @@ MainWindow::MainWindow(QWidget *t_parent)
             SLOT(cellRowFlipHorizontalChanged(bool)));
     connect(ui->checkCellRowFlipV, SIGNAL(clicked(bool)), this,
             SLOT(cellRowFlipVerticalChanged(bool)));
+    //Cell alternate spacing
+    connect(ui->checkCellAlternateRowSpacing, SIGNAL(toggled(bool)), this,
+            SLOT(enableCellAlternateRowSpacing(bool)));
+    connect(ui->checkCellAlternateColSpacing, SIGNAL(toggled(bool)), this,
+            SLOT(enableCellAlternateColSpacing(bool)));
+    connect(ui->spinCellAlternateRowSpacing, SIGNAL(valueChanged(int)), this,
+            SLOT(cellAlternateRowSpacingChanged(int)));
+    connect(ui->spinCellAlternateColSpacing, SIGNAL(valueChanged(int)), this,
+            SLOT(cellAlternateColSpacingChanged(int)));
 
     //Setup image library list
     ui->listPhoto->setResizeMode(QListWidget::ResizeMode::Adjust);
@@ -118,7 +130,7 @@ MainWindow::~MainWindow()
 //Saves the custom cell shape to a file
 void MainWindow::saveCellShape()
 {
-    CellShape cellShape = ui->widgetCellShapeViewer->getCellShape();
+    CellShape &cellShape = ui->widgetCellShapeViewer->getCellShape();
     if (cellShape.getCellMask(0, 0).empty())
     {
         QMessageBox::information(this, tr("Failed to save custom cell shape"),
@@ -136,8 +148,8 @@ void MainWindow::saveCellShape()
     {
         QDataStream out(&file);
         //Write header with "magic number" and version
-        out << static_cast<quint32>(UtilityFuncs::MCS_MAGIC);
-        out << static_cast<qint32>(UtilityFuncs::MCS_VERSION);
+        out << static_cast<quint32>(CellShape::MCS_MAGIC);
+        out << static_cast<qint32>(CellShape::MCS_VERSION);
 
         out.setVersion(QDataStream::Qt_5_13);
 
@@ -163,7 +175,7 @@ void MainWindow::loadCellShape()
         //Read and check magic number
         quint32 magic;
         in >> magic;
-        if (magic != UtilityFuncs::MCS_MAGIC)
+        if (magic != CellShape::MCS_MAGIC)
         {
             QMessageBox msgBox;
             msgBox.setText(filename + tr(" is not a valid .mcs file"));
@@ -174,7 +186,7 @@ void MainWindow::loadCellShape()
         //Read the version
         qint32 version;
         in >> version;
-        if (version == UtilityFuncs::MCS_VERSION || version == 4)
+        if (version <= CellShape::MCS_VERSION && version >= 4)
             in.setVersion(QDataStream::Qt_5_13);
         else
         {
@@ -192,30 +204,40 @@ void MainWindow::loadCellShape()
         std::pair<CellShape &, const int> cellAndVersion(cellShape, version);
         in >> cellAndVersion;
         //Blocks signals to prevent grid update until all values loaded
+        //Update cell spacing
         ui->spinCustomCellSpacingCol->blockSignals(true);
         ui->spinCustomCellSpacingRow->blockSignals(true);
-        ui->spinCustomCellAlternateColOffset->blockSignals(true);
-        ui->spinCustomCellAlternateRowOffset->blockSignals(true);
-        ui->checkCellColFlipH->blockSignals(true);
-        ui->checkCellColFlipV->blockSignals(true);
-        ui->checkCellRowFlipH->blockSignals(true);
-        ui->checkCellRowFlipV->blockSignals(true);
         ui->spinCustomCellSpacingCol->setValue(cellShape.getColSpacing());
         ui->spinCustomCellSpacingRow->setValue(cellShape.getRowSpacing());
+        ui->spinCustomCellSpacingCol->blockSignals(false);
+        ui->spinCustomCellSpacingRow->blockSignals(false);
+
+        //Update cell alternate spacing
+        ui->checkCellAlternateColSpacing->setChecked(
+                    cellShape.getAlternateColSpacing() != cellShape.getColSpacing());
+        ui->checkCellAlternateRowSpacing->setChecked(
+                    cellShape.getAlternateRowSpacing() != cellShape.getRowSpacing());
+        ui->spinCellAlternateColSpacing->blockSignals(true);
+        ui->spinCellAlternateRowSpacing->blockSignals(true);
+        ui->spinCellAlternateColSpacing->setValue(cellShape.getAlternateColSpacing());
+        ui->spinCellAlternateRowSpacing->setValue(cellShape.getAlternateRowSpacing());
+        ui->spinCellAlternateColSpacing->blockSignals(false);
+        ui->spinCellAlternateRowSpacing->blockSignals(false);
+
+        //Update cell alternate offset
+        ui->spinCustomCellAlternateColOffset->blockSignals(true);
+        ui->spinCustomCellAlternateRowOffset->blockSignals(true);
         ui->spinCustomCellAlternateColOffset->setValue(cellShape.getAlternateColOffset());
         ui->spinCustomCellAlternateRowOffset->setValue(cellShape.getAlternateRowOffset());
+        ui->spinCustomCellAlternateColOffset->blockSignals(false);
+        ui->spinCustomCellAlternateRowOffset->blockSignals(false);
+
+        //Update cell flip states
+        //No need to block signals as setChecked does not trigger clicked signal
         ui->checkCellColFlipH->setChecked(cellShape.getColFlipHorizontal());
         ui->checkCellColFlipV->setChecked(cellShape.getColFlipVertical());
         ui->checkCellRowFlipH->setChecked(cellShape.getRowFlipHorizontal());
         ui->checkCellRowFlipV->setChecked(cellShape.getRowFlipVertical());
-        ui->spinCustomCellSpacingCol->blockSignals(false);
-        ui->spinCustomCellSpacingRow->blockSignals(false);
-        ui->spinCustomCellAlternateColOffset->blockSignals(false);
-        ui->spinCustomCellAlternateRowOffset->blockSignals(false);
-        ui->checkCellColFlipH->blockSignals(false);
-        ui->checkCellColFlipV->blockSignals(false);
-        ui->checkCellRowFlipH->blockSignals(false);
-        ui->checkCellRowFlipV->blockSignals(false);
 
         //Extract cell name from filename
         QString cellName = filename.right(filename.size() - filename.lastIndexOf('/') - 1);
@@ -269,6 +291,8 @@ void MainWindow::selectCellMask()
 //Update custom cell column spacing
 void MainWindow::cellSpacingColChanged(int t_value)
 {
+    if (!ui->spinCellAlternateColSpacing->isEnabled())
+        ui->spinCellAlternateColSpacing->setValue(t_value);
     ui->widgetCellShapeViewer->getCellShape().setColSpacing(t_value);
     ui->widgetCellShapeViewer->updateGrid();
 }
@@ -276,6 +300,8 @@ void MainWindow::cellSpacingColChanged(int t_value)
 //Update custom cell column offset y
 void MainWindow::cellSpacingRowChanged(int t_value)
 {
+    if (!ui->spinCellAlternateRowSpacing->isEnabled())
+        ui->spinCellAlternateRowSpacing->setValue(t_value);
     ui->widgetCellShapeViewer->getCellShape().setRowSpacing(t_value);
     ui->widgetCellShapeViewer->updateGrid();
 }
@@ -320,6 +346,38 @@ void MainWindow::cellRowFlipVerticalChanged(bool t_state)
 {
     ui->widgetCellShapeViewer->getCellShape().setRowFlipVertical(t_state);
     ui->widgetCellShapeViewer->updateGrid();
+}
+
+//Enables/disables cell alternate row spacing
+void MainWindow::enableCellAlternateRowSpacing(bool t_state)
+{
+    ui->spinCellAlternateRowSpacing->setEnabled(t_state);
+}
+
+//Enables/disables cell alternate column spacing
+void MainWindow::enableCellAlternateColSpacing(bool t_state)
+{
+    ui->spinCellAlternateColSpacing->setEnabled(t_state);
+}
+
+//Updates cell alternate row spacing
+void MainWindow::cellAlternateRowSpacingChanged(int t_value)
+{
+    if (ui->checkCellAlternateRowSpacing->isEnabled())
+    {
+        ui->widgetCellShapeViewer->getCellShape().setAlternateRowSpacing(t_value);
+        ui->widgetCellShapeViewer->updateGrid();
+    }
+}
+
+//Updates cell alternate column spacing
+void MainWindow::cellAlternateColSpacingChanged(int t_value)
+{
+    if (ui->checkCellAlternateColSpacing->isEnabled())
+    {
+        ui->widgetCellShapeViewer->getCellShape().setAlternateColSpacing(t_value);
+        ui->widgetCellShapeViewer->updateGrid();
+    }
 }
 
 //Used to add images to the image library

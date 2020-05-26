@@ -23,6 +23,8 @@ public:
     ~MainWindow();
 
 public slots:
+    void tabChanged(int t_index);
+
     //Custom Cell Shapes tab
     void saveCellShape();
     void loadCellShape();
@@ -65,6 +67,8 @@ public slots:
 private:
     Ui::MainWindow *ui;
     QProgressBar *progressBar;
+
+    bool cellShapeChanged;
 
     double photomosaicSizeRatio;
 

@@ -47,6 +47,9 @@ MainWindow::MainWindow(QWidget *t_parent)
     ui->statusbar->addPermanentWidget(progressBar);
     ui->statusbar->setSizeGripEnabled(false);
 
+    connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
+
+    cellShapeChanged = false;
     //Connects custom cell shapes tab to appropriate methods
     connect(ui->buttonSaveCustomCell, SIGNAL(released()), this, SLOT(saveCellShape()));
     connect(ui->buttonLoadCustomCell, SIGNAL(released()), this, SLOT(loadCellShape()));
@@ -125,6 +128,22 @@ MainWindow::MainWindow(QWidget *t_parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+//Updates grid preview in generator sett
+void MainWindow::tabChanged(int t_index)
+{
+    //Generator settings tab
+    if (t_index == 2)
+    {
+        if (ui->checkCellShape->isChecked() && cellShapeChanged)
+        {
+            ui->widgetGridPreview->setCellShape(ui->widgetCellShapeViewer->getCellShape()
+                                                .resized(ui->spinCellSize->value(),
+                                                         ui->spinCellSize->value()));
+            cellShapeChanged = false;
+        }
+    }
 }
 
 //Saves the custom cell shape to a file
@@ -247,6 +266,7 @@ void MainWindow::loadCellShape()
         file.close();
 
         ui->widgetCellShapeViewer->setCellShape(cellShape);
+        cellShapeChanged = true;
     }
 }
 
@@ -285,6 +305,8 @@ void MainWindow::selectCellMask()
         ui->spinCustomCellSpacingRow->blockSignals(false);
         ui->spinCustomCellAlternateColOffset->blockSignals(false);
         ui->spinCustomCellAlternateRowOffset->blockSignals(false);
+
+        cellShapeChanged = true;
     }
 }
 
@@ -295,6 +317,8 @@ void MainWindow::cellSpacingColChanged(int t_value)
         ui->spinCellAlternateColSpacing->setValue(t_value);
     ui->widgetCellShapeViewer->getCellShape().setColSpacing(t_value);
     ui->widgetCellShapeViewer->updateGrid();
+
+    cellShapeChanged = true;
 }
 
 //Update custom cell column offset y
@@ -304,6 +328,8 @@ void MainWindow::cellSpacingRowChanged(int t_value)
         ui->spinCellAlternateRowSpacing->setValue(t_value);
     ui->widgetCellShapeViewer->getCellShape().setRowSpacing(t_value);
     ui->widgetCellShapeViewer->updateGrid();
+
+    cellShapeChanged = true;
 }
 
 //Update custom cell row offset x
@@ -311,6 +337,8 @@ void MainWindow::cellAlternateColOffsetChanged(int t_value)
 {
     ui->widgetCellShapeViewer->getCellShape().setAlternateColOffset(t_value);
     ui->widgetCellShapeViewer->updateGrid();
+
+    cellShapeChanged = true;
 }
 
 //Update custom cell row offset y
@@ -318,6 +346,8 @@ void MainWindow::cellAlternateRowOffsetChanged(int t_value)
 {
     ui->widgetCellShapeViewer->getCellShape().setAlternateRowOffset(t_value);
     ui->widgetCellShapeViewer->updateGrid();
+
+    cellShapeChanged = true;
 }
 
 //Update custom cell alternate column horizontal flipping
@@ -325,6 +355,8 @@ void MainWindow::cellColumnFlipHorizontalChanged(bool t_state)
 {
     ui->widgetCellShapeViewer->getCellShape().setColFlipHorizontal(t_state);
     ui->widgetCellShapeViewer->updateGrid();
+
+    cellShapeChanged = true;
 }
 
 //Update custom cell alternate column vertical flipping
@@ -332,6 +364,8 @@ void MainWindow::cellColumnFlipVerticalChanged(bool t_state)
 {
     ui->widgetCellShapeViewer->getCellShape().setColFlipVertical(t_state);
     ui->widgetCellShapeViewer->updateGrid();
+
+    cellShapeChanged = true;
 }
 
 //Update custom cell alternate row horizontal flipping
@@ -339,6 +373,8 @@ void MainWindow::cellRowFlipHorizontalChanged(bool t_state)
 {
     ui->widgetCellShapeViewer->getCellShape().setRowFlipHorizontal(t_state);
     ui->widgetCellShapeViewer->updateGrid();
+
+    cellShapeChanged = true;
 }
 
 //Update custom cell alternate row vertical flipping
@@ -346,18 +382,24 @@ void MainWindow::cellRowFlipVerticalChanged(bool t_state)
 {
     ui->widgetCellShapeViewer->getCellShape().setRowFlipVertical(t_state);
     ui->widgetCellShapeViewer->updateGrid();
+
+    cellShapeChanged = true;
 }
 
 //Enables/disables cell alternate row spacing
 void MainWindow::enableCellAlternateRowSpacing(bool t_state)
 {
     ui->spinCellAlternateRowSpacing->setEnabled(t_state);
+
+    cellShapeChanged = true;
 }
 
 //Enables/disables cell alternate column spacing
 void MainWindow::enableCellAlternateColSpacing(bool t_state)
 {
     ui->spinCellAlternateColSpacing->setEnabled(t_state);
+
+    cellShapeChanged = true;
 }
 
 //Updates cell alternate row spacing
@@ -367,6 +409,8 @@ void MainWindow::cellAlternateRowSpacingChanged(int t_value)
     {
         ui->widgetCellShapeViewer->getCellShape().setAlternateRowSpacing(t_value);
         ui->widgetCellShapeViewer->updateGrid();
+
+        cellShapeChanged = true;
     }
 }
 
@@ -377,6 +421,8 @@ void MainWindow::cellAlternateColSpacingChanged(int t_value)
     {
         ui->widgetCellShapeViewer->getCellShape().setAlternateColSpacing(t_value);
         ui->widgetCellShapeViewer->updateGrid();
+
+        cellShapeChanged = true;
     }
 }
 

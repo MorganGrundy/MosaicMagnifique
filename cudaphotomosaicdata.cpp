@@ -58,7 +58,7 @@ bool CUDAPhotomosaicData::mallocData()
 
     //Calculate max batch size possible with given memory
     batchSize = noCellImages;
-    while (staticMemory + batchScalingMemory * batchSize >= freeMem && batchSize != 0)
+    while (staticMemory + batchScalingMemory * batchSize >= 3 * (freeMem / 4) && batchSize != 0)
         --batchSize;
     //If memory needed exceeds available memory then exit
     if (batchSize == 0)

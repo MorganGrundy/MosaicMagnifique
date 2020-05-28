@@ -8,7 +8,7 @@
 #include <QWheelEvent>
 
 GridViewer::GridViewer(QWidget *parent)
-    : QWidget(parent), MIN_ZOOM{0.1}, MAX_ZOOM{10}, zoom{1}
+    : QWidget(parent), MIN_ZOOM{0.5}, MAX_ZOOM{10}, zoom{1}
 {
     layout = new QGridLayout(this);
 

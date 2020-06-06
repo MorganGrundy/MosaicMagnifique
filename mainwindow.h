@@ -56,6 +56,7 @@ public slots:
 
     //Generator Settings tab
     void selectMainImage();
+    void compareColours();
     void photomosaicSizeLink();
     void photomosaicWidthChanged(int i);
     void photomosaicHeightChanged(int i);
@@ -67,6 +68,8 @@ public slots:
 private:
     Ui::MainWindow *ui;
     QProgressBar *progressBar;
+
+
 
     bool cellShapeChanged;
 

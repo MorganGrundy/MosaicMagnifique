@@ -1240,6 +1240,23 @@ border: 1px solid dimgray;
               </widget>
              </item>
              <item>
+              <widget class="QPushButton" name="buttonCompareColours">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QPushButton:disabled {
+	background-color: rgb(30, 30, 30);
+	color: rgb(60, 60, 60);
+	border-color: rgb(0, 0, 0);
+}</string>
+               </property>
+               <property name="text">
+                <string>Compare Colours</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="Line" name="line_2">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>

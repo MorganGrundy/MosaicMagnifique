@@ -15,6 +15,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
 	cellshape.cpp \
+	colourvisualisation.cpp \
 	customgraphicsview.cpp \
     gridviewer.cpp \
 	imageviewer.cpp \
@@ -25,6 +26,7 @@ SOURCES += \
 
 HEADERS += \
 	cellshape.h \
+	colourvisualisation.h \
 	customgraphicsview.h \
     gridviewer.h \
 	imageviewer.h \
@@ -33,6 +35,7 @@ HEADERS += \
     utilityfuncs.h
 
 FORMS += \
+    colourvisualisation.ui \
     imageviewer.ui \
     mainwindow.ui
 

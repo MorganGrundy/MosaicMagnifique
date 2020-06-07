@@ -69,8 +69,6 @@ private:
     Ui::MainWindow *ui;
     QProgressBar *progressBar;
 
-
-
     bool cellShapeChanged;
 
     double photomosaicSizeRatio;

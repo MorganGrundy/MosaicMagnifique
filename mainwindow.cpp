@@ -689,16 +689,18 @@ void MainWindow::selectMainImage()
 //Opens colour visualisation window
 void MainWindow::compareColours()
 {
-    ui->buttonCompareColours->setEnabled(false);
+    std::vector<cv::Mat> libImages;
+    cv::Mat *libraryImages = static_cast<cv::Mat *>(malloc(allImages.size() * sizeof(cv::Mat)));
+    if (!libraryImages)
+        return;
 
-    ColourVisualisation colourVisualisation(this);
-    colourVisualisation.show();
+    for (auto pair: allImages.values())
+        libImages.push_back(pair.first);
 
-    QEventLoop loop;
-    connect(this, SIGNAL(destroyed()), &loop, SLOT(quit()));
-    loop.exec();
-
-    ui->buttonCompareColours->setEnabled(true);
+    ColourVisualisation *colourVisualisation = new ColourVisualisation(this, mainImage,
+                                                                       libImages.data(),
+                                                                       libImages.size());
+    colourVisualisation->show();
 }
 
 //Changes icon of photomosaic size link button and saves ratio
@@ -866,9 +868,6 @@ void MainWindow::generatePhotomosaic()
     qDebug() << "Generator time: " << duration << "s";
 
     //Displays Photomosaic
-    ImageViewer imageViewer(this, mosaic, duration);
-    imageViewer.show();
-    QEventLoop loop;
-    connect(this, SIGNAL(destroyed()), &loop, SLOT(quit()));
-    loop.exec();
+    ImageViewer *imageViewer = new ImageViewer(this, mosaic, duration);
+    imageViewer->show();
 }

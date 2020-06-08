@@ -75,7 +75,7 @@ border: 0px;
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideNone</enum>
@@ -1243,6 +1243,12 @@ border: 1px solid dimgray;
               <widget class="QPushButton" name="buttonCompareColours">
                <property name="enabled">
                 <bool>true</bool>
+               </property>
+               <property name="statusTip">
+                <string>Compare colours in main image and library images</string>
+               </property>
+               <property name="whatsThis">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Provides a list of colours that could improve Photomosaic if images containing similar colours are added to library.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Colours listed in order of descending priority.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="styleSheet">
                 <string notr="true">QPushButton:disabled {

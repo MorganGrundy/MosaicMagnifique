@@ -689,11 +689,10 @@ void MainWindow::selectMainImage()
 //Opens colour visualisation window
 void MainWindow::compareColours()
 {
-    std::vector<cv::Mat> libImages;
-    cv::Mat *libraryImages = static_cast<cv::Mat *>(malloc(allImages.size() * sizeof(cv::Mat)));
-    if (!libraryImages)
+    if (allImages.size() == 0 || mainImage.empty())
         return;
 
+    std::vector<cv::Mat> libImages;
     for (auto pair: allImages.values())
         libImages.push_back(pair.first);
 

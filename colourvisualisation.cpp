@@ -81,7 +81,8 @@ void ColourVisualisation::createColourList()
         colour.fill(QColor((std::get<0>(data.first) + 0.5) * ((RGBRanges[1] - 1) / noOfBins),
                            (std::get<1>(data.first) + 0.5) * ((RGBRanges[1] - 1) / noOfBins),
                            (std::get<2>(data.first) + 0.5) * ((RGBRanges[1] - 1) / noOfBins)));
-        QListWidgetItem *listItem = new QListWidgetItem(QIcon(colour), "");
+
+        QListWidgetItem *listItem = new QListWidgetItem(QIcon(colour), QString());
         ui->listWidget->addItem(listItem);
     }
 }

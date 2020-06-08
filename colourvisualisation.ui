@@ -16,9 +16,34 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>Add images to library with colours similar to the following to improve Photomosaic (ordered by descending priority):</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QListWidget" name="listWidget">
       <property name="horizontalScrollBarPolicy">
        <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="editTriggers">
+       <set>QAbstractItemView::NoEditTriggers</set>
+      </property>
+      <property name="showDropIndicator" stdset="0">
+       <bool>false</bool>
+      </property>
+      <property name="dragDropMode">
+       <enum>QAbstractItemView::NoDragDrop</enum>
+      </property>
+      <property name="defaultDropAction">
+       <enum>Qt::IgnoreAction</enum>
+      </property>
+      <property name="alternatingRowColors">
+       <bool>false</bool>
       </property>
       <property name="horizontalScrollMode">
        <enum>QAbstractItemView::ScrollPerItem</enum>
@@ -38,8 +63,14 @@
       <property name="viewMode">
        <enum>QListView::IconMode</enum>
       </property>
+      <property name="uniformItemSizes">
+       <bool>true</bool>
+      </property>
       <property name="batchSize">
        <number>5</number>
+      </property>
+      <property name="selectionRectVisible">
+       <bool>false</bool>
       </property>
      </widget>
     </item>

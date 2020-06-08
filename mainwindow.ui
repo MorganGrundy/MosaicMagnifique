@@ -1240,6 +1240,29 @@ border: 1px solid dimgray;
               </widget>
              </item>
              <item>
+              <widget class="QPushButton" name="buttonCompareColours">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="statusTip">
+                <string>Compare colours in main image and library images</string>
+               </property>
+               <property name="whatsThis">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Provides a list of colours that could improve Photomosaic if images containing similar colours are added to library.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Colours listed in order of descending priority.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QPushButton:disabled {
+	background-color: rgb(30, 30, 30);
+	color: rgb(60, 60, 60);
+	border-color: rgb(0, 0, 0);
+}</string>
+               </property>
+               <property name="text">
+                <string>Compare Colours</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="Line" name="line_2">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>

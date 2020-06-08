@@ -19,6 +19,7 @@
 #include "utilityfuncs.h"
 #include "photomosaicgenerator.h"
 #include "imageviewer.h"
+#include "colourvisualisation.h"
 
 #ifdef OPENCV_W_CUDA
 #include <opencv2/cudawarping.hpp>
@@ -102,6 +103,7 @@ MainWindow::MainWindow(QWidget *t_parent)
 
     //Connects generator settings to appropriate methods
     connect(ui->buttonMainImage, SIGNAL(released()), this, SLOT(selectMainImage()));
+    connect(ui->buttonCompareColours, SIGNAL(released()), this, SLOT(compareColours()));
     connect(ui->buttonPhotomosaicSizeLink, SIGNAL(released()), this, SLOT(photomosaicSizeLink()));
     connect(ui->spinPhotomosaicWidth, SIGNAL(valueChanged(int)), this,
             SLOT(photomosaicWidthChanged(int)));
@@ -684,6 +686,22 @@ void MainWindow::selectMainImage()
         ui->widgetGridPreview->setBackground(cv::Mat());
 }
 
+//Opens colour visualisation window
+void MainWindow::compareColours()
+{
+    if (allImages.size() == 0 || mainImage.empty())
+        return;
+
+    std::vector<cv::Mat> libImages;
+    for (auto pair: allImages.values())
+        libImages.push_back(pair.first);
+
+    ColourVisualisation *colourVisualisation = new ColourVisualisation(this, mainImage,
+                                                                       libImages.data(),
+                                                                       libImages.size());
+    colourVisualisation->show();
+}
+
 //Changes icon of photomosaic size link button and saves ratio
 void MainWindow::photomosaicSizeLink()
 {
@@ -849,9 +867,6 @@ void MainWindow::generatePhotomosaic()
     qDebug() << "Generator time: " << duration << "s";
 
     //Displays Photomosaic
-    ImageViewer imageViewer(this, mosaic, duration);
-    imageViewer.show();
-    QEventLoop loop;
-    connect(this, SIGNAL(destroyed()), & loop, SLOT(quit()));
-    loop.exec();
+    ImageViewer *imageViewer = new ImageViewer(this, mosaic, duration);
+    imageViewer->show();
 }

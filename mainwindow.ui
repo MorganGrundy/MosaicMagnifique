@@ -1302,33 +1302,35 @@ border: 1px solid dimgray;
                 <property name="spacing">
                  <number>6</number>
                 </property>
-                <item row="1" column="3">
-                 <widget class="QPushButton" name="buttonPhotomosaicSizeLink">
-                  <property name="statusTip">
-                   <string>Locks aspect ratio of width/height</string>
+                <item row="0" column="1">
+                 <widget class="QLabel" name="label_4">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
                   </property>
                   <property name="text">
-                   <string/>
+                   <string>Width</string>
                   </property>
-                  <property name="icon">
-                   <iconset resource="ui.qrc">
-                    <normaloff>:/img/LinkIcon.png</normaloff>:/img/LinkIcon.png</iconset>
-                  </property>
-                  <property name="checkable">
-                   <bool>true</bool>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="4">
-                 <widget class="QPushButton" name="buttonPhotomosaicSize">
-                  <property name="statusTip">
-                   <string>Sets size to size of main image</string>
+                <item row="0" column="2">
+                 <widget class="QLabel" name="label_5">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
                   </property>
                   <property name="text">
-                   <string>From Main Image</string>
+                   <string>Height</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
                   </property>
                  </widget>
                 </item>
@@ -1377,45 +1379,59 @@ border: 1px solid dimgray;
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="2">
-                 <widget class="QLabel" name="label_5">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
+                <item row="1" column="5">
+                 <spacer name="horizontalSpacer_3">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
                   </property>
-                  <property name="text">
-                   <string>Height</string>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
                   </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
-                  </property>
-                 </widget>
+                 </spacer>
                 </item>
-                <item row="0" column="1">
-                 <widget class="QLabel" name="label_4">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="text">
-                   <string>Width</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QLabel" name="label_10">
+                <item row="1" column="4">
+                 <widget class="QPushButton" name="buttonPhotomosaicSize">
                   <property name="statusTip">
-                   <string>Controls detail level when comparing images</string>
+                   <string>Sets size to size of main image</string>
                   </property>
                   <property name="text">
-                   <string>Detail:</string>
+                   <string>From Main Image</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QSpinBox" name="spinPhotomosaicHeight">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="statusTip">
+                   <string>Controls height of Photomosaic in pixels</string>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">QSpinBox {
+border: 1px solid dimgray;
+}</string>
+                  </property>
+                  <property name="buttonSymbols">
+                   <enum>QAbstractSpinBox::PlusMinus</enum>
+                  </property>
+                  <property name="suffix">
+                   <string>px</string>
+                  </property>
+                  <property name="prefix">
+                   <string/>
+                  </property>
+                  <property name="minimum">
+                   <number>10</number>
+                  </property>
+                  <property name="maximum">
+                   <number>100000</number>
                   </property>
                  </widget>
                 </item>
@@ -1471,51 +1487,35 @@ border: 1px solid dimgray;
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="2">
-                 <widget class="QSpinBox" name="spinPhotomosaicHeight">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
+                <item row="1" column="3">
+                 <widget class="QPushButton" name="buttonPhotomosaicSizeLink">
                   <property name="statusTip">
-                   <string>Controls height of Photomosaic in pixels</string>
+                   <string>Locks aspect ratio of width/height</string>
                   </property>
-                  <property name="styleSheet">
-                   <string notr="true">QSpinBox {
-border: 1px solid dimgray;
-}</string>
-                  </property>
-                  <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::PlusMinus</enum>
-                  </property>
-                  <property name="suffix">
-                   <string>px</string>
-                  </property>
-                  <property name="prefix">
+                  <property name="text">
                    <string/>
                   </property>
-                  <property name="minimum">
-                   <number>10</number>
+                  <property name="icon">
+                   <iconset resource="ui.qrc">
+                    <normaloff>:/img/LinkIcon.png</normaloff>:/img/LinkIcon.png</iconset>
                   </property>
-                  <property name="maximum">
-                   <number>100000</number>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="5">
-                 <spacer name="horizontalSpacer_3">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="label_10">
+                  <property name="statusTip">
+                   <string>Controls detail level when comparing images</string>
                   </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
+                  <property name="text">
+                   <string>Detail:</string>
                   </property>
-                 </spacer>
+                 </widget>
                 </item>
                </layout>
               </widget>
@@ -2058,6 +2058,22 @@ border: 1px solid dimgray;
                <bool>true</bool>
               </property>
              </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="comboCUDA"/>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_9">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
             </item>
             <item alignment="Qt::AlignRight">
              <widget class="QPushButton" name="buttonGenerate">

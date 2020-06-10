@@ -15,11 +15,13 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <chrono>
+#include <cuda_runtime.h>
 
 #include "utilityfuncs.h"
 #include "photomosaicgenerator.h"
 #include "imageviewer.h"
 #include "colourvisualisation.h"
+#include "cudaphotomosaicdata.h"
 
 #ifdef OPENCV_W_CUDA
 #include <opencv2/cudawarping.hpp>
@@ -114,8 +116,45 @@ MainWindow::MainWindow(QWidget *t_parent)
     connect(ui->checkCellShape, SIGNAL(clicked(bool)), this, SLOT(enableCellShape(bool)));
 
     connect(ui->buttonGenerate, SIGNAL(released()), this, SLOT(generatePhotomosaic()));
-#ifndef CUDA
+
+#ifdef CUDA
+    int deviceCount, device;
+    int gpuDeviceCount = 0;
+    cudaDeviceProp properties;
+    cudaError_t cudaResultCode = cudaGetDeviceCount(&deviceCount);
+    if (cudaResultCode != cudaSuccess)
+        deviceCount = 0;
+
+    //Check devices are not emulation only (9999)
+    for (device = 0; device < deviceCount; ++device) {
+        gpuErrchk(cudaGetDeviceProperties(&properties, device));
+        if (properties.major != 9999)
+        {
+            ++gpuDeviceCount;
+            //Add device name to combo box
+            ui->comboCUDA->addItem(properties.name);
+        }
+    }
+
+    //No devices so disable CUDA controls
+    if (gpuDeviceCount == 0)
+    {
+        ui->checkCUDA->setEnabled(false);
+        ui->comboCUDA->setEnabled(false);
+    }
+    else
+    {
+        connect(ui->comboCUDA, SIGNAL(currentIndexChanged(int)),
+                this, SLOT(CUDADeviceChanged(int)));
+        CUDADeviceChanged(0);
+
+        //Initialise CUDA
+        int *deviceInit;
+        gpuErrchk(cudaMalloc(&deviceInit, 0 * sizeof(int)));
+    }
+#else
     ui->checkCUDA->hide();
+    ui->comboCUDA->hide();
 #endif
 
     //Sets grid preview to default square cell
@@ -800,6 +839,12 @@ void MainWindow::enableCellShape(bool t_state)
                                                               ui->spinCellSize->value(),
                                                               CV_8UC1, cv::Scalar(255))));
     }
+}
+
+//Changes CUDA device
+void MainWindow::CUDADeviceChanged(int t_index)
+{
+    gpuErrchk(cudaSetDevice(t_index));
 }
 
 //Attempts to generate and display a Photomosaic for current settings

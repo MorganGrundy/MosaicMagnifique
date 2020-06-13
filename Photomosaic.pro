@@ -39,10 +39,6 @@ FORMS += \
     imageviewer.ui \
     mainwindow.ui
 
-# Boost libraries
-INCLUDEPATH += $$(BOOST_ROOT)
-LIBS += -L$$(BOOST_ROOT)/stage/lib
-
 # OpenCV libraries
 INCLUDEPATH += $$(OPENCV_SDK_DIR)/include
 CONFIG( debug, debug|release ) {

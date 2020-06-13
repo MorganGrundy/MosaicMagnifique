@@ -9,7 +9,6 @@ A GUI based application for generating Photomosaics.
 * CUDA v10.1
 * Qt 5.13.1
 * OpenCV + Contrib 4.1.1 w/ CUDA
-* Boost 1.71.0
 
 Note: CUDA & OpenCV w/ CUDA usage controlled by CONFIG in Photomosaic.pro
 ```

@@ -8,7 +8,6 @@
 #include <opencv2/imgproc.hpp>
 #include <iostream>
 #include <cstdio>
-#include <boost/filesystem.hpp>
 #include <string>
 #include <cmath>
 

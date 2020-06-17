@@ -18,6 +18,7 @@ SOURCES += \
 	colourvisualisation.cpp \
 	customgraphicsview.cpp \
     gridviewer.cpp \
+	halvingspinbox.cpp \
 	imageviewer.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -29,6 +30,7 @@ HEADERS += \
 	colourvisualisation.h \
 	customgraphicsview.h \
     gridviewer.h \
+	halvingspinbox.h \
 	imageviewer.h \
     mainwindow.h \
     photomosaicgenerator.h \

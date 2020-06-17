@@ -113,6 +113,7 @@ MainWindow::MainWindow(QWidget *t_parent)
             SLOT(photomosaicHeightChanged(int)));
     connect(ui->buttonPhotomosaicSize, SIGNAL(released()), this, SLOT(loadImageSize()));
 
+    connect(ui->spinCellSize, SIGNAL(valueChanged(int)), this, SLOT(cellSizeChanged(int)));
     connect(ui->checkCellShape, SIGNAL(clicked(bool)), this, SLOT(enableCellShape(bool)));
 
     connect(ui->buttonGenerate, SIGNAL(released()), this, SLOT(generatePhotomosaic()));
@@ -156,6 +157,9 @@ MainWindow::MainWindow(QWidget *t_parent)
     ui->checkCUDA->hide();
     ui->comboCUDA->hide();
 #endif
+
+    //Sets default cell size
+    ui->spinCellSize->setValue(100);
 
     //Sets grid preview to default square cell
     ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(ui->spinCellSize->value(),
@@ -814,12 +818,18 @@ void MainWindow::loadImageSize()
         photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) /
                 ui->spinPhotomosaicHeight->value();
 
-
         //Resize main image to user entered size
         ui->widgetGridPreview->setBackground(
                     UtilityFuncs::resizeImage(mainImage, mainImage.rows, mainImage.cols,
                                               UtilityFuncs::ResizeType::INCLUSIVE));
     }
+}
+
+//Updates minimum cell size spin box
+void MainWindow::cellSizeChanged(int t_value)
+{
+    ui->spinMinCellSize->setMaximum(t_value);
+    ui->spinMinCellSize->stepBy(0);
 }
 
 //Enables/disables non-square cell shapes, GUI widgets for choosing

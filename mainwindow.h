@@ -61,6 +61,7 @@ public slots:
     void photomosaicWidthChanged(int i);
     void photomosaicHeightChanged(int i);
     void loadImageSize();
+    void cellSizeChanged(int t_value);
     void enableCellShape(bool t_state);
     void CUDADeviceChanged(int t_index);
 

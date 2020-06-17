@@ -1710,9 +1710,6 @@ border: 1px solid dimgray;
                   <property name="maximum">
                    <number>10000</number>
                   </property>
-                  <property name="value">
-                   <number>100</number>
-                  </property>
                  </widget>
                 </item>
                 <item>
@@ -1813,6 +1810,57 @@ QLineEdit:disabled {
                 <enum>Qt::Horizontal</enum>
                </property>
               </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_9">
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="label_22">
+                 <property name="statusTip">
+                  <string>Minimum width and height of each cell in pixels</string>
+                 </property>
+                 <property name="text">
+                  <string>Minimum Cell Size:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="HalvingSpinBox" name="spinMinCellSize">
+                 <property name="statusTip">
+                  <string>Minimum width and height of each cell in pixels</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Photomosaics can be generated using variable cell sizes. Areas of higher detail will use a smaller cell size.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;For each step down a cell is split into four smaller cells of half the size (and rounded down). For best cell alignment the cell size should be a power of 2.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">QSpinBox {
+border: 1px solid dimgray;
+}</string>
+                 </property>
+                 <property name="buttonSymbols">
+                  <enum>QAbstractSpinBox::PlusMinus</enum>
+                 </property>
+                 <property name="suffix">
+                  <string>px</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_10">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
              </item>
              <item>
               <spacer name="verticalSpacer_2">
@@ -2138,6 +2186,11 @@ border: 1px solid dimgray;
    <extends>QWidget</extends>
    <header>gridviewer.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>HalvingSpinBox</class>
+   <extends>QSpinBox</extends>
+   <header>halvingspinbox.h</header>
   </customwidget>
  </customwidgets>
  <resources>

@@ -15,6 +15,8 @@
 #include <opencv2/cudaimgproc.hpp>
 #endif
 
+#include "cellgrid.h"
+
 #ifdef CUDA
 #include <cuda.h>
 #include <cuda_runtime_api.h>
@@ -119,7 +121,7 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGenerator::resizeAndCvtColor
 
 #endif
 
-    return std::make_pair(resultMain, result);
+    return {resultMain, result};
 }
 
 #ifdef CUDA
@@ -144,7 +146,8 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
 
     //Library images are square so rows == cols
     const int cellSize = resizedLib.front().cols;
-    const cv::Point gridSize = resizedCellShape.calculateGridSize(resizedImg.cols, resizedImg.rows,
+    const cv::Point gridSize = CellGrid::calculateGridSize(resizedCellShape,
+            resizedImg.cols, resizedImg.rows,
             padGrid);
 
     setMaximum(gridSize.x * gridSize.y);
@@ -186,7 +189,7 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
             if (wasCanceled())
                 return cv::Mat();
 
-            const cv::Rect unboundedRect = resizedCellShape.getRectAt(x, y);
+            const cv::Rect unboundedRect = CellGrid::getRectAt(resizedCellShape, x, y);
 
             //Cell bounded positions (in mosaic area)
             const int yStart = std::clamp(unboundedRect.tl().y, 0, resizedImg.rows);
@@ -268,7 +271,8 @@ cv::Mat PhotomosaicGenerator::generate()
                                                resizedLib.front().rows);
 
     const cv::Point cellSize(resizedLib.front().cols, resizedLib.front().rows);
-    const cv::Point gridSize = resizedCellShape.calculateGridSize(resizedImg.cols, resizedImg.rows,
+    const cv::Point gridSize = CellGrid::calculateGridSize(resizedCellShape,
+            resizedImg.cols, resizedImg.rows,
             padGrid);
 
     setMaximum(gridSize.x * gridSize.y);
@@ -290,7 +294,7 @@ cv::Mat PhotomosaicGenerator::generate()
             if (wasCanceled())
                 return cv::Mat();
 
-            const cv::Rect unboundedRect = resizedCellShape.getRectAt(x, y);
+            const cv::Rect unboundedRect = CellGrid::getRectAt(resizedCellShape, x, y);
 
             //Cell bounded positions (in mosaic area)
             const int yStart = std::clamp(unboundedRect.tl().y, 0, resizedImg.rows);
@@ -639,7 +643,7 @@ cv::Mat PhotomosaicGenerator::combineResults(const cv::Point gridSize,
         {
             for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
             {
-                const cv::Rect unboundedRect = resizedCellShape.getRectAt(x, y);
+                const cv::Rect unboundedRect = CellGrid::getRectAt(resizedCellShape, x, y);
 
                 //Cell bounded positions (in mosaic area)
                 const int yStart = std::clamp(unboundedRect.tl().y, 0, mosaic.rows);
@@ -652,15 +656,8 @@ cv::Mat PhotomosaicGenerator::combineResults(const cv::Point gridSize,
                     continue;
 
                 //Calculate if and how current cell is flipped
-                bool flipHorizontal = false, flipVertical = false;
-                if (resizedCellShape.getColFlipHorizontal() && (x + padGrid) % 2 == 1)
-                    flipHorizontal = !flipHorizontal;
-                if (resizedCellShape.getRowFlipHorizontal() && (y + padGrid) % 2 == 1)
-                    flipHorizontal = !flipHorizontal;
-                if (resizedCellShape.getColFlipVertical() && (x + padGrid) % 2 == 1)
-                    flipVertical = !flipVertical;
-                if (resizedCellShape.getRowFlipVertical() && (y + padGrid) % 2 == 1)
-                    flipVertical = !flipVertical;
+                auto [flipHorizontal, flipVertical] = CellGrid::getFlipStateAt(resizedCellShape,
+                        x, y, padGrid);
 
                 //Creates a mat that is the cell area actually visible in mosaic
                 cv::Mat cellBounded(result.at(static_cast<size_t>(x + padGrid)).

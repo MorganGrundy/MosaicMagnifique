@@ -14,6 +14,7 @@ TARGET = Photomosaic
 DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
+	cellgrid.cpp \
 	cellshape.cpp \
 	colourvisualisation.cpp \
 	customgraphicsview.cpp \
@@ -26,6 +27,7 @@ SOURCES += \
     utilityfuncs.cpp
 
 HEADERS += \
+	cellgrid.h \
 	cellshape.h \
 	colourvisualisation.h \
 	customgraphicsview.h \

@@ -7,6 +7,8 @@
 #include <opencv2/imgproc.hpp>
 #include <QWheelEvent>
 
+#include "cellgrid.h"
+
 GridViewer::GridViewer(QWidget *parent)
     : QWidget(parent), MIN_ZOOM{0.5}, MAX_ZOOM{10}, zoom{1}
 {
@@ -87,14 +89,15 @@ void GridViewer::updateGrid()
     cv::Mat newGrid(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0));
     cv::Mat newEdgeGrid(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0));
 
-    const cv::Point gridSize = cellShape.calculateGridSize(newGrid.cols, newGrid.rows, padGrid);
+    const cv::Point gridSize = CellGrid::calculateGridSize(cellShape,
+                                                           newGrid.cols, newGrid.rows, padGrid);
 
     //Create all cells in grid
     for (int y = -padGrid; y < gridSize.y - padGrid; ++y)
     {
         for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
         {
-            const cv::Rect unboundedRect = cellShape.getRectAt(x, y);
+            const cv::Rect unboundedRect = CellGrid::getRectAt(cellShape, x, y);
 
             //Cell bounded positions (in background area)
             const int yStart = std::clamp(unboundedRect.tl().y, 0, newGrid.rows);
@@ -111,15 +114,8 @@ void GridViewer::updateGrid()
             cv::Mat gridPart(newGrid, roi), edgeGridPart(newEdgeGrid, roi);
 
             //Calculate if and how current cell is flipped
-            bool flipHorizontal = false, flipVertical = false;
-            if (cellShape.getColFlipHorizontal() && (x + padGrid) % 2 == 1)
-                flipHorizontal = !flipHorizontal;
-            if (cellShape.getRowFlipHorizontal() && (y + padGrid) % 2 == 1)
-                flipHorizontal = !flipHorizontal;
-            if (cellShape.getColFlipVertical() && (x + padGrid) % 2 == 1)
-                flipVertical = !flipVertical;
-            if (cellShape.getRowFlipVertical() && (y + padGrid) % 2 == 1)
-                flipVertical = !flipVertical;
+            auto [flipHorizontal, flipVertical] = CellGrid::getFlipStateAt(cellShape,
+                    x, y, padGrid);
 
             //Copy cell to grid
             cv::Mat mask(flipHorizontal ? (flipVertical ? cellFlippedHV : cellFlippedH)

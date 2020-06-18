@@ -61,7 +61,7 @@ void ColourVisualisation::createColourList()
                     else
                         priority = mainBin / libraryBin;
 
-                    colourPriority.push_back(std::make_pair(std::make_tuple(r, g, b), priority));
+                    colourPriority.push_back({{r, g, b}, priority});
                 }
             }
         }

@@ -22,6 +22,8 @@ public:
     void setCellShape(const CellShape &t_cellShape);
     CellShape &getCellShape();
 
+    void setMinimumCellSize(const size_t t_size);
+
     void setBackground(const cv::Mat &t_background);
 
 public slots:
@@ -41,6 +43,7 @@ private:
     QSpacerItem *hSpacer, *vSpacer;
 
     CellShape cellShape;
+    size_t minimumCellSize;
     QImage background;
 
     cv::Mat cell, cellFlippedH, cellFlippedV, cellFlippedHV;

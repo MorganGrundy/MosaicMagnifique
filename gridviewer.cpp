@@ -69,6 +69,8 @@ void GridViewer::updateGrid()
         return;
     }
 
+    const int padGrid = 2;
+
     //Calculate grid size
     int gridHeight = static_cast<int>(height() / MIN_ZOOM);
     int gridWidth = static_cast<int>(width() / MIN_ZOOM);
@@ -85,36 +87,49 @@ void GridViewer::updateGrid()
     cv::Mat newGrid(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0));
     cv::Mat newEdgeGrid(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0));
 
-    const cv::Point gridSize = cellShape.calculateGridSize(newGrid.cols, newGrid.rows, 0);
+    const cv::Point gridSize = cellShape.calculateGridSize(newGrid.cols, newGrid.rows, padGrid);
 
     //Create all cells in grid
-    for (int x = 0; x < gridSize.x; ++x)
+    for (int y = -padGrid; y < gridSize.y - padGrid; ++y)
     {
-        for (int y = 0; y < gridSize.y; ++y)
+        for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
         {
-            const cv::Rect roi = cellShape.getRectAt(x, y)
-                    & cv::Rect(0, 0, newGrid.cols, newGrid.rows);
+            const cv::Rect unboundedRect = cellShape.getRectAt(x, y);
+
+            //Cell bounded positions (in background area)
+            const int yStart = std::clamp(unboundedRect.tl().y, 0, newGrid.rows);
+            const int yEnd = std::clamp(unboundedRect.br().y, 0, newGrid.rows);
+            const int xStart = std::clamp(unboundedRect.tl().x, 0, newGrid.cols);
+            const int xEnd = std::clamp(unboundedRect.br().x, 0, newGrid.cols);
+
+            //Cell completely out of bounds, just skip
+            if (yStart == yEnd || xStart == xEnd)
+                continue;
+
+            const cv::Rect roi = cv::Rect(xStart, yStart, xEnd - xStart, yEnd - yStart);
 
             cv::Mat gridPart(newGrid, roi), edgeGridPart(newEdgeGrid, roi);
 
             //Calculate if and how current cell is flipped
             bool flipHorizontal = false, flipVertical = false;
-            if (cellShape.getColFlipHorizontal() && x % 2 == 1)
+            if (cellShape.getColFlipHorizontal() && (x + padGrid) % 2 == 1)
                 flipHorizontal = !flipHorizontal;
-            if (cellShape.getRowFlipHorizontal() && y % 2 == 1)
+            if (cellShape.getRowFlipHorizontal() && (y + padGrid) % 2 == 1)
                 flipHorizontal = !flipHorizontal;
-            if (cellShape.getColFlipVertical() && x % 2 == 1)
+            if (cellShape.getColFlipVertical() && (x + padGrid) % 2 == 1)
                 flipVertical = !flipVertical;
-            if (cellShape.getRowFlipVertical() && y % 2 == 1)
+            if (cellShape.getRowFlipVertical() && (y + padGrid) % 2 == 1)
                 flipVertical = !flipVertical;
 
             //Copy cell to grid
             cv::Mat mask(flipHorizontal ? (flipVertical ? cellFlippedHV : cellFlippedH)
                                         : (flipVertical ? cellFlippedV : cell),
-                         cv::Rect(0, 0, gridPart.cols, gridPart.rows));
+                         cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                         cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
             cv::Mat edgeMask(flipHorizontal ? (flipVertical ? edgeCellFlippedHV : edgeCellFlippedH)
                                             : (flipVertical ? edgeCellFlippedV : edgeCell),
-                             cv::Rect(0, 0, edgeGridPart.cols, edgeGridPart.rows));
+                             cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                             cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
             cv::bitwise_or(gridPart, mask, gridPart);
             cv::bitwise_or(edgeGridPart, edgeMask, edgeGridPart);
         }
@@ -215,6 +230,12 @@ void GridViewer::setCellShape(const CellShape &t_cellShape)
 CellShape &GridViewer::getCellShape()
 {
     return cellShape;
+}
+
+//Sets the minimum cell size
+void GridViewer::setMinimumCellSize(const size_t t_size)
+{
+    minimumCellSize = t_size;
 }
 
 //Sets the background image in grid

@@ -114,6 +114,8 @@ MainWindow::MainWindow(QWidget *t_parent)
     connect(ui->buttonPhotomosaicSize, SIGNAL(released()), this, SLOT(loadImageSize()));
 
     connect(ui->spinCellSize, SIGNAL(valueChanged(int)), this, SLOT(cellSizeChanged(int)));
+    connect(ui->spinMinCellSize, SIGNAL(valueChanged(int)),
+            this, SLOT(minimumCellSizeChanged(int)));
     connect(ui->checkCellShape, SIGNAL(clicked(bool)), this, SLOT(enableCellShape(bool)));
 
     connect(ui->buttonGenerate, SIGNAL(released()), this, SLOT(generatePhotomosaic()));
@@ -161,10 +163,6 @@ MainWindow::MainWindow(QWidget *t_parent)
     //Sets default cell size
     ui->spinCellSize->setValue(100);
 
-    //Sets grid preview to default square cell
-    ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(ui->spinCellSize->value(),
-                                                          ui->spinCellSize->value(),
-                                                          CV_8UC1, cv::Scalar(255))));
 
     //tabWidget starts on Generator Settings tab
     ui->tabWidget->setCurrentIndex(2);
@@ -825,11 +823,33 @@ void MainWindow::loadImageSize()
     }
 }
 
-//Updates minimum cell size spin box
+//Updates grid preview and minimum cell size spin box
 void MainWindow::cellSizeChanged(int t_value)
 {
     ui->spinMinCellSize->setMaximum(t_value);
+
+    if (ui->checkCellShape->isChecked())
+    {
+        ui->lineCellShape->setEnabled(true);
+        ui->widgetGridPreview->setCellShape(ui->widgetCellShapeViewer->getCellShape().
+                                            resized(ui->spinCellSize->value(),
+                                                    ui->spinCellSize->value()));
+    }
+    else
+    {
+        ui->lineCellShape->setEnabled(false);
+        ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(ui->spinCellSize->value(),
+                                                              ui->spinCellSize->value(),
+                                                              CV_8UC1, cv::Scalar(255))));
+    }
+
     ui->spinMinCellSize->stepBy(0);
+}
+
+//Updates grid preview
+void MainWindow::minimumCellSizeChanged(int t_value)
+{
+    ui->widgetGridPreview->setMinimumCellSize(t_value);
 }
 
 //Enables/disables non-square cell shapes, GUI widgets for choosing

@@ -16,16 +16,16 @@ void HalvingSpinBox::stepBy(int steps)
     int newValue = maximum();
 
     //Prevent negative steps
-    int step = std::max(0, halveSteps - steps);
+    int step = 0;
     //For every step halve value, stop once minimum reached
-    while (step > 0 && newValue > minimum())
+    while (step < std::max(0, halveSteps - steps) && newValue > minimum())
     {
         newValue /= 2;
-        --step;
+        ++step;
     }
 
     //Store new step
-    halveSteps -= steps + step;
+    halveSteps = step;
     //Display new value
     lineEdit()->setText(QString::number(newValue));
 }

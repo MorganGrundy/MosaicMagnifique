@@ -163,7 +163,6 @@ MainWindow::MainWindow(QWidget *t_parent)
     //Sets default cell size
     ui->spinCellSize->setValue(100);
 
-
     //tabWidget starts on Generator Settings tab
     ui->tabWidget->setCurrentIndex(2);
 }
@@ -185,6 +184,7 @@ void MainWindow::tabChanged(int t_index)
                                                 .resized(ui->spinCellSize->value(),
                                                          ui->spinCellSize->value()));
             cellShapeChanged = false;
+            ui->widgetGridPreview->updateGrid();
         }
     }
 }
@@ -309,6 +309,7 @@ void MainWindow::loadCellShape()
         file.close();
 
         ui->widgetCellShapeViewer->setCellShape(cellShape);
+        ui->widgetCellShapeViewer->updateGrid();
         cellShapeChanged = true;
     }
 }
@@ -334,6 +335,7 @@ void MainWindow::selectCellMask()
         CellShape cellShape(tmp);
 
         ui->widgetCellShapeViewer->setCellShape(cellShape);
+        ui->widgetCellShapeViewer->updateGrid();
         ui->lineCellMask->setText(filename);
 
         ui->spinCustomCellSpacingCol->blockSignals(true);
@@ -703,6 +705,7 @@ void MainWindow::selectMainImage()
         if (mainImage.empty())
         {
             ui->widgetGridPreview->setBackground(cv::Mat());
+            ui->widgetGridPreview->updateGrid();
             QMessageBox msgBox;
             msgBox.setText(tr("The main image \"") + ui->lineMainImage->text() +
                            tr("\" failed to load"));
@@ -725,6 +728,7 @@ void MainWindow::selectMainImage()
     }
     else
         ui->widgetGridPreview->setBackground(cv::Mat());
+    ui->widgetGridPreview->updateGrid();
 }
 
 //Opens colour visualisation window
@@ -775,6 +779,7 @@ void MainWindow::photomosaicWidthChanged(int i)
                         UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
                                                   ui->spinPhotomosaicWidth->value(),
                                                   UtilityFuncs::ResizeType::INCLUSIVE));
+            ui->widgetGridPreview->updateGrid();
         }
     }
 }
@@ -796,6 +801,7 @@ void MainWindow::photomosaicHeightChanged(int i)
                         UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
                                                   ui->spinPhotomosaicWidth->value(),
                                                   UtilityFuncs::ResizeType::INCLUSIVE));
+            ui->widgetGridPreview->updateGrid();
         }
     }
 }
@@ -820,55 +826,60 @@ void MainWindow::loadImageSize()
         ui->widgetGridPreview->setBackground(
                     UtilityFuncs::resizeImage(mainImage, mainImage.rows, mainImage.cols,
                                               UtilityFuncs::ResizeType::INCLUSIVE));
+        ui->widgetGridPreview->updateGrid();
     }
 }
 
 //Updates grid preview and minimum cell size spin box
 void MainWindow::cellSizeChanged(int t_value)
 {
-    ui->spinMinCellSize->setMaximum(t_value);
-
+    ui->lineCellShape->setEnabled(ui->checkCellShape->isChecked());
     if (ui->checkCellShape->isChecked())
     {
-        ui->lineCellShape->setEnabled(true);
         ui->widgetGridPreview->setCellShape(ui->widgetCellShapeViewer->getCellShape().
                                             resized(ui->spinCellSize->value(),
                                                     ui->spinCellSize->value()));
     }
     else
     {
-        ui->lineCellShape->setEnabled(false);
         ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(ui->spinCellSize->value(),
                                                               ui->spinCellSize->value(),
                                                               CV_8UC1, cv::Scalar(255))));
     }
 
+    ui->spinMinCellSize->blockSignals(true);
+    ui->spinMinCellSize->setMaximum(t_value);
     ui->spinMinCellSize->stepBy(0);
+    ui->spinMinCellSize->blockSignals(false);
+
+    ui->widgetGridPreview->setMinimumCellSize(ui->spinMinCellSize->value());
+    ui->widgetGridPreview->updateGrid();
 }
 
 //Updates grid preview
 void MainWindow::minimumCellSizeChanged(int t_value)
 {
     ui->widgetGridPreview->setMinimumCellSize(t_value);
+    ui->widgetGridPreview->updateGrid();
 }
 
 //Enables/disables non-square cell shapes, GUI widgets for choosing
 void MainWindow::enableCellShape(bool t_state)
 {
+    ui->lineCellShape->setEnabled(t_state);
     if (t_state)
     {
-        ui->lineCellShape->setEnabled(true);
         ui->widgetGridPreview->setCellShape(ui->widgetCellShapeViewer->getCellShape().
                                             resized(ui->spinCellSize->value(),
                                                     ui->spinCellSize->value()));
     }
     else
     {
-        ui->lineCellShape->setEnabled(false);
         ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(ui->spinCellSize->value(),
                                                               ui->spinCellSize->value(),
                                                               CV_8UC1, cv::Scalar(255))));
     }
+    ui->widgetGridPreview->updateGrid();
 }
 
 //Changes CUDA device

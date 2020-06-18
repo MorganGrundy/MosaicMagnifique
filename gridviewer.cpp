@@ -117,15 +117,29 @@ void GridViewer::updateGrid()
             auto [flipHorizontal, flipVertical] = CellGrid::getFlipStateAt(cellShape,
                     x, y, padGrid);
 
-            //Copy cell to grid
+            //Create bounded mask
             cv::Mat mask(flipHorizontal ? (flipVertical ? cellFlippedHV : cellFlippedH)
                                         : (flipVertical ? cellFlippedV : cell),
                          cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                          cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+
+            if (!backImage.empty()
+                    && static_cast<size_t>(cellShape.getCellMask(0, 0).rows) > minimumCellSize)
+            {
+                const cv::Mat cellImage(backImage, roi);
+                if (CellGrid::calculateEntropy(mask, cellImage) >= CellGrid::MAX_ENTROPY() * 0.9)
+                {
+                    fprintf(stderr, "Entropy threshold: (%i, %i) %i\n", x, y, static_cast<int>(minimumCellSize));
+                }
+            }
+
+            //Create bounded edge mask
             cv::Mat edgeMask(flipHorizontal ? (flipVertical ? edgeCellFlippedHV : edgeCellFlippedH)
                                             : (flipVertical ? edgeCellFlippedV : edgeCell),
                              cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                              cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+
+            //Copy cell to grid
             cv::bitwise_or(gridPart, mask, gridPart);
             cv::bitwise_or(edgeGridPart, edgeMask, edgeGridPart);
         }
@@ -218,8 +232,6 @@ void GridViewer::setCellShape(const CellShape &t_cellShape)
         edgeCellFlippedV.release();
         edgeCellFlippedHV.release();
     }
-
-    updateGrid();
 }
 
 //Returns a reference to the cell shape
@@ -237,6 +249,7 @@ void GridViewer::setMinimumCellSize(const size_t t_size)
 //Sets the background image in grid
 void GridViewer::setBackground(const cv::Mat &t_background)
 {
+    backImage = t_background;
     if (t_background.empty())
         background = QImage();
     else
@@ -246,13 +259,7 @@ void GridViewer::setBackground(const cv::Mat &t_background)
 
         background = QImage(inverted.data, inverted.cols, inverted.rows,
                             static_cast<int>(inverted.step), QImage::Format_RGB888).copy();
-
-        //Grid too small for background, recreate
-        if ((grid.height() < background.height()) ||
-                (grid.width() < background.width()))
-            updateGrid();
     }
-    update();
 }
 
 //Called when the spinbox value is changed, updates grid zoom

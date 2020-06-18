@@ -44,6 +44,8 @@ private:
 
     CellShape cellShape;
     size_t minimumCellSize;
+
+    cv::Mat backImage;
     QImage background;
 
     cv::Mat cell, cellFlippedH, cellFlippedV, cellFlippedHV;

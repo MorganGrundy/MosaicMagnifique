@@ -1,5 +1,5 @@
-#ifndef SHARED_HPP_
-#define SHARED_HPP_
+#ifndef SHARED_H
+#define SHARED_H
 
 #include <opencv2/core.hpp>
 #include <QPixmap>
@@ -57,4 +57,4 @@ QDataStream &operator<<(QDataStream &t_out, const cv::Mat &t_mat);
 //Can be used to load a OpenCV mat from a file
 QDataStream &operator>>(QDataStream &t_in, cv::Mat &t_mat);
 
-#endif //SHARED_HPP_
+#endif //SHARED_H

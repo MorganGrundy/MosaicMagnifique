@@ -1,5 +1,7 @@
 #include "cellgrid.h"
 
+#include <opencv2/imgproc.hpp>
+
 //Calculates the number of given cells needed to fill an image of given size
 cv::Point CellGrid::calculateGridSize(const CellShape &t_cellShape,
                                       const int t_imageWidth, const int t_imageHeight,
@@ -77,4 +79,42 @@ std::pair<bool, bool> CellGrid::getFlipStateAt(const CellShape &t_cellShape,
         flipVertical = !flipVertical;
 
     return {flipHorizontal, flipVertical};
+}
+
+//Returns the entropy of the given image in the given mask
+double CellGrid::calculateEntropy(const cv::Mat &t_mask, const cv::Mat &t_image)
+{
+    //Convert image to grayscale
+    cv::Mat grayImage;
+    cv::cvtColor(t_image, grayImage, cv::COLOR_BGR2GRAY);
+
+    //Calculate histogram in cell shape
+    size_t pixelCount = 0;
+    std::vector<size_t> histogram(256, 0);
+
+    const uchar *p_im, *p_mask;
+    for (int row = 0; row < grayImage.rows; ++row)
+    {
+        p_im = grayImage.ptr<uchar>(row);
+        p_mask = t_mask.ptr<uchar>(row);
+        for (int col = 0; col < grayImage.cols; ++col)
+        {
+            if (p_mask[col] != 0)
+            {
+                ++histogram.at(p_im[col]);
+                ++pixelCount;
+            }
+        }
+    }
+
+    //Calculate entropy
+    double entropy = 0;
+    for (auto value: histogram)
+    {
+        const double probability = value / static_cast<double>(pixelCount);
+        if (probability > 0)
+            entropy -= probability * std::log2(probability);
+    }
+
+    return entropy;
 }

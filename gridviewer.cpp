@@ -62,6 +62,71 @@ void GridViewer::setEdgeDetect(bool t_state)
 }
 
 //Generates grid preview
+void GridViewer::updateCell(const CellShape &t_cellShape, const int t_x, const int t_y,
+                            cv::Mat &t_grid, cv::Mat &t_edgeGrid)
+{
+    const cv::Rect unboundedRect = CellGrid::getRectAt(t_cellShape, t_x, t_y);
+
+    //Cell bounded positions (in background area)
+    const int yStart = std::clamp(unboundedRect.tl().y, 0, t_grid.rows);
+    const int yEnd = std::clamp(unboundedRect.br().y, 0, t_grid.rows);
+    const int xStart = std::clamp(unboundedRect.tl().x, 0, t_grid.cols);
+    const int xEnd = std::clamp(unboundedRect.br().x, 0, t_grid.cols);
+
+    //Cell completely out of bounds, just skip
+    if (yStart == yEnd || xStart == xEnd)
+        return;
+
+    const cv::Rect roi = cv::Rect(xStart, yStart, xEnd - xStart, yEnd - yStart);
+
+    cv::Mat gridPart(t_grid, roi), edgeGridPart(t_edgeGrid, roi);
+
+    //Calculate if and how current cell is flipped
+    auto [flipHorizontal, flipVertical] = CellGrid::getFlipStateAt(t_cellShape,
+            t_x, t_y, padGrid);
+
+    //Create bounded mask
+    cv::Mat mask(flipHorizontal ? (flipVertical ? cellFlippedHV : cellFlippedH)
+                                : (flipVertical ? cellFlippedV : cell),
+                 cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                 cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+
+    if (!backImage.empty()
+            && static_cast<size_t>(t_cellShape.getCellMask(0, 0).rows) > minimumCellSize)
+    {
+        const cv::Mat cellImage(backImage, roi);
+        if (CellGrid::calculateEntropy(mask, cellImage) >= CellGrid::MAX_ENTROPY() * 0.7)
+        {
+            fprintf(stderr, "Entropy threshold: (%i, %i) %i\n", t_x, t_y,
+                    static_cast<int>(minimumCellSize));
+
+            const CellShape resizedCell = t_cellShape.resized(t_cellShape.getCellMask(0, 0).cols / 2,
+                                                              t_cellShape.getCellMask(0, 0).rows / 2);
+
+
+            for (int y = -padGrid; y < 2; ++y)
+            {
+                for (int x = -padGrid; x < 2; ++x)
+                {
+                    updateCell(resizedCell, x, y, gridPart, edgeGridPart);
+                }
+            }
+
+            return;
+        }
+    }
+
+    //Create bounded edge mask
+    cv::Mat edgeMask(flipHorizontal ? (flipVertical ? edgeCellFlippedHV : edgeCellFlippedH)
+                                    : (flipVertical ? edgeCellFlippedV : edgeCell),
+                     cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                     cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+
+    //Copy cell to grid
+    cv::bitwise_or(gridPart, mask, gridPart);
+    cv::bitwise_or(edgeGridPart, edgeMask, edgeGridPart);
+}
+
 void GridViewer::updateGrid()
 {
     //No cell mask, no grid
@@ -70,8 +135,6 @@ void GridViewer::updateGrid()
         grid = QImage();
         return;
     }
-
-    const int padGrid = 2;
 
     //Calculate grid size
     int gridHeight = static_cast<int>(height() / MIN_ZOOM);
@@ -94,51 +157,7 @@ void GridViewer::updateGrid()
     {
         for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
         {
-            const cv::Rect unboundedRect = CellGrid::getRectAt(cellShape, x, y);
-
-            //Cell bounded positions (in background area)
-            const int yStart = std::clamp(unboundedRect.tl().y, 0, newGrid.rows);
-            const int yEnd = std::clamp(unboundedRect.br().y, 0, newGrid.rows);
-            const int xStart = std::clamp(unboundedRect.tl().x, 0, newGrid.cols);
-            const int xEnd = std::clamp(unboundedRect.br().x, 0, newGrid.cols);
-
-            //Cell completely out of bounds, just skip
-            if (yStart == yEnd || xStart == xEnd)
-                continue;
-
-            const cv::Rect roi = cv::Rect(xStart, yStart, xEnd - xStart, yEnd - yStart);
-
-            cv::Mat gridPart(newGrid, roi), edgeGridPart(newEdgeGrid, roi);
-
-            //Calculate if and how current cell is flipped
-            auto [flipHorizontal, flipVertical] = CellGrid::getFlipStateAt(cellShape,
-                    x, y, padGrid);
-
-            //Create bounded mask
-            cv::Mat mask(flipHorizontal ? (flipVertical ? cellFlippedHV : cellFlippedH)
-                                        : (flipVertical ? cellFlippedV : cell),
-                         cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
-                         cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
-
-            if (!backImage.empty()
-                    && static_cast<size_t>(cellShape.getCellMask(0, 0).rows) > minimumCellSize)
-            {
-                const cv::Mat cellImage(backImage, roi);
-                if (CellGrid::calculateEntropy(mask, cellImage) >= CellGrid::MAX_ENTROPY() * 0.9)
-                {
-                    fprintf(stderr, "Entropy threshold: (%i, %i) %i\n", x, y, static_cast<int>(minimumCellSize));
-                }
-            }
-
-            //Create bounded edge mask
-            cv::Mat edgeMask(flipHorizontal ? (flipVertical ? edgeCellFlippedHV : edgeCellFlippedH)
-                                            : (flipVertical ? edgeCellFlippedV : edgeCell),
-                             cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
-                             cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
-
-            //Copy cell to grid
-            cv::bitwise_or(gridPart, mask, gridPart);
-            cv::bitwise_or(edgeGridPart, edgeMask, edgeGridPart);
+            updateCell(cellShape, x, y, newGrid, newEdgeGrid);
         }
     }
 

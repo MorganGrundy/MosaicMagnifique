@@ -36,6 +36,9 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
 
 private:
+    void updateCell(const CellShape &t_cellShape, const int t_x, const int t_y,
+                    cv::Mat &t_grid, cv::Mat &t_edgeGrid);
+
     QGridLayout *layout;
     QLabel *labelZoom;
     QDoubleSpinBox *spinZoom;
@@ -54,6 +57,8 @@ private:
 
     const double MIN_ZOOM, MAX_ZOOM;
     double zoom;
+
+    const int padGrid = 2;
 };
 
 #endif // GRIDVIEWER_H

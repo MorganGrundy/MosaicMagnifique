@@ -79,11 +79,8 @@ void GridViewer::updateGrid()
     //If background larger then change grid size
     if (!background.isNull())
     {
-        if (background.height() > gridHeight)
-            gridHeight = background.height();
-
-        if (background.width() > gridWidth)
-            gridWidth = background.width();
+        gridHeight = background.height();
+        gridWidth = background.width();
     }
 
     cv::Mat newGrid(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0));

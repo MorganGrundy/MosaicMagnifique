@@ -11,8 +11,10 @@ public:
 
     void stepBy(int steps) override;
 
+    size_t getHalveSteps() const;
+
 private:
-    int halveSteps = 0;
+    size_t halveSteps = 0;
 };
 
 #endif // EXPONENTIATIONSPINBOX_H

@@ -22,7 +22,7 @@ public:
     void setCellShape(const CellShape &t_cellShape);
     CellShape &getCellShape();
 
-    void setMinimumCellSize(const size_t t_size);
+    void setSizeSteps(const size_t t_steps, const bool t_reset = false);
 
     void setBackground(const cv::Mat &t_background);
 
@@ -37,7 +37,10 @@ protected:
 
 private:
     void updateCell(const CellShape &t_cellShape, const int t_x, const int t_y,
-                    cv::Mat &t_grid, cv::Mat &t_edgeGrid);
+                    cv::Mat &t_grid, cv::Mat &t_edgeGrid, size_t t_step = 0);
+
+    cv::Mat &getCellMask(size_t t_sizeStep, bool t_flipHorizontal, bool t_flipVertical,
+                         bool t_edge);
 
     QGridLayout *layout;
     QLabel *labelZoom;
@@ -46,13 +49,14 @@ private:
     QSpacerItem *hSpacer, *vSpacer;
 
     CellShape cellShape;
-    size_t minimumCellSize;
+    size_t sizeSteps;
 
     cv::Mat backImage;
     QImage background;
 
-    cv::Mat cell, cellFlippedH, cellFlippedV, cellFlippedHV;
-    cv::Mat edgeCell, edgeCellFlippedH, edgeCellFlippedV, edgeCellFlippedHV;
+    std::vector<std::vector<cv::Mat>> cells;
+    std::vector<std::vector<cv::Mat>> edgeCells;
+
     QImage grid, edgeGrid;
 
     const double MIN_ZOOM, MAX_ZOOM;

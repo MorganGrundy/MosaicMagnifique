@@ -869,14 +869,14 @@ void MainWindow::cellSizeChanged(int t_value)
     ui->spinMinCellSize->stepBy(0);
     ui->spinMinCellSize->blockSignals(false);
 
-    ui->widgetGridPreview->setMinimumCellSize(ui->spinMinCellSize->value());
+    ui->widgetGridPreview->setSizeSteps(ui->spinMinCellSize->getHalveSteps());
     ui->widgetGridPreview->updateGrid();
 }
 
 //Updates grid preview
 void MainWindow::minimumCellSizeChanged(int t_value)
 {
-    ui->widgetGridPreview->setMinimumCellSize(t_value);
+    ui->widgetGridPreview->setSizeSteps(ui->spinMinCellSize->getHalveSteps());
     ui->widgetGridPreview->updateGrid();
 }
 

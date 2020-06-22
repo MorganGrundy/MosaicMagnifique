@@ -64,21 +64,36 @@ void GridViewer::setEdgeDetect(bool t_state)
     checkEdgeDetect->setChecked(t_state);
 }
 
-//Generates grid preview
-void GridViewer::updateCell(const CellShape &t_cellShape, const int t_x, const int t_y,
-                            cv::Mat &t_grid, cv::Mat &t_edgeGrid, size_t t_step)
+//Creates cell in grid at given position
+//Returns false if cell entropy exceeds threshold
+bool GridViewer::createCell(const CellShape &t_cellShape, const int t_x, const int t_y,
+                            cv::Mat &t_grid, cv::Mat &t_edgeGrid, const GridBounds &t_bounds,
+                            size_t t_step)
 {
     const cv::Rect unboundedRect = CellGrid::getRectAt(t_cellShape, t_x, t_y);
 
     //Cell bounded positions (in background area)
-    const int yStart = std::clamp(unboundedRect.tl().y, 0, t_grid.rows);
-    const int yEnd = std::clamp(unboundedRect.br().y, 0, t_grid.rows);
-    const int xStart = std::clamp(unboundedRect.tl().x, 0, t_grid.cols);
-    const int xEnd = std::clamp(unboundedRect.br().x, 0, t_grid.cols);
+    int yStart, yEnd, xStart, xEnd;
+
+    bool inBounds = false;
+    for (auto it = t_bounds.cbegin(); it != t_bounds.cend(); ++it)
+    {
+        yStart = std::clamp(unboundedRect.y, it->y, it->br().y);
+        yEnd = std::clamp(unboundedRect.br().y, it->y, it->br().y);
+        xStart = std::clamp(unboundedRect.x, it->x, it->br().x);
+        xEnd = std::clamp(unboundedRect.br().x, it->x, it->br().x);
+
+        //Cell in bounds
+        if (yStart != yEnd && xStart != xEnd)
+        {
+            inBounds = true;
+            break;
+        }
+    }
 
     //Cell completely out of bounds, just skip
-    if (yStart == yEnd || xStart == xEnd)
-        return;
+    if (!inBounds)
+        return true;
 
     const cv::Rect roi = cv::Rect(xStart, yStart, xEnd - xStart, yEnd - yStart);
 
@@ -100,18 +115,8 @@ void GridViewer::updateCell(const CellShape &t_cellShape, const int t_x, const i
         if (CellGrid::calculateEntropy(mask, cellImage) >= CellGrid::MAX_ENTROPY() * 0.7)
         {
             fprintf(stderr, "Entropy (%i, %i)", t_x, t_y);
-            const CellShape resizedCell = t_cellShape.resized(t_cellShape.getCellMask(0, 0).cols / 2,
-                                                              t_cellShape.getCellMask(0, 0).rows / 2);
 
-            for (int y = -padGrid; y < 2; ++y)
-            {
-                for (int x = -padGrid; x < 2; ++x)
-                {
-                    updateCell(resizedCell, x, y, gridPart, edgeGridPart, t_step + 1);
-                }
-            }
-
-            return;
+            return false;
         }
     }
 
@@ -123,8 +128,11 @@ void GridViewer::updateCell(const CellShape &t_cellShape, const int t_x, const i
     //Copy cell to grid
     cv::bitwise_or(gridPart, mask, gridPart);
     cv::bitwise_or(edgeGridPart, edgeMask, edgeGridPart);
+
+    return true;
 }
 
+//Generates grid preview
 void GridViewer::updateGrid()
 {
     //No cell mask, no grid
@@ -135,17 +143,16 @@ void GridViewer::updateGrid()
     }
 
     //Calculate grid size
-    int gridHeight = static_cast<int>(height() / MIN_ZOOM);
-    int gridWidth = static_cast<int>(width() / MIN_ZOOM);
-    //If background larger then change grid size
-    if (!background.isNull())
-    {
-        gridHeight = background.height();
-        gridWidth = background.width();
-    }
+    const int gridHeight = (!background.isNull()) ? background.height()
+                                                  : static_cast<int>(height() / MIN_ZOOM);
+    const int gridWidth = (!background.isNull()) ? background.width()
+                                                 : static_cast<int>(width() / MIN_ZOOM);
 
     cv::Mat newGrid(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0));
     cv::Mat newEdgeGrid(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+
+    GridBounds bounds;
+    bounds.addBound(gridHeight, gridWidth);
 
     const cv::Point gridSize = CellGrid::calculateGridSize(cellShape,
                                                            newGrid.cols, newGrid.rows, padGrid);
@@ -155,7 +162,10 @@ void GridViewer::updateGrid()
     {
         for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
         {
-            updateCell(cellShape, x, y, newGrid, newEdgeGrid);
+            if (!createCell(cellShape, x, y, newGrid, newEdgeGrid, bounds))
+            {
+                //Add to vector
+            }
         }
     }
 

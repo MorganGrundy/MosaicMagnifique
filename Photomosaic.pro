@@ -18,6 +18,7 @@ SOURCES += \
 	cellshape.cpp \
 	colourvisualisation.cpp \
 	customgraphicsview.cpp \
+	gridbounds.cpp \
     gridviewer.cpp \
 	halvingspinbox.cpp \
 	imageviewer.cpp \
@@ -31,6 +32,7 @@ HEADERS += \
 	cellshape.h \
 	colourvisualisation.h \
 	customgraphicsview.h \
+	gridbounds.h \
     gridviewer.h \
 	halvingspinbox.h \
 	imageviewer.h \

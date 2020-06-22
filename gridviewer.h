@@ -10,6 +10,7 @@
 #include <QSpacerItem>
 
 #include "cellshape.h"
+#include "gridbounds.h"
 
 class GridViewer : public QWidget
 {
@@ -36,8 +37,9 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
 
 private:
-    void updateCell(const CellShape &t_cellShape, const int t_x, const int t_y,
-                    cv::Mat &t_grid, cv::Mat &t_edgeGrid, size_t t_step = 0);
+    bool createCell(const CellShape &t_cellShape, const int t_x, const int t_y,
+                    cv::Mat &t_grid, cv::Mat &t_edgeGrid, const GridBounds &t_bounds,
+                    size_t t_step = 0);
 
     cv::Mat &getCellMask(size_t t_sizeStep, bool t_flipHorizontal, bool t_flipVertical,
                          bool t_edge);

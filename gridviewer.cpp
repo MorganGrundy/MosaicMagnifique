@@ -76,7 +76,7 @@ bool GridViewer::createCell(const CellShape &t_cellShape, const int t_x, const i
     int yStart, yEnd, xStart, xEnd;
 
     bool inBounds = false;
-    for (auto it = t_bounds.cbegin(); it != t_bounds.cend(); ++it)
+    for (auto it = t_bounds.cbegin(); it != t_bounds.cend() && !inBounds; ++it)
     {
         yStart = std::clamp(unboundedRect.y, it->y, it->br().y);
         yEnd = std::clamp(unboundedRect.br().y, it->y, it->br().y);
@@ -85,10 +85,7 @@ bool GridViewer::createCell(const CellShape &t_cellShape, const int t_x, const i
 
         //Cell in bounds
         if (yStart != yEnd && xStart != xEnd)
-        {
             inBounds = true;
-            break;
-        }
     }
 
     //Cell completely out of bounds, just skip
@@ -113,11 +110,7 @@ bool GridViewer::createCell(const CellShape &t_cellShape, const int t_x, const i
         //If cell entropy exceeds threshold halve cell size
         const cv::Mat cellImage(backImage, roi);
         if (CellGrid::calculateEntropy(mask, cellImage) >= CellGrid::MAX_ENTROPY() * 0.7)
-        {
-            fprintf(stderr, "Entropy (%i, %i)", t_x, t_y);
-
             return false;
-        }
     }
 
     //Create bounded edge mask
@@ -148,31 +141,120 @@ void GridViewer::updateGrid()
     const int gridWidth = (!background.isNull()) ? background.width()
                                                  : static_cast<int>(width() / MIN_ZOOM);
 
-    cv::Mat newGrid(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-    cv::Mat newEdgeGrid(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+    std::vector<cv::Mat> newGrid, newEdgeGrid;
 
-    GridBounds bounds;
-    bounds.addBound(gridHeight, gridWidth);
+    //Stores grid bounds starting with full grid size
+    std::vector<GridBounds> bounds(2);
+    //Determines which bound is active
+    int activeBound = 0;
+    bounds.at(activeBound).addBound(gridHeight, gridWidth);
 
-    const cv::Point gridSize = CellGrid::calculateGridSize(cellShape,
-                                                           newGrid.cols, newGrid.rows, padGrid);
-
-    //Create all cells in grid
-    for (int y = -padGrid; y < gridSize.y - padGrid; ++y)
+    CellShape currentCellShape(cellShape);
+    for (size_t step = 0; step <= sizeSteps && !bounds.at(activeBound).empty(); ++step)
     {
-        for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
+        //Create new grids
+        newGrid.push_back(cv::Mat(gridHeight, gridWidth, CV_8UC1, cv::Scalar(0)));
+        newEdgeGrid.push_back(cv::Mat(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0)));
+
+        const cv::Point gridSize = CellGrid::calculateGridSize(currentCellShape,
+                                                               gridWidth, gridHeight, padGrid);
+
+        //Clear previous bounds
+        bounds.at(!activeBound).clear();
+        //Create all cells in grid
+        for (int y = -padGrid; y < gridSize.y - padGrid; ++y)
         {
-            if (!createCell(cellShape, x, y, newGrid, newEdgeGrid, bounds))
+            for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
             {
-                //Add to vector
+                if (!createCell(currentCellShape, x, y, newGrid.at(step), newEdgeGrid.at(step),
+                                bounds.at(activeBound), step))
+                {
+                    //Get cell bounds and add buffer around it
+                    cv::Rect cellBounds = CellGrid::getRectAt(currentCellShape, x, y);
+                    cellBounds.x -= currentCellShape.getColSpacing() / 2;
+                    cellBounds.y -= currentCellShape.getRowSpacing() / 2;
+                    cellBounds.width += currentCellShape.getColSpacing();
+                    cellBounds.height += currentCellShape.getRowSpacing();
+
+                    //New bound must be inside current bounds
+                    int yStart, yEnd, xStart, xEnd;
+
+                    bool inBounds = false;
+                    for (auto it = bounds.at(activeBound).cbegin();
+                         it != bounds.at(activeBound).cend() && !inBounds; ++it)
+                    {
+                        yStart = std::clamp(cellBounds.y, it->y, it->br().y);
+                        yEnd = std::clamp(cellBounds.br().y, it->y, it->br().y);
+                        xStart = std::clamp(cellBounds.x, it->x, it->br().x);
+                        xEnd = std::clamp(cellBounds.br().x, it->x, it->br().x);
+
+                        //Cell in bounds
+                        if (yStart != yEnd && xStart != xEnd)
+                            inBounds = true;
+                    }
+
+                    //Update cell bounds
+                    cellBounds.y = yStart;
+                    cellBounds.x = xStart;
+                    cellBounds.height = yEnd - yStart;
+                    cellBounds.width = xEnd - xStart;
+
+                    //Add to inactive bounds
+                    bounds.at(!activeBound).addBound(cellBounds);
+                }
             }
+        }
+
+        //Swap active and inactive bounds
+        activeBound = !activeBound;
+
+        //New bounds
+        if (!bounds.at(activeBound).empty())
+        {
+            //Split cell size
+            currentCellShape = currentCellShape.resized(
+                        currentCellShape.getCellMask(0, 0).cols / 2,
+                        currentCellShape.getCellMask(0, 0).rows / 2);
         }
     }
 
-    grid = QImage(newGrid.data, newGrid.cols, newGrid.rows, static_cast<int>(newGrid.step),
+    //Combine grids
+    for (size_t i = newGrid.size() - 1; i > 0; --i)
+    {
+        cv::Mat mask;
+        cv::bitwise_not(newGrid.at(i - 1), mask);
+
+        cv::bitwise_or(newGrid.at(i - 1), newGrid.at(i), newGrid.at(i - 1), mask);
+        cv::bitwise_or(newEdgeGrid.at(i - 1), newEdgeGrid.at(i), newEdgeGrid.at(i - 1), mask);
+    }
+
+    //Convert to RGBA
+    cv::cvtColor(newGrid.at(0), newGrid.at(0), cv::COLOR_GRAY2RGBA);
+
+    //Make black pixels transparent
+    int channels = newGrid.at(0).channels();
+    int nRows = newGrid.at(0).rows;
+    int nCols = newGrid.at(0).cols * channels;
+    if (newGrid.at(0).isContinuous())
+    {
+        nCols *= nRows;
+        nRows = 1;
+    }
+    uchar *p;
+    for (int i = 0; i < nRows; ++i)
+    {
+        p = newGrid.at(0).ptr<uchar>(i);
+        for (int j = 0; j < nCols; j += channels)
+        {
+            if (p[j] == 0)
+                p[j+3] = 0;
+        }
+    }
+
+    grid = QImage(newGrid.at(0).data, gridWidth, gridHeight, static_cast<int>(newGrid.at(0).step),
                   QImage::Format_RGBA8888).copy();
-    edgeGrid = QImage(newEdgeGrid.data, newEdgeGrid.cols, newEdgeGrid.rows,
-                      static_cast<int>(newEdgeGrid.step), QImage::Format_RGBA8888).copy();
+    edgeGrid = QImage(newEdgeGrid.at(0).data, gridWidth, gridHeight,
+                      static_cast<int>(newEdgeGrid.at(0).step), QImage::Format_RGBA8888).copy();
     update();
 }
 
@@ -183,9 +265,17 @@ void GridViewer::setCellShape(const CellShape &t_cellShape)
 
     if (!cellShape.getCellMask(0, 0).empty())
     {
+        getCellMask(0, false, false, false) = cellShape.getCellMask(0, 0);
+
         cv::Mat cellMask;
-        //Converts cell mask to RGBA
-        cv::cvtColor(cellShape.getCellMask(0, 0), cellMask, cv::COLOR_GRAY2RGBA);
+        //Add single pixel black transparent border to mask so that Canny cannot leave open edges
+        cv::Mat maskWithBorder;
+        cv::copyMakeBorder(getCellMask(0, false, false, false), maskWithBorder, 1, 1, 1, 1,
+                           cv::BORDER_CONSTANT, cv::Scalar(0));
+        //Use Canny to detect edge of cell mask and convert to RGBA
+        cv::Canny(maskWithBorder, cellMask, 100.0, 155.0);
+        cv::cvtColor(cellMask, cellMask, cv::COLOR_GRAY2RGBA);
+
         //Make black pixels transparent
         int channels = cellMask.channels();
         int nRows = cellMask.rows;
@@ -196,34 +286,6 @@ void GridViewer::setCellShape(const CellShape &t_cellShape)
             nRows = 1;
         }
         uchar *p;
-        for (int i = 0; i < nRows; ++i)
-        {
-            p = cellMask.ptr<uchar>(i);
-            for (int j = 0; j < nCols; j += channels)
-            {
-                if (p[j] == 0)
-                    p[j+3] = 0;
-            }
-        }
-        getCellMask(0, false, false, false) = cellMask;
-
-        //Add single pixel black transparent border to mask so that Canny cannot leave open edges
-        cv::Mat maskWithBorder;
-        cv::copyMakeBorder(cellMask, maskWithBorder, 1, 1, 1, 1, cv::BORDER_CONSTANT,
-                           cv::Scalar(0));
-        //Use Canny to detect edge of cell mask and convert to RGBA
-        cv::Canny(maskWithBorder, cellMask, 100.0, 155.0);
-        cv::cvtColor(cellMask, cellMask, cv::COLOR_GRAY2RGBA);
-
-        //Make black pixels transparent
-        channels = cellMask.channels();
-        nRows = cellMask.rows;
-        nCols = cellMask.cols * channels;
-        if (cellMask.isContinuous())
-        {
-            nCols *= nRows;
-            nRows = 1;
-        }
         for (int i = 0; i < nRows; ++i)
         {
             p = cellMask.ptr<uchar>(i);

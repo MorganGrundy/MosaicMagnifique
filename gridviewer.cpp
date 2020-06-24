@@ -228,28 +228,8 @@ void GridViewer::updateGrid()
         cv::bitwise_or(newEdgeGrid.at(i - 1), newEdgeGrid.at(i), newEdgeGrid.at(i - 1), mask);
     }
 
-    //Convert to RGBA
-    cv::cvtColor(newGrid.at(0), newGrid.at(0), cv::COLOR_GRAY2RGBA);
-
     //Make black pixels transparent
-    int channels = newGrid.at(0).channels();
-    int nRows = newGrid.at(0).rows;
-    int nCols = newGrid.at(0).cols * channels;
-    if (newGrid.at(0).isContinuous())
-    {
-        nCols *= nRows;
-        nRows = 1;
-    }
-    uchar *p;
-    for (int i = 0; i < nRows; ++i)
-    {
-        p = newGrid.at(0).ptr<uchar>(i);
-        for (int j = 0; j < nCols; j += channels)
-        {
-            if (p[j] == 0)
-                p[j+3] = 0;
-        }
-    }
+    UtilityFuncs::matMakeTransparent(newGrid.at(0), newGrid.at(0), 0);
 
     grid = QImage(newGrid.at(0).data, gridWidth, gridHeight, static_cast<int>(newGrid.at(0).step),
                   QImage::Format_RGBA8888).copy();
@@ -268,34 +248,10 @@ void GridViewer::setCellShape(const CellShape &t_cellShape)
         getCellMask(0, false, false, false) = cellShape.getCellMask(0, 0);
 
         cv::Mat cellMask;
-        //Add single pixel black transparent border to mask so that Canny cannot leave open edges
-        cv::Mat maskWithBorder;
-        cv::copyMakeBorder(getCellMask(0, false, false, false), maskWithBorder, 1, 1, 1, 1,
-                           cv::BORDER_CONSTANT, cv::Scalar(0));
-        //Use Canny to detect edge of cell mask and convert to RGBA
-        cv::Canny(maskWithBorder, cellMask, 100.0, 155.0);
-        cv::cvtColor(cellMask, cellMask, cv::COLOR_GRAY2RGBA);
+        UtilityFuncs::edgeDetect(cellShape.getCellMask(0, 0), cellMask);
 
         //Make black pixels transparent
-        int channels = cellMask.channels();
-        int nRows = cellMask.rows;
-        int nCols = cellMask.cols * channels;
-        if (cellMask.isContinuous())
-        {
-            nCols *= nRows;
-            nRows = 1;
-        }
-        uchar *p;
-        for (int i = 0; i < nRows; ++i)
-        {
-            p = cellMask.ptr<uchar>(i);
-            for (int j = 0; j < nCols; j += channels)
-            {
-                if (p[j] == 0)
-                    p[j+3] = 0;
-            }
-        }
-        getCellMask(0, false, false, true) = cellMask;
+        UtilityFuncs::matMakeTransparent(cellMask, getCellMask(0, false, false, true), 0);
 
         //Create flipped cell and edge cell
         cv::flip(getCellMask(0, false, false, false), getCellMask(0, true, false, false), 1);
@@ -359,38 +315,14 @@ void GridViewer::setSizeSteps(const size_t t_steps, const bool t_reset)
                      getCellMask(step, true, true, false), -1);
 
             //Create edge cell masks
-            //Add single pixel black transparent border to mask so that Canny cannot leave open edges
-            cv::Mat &newEdgeMask = getCellMask(step, false, false, true);
-            cv::Mat maskWithBorder;
-            cv::copyMakeBorder(getCellMask(step, false, false, false), maskWithBorder, 1, 1, 1, 1,
-                               cv::BORDER_CONSTANT, cv::Scalar(0));
-            //Use Canny to detect edge of cell mask and convert to RGBA
-            cv::Canny(maskWithBorder, newEdgeMask, 100.0, 155.0);
-            cv::cvtColor(newEdgeMask, newEdgeMask, cv::COLOR_GRAY2RGBA);
-
+            cv::Mat cellMask;
+            UtilityFuncs::edgeDetect(getCellMask(step, false, false, false), cellMask);
             //Make black pixels transparent
-            int channels = newEdgeMask.channels();
-            int nRows = newEdgeMask.rows;
-            int nCols = newEdgeMask.cols * channels;
-            if (newEdgeMask.isContinuous())
-            {
-                nCols *= nRows;
-                nRows = 1;
-            }
-            uchar *p;
-            for (int i = 0; i < nRows; ++i)
-            {
-                p = newEdgeMask.ptr<uchar>(i);
-                for (int j = 0; j < nCols; j += channels)
-                {
-                    if (p[j] == 0)
-                        p[j+3] = 0;
-                }
-            }
+            UtilityFuncs::matMakeTransparent(cellMask, getCellMask(step, false, false, true), 0);
 
-            cv::flip(newEdgeMask, getCellMask(step, true, false, true), 1);
-            cv::flip(newEdgeMask, getCellMask(step, false, true, true), 0);
-            cv::flip(newEdgeMask, getCellMask(step, true, true, true), -1);
+            cv::flip(getCellMask(0, false, false, true), getCellMask(step, true, false, true), 1);
+            cv::flip(getCellMask(0, false, false, true), getCellMask(step, false, true, true), 0);
+            cv::flip(getCellMask(0, false, false, true), getCellMask(step, true, true, true), -1);
         }
     }
     sizeSteps = t_steps;

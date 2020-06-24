@@ -45,6 +45,14 @@ public:
                                                const ResizeType t_type,
                                                QProgressBar *progressBar = nullptr);
 
+    //Takes a grayscale image as src
+    //Converts to RGBA and makes pixels of target value transparent
+    //Returns result in dst
+    static void matMakeTransparent(const cv::Mat &t_src, cv::Mat &t_dst, const int t_targetValue);
+
+    //Replace dst with edge detected version of src
+    static void edgeDetect(const cv::Mat &t_src, cv::Mat &t_dst);
+
 private:
     UtilityFuncs() {}
 };

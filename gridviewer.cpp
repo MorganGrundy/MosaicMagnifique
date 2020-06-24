@@ -75,6 +75,7 @@ bool GridViewer::createCell(const CellShape &t_cellShape, const int t_x, const i
     //Cell bounded positions (in background area)
     int yStart, yEnd, xStart, xEnd;
 
+    //Check that cell is within a bound
     bool inBounds = false;
     for (auto it = t_bounds.cbegin(); it != t_bounds.cend() && !inBounds; ++it)
     {
@@ -92,6 +93,12 @@ bool GridViewer::createCell(const CellShape &t_cellShape, const int t_x, const i
     if (!inBounds)
         return true;
 
+    //Bound cell within grid dimensions
+    yStart = std::clamp(unboundedRect.y, 0, t_grid.rows);
+    yEnd = std::clamp(unboundedRect.br().y, 0, t_grid.rows);
+    xStart = std::clamp(unboundedRect.x, 0, t_grid.cols);
+    xEnd = std::clamp(unboundedRect.br().x, 0, t_grid.cols);
+
     const cv::Rect roi = cv::Rect(xStart, yStart, xEnd - xStart, yEnd - yStart);
 
     cv::Mat gridPart(t_grid, roi), edgeGridPart(t_edgeGrid, roi);
@@ -101,9 +108,9 @@ bool GridViewer::createCell(const CellShape &t_cellShape, const int t_x, const i
             t_x, t_y, padGrid);
 
     //Create bounded mask
-    cv::Mat mask(getCellMask(t_step, flipHorizontal, flipVertical, false),
-                 cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
-                 cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+    const cv::Mat mask(getCellMask(t_step, flipHorizontal, flipVertical, false),
+                       cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                       cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
     if (!backImage.empty() && t_step < sizeSteps)
     {
@@ -114,9 +121,9 @@ bool GridViewer::createCell(const CellShape &t_cellShape, const int t_x, const i
     }
 
     //Create bounded edge mask
-    cv::Mat edgeMask(getCellMask(t_step, flipHorizontal, flipVertical, true),
-                     cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
-                     cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+    const cv::Mat edgeMask(getCellMask(t_step, flipHorizontal, flipVertical, true),
+                           cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                           cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
     //Copy cell to grid
     cv::bitwise_or(gridPart, mask, gridPart);

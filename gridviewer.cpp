@@ -176,29 +176,14 @@ void GridViewer::updateGrid()
                 if (!createCell(currentCellShape, x, y, newGrid.at(step), newEdgeGrid.at(step),
                                 bounds.at(activeBound), step))
                 {
-                    //Get cell bounds and add buffer around it
+                    //Get cell bounds
                     cv::Rect cellBounds = CellGrid::getRectAt(currentCellShape, x, y);
-                    cellBounds.x -= currentCellShape.getColSpacing() / 2;
-                    cellBounds.y -= currentCellShape.getRowSpacing() / 2;
-                    cellBounds.width += currentCellShape.getColSpacing();
-                    cellBounds.height += currentCellShape.getRowSpacing();
 
-                    //New bound must be inside current bounds
-                    int yStart, yEnd, xStart, xEnd;
-
-                    bool inBounds = false;
-                    for (auto it = bounds.at(activeBound).cbegin();
-                         it != bounds.at(activeBound).cend() && !inBounds; ++it)
-                    {
-                        yStart = std::clamp(cellBounds.y, it->y, it->br().y);
-                        yEnd = std::clamp(cellBounds.br().y, it->y, it->br().y);
-                        xStart = std::clamp(cellBounds.x, it->x, it->br().x);
-                        xEnd = std::clamp(cellBounds.br().x, it->x, it->br().x);
-
-                        //Cell in bounds
-                        if (yStart != yEnd && xStart != xEnd)
-                            inBounds = true;
-                    }
+                    //Bound cell within grid dimensions
+                    int yStart = std::clamp(cellBounds.y, 0, gridHeight);
+                    int yEnd = std::clamp(cellBounds.br().y, 0, gridHeight);
+                    int xStart = std::clamp(cellBounds.x, 0, gridWidth);
+                    int xEnd = std::clamp(cellBounds.br().x, 0, gridWidth);
 
                     //Update cell bounds
                     cellBounds.y = yStart;

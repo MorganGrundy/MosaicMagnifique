@@ -203,6 +203,8 @@ void GridViewer::updateGrid()
         //New bounds
         if (!bounds.at(activeBound).empty())
         {
+            bounds.at(activeBound).mergeBounds();
+
             //Split cell size
             currentCellShape = currentCellShape.resized(
                         currentCellShape.getCellMask(0, 0).cols / 2,

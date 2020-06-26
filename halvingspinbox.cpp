@@ -18,7 +18,7 @@ void HalvingSpinBox::stepBy(int steps)
     //Prevent negative steps
     size_t step = 0;
     //For every step halve value, stop once minimum reached
-    while (step < std::max(static_cast<size_t>(0), halveSteps - steps) && newValue > minimum())
+    while (step < static_cast<size_t>(std::max(0, static_cast<int>(halveSteps) - steps)) && newValue > minimum())
     {
         newValue /= 2;
         ++step;

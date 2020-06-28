@@ -181,10 +181,8 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
 
     //Split main image into grid
     //Find best match for each cell in grid
-    std::vector<std::vector<cv::Mat>> result(static_cast<size_t>(gridSize.x),
-                                             std::vector<cv::Mat>(static_cast<size_t>(gridSize.y)));
-    std::vector<std::vector<size_t>> grid(static_cast<size_t>(gridSize.x),
-                                          std::vector<size_t>(static_cast<size_t>(gridSize.y), 0));
+    std::vector<std::vector<size_t>> result(static_cast<size_t>(gridSize.x),
+            std::vector<size_t>(static_cast<size_t>(gridSize.y), 0));
     cv::Mat cell(cellSize, cellSize, m_img.type(), cv::Scalar(0));
     for (int y = -padGrid; y < gridSize.y - padGrid; ++y)
     {
@@ -205,8 +203,6 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
             //Cell completely out of bounds, just skip
             if (yStart == yEnd || xStart == xEnd)
             {
-                result.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) =
-                        m_lib.front();
                 setValue(value() + 1);
                 continue;
             }
@@ -241,12 +237,10 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
             if (results[index] >= resizedLib.size())
             {
                 qDebug() << "Error: Failed to find a best fit";
-                result.at(x).at(y) = m_lib.front();
                 continue;
             }
 
-            grid.at(x).at(y) = results[index];
-            result.at(x).at(y) = m_lib.at(results[index]);
+            result.at(x).at(y) = results[index];
         }
     }
 
@@ -340,10 +334,8 @@ cv::Mat PhotomosaicGenerator::generate()
 
     //Split main image into grid
     //Find best match for each cell in grid
-    std::vector<std::vector<cv::Mat>> result(static_cast<size_t>(gridSize.x),
-                                             std::vector<cv::Mat>(static_cast<size_t>(gridSize.y)));
-    std::vector<std::vector<size_t>> grid(static_cast<size_t>(gridSize.x),
-                                          std::vector<size_t>(static_cast<size_t>(gridSize.y), 0));
+    std::vector<std::vector<size_t>> result(static_cast<size_t>(gridSize.x),
+            std::vector<size_t>(static_cast<size_t>(gridSize.y), 0));
     for (int y = -padGrid; y < gridSize.y - padGrid; ++y)
     {
         for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
@@ -354,20 +346,11 @@ cv::Mat PhotomosaicGenerator::generate()
 
             //Find cell best fit
             auto index = findCellBestFit(resizedCellShape, x, y, padGrid, resizedImg, resizedLib,
-                                         grid);
+                                         result);
 
             if (index.has_value())
-            {
-               grid.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) =
-                       index.value();
                result.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) =
-                       m_lib.at(index.value());
-            }
-            else
-            {
-                result.at(static_cast<size_t>(x + padGrid)).at(static_cast<size_t>(y + padGrid)) =
-                        m_lib.front();
-            }
+                       index.value();
             setValue(value() + 1);
         }
     }
@@ -624,22 +607,20 @@ double PhotomosaicGenerator::degToRad(const double deg) const
 
 //Combines results into a Photomosaic
 cv::Mat PhotomosaicGenerator::combineResults(const cv::Point gridSize,
-                                             const std::vector<std::vector<cv::Mat>> &result)
+                                             const std::vector<std::vector<size_t>> &result)
 {
     cv::Mat mosaic;
-    if (m_cellShape.empty())
-    {
-        std::vector<cv::Mat> mosaicRows(static_cast<size_t>(gridSize.x));
-        for (size_t x = 0; x < static_cast<size_t>(gridSize.x); ++x)
-            cv::vconcat(result.at(x), mosaicRows.at(x));
-        cv::hconcat(mosaicRows, mosaic);
-    }
-    else
     {
         const int padGrid = m_cellShape.empty() ? 0 : 2;
 
         //Resizes cell shape to size of library images
-        CellShape resizedCellShape = m_cellShape.resized(m_lib.front().cols, m_lib.front().rows);
+        //If no cell shape provided then use default square cell, else resize given cell shape
+        CellShape resizedCellShape;
+        if (m_cellShape.empty())
+            resizedCellShape = CellShape(cv::Mat(m_lib.front().rows, m_lib.front().cols,
+                                                 CV_8UC1, cv::Scalar(255)));
+        else
+            resizedCellShape = m_cellShape.resized(m_lib.front().cols, m_lib.front().rows);
 
         mosaic = cv::Mat(m_img.rows, m_img.cols, m_img.type(),
                          cv::Scalar(0));
@@ -666,8 +647,8 @@ cv::Mat PhotomosaicGenerator::combineResults(const cv::Point gridSize,
                         x, y, padGrid);
 
                 //Creates a mat that is the cell area actually visible in mosaic
-                cv::Mat cellBounded(result.at(static_cast<size_t>(x + padGrid)).
-                                    at(static_cast<size_t>(y + padGrid)),
+                cv::Mat cellBounded(m_lib.at(result.at(static_cast<size_t>(x + padGrid)).
+                                    at(static_cast<size_t>(y + padGrid))),
                                     cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                                     cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 

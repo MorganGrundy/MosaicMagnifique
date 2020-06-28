@@ -67,7 +67,7 @@ private:
 
     double degToRad(const double deg) const;
     cv::Mat combineResults(const cv::Point gridSize,
-                           const std::vector<std::vector<cv::Mat>> &result);
+                           const std::vector<std::vector<size_t>> &result);
 };
 
 #endif // PHOTOMOSAICGENERATOR_H

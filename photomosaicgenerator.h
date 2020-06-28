@@ -45,11 +45,10 @@ private:
 
     std::pair<cv::Mat, std::vector<cv::Mat>> resizeAndCvtColor();
 
-    std::optional<size_t> findCellBestFit(const CellShape &t_cellShape, const int x, const int y,
-                                          const bool t_pad,
-                                          const cv::Mat &t_image,
-                                          const std::vector<cv::Mat> &t_lib,
-                                          const std::vector<std::vector<size_t>> &t_grid) const;
+    std::pair<std::optional<size_t>, bool>
+    findCellBestFit(const CellShape &t_cellShape, const int x, const int y, const bool t_pad,
+                    const size_t t_step, const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
+                    const std::vector<std::vector<size_t>> &t_grid) const;
 
     int findBestFitEuclidean(const cv::Mat &cell, const cv::Mat &mask,
                              const std::vector<cv::Mat> &library,
@@ -66,8 +65,7 @@ private:
                                            const int x, const int y) const;
 
     double degToRad(const double deg) const;
-    cv::Mat combineResults(const cv::Point gridSize,
-                           const std::vector<std::vector<size_t>> &result);
+    cv::Mat combineResults(const std::vector<std::vector<std::vector<size_t>>> &results);
 };
 
 #endif // PHOTOMOSAICGENERATOR_H

@@ -394,7 +394,10 @@ void GridViewer::paintEvent(QPaintEvent * /*event*/)
 //Generate new grid with new size
 void GridViewer::resizeEvent(QResizeEvent * /*event*/)
 {
-    updateGrid();
+    if (background.isNull())
+        updateGrid();
+    else
+        update();
 }
 
 //Change zoom of grid preview based on mouse scrollwheel movement

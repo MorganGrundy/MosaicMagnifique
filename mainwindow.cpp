@@ -874,7 +874,7 @@ void MainWindow::cellSizeChanged(int t_value)
 }
 
 //Updates grid preview
-void MainWindow::minimumCellSizeChanged(int t_value)
+void MainWindow::minimumCellSizeChanged(int /*t_value*/)
 {
     ui->widgetGridPreview->setSizeSteps(ui->spinMinCellSize->getHalveSteps());
     ui->widgetGridPreview->updateGrid();
@@ -955,6 +955,8 @@ void MainWindow::generatePhotomosaic()
 
     if (ui->checkCellShape->isChecked())
         generator.setCellShape(ui->widgetCellShapeViewer->getCellShape());
+
+    generator.setSizeSteps(ui->spinMinCellSize->getHalveSteps());
 
     generator.setRepeat(ui->spinRepeatRange->value(), ui->spinRepeatAddition->value());
 

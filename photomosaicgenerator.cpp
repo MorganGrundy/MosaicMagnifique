@@ -339,7 +339,10 @@ PhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape, const int x,
     xEnd = std::clamp(unboundedRect.br().x, 0, t_image.cols);
 
     //Copies visible part of main image to cell
-    const cv::Mat cell(t_image(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)));
+    cv::Mat cell(unboundedRect.height, unboundedRect.width, t_image.type(), cv::Scalar(0));
+    t_image(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)).
+            copyTo(cell(cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                        cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x)));
 
     //Calculate repeat value of each library image in repeat range
     const std::map<size_t, int> repeats = calculateRepeats(t_grid, x + t_pad, y + t_pad);

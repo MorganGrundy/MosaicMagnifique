@@ -130,6 +130,40 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGenerator::resizeAndCvtColor
     return {resultMain, result};
 }
 
+//Resizes vector of images based on ratio
+void PhotomosaicGenerator::resizeImages(std::vector<cv::Mat> &t_images, const double t_ratio)
+{
+    //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
+    cv::InterpolationFlags flags = (t_ratio < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
+#ifdef OPENCV_W_CUDA
+    cv::cuda::Stream stream;
+
+    //Library image
+    std::vector<cv::cuda::GpuMat> src(t_images.size()), dst(t_images.size());
+    for (size_t i = 0; i < t_images.size(); ++i)
+    {
+        //Resize image
+        src.at(i).upload(t_images.at(i), stream);
+        cv::cuda::resize(src.at(i), dst.at(i),
+                         cv::Size(static_cast<int>(t_ratio * src.at(i).cols),
+                                  static_cast<int>(t_ratio * src.at(i).rows)),
+                         0, 0, flags, stream);
+        dst.at(i).download(t_images.at(i), stream);
+    }
+    stream.waitForCompletion();
+#else
+    //Library image
+    for (size_t i = 0; i < t_images.size(); ++i)
+    {
+        cv::resize(t_images.at(i), t_images.at(i),
+                   cv::Size(static_cast<int>(t_ratio * t_images.at(i).cols),
+                            static_cast<int>(t_ratio * t_images.at(i).rows)), 0, 0, flags);
+    }
+
+
+#endif
+}
+
 #ifdef CUDA
 
 size_t differenceGPU(CUDAPhotomosaicData &photomosaicData);
@@ -181,7 +215,7 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
             resizedCellShape.getRowFlipVertical());
 
 
-    std::vector<std::vector<std::vector<size_t>>> results;
+    mosaicBestFit results;
 
     //Stores grid bounds starting with full grid size
     std::vector<GridBounds> bounds(2);
@@ -192,8 +226,8 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
     CellShape currentCellShape(resizedCellShape);
     for (size_t step = 0; step <= sizeSteps && !bounds.at(activeBound).empty(); ++step)
     {
-        results.push_back(std::vector<std::vector<size_t>>(static_cast<size_t>(gridSize.y),
-                                    std::vector<size_t>(static_cast<size_t>(gridSize.x), 0)));
+        results.push_back(std::vector<std::vector<cellBestFit>>(static_cast<size_t>(gridSize.y),
+                                    std::vector<cellBestFit>(static_cast<size_t>(gridSize.x))));
 
         //Split main image into grid
         //Find best match for each cell in grid
@@ -253,7 +287,7 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
                     continue;
                 }
 
-                results.at(step).at(y).at(x) = resultFlat[index];
+                results.at(step).at(y).at(x).first = resultFlat[index];
             }
         }
     }
@@ -268,23 +302,41 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
 
 //Returns best fit index for cell if it is the grid
 //Also returns if cell entropy exceeded threshold
-std::pair<std::optional<size_t>, bool>
+PhotomosaicGenerator::cellBestFit
 PhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape, const int x, const int y,
                                       const bool t_pad, const size_t t_step,
                                       const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
-                                      const std::vector<std::vector<size_t>> &t_grid) const
+                                      const std::vector<std::vector<cellBestFit>> &t_grid,
+                                      const GridBounds &t_bounds) const
 {
     const cv::Rect unboundedRect = CellGrid::getRectAt(t_cellShape, x, y);
 
-    //Cell bounded positions (in mosaic area)
-    const int yStart = std::clamp(unboundedRect.tl().y, 0, t_image.rows);
-    const int yEnd = std::clamp(unboundedRect.br().y, 0, t_image.rows);
-    const int xStart = std::clamp(unboundedRect.tl().x, 0, t_image.cols);
-    const int xEnd = std::clamp(unboundedRect.br().x, 0, t_image.cols);
+    //Cell bounded positions (in background area)
+    int yStart, yEnd, xStart, xEnd;
+
+    //Check that cell is within a bound
+    bool inBounds = false;
+    for (auto it = t_bounds.cbegin(); it != t_bounds.cend() && !inBounds; ++it)
+    {
+        yStart = std::clamp(unboundedRect.y, it->y, it->br().y);
+        yEnd = std::clamp(unboundedRect.br().y, it->y, it->br().y);
+        xStart = std::clamp(unboundedRect.x, it->x, it->br().x);
+        xEnd = std::clamp(unboundedRect.br().x, it->x, it->br().x);
+
+        //Cell in bounds
+        if (yStart != yEnd && xStart != xEnd)
+            inBounds = true;
+    }
 
     //Cell completely out of bounds, just skip
-    if (yStart == yEnd || xStart == xEnd)
-        return {std::nullopt, false};
+    if (!inBounds)
+        return {0, false};
+
+    //Cell bounded positions (in mosaic area)
+    yStart = std::clamp(unboundedRect.tl().y, 0, t_image.rows);
+    yEnd = std::clamp(unboundedRect.br().y, 0, t_image.rows);
+    xStart = std::clamp(unboundedRect.tl().x, 0, t_image.cols);
+    xEnd = std::clamp(unboundedRect.br().x, 0, t_image.cols);
 
     //Copies visible part of main image to cell
     const cv::Mat cell(t_image(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)));
@@ -320,21 +372,19 @@ PhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape, const int x,
     if (index < 0 || index >= static_cast<int>(t_lib.size()))
     {
         qDebug() << "Failed to find a best fit";
-        return {std::nullopt, false};
+        return {0, false};
     }
 
+    //If cell not at lowest size
     if (t_step < sizeSteps)
     {
-        const cv::Mat cellImage(cell, cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
-                                cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
-
         //Create bounded mask
         const cv::Mat mask(t_cellShape.getCellMask(flipHorizontal, flipVertical),
                            cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                            cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
         //If cell entropy exceeds threshold return true
-        if (CellGrid::calculateEntropy(mask, cellImage) >= CellGrid::MAX_ENTROPY() * 0.7)
+        if (CellGrid::calculateEntropy(mask, cell) >= CellGrid::MAX_ENTROPY() * 0.7)
             return {index, true};
     }
     return {index, false};
@@ -355,27 +405,34 @@ cv::Mat PhotomosaicGenerator::generate()
     else
         resizedCellShape = m_cellShape.resized(resizedLib.front().cols, resizedLib.front().rows);
 
-    std::vector<std::vector<std::vector<size_t>>> results;
+    //Stores best fit and if entropy exceeded for each cell and each size step
+    mosaicBestFit results;
 
     //Stores grid bounds starting with full grid size
     std::vector<GridBounds> bounds(2);
     //Determines which bound is active
     int activeBound = 0;
+    //Image size is initial bound
     bounds.at(activeBound).addBound(resizedImg.rows, resizedImg.cols);
 
-    CellShape currentCellShape(resizedCellShape);
+    //For all size steps, stop if no bounds for step
     for (size_t step = 0; step <= sizeSteps && !bounds.at(activeBound).empty(); ++step)
     {
         const cv::Point gridSize = CellGrid::calculateGridSize(resizedCellShape,
                                                                resizedImg.cols, resizedImg.rows,
                                                                padGrid);
 
-        results.push_back(std::vector<std::vector<size_t>>(static_cast<size_t>(gridSize.y),
-                                    std::vector<size_t>(static_cast<size_t>(gridSize.x), 0)));
+        //Initialise progress bar
+        if (step == 0)
+        {
+            setMaximum(gridSize.x * gridSize.y * std::pow(4, sizeSteps) * (sizeSteps + 1));
+            setValue(0);
+            setLabelText("Finding best fits...");
+        }
+        const int progressStep = std::pow(4, sizeSteps - step);
 
-        setMaximum(gridSize.x * gridSize.y);
-        setValue(0);
-        setLabelText("Finding best fits...");
+        results.push_back(std::vector<std::vector<cellBestFit>>(static_cast<size_t>(gridSize.y),
+                                    std::vector<cellBestFit>(static_cast<size_t>(gridSize.x))));
 
         //Clear previous bounds
         bounds.at(!activeBound).clear();
@@ -391,17 +448,17 @@ cv::Mat PhotomosaicGenerator::generate()
                     return cv::Mat();
 
                 //Find cell best fit
-                auto [index, entropyExceeded] = findCellBestFit(resizedCellShape, x, y, padGrid,
-                        step, resizedImg, resizedLib, results.at(step));
+                const cellBestFit bestFit = findCellBestFit(resizedCellShape, x, y, padGrid,
+                        step, resizedImg, resizedLib, results.at(step), bounds.at(activeBound));
 
-                if (index.has_value())
-                    results.at(step).at(static_cast<size_t>(y + padGrid)).
-                            at(static_cast<size_t>(x + padGrid)) = index.value();
+                results.at(step).at(static_cast<size_t>(y + padGrid)).
+                        at(static_cast<size_t>(x + padGrid)) = bestFit;
 
-                if (entropyExceeded)
+                //If cell entropy exceeded
+                if (bestFit.second)
                 {
                     //Get cell bounds
-                    cv::Rect cellBounds = CellGrid::getRectAt(currentCellShape, x, y);
+                    cv::Rect cellBounds = CellGrid::getRectAt(resizedCellShape, x, y);
 
                     //Bound cell within grid dimensions
                     int yStart = std::clamp(cellBounds.y, 0, resizedImg.rows);
@@ -419,22 +476,29 @@ cv::Mat PhotomosaicGenerator::generate()
                     bounds.at(!activeBound).addBound(cellBounds);
                 }
 
-                setValue(value() + 1);
+                //Increment progress bar
+                setValue(value() + progressStep);
             }
         }
 
         //Swap active and inactive bounds
         activeBound = !activeBound;
 
-        //New bounds
+        //If there are new bounds
         if (!bounds.at(activeBound).empty())
         {
             bounds.at(activeBound).mergeBounds();
 
-            //Split cell size
-            currentCellShape = currentCellShape.resized(
-                        currentCellShape.getCellMask(0, 0).cols / 2,
-                        currentCellShape.getCellMask(0, 0).rows / 2);
+            //Halve cell size
+            resizedCellShape = resizedCellShape.resized(
+                        resizedCellShape.getCellMask(0, 0).cols / 2,
+                        resizedCellShape.getCellMask(0, 0).rows / 2);
+
+            resizeImages(resizedLib);
+        }
+        else if (step != sizeSteps)
+        {
+            setMaximum(gridSize.x * gridSize.y * std::pow(4, sizeSteps) * (step + 1));
         }
     }
 
@@ -445,7 +509,7 @@ cv::Mat PhotomosaicGenerator::generate()
 //Calculates the repeat value of each library image in repeat range around x,y
 //Only needs to look at first half of cells as the latter half are not yet used
 std::map<size_t, int> PhotomosaicGenerator::calculateRepeats(
-        const std::vector<std::vector<size_t>> &grid, const int x, const int y) const
+        const std::vector<std::vector<cellBestFit>> &grid, const int x, const int y) const
 {
     std::map<size_t, int> repeats;
     const int repeatStartY = std::clamp(y - m_repeatRange, 0, static_cast<int>(grid.size()));
@@ -459,12 +523,12 @@ std::map<size_t, int> PhotomosaicGenerator::calculateRepeats(
         for (int repeatX = repeatStartX; repeatX <= repeatEndX; ++repeatX)
         {
             const auto it = repeats.find(grid.at(static_cast<size_t>(repeatX)).
-                                   at(static_cast<size_t>(repeatY)));
+                                   at(static_cast<size_t>(repeatY)).first);
             if (it != repeats.end())
                 it->second += m_repeatAddition;
             else
                 repeats.emplace(grid.at(static_cast<size_t>(repeatX)).
-                                at(static_cast<size_t>(repeatY)), m_repeatAddition);
+                                at(static_cast<size_t>(repeatY)).first, m_repeatAddition);
         }
     }
 
@@ -472,12 +536,12 @@ std::map<size_t, int> PhotomosaicGenerator::calculateRepeats(
     for (int repeatX = repeatStartX; repeatX < x; ++repeatX)
     {
         const auto it = repeats.find(grid.at(static_cast<size_t>(repeatX)).
-                               at(static_cast<size_t>(y)));
+                               at(static_cast<size_t>(y)).first);
         if (it != repeats.end())
             it->second += m_repeatAddition;
         else
             repeats.emplace(grid.at(static_cast<size_t>(repeatX)).
-                            at(static_cast<size_t>(y)), m_repeatAddition);
+                            at(static_cast<size_t>(y)).first, m_repeatAddition);
     }
     return repeats;
 }
@@ -690,85 +754,124 @@ double PhotomosaicGenerator::degToRad(const double deg) const
 }
 
 //Combines results into a Photomosaic
-cv::Mat PhotomosaicGenerator::combineResults(
-        const std::vector<std::vector<std::vector<size_t>>> &results)
+cv::Mat PhotomosaicGenerator::combineResults(const mosaicBestFit &results)
 {
-    cv::Mat mosaic = cv::Mat(m_img.rows, m_img.cols, m_img.type(),
-                             cv::Scalar(0));
+    //Update progress bar
+    setLabelText("Building Photomosaic...");
+    setValue(0);
+
+    std::vector<cv::Mat> mosaic(2, cv::Mat::zeros(m_img.rows, m_img.cols, m_img.type()));
+    std::vector<cv::Mat> mosaicMask(2, cv::Mat::zeros(m_img.rows, m_img.cols, CV_8UC1));
 
     const int padGrid = m_cellShape.empty() ? 0 : 2;
+
+    std::vector<cv::Mat> libImg(m_lib);
 
     //Resizes cell shape to size of library images
     //If no cell shape provided then use default square cell, else resize given cell shape
     CellShape resizedCellShape;
     if (m_cellShape.empty())
-        resizedCellShape = CellShape(cv::Mat(m_lib.front().rows, m_lib.front().cols,
+        resizedCellShape = CellShape(cv::Mat(libImg.front().rows, libImg.front().cols,
                                              CV_8UC1, cv::Scalar(255)));
     else
-        resizedCellShape = m_cellShape.resized(m_lib.front().cols, m_lib.front().rows);
+        resizedCellShape = m_cellShape.resized(libImg.front().cols, libImg.front().rows);
 
-    //Stores grid bounds starting with full grid size
-    std::vector<GridBounds> bounds(2);
-    //Determines which bound is active
-    int activeBound = 0;
-    bounds.at(activeBound).addBound(mosaic.rows, mosaic.cols);
-
-    CellShape currentCellShape(resizedCellShape);
+    //For all size steps in results
     for (size_t step = 0; step < results.size(); ++step)
     {
+        const int progressStep = std::pow(4, sizeSteps - step);
+
+        //Halve cell size
+        if (step != 0)
+        {
+            resizedCellShape = resizedCellShape.resized(
+                        resizedCellShape.getCellMask(0, 0).cols / 2,
+                        resizedCellShape.getCellMask(0, 0).rows / 2);
+
+            resizeImages(libImg);
+        }
+
+        mosaic.at(1) = cv::Mat::zeros(m_img.rows, m_img.cols, m_img.type());
+        mosaicMask.at(1) = cv::Mat::zeros(m_img.rows, m_img.cols, CV_8UC1);
+
         //For all cells
         for (int y = -padGrid; y < static_cast<int>(results.at(step).size()) - padGrid; ++y)
         {
             for (int x = -padGrid;
                  x < static_cast<int>(results.at(step).at(y + padGrid).size()) - padGrid; ++x)
             {
+                //Skip cells where entropy exceeded threshold
+                if (results.at(step).at(static_cast<size_t>(y + padGrid)).
+                        at(static_cast<size_t>(x + padGrid)).second)
+                {
+                    //Increment progress bar
+                    setValue(value() + progressStep);
+                    continue;
+                }
+
                 const cv::Rect unboundedRect = CellGrid::getRectAt(resizedCellShape, x, y);
 
                 //Cell bounded positions (in mosaic area)
-                const int yStart = std::clamp(unboundedRect.tl().y, 0, mosaic.rows);
-                const int yEnd = std::clamp(unboundedRect.br().y, 0, mosaic.rows);
-                const int xStart = std::clamp(unboundedRect.tl().x, 0, mosaic.cols);
-                const int xEnd = std::clamp(unboundedRect.br().x, 0, mosaic.cols);
+                const int yStart = std::clamp(unboundedRect.tl().y, 0, m_img.rows);
+                const int yEnd = std::clamp(unboundedRect.br().y, 0, m_img.rows);
+                const int xStart = std::clamp(unboundedRect.tl().x, 0, m_img.cols);
+                const int xEnd = std::clamp(unboundedRect.br().x, 0, m_img.cols);
 
                 //Cell completely out of bounds, just skip
                 if (yStart == yEnd || xStart == xEnd)
+                {
+                    //Increment progress bar
+                    setValue(value() + progressStep);
                     continue;
+                }
 
                 //Calculate if and how current cell is flipped
                 const auto [flipHorizontal, flipVertical] = CellGrid::getFlipStateAt(
                         resizedCellShape, x, y, padGrid);
 
-                //Creates a mat that is the cell area actually visible in mosaic
-                const cv::Mat cellBounded(m_lib.at(results.at(step).
-                        at(static_cast<size_t>(y + padGrid)).at(static_cast<size_t>(x + padGrid))),
+                //Creates a mat that is the cell in bounded position
+                const cv::Mat cellBounded(libImg.at(results.at(step).
+                        at(static_cast<size_t>(y + padGrid)).
+                        at(static_cast<size_t>(x + padGrid)).first),
                         cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                         cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
                 //Creates mask bounded same as cell
-                const cv::Mat maskBounded(resizedCellShape.getCellMask(flipHorizontal,flipVertical),
+                const cv::Mat maskBounded(resizedCellShape.getCellMask(flipHorizontal, flipVertical),
                         cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                         cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
-                //Copys cell to mosaic using mask
-                cellBounded.copyTo(mosaic(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)),
-                        maskBounded);
+                //Copy cell to mosaic using mask
+                cellBounded.copyTo(mosaic.at(1)(cv::Range(yStart, yEnd),
+                        cv::Range(xStart, xEnd)), maskBounded);
+
+                //Adds cell mask to mosaic mask
+                cv::Mat mosaicMaskPart(mosaicMask.at(1),
+                        cv::Range(yStart, yEnd), cv::Range(xStart, xEnd));
+                cv::bitwise_or(mosaicMaskPart, maskBounded, mosaicMaskPart);
+
+                //Increment progress bar
+                setValue(value() + progressStep);
             }
         }
 
-        //Swap active and inactive bounds
-        activeBound = !activeBound;
-
-        //New bounds
-        if (!bounds.at(activeBound).empty())
+        //Combine mosaic size steps
+        if (step != 0)
         {
-            bounds.at(activeBound).mergeBounds();
+            cv::Mat mask;
+            cv::bitwise_not(mosaicMask.at(0), mask);
+            mosaic.at(1).copyTo(mosaic.at(0), mask);
+            mosaicMask.at(1).copyTo(mosaicMask.at(0), mask);
 
-            //Split cell size
-            currentCellShape = currentCellShape.resized(
-                        currentCellShape.getCellMask(0, 0).cols / 2,
-                        currentCellShape.getCellMask(0, 0).rows / 2);
+            mosaic.at(0) = mosaic.at(0).clone();
+            mosaicMask.at(0) = mosaicMask.at(0).clone();
+        }
+        else
+        {
+            mosaic.at(0) = mosaic.at(1).clone();
+            mosaicMask.at(0) = mosaicMask.at(1).clone();
         }
     }
 
-    return mosaic;
+    return mosaic.front();
 }

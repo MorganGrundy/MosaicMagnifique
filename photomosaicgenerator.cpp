@@ -330,7 +330,7 @@ PhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape, const int x,
 
     //Cell completely out of bounds, just skip
     if (!inBounds)
-        return {0, false};
+        return {std::nullopt, false};
 
     //Cell bounded positions (in mosaic area)
     yStart = std::clamp(unboundedRect.tl().y, 0, t_image.rows);
@@ -372,7 +372,7 @@ PhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape, const int x,
     if (index < 0 || index >= static_cast<int>(t_lib.size()))
     {
         qDebug() << "Failed to find a best fit";
-        return {0, false};
+        return {std::nullopt, false};
     }
 
     //If cell not at lowest size
@@ -522,26 +522,32 @@ std::map<size_t, int> PhotomosaicGenerator::calculateRepeats(
     {
         for (int repeatX = repeatStartX; repeatX <= repeatEndX; ++repeatX)
         {
-            const auto it = repeats.find(grid.at(static_cast<size_t>(repeatX)).
-                                   at(static_cast<size_t>(repeatY)).first);
-            if (it != repeats.end())
-                it->second += m_repeatAddition;
-            else
-                repeats.emplace(grid.at(static_cast<size_t>(repeatX)).
-                                at(static_cast<size_t>(repeatY)).first, m_repeatAddition);
+            const std::optional<size_t> cell = grid.at(static_cast<size_t>(repeatX)).
+                    at(static_cast<size_t>(repeatY)).first;
+            if (cell.has_value())
+            {
+                const auto it = repeats.find(cell.value());
+                if (it != repeats.end())
+                    it->second += m_repeatAddition;
+                else
+                    repeats.emplace(cell.value(), m_repeatAddition);
+            }
         }
     }
 
     //Looks at cells directly to the left of current cell
     for (int repeatX = repeatStartX; repeatX < x; ++repeatX)
     {
-        const auto it = repeats.find(grid.at(static_cast<size_t>(repeatX)).
-                               at(static_cast<size_t>(y)).first);
-        if (it != repeats.end())
-            it->second += m_repeatAddition;
-        else
-            repeats.emplace(grid.at(static_cast<size_t>(repeatX)).
-                            at(static_cast<size_t>(y)).first, m_repeatAddition);
+        const std::optional<size_t> cell = grid.at(static_cast<size_t>(repeatX)).
+                at(static_cast<size_t>(y)).first;
+        if (cell.has_value())
+        {
+            const auto it = repeats.find(cell.value());
+            if (it != repeats.end())
+                it->second += m_repeatAddition;
+            else
+                repeats.emplace(cell.value(), m_repeatAddition);
+        }
     }
     return repeats;
 }
@@ -800,9 +806,10 @@ cv::Mat PhotomosaicGenerator::combineResults(const mosaicBestFit &results)
             for (int x = -padGrid;
                  x < static_cast<int>(results.at(step).at(y + padGrid).size()) - padGrid; ++x)
             {
-                //Skip cells where entropy exceeded threshold
-                if (results.at(step).at(static_cast<size_t>(y + padGrid)).
-                        at(static_cast<size_t>(x + padGrid)).second)
+                const cellBestFit &cellData = results.at(step).at(static_cast<size_t>(y + padGrid)).
+                        at(static_cast<size_t>(x + padGrid));
+                //Skip cells that are empty or entropy exceeded threshold
+                if (!cellData.first.has_value() || cellData.second)
                 {
                     //Increment progress bar
                     setValue(value() + progressStep);
@@ -830,9 +837,7 @@ cv::Mat PhotomosaicGenerator::combineResults(const mosaicBestFit &results)
                         resizedCellShape, x, y, padGrid);
 
                 //Creates a mat that is the cell in bounded position
-                const cv::Mat cellBounded(libImg.at(results.at(step).
-                        at(static_cast<size_t>(y + padGrid)).
-                        at(static_cast<size_t>(x + padGrid)).first),
+                const cv::Mat cellBounded(libImg.at(cellData.first.value()),
                         cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                         cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 

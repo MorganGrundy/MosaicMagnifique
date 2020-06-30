@@ -33,7 +33,7 @@ public:
 #endif
 
 private:
-    typedef std::pair<size_t, bool> cellBestFit;
+    typedef std::pair<std::optional<size_t>, bool> cellBestFit;
     typedef std::vector<std::vector<std::vector<cellBestFit>>> mosaicBestFit;
 
     cv::Mat m_img;

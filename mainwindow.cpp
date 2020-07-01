@@ -113,6 +113,8 @@ MainWindow::MainWindow(QWidget *t_parent)
             SLOT(photomosaicHeightChanged(int)));
     connect(ui->buttonPhotomosaicSize, SIGNAL(released()), this, SLOT(loadImageSize()));
 
+    connect(ui->spinDetail, SIGNAL(valueChanged(int)), this, SLOT(photomosaicDetailChanged(int)));
+
     connect(ui->spinCellSize, SIGNAL(valueChanged(int)), this, SLOT(cellSizeChanged(int)));
     connect(ui->spinMinCellSize, SIGNAL(valueChanged(int)),
             this, SLOT(minimumCellSizeChanged(int)));
@@ -165,6 +167,8 @@ MainWindow::MainWindow(QWidget *t_parent)
 
     //tabWidget starts on Generator Settings tab
     ui->tabWidget->setCurrentIndex(2);
+
+    ui->spinDetail->setValue(100);
 }
 
 MainWindow::~MainWindow()
@@ -810,16 +814,16 @@ void MainWindow::photomosaicHeightChanged(int i)
         ui->spinPhotomosaicWidth->blockSignals(true);
         ui->spinPhotomosaicWidth->setValue(static_cast<int>(i * photomosaicSizeRatio));
         ui->spinPhotomosaicWidth->blockSignals(false);
+    }
 
-        //Updates image size in grid preview
-        if (!mainImage.empty())
-        {
-            ui->widgetGridPreview->setBackground(
-                        UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
-                                                  ui->spinPhotomosaicWidth->value(),
-                                                  UtilityFuncs::ResizeType::INCLUSIVE));
-            ui->widgetGridPreview->updateGrid();
-        }
+    //Updates image size in grid preview
+    if (!mainImage.empty())
+    {
+        ui->widgetGridPreview->setBackground(
+                    UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
+                                              ui->spinPhotomosaicWidth->value(),
+                                              UtilityFuncs::ResizeType::INCLUSIVE));
+        ui->widgetGridPreview->updateGrid();
     }
 }
 
@@ -845,6 +849,14 @@ void MainWindow::loadImageSize()
                                               UtilityFuncs::ResizeType::INCLUSIVE));
         ui->widgetGridPreview->updateGrid();
     }
+}
+
+//Updates grid preview when detail level changes
+void MainWindow::photomosaicDetailChanged(int i)
+{
+    ui->widgetGridPreview->setDetail(i);
+    if (!mainImage.empty())
+        ui->widgetGridPreview->updateGrid();
 }
 
 //Updates grid preview and minimum cell size spin box

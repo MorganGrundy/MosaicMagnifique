@@ -11,7 +11,8 @@
 #include "utilityfuncs.h"
 
 GridViewer::GridViewer(QWidget *parent)
-    : QWidget(parent), sizeSteps{0}, cells{std::vector<cv::Mat>(4)},
+    : QWidget(parent), sizeSteps{0}, detail{1.0}, cells{1},
+      detailCells{1},
       edgeCells{std::vector<cv::Mat>(4)},
       MIN_ZOOM{0.5}, MAX_ZOOM{10}, zoom{1}
 {
@@ -66,7 +67,8 @@ void GridViewer::setEdgeDetect(bool t_state)
 
 //Creates cell in grid at given position
 //Returns false if cell entropy exceeds threshold
-bool GridViewer::createCell(const CellShape &t_cellShape, const int t_x, const int t_y,
+bool GridViewer::createCell(const CellShape &t_cellShape, const CellShape &t_detailCellShape,
+                            const int t_x, const int t_y,
                             cv::Mat &t_grid, cv::Mat &t_edgeGrid, const GridBounds &t_bounds,
                             size_t t_step)
 {
@@ -108,20 +110,43 @@ bool GridViewer::createCell(const CellShape &t_cellShape, const int t_x, const i
             t_x, t_y, padGrid);
 
     //Create bounded mask
-    const cv::Mat mask(getCellMask(t_step, flipHorizontal, flipVertical, false),
+    const cv::Mat mask(t_cellShape.getCellMask(flipHorizontal, flipVertical),
                        cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                        cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
-    if (!backImage.empty() && t_step < sizeSteps)
+    //If not at lowest size step
+    if (!detailImage.empty() && t_step < sizeSteps)
     {
-        //If cell entropy exceeds threshold halve cell size
-        const cv::Mat cellImage(backImage, roi);
-        if (CellGrid::calculateEntropy(mask, cellImage) >= CellGrid::MAX_ENTROPY() * 0.7)
+        const cv::Rect detailUnboundedRect = CellGrid::getRectAt(t_detailCellShape, t_x, t_y);
+
+        //Detail cell bounded positions (in background area)
+        const int detailYStart = std::clamp(detailUnboundedRect.y, 0,
+                                            static_cast<int>(detailImage.rows));
+        const int detailYEnd = std::clamp(detailUnboundedRect.br().y, 0,
+                                          static_cast<int>(detailImage.rows));
+        const int detailXStart = std::clamp(detailUnboundedRect.x, 0,
+                                            static_cast<int>(detailImage.cols));
+        const int detailXEnd = std::clamp(detailUnboundedRect.br().x, 0,
+                                          static_cast<int>(detailImage.cols));
+
+        const cv::Rect detailRoi = cv::Rect(detailXStart, detailYStart, detailXEnd - detailXStart,
+                                            detailYEnd - detailYStart);
+
+        //Create bounded detail mask
+        const cv::Mat detailMask(t_detailCellShape.getCellMask(flipHorizontal, flipVertical),
+                                 cv::Range(detailYStart - detailUnboundedRect.y,
+                                           detailYEnd - detailUnboundedRect.y),
+                                 cv::Range(detailXStart - detailUnboundedRect.x,
+                                           detailXEnd - detailUnboundedRect.x));
+
+        //If cell entropy exceeds threshold return false
+        const cv::Mat cellImage(detailImage, detailRoi);
+        if (CellGrid::calculateEntropy(detailMask, cellImage) >= CellGrid::MAX_ENTROPY() * 0.7)
             return false;
     }
 
     //Create bounded edge mask
-    const cv::Mat edgeMask(getCellMask(t_step, flipHorizontal, flipVertical, true),
+    const cv::Mat edgeMask(getEdgeCell(t_step, flipHorizontal, flipVertical),
                            cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                            cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
@@ -136,7 +161,7 @@ bool GridViewer::createCell(const CellShape &t_cellShape, const int t_x, const i
 void GridViewer::updateGrid()
 {
     //No cell mask, no grid
-    if (cellShape.getCellMask(0, 0).empty())
+    if (cells.at(0).getCellMask(0, 0).empty())
     {
         grid = QImage();
         return;
@@ -156,14 +181,13 @@ void GridViewer::updateGrid()
     int activeBound = 0;
     bounds.at(activeBound).addBound(gridHeight, gridWidth);
 
-    CellShape currentCellShape(cellShape);
     for (size_t step = 0; step <= sizeSteps && !bounds.at(activeBound).empty(); ++step)
     {
         //Create new grids
         newGrid.push_back(cv::Mat(gridHeight, gridWidth, CV_8UC1, cv::Scalar(0)));
         newEdgeGrid.push_back(cv::Mat(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0)));
 
-        const cv::Point gridSize = CellGrid::calculateGridSize(currentCellShape,
+        const cv::Point gridSize = CellGrid::calculateGridSize(cells.at(step),
                                                                gridWidth, gridHeight, padGrid);
 
         //Clear previous bounds
@@ -173,11 +197,12 @@ void GridViewer::updateGrid()
         {
             for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
             {
-                if (!createCell(currentCellShape, x, y, newGrid.at(step), newEdgeGrid.at(step),
+                if (!createCell(cells.at(step), detailCells.at(step), x, y,
+                                newGrid.at(step), newEdgeGrid.at(step),
                                 bounds.at(activeBound), step))
                 {
                     //Get cell bounds
-                    cv::Rect cellBounds = CellGrid::getRectAt(currentCellShape, x, y);
+                    cv::Rect cellBounds = CellGrid::getRectAt(cells.at(step), x, y);
 
                     //Bound cell within grid dimensions
                     int yStart = std::clamp(cellBounds.y, 0, gridHeight);
@@ -202,14 +227,7 @@ void GridViewer::updateGrid()
 
         //New bounds
         if (!bounds.at(activeBound).empty())
-        {
             bounds.at(activeBound).mergeBounds();
-
-            //Split cell size
-            currentCellShape = currentCellShape.resized(
-                        currentCellShape.getCellMask(0, 0).cols / 2,
-                        currentCellShape.getCellMask(0, 0).rows / 2);
-        }
     }
 
     //Combine grids
@@ -235,88 +253,81 @@ void GridViewer::updateGrid()
 //Sets the cell shape
 void GridViewer::setCellShape(const CellShape &t_cellShape)
 {
-    cellShape = t_cellShape;
+    cells.at(0) = t_cellShape;
 
-    if (!cellShape.getCellMask(0, 0).empty())
+    if (!cells.at(0).getCellMask(0, 0).empty())
     {
-        getCellMask(0, false, false, false) = cellShape.getCellMask(0, 0);
-
+        //Create edge cell
         cv::Mat cellMask;
-        UtilityFuncs::edgeDetect(cellShape.getCellMask(0, 0), cellMask);
+        UtilityFuncs::edgeDetect(cells.at(0).getCellMask(0, 0), cellMask);
 
         //Make black pixels transparent
-        UtilityFuncs::matMakeTransparent(cellMask, getCellMask(0, false, false, true), 0);
+        UtilityFuncs::matMakeTransparent(cellMask, getEdgeCell(0, false, false), 0);
 
-        //Create flipped cell and edge cell
-        cv::flip(getCellMask(0, false, false, false), getCellMask(0, true, false, false), 1);
-        cv::flip(getCellMask(0, false, false, true), getCellMask(0, true, false, true), 1);
-        cv::flip(getCellMask(0, false, false, false), getCellMask(0, false, true, false), 0);
-        cv::flip(getCellMask(0, false, false, true), getCellMask(0, false, true, true), 0);
-        cv::flip(getCellMask(0, false, false, false), getCellMask(0, true, true, false), -1);
-        cv::flip(getCellMask(0, false, false, true), getCellMask(0, true, true, true), -1);
+        //Create flipped edge cell
+        cv::flip(getEdgeCell(0, false, false), getEdgeCell(0, true, false), 1);
+        cv::flip(getEdgeCell(0, false, false), getEdgeCell(0, false, true), 0);
+        cv::flip(getEdgeCell(0, false, false), getEdgeCell(0, true, true), -1);
 
+        //Update detail cell
+        setDetail(detail, true);
+        //Update size steps for all cells
         setSizeSteps(sizeSteps, true);
     }
     else
     {
-        cells.clear();
-        edgeCells.clear();
+        cells.resize(1);
+        detailCells.resize(1);
+        edgeCells.resize(1);
     }
 }
 
-//Returns reference to a cell mask
-cv::Mat &GridViewer::getCellMask(size_t t_sizeStep, bool t_flipHorizontal, bool t_flipVertical,
-                                 bool t_edge)
+//Returns reference to an edge cell mask
+cv::Mat &GridViewer::getEdgeCell(size_t t_sizeStep, bool t_flipHorizontal, bool t_flipVertical)
 {
-    if (t_edge)
-        return edgeCells.at(t_sizeStep).at(t_flipHorizontal + t_flipVertical * 2);
-    else
-        return cells.at(t_sizeStep).at(t_flipHorizontal + t_flipVertical * 2);
+    return edgeCells.at(t_sizeStep).at(t_flipHorizontal + t_flipVertical * 2);
 }
 
 //Returns a reference to the cell shape
 CellShape &GridViewer::getCellShape()
 {
-    return cellShape;
+    return cells.at(0);
 }
 
 //Sets the minimum cell size
 void GridViewer::setSizeSteps(const size_t t_steps, const bool t_reset)
 {
     //Resize vectors
-    cells.resize(t_steps + 1, std::vector<cv::Mat>(4));
+    cells.resize(t_steps + 1);
+    detailCells.resize(t_steps + 1);
     edgeCells.resize(t_steps + 1, std::vector<cv::Mat>(4));
 
     //Create cell masks for each step size
-    int cellSize = getCellMask(0, false, false, false).rows;
+    int cellSize = cells.at(0).getCellMask(0, 0).rows;
+    int detailCellSize = detailCells.at(0).getCellMask(0, 0).rows;
     for (size_t step = 1; step <= t_steps; ++step)
     {
         cellSize /= 2;
+        detailCellSize /= 2;
 
         //Only create if reset or is a new step size
         if (t_reset || step > sizeSteps)
         {
             //Create cell masks
-            getCellMask(step, false, false, false) = UtilityFuncs::resizeImage(
-                        getCellMask(0, false, false, false), cellSize, cellSize,
-                        UtilityFuncs::ResizeType::EXCLUSIVE);
+            cells.at(step) = cells.at(step - 1).resized(cellSize, cellSize);
 
-            cv::flip(getCellMask(step, false, false, false),
-                     getCellMask(step, true, false, false), 1);
-            cv::flip(getCellMask(step, false, false, false),
-                     getCellMask(step, false, true, false), 0);
-            cv::flip(getCellMask(step, false, false, false),
-                     getCellMask(step, true, true, false), -1);
+            //Create detail cell masks
+            detailCells.at(step) = detailCells.at(step - 1).resized(detailCellSize, detailCellSize);
 
             //Create edge cell masks
             cv::Mat cellMask;
-            UtilityFuncs::edgeDetect(getCellMask(step, false, false, false), cellMask);
+            UtilityFuncs::edgeDetect(cells.at(step).getCellMask(0, 0), cellMask);
             //Make black pixels transparent
-            UtilityFuncs::matMakeTransparent(cellMask, getCellMask(step, false, false, true), 0);
+            UtilityFuncs::matMakeTransparent(cellMask, getEdgeCell(step, false, false), 0);
 
-            cv::flip(getCellMask(0, false, false, true), getCellMask(step, true, false, true), 1);
-            cv::flip(getCellMask(0, false, false, true), getCellMask(step, false, true, true), 0);
-            cv::flip(getCellMask(0, false, false, true), getCellMask(step, true, true, true), -1);
+            cv::flip(getEdgeCell(0, false, false), getEdgeCell(step, true, false), 1);
+            cv::flip(getEdgeCell(0, false, false), getEdgeCell(step, false, true), 0);
+            cv::flip(getEdgeCell(0, false, false), getEdgeCell(step, true, true), -1);
         }
     }
     sizeSteps = t_steps;
@@ -327,7 +338,10 @@ void GridViewer::setBackground(const cv::Mat &t_background)
 {
     backImage = t_background;
     if (t_background.empty())
+    {
         background = QImage();
+        detailImage = t_background;
+    }
     else
     {
         cv::Mat inverted(t_background.rows, t_background.cols, t_background.type());
@@ -335,6 +349,34 @@ void GridViewer::setBackground(const cv::Mat &t_background)
 
         background = QImage(inverted.data, inverted.cols, inverted.rows,
                             static_cast<int>(inverted.step), QImage::Format_RGB888).copy();
+
+        detailImage = UtilityFuncs::resizeImage(backImage, backImage.rows * detail,
+                                                backImage.cols * detail,
+                                                UtilityFuncs::ResizeType::EXCLUSIVE);
+    }
+}
+
+//Sets the detail level
+void GridViewer::setDetail(const int t_detail, const bool t_reset)
+{
+    double newDetail = detail;
+    if (!t_reset)
+        newDetail = (t_detail < 1) ? 0.01 : t_detail / 100.0;
+
+    if (newDetail != detail || t_reset)
+    {
+        detail = newDetail;
+        if (!backImage.empty())
+            detailImage = UtilityFuncs::resizeImage(backImage, backImage.rows * detail,
+                                                    backImage.cols * detail,
+                                                    UtilityFuncs::ResizeType::EXCLUSIVE);
+
+        //Create top level detail cell
+        if (!cells.at(0).getCellMask(0, 0).empty())
+        {
+            const int cellSize = cells.at(0).getCellMask(0, 0).rows;
+            detailCells.at(0) = cells.at(0).resized(cellSize * detail, cellSize * detail);
+        }
     }
 }
 

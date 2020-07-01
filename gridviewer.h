@@ -27,6 +27,8 @@ public:
 
     void setBackground(const cv::Mat &t_background);
 
+    void setDetail(const int t_detail = 100, const bool t_reset = false);
+
 public slots:
     void zoomChanged(double t_value);
     void edgeDetectChanged(int t_state);
@@ -37,12 +39,12 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
 
 private:
-    bool createCell(const CellShape &t_cellShape, const int t_x, const int t_y,
+    bool createCell(const CellShape &t_cellShape, const CellShape &t_detailCellShape,
+                    const int t_x, const int t_y,
                     cv::Mat &t_grid, cv::Mat &t_edgeGrid, const GridBounds &t_bounds,
                     size_t t_step = 0);
 
-    cv::Mat &getCellMask(size_t t_sizeStep, bool t_flipHorizontal, bool t_flipVertical,
-                         bool t_edge);
+    cv::Mat &getEdgeCell(size_t t_sizeStep, bool t_flipHorizontal, bool t_flipVertical);
 
     QGridLayout *layout;
     QLabel *labelZoom;
@@ -50,13 +52,15 @@ private:
     QCheckBox *checkEdgeDetect;
     QSpacerItem *hSpacer, *vSpacer;
 
-    CellShape cellShape;
     size_t sizeSteps;
 
-    cv::Mat backImage;
+    cv::Mat backImage, detailImage;
     QImage background;
 
-    std::vector<std::vector<cv::Mat>> cells;
+    double detail;
+
+    std::vector<CellShape> cells;
+    std::vector<CellShape> detailCells;
     std::vector<std::vector<cv::Mat>> edgeCells;
 
     QImage grid, edgeGrid;

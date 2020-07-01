@@ -61,6 +61,7 @@ public slots:
     void photomosaicWidthChanged(int i);
     void photomosaicHeightChanged(int i);
     void loadImageSize();
+    void photomosaicDetailChanged(int i);
     void cellSizeChanged(int t_value);
     void minimumCellSizeChanged(int t_value);
     void enableCellShape(bool t_state);

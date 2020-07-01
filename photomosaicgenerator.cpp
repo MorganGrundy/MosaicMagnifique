@@ -344,9 +344,6 @@ PhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape, const int x,
             copyTo(cell(cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                         cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x)));
 
-    //Calculate repeat value of each library image in repeat range
-    const std::map<size_t, int> repeats = calculateRepeats(t_grid, x + t_pad, y + t_pad);
-
     //Calculate if and how current cell is flipped
     bool flipHorizontal = false, flipVertical = false;
     if (t_cellShape.getColFlipHorizontal() && (x + t_pad) % 2 == 1)
@@ -357,6 +354,23 @@ PhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape, const int x,
         flipVertical = !flipVertical;
     if (t_cellShape.getRowFlipVertical() && (y + t_pad) % 2 == 1)
         flipVertical = !flipVertical;
+
+    //If cell not at lowest size
+    if (t_step < sizeSteps)
+    {
+        //Create bounded mask
+        const cv::Mat mask(t_cellShape.getCellMask(flipHorizontal, flipVertical),
+                           cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                           cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+
+        //If cell entropy exceeds threshold return true
+        if (CellGrid::calculateEntropy(mask, cell) >= CellGrid::MAX_ENTROPY() * 0.7)
+            return {std::nullopt, true};
+    }
+
+
+    //Calculate repeat value of each library image in repeat range
+    const std::map<size_t, int> repeats = calculateRepeats(t_grid, x + t_pad, y + t_pad);
 
     //Find cell best fit
     int index = -1;
@@ -378,18 +392,7 @@ PhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape, const int x,
         return {std::nullopt, false};
     }
 
-    //If cell not at lowest size
-    if (t_step < sizeSteps)
-    {
-        //Create bounded mask
-        const cv::Mat mask(t_cellShape.getCellMask(flipHorizontal, flipVertical),
-                           cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
-                           cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
-        //If cell entropy exceeds threshold return true
-        if (CellGrid::calculateEntropy(mask, cell) >= CellGrid::MAX_ENTROPY() * 0.7)
-            return {index, true};
-    }
     return {index, false};
 }
 

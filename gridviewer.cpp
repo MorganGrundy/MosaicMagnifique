@@ -129,20 +129,25 @@ bool GridViewer::createCell(const CellShape &t_cellShape, const CellShape &t_det
         const int detailXEnd = std::clamp(detailUnboundedRect.br().x, 0,
                                           static_cast<int>(detailImage.cols));
 
-        const cv::Rect detailRoi = cv::Rect(detailXStart, detailYStart, detailXEnd - detailXStart,
-                                            detailYEnd - detailYStart);
+        //Bound in grid, else skip
+        if (detailYStart != detailYEnd && detailXStart != detailXEnd)
+        {
+            const cv::Rect detailRoi = cv::Rect(detailXStart, detailYStart,
+                                                detailXEnd - detailXStart,
+                                                detailYEnd - detailYStart);
 
-        //Create bounded detail mask
-        const cv::Mat detailMask(t_detailCellShape.getCellMask(flipHorizontal, flipVertical),
-                                 cv::Range(detailYStart - detailUnboundedRect.y,
-                                           detailYEnd - detailUnboundedRect.y),
-                                 cv::Range(detailXStart - detailUnboundedRect.x,
-                                           detailXEnd - detailUnboundedRect.x));
+            //Create bounded detail mask
+            const cv::Mat detailMask(t_detailCellShape.getCellMask(flipHorizontal, flipVertical),
+                                     cv::Range(detailYStart - detailUnboundedRect.y,
+                                               detailYEnd - detailUnboundedRect.y),
+                                     cv::Range(detailXStart - detailUnboundedRect.x,
+                                               detailXEnd - detailUnboundedRect.x));
 
-        //If cell entropy exceeds threshold return false
-        const cv::Mat cellImage(detailImage, detailRoi);
-        if (CellGrid::calculateEntropy(detailMask, cellImage) >= CellGrid::MAX_ENTROPY() * 0.7)
-            return false;
+            //If cell entropy exceeds threshold return false
+            const cv::Mat cellImage(detailImage, detailRoi);
+            if (CellGrid::calculateEntropy(detailMask, cellImage) >= CellGrid::MAX_ENTROPY() * 0.7)
+                return false;
+        }
     }
 
     //Create bounded edge mask

@@ -345,15 +345,8 @@ PhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape, const int x,
                         cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x)));
 
     //Calculate if and how current cell is flipped
-    bool flipHorizontal = false, flipVertical = false;
-    if (t_cellShape.getColFlipHorizontal() && (x + t_pad) % 2 == 1)
-        flipHorizontal = !flipHorizontal;
-    if (t_cellShape.getRowFlipHorizontal() && (y + t_pad) % 2 == 1)
-        flipHorizontal = !flipHorizontal;
-    if (t_cellShape.getColFlipVertical() && (x + t_pad) % 2 == 1)
-        flipVertical = !flipVertical;
-    if (t_cellShape.getRowFlipVertical() && (y + t_pad) % 2 == 1)
-        flipVertical = !flipVertical;
+    auto [flipHorizontal, flipVertical] = CellGrid::getFlipStateAt(t_cellShape,
+            x, y, t_pad);
 
     //If cell not at lowest size
     if (t_step < sizeSteps)
@@ -471,6 +464,10 @@ cv::Mat PhotomosaicGenerator::generate()
                     int yEnd = std::clamp(cellBounds.br().y, 0, resizedImg.rows);
                     int xStart = std::clamp(cellBounds.x, 0, resizedImg.cols);
                     int xEnd = std::clamp(cellBounds.br().x, 0, resizedImg.cols);
+
+                    //Bound not in grid, just skip
+                    if (yStart == yEnd || xStart == xEnd)
+                        continue;
 
                     //Update cell bounds
                     cellBounds.y = yStart;

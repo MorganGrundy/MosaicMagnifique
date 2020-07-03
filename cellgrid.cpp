@@ -84,6 +84,9 @@ std::pair<bool, bool> CellGrid::getFlipStateAt(const CellShape &t_cellShape,
 //Returns the entropy of the given image in the given mask
 double CellGrid::calculateEntropy(const cv::Mat &t_mask, const cv::Mat &t_image)
 {
+    if (t_image.empty() || t_mask.empty())
+        return 0;
+
     //Convert image to grayscale
     cv::Mat grayImage;
     cv::cvtColor(t_image, grayImage, cv::COLOR_BGR2GRAY);

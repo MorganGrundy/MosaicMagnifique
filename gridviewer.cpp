@@ -210,6 +210,10 @@ void GridViewer::updateGrid()
                     int xStart = std::clamp(cellBounds.x, 0, gridWidth);
                     int xEnd = std::clamp(cellBounds.br().x, 0, gridWidth);
 
+                    //Bound not in grid, just skip
+                    if (yStart == yEnd || xStart == xEnd)
+                        continue;
+
                     //Update cell bounds
                     cellBounds.y = yStart;
                     cellBounds.x = xStart;

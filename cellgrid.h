@@ -2,12 +2,17 @@
 #define CELLGRID_H
 
 #include <opencv2/core.hpp>
+#include <optional>
 
 #include "cellshape.h"
 
 class CellGrid
 {
 public:
+    typedef std::pair<std::optional<size_t>, bool> cellBestFit;
+    typedef std::vector<std::vector<cellBestFit>> stepBestFit;
+    typedef std::vector<stepBestFit> mosaicBestFit;
+
     static cv::Point calculateGridSize(const CellShape &t_cellShape,
                                        const int t_imageWidth, const int t_imageHeight,
                                        const int t_pad);

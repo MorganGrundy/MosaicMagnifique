@@ -65,16 +65,14 @@ void GridViewer::setEdgeDetect(bool t_state)
     checkEdgeDetect->setChecked(t_state);
 }
 
-//Creates cell in grid at given position
-//Returns false if cell entropy exceeds threshold
-bool GridViewer::createCell(const CellShape &t_cellShape, const CellShape &t_detailCellShape,
-                            const int t_x, const int t_y,
-                            cv::Mat &t_grid, cv::Mat &t_edgeGrid, const GridBounds &t_bounds,
-                            size_t t_step)
+//Finds state of cell at current position and step in detail image
+CellGrid::cellBestFit GridViewer::findCellState(const int x, const int y,
+                                                const GridBounds &t_bounds,
+                                                const size_t t_step) const
 {
-    const cv::Rect unboundedRect = CellGrid::getRectAt(t_cellShape, t_x, t_y);
+    const cv::Rect unboundedRect = CellGrid::getRectAt(detailCells.at(t_step), x, y);
 
-    //Cell bounded positions (in background area)
+    //Cell bounded positions
     int yStart, yEnd, xStart, xEnd;
 
     //Check that cell is within a bound
@@ -93,78 +91,121 @@ bool GridViewer::createCell(const CellShape &t_cellShape, const CellShape &t_det
 
     //Cell completely out of bounds, just skip
     if (!inBounds)
-        return true;
+        return {std::nullopt, false};
 
-    //Bound cell within grid dimensions
-    yStart = std::clamp(unboundedRect.y, 0, t_grid.rows);
-    yEnd = std::clamp(unboundedRect.br().y, 0, t_grid.rows);
-    xStart = std::clamp(unboundedRect.x, 0, t_grid.cols);
-    xEnd = std::clamp(unboundedRect.br().x, 0, t_grid.cols);
-
-    const cv::Rect roi = cv::Rect(xStart, yStart, xEnd - xStart, yEnd - yStart);
-
-    cv::Mat gridPart(t_grid, roi), edgeGridPart(t_edgeGrid, roi);
-
-    //Calculate if and how current cell is flipped
-    auto [flipHorizontal, flipVertical] = CellGrid::getFlipStateAt(t_cellShape,
-            t_x, t_y, padGrid);
-
-    //Create bounded mask
-    const cv::Mat mask(t_cellShape.getCellMask(flipHorizontal, flipVertical),
-                       cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
-                       cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
-
-    //If not at lowest size step
+    //If cell not at lowest size
     if (!detailImage.empty() && t_step < sizeSteps)
     {
-        const cv::Rect detailUnboundedRect = CellGrid::getRectAt(t_detailCellShape, t_x, t_y);
+        //Cell bounded positions (in image)
+        yStart = std::clamp(unboundedRect.tl().y, 0, detailImage.rows);
+        yEnd = std::clamp(unboundedRect.br().y, 0, detailImage.rows);
+        xStart = std::clamp(unboundedRect.tl().x, 0, detailImage.cols);
+        xEnd = std::clamp(unboundedRect.br().x, 0, detailImage.cols);
 
-        //Detail cell bounded positions (in background area)
-        const int detailYStart = std::clamp(detailUnboundedRect.y, 0,
-                                            static_cast<int>(detailImage.rows));
-        const int detailYEnd = std::clamp(detailUnboundedRect.br().y, 0,
-                                          static_cast<int>(detailImage.rows));
-        const int detailXStart = std::clamp(detailUnboundedRect.x, 0,
-                                            static_cast<int>(detailImage.cols));
-        const int detailXEnd = std::clamp(detailUnboundedRect.br().x, 0,
-                                          static_cast<int>(detailImage.cols));
+        const cv::Rect boundedRect(xStart - unboundedRect.x, yStart - unboundedRect.y,
+                                   xEnd - xStart, yEnd - yStart);
 
-        //Bound in grid, else skip
-        if (detailYStart != detailYEnd && detailXStart != detailXEnd)
+        //Copies visible part of image to cell
+        const cv::Mat cell(detailImage, cv::Range(yStart, yEnd), cv::Range(xStart, xEnd));
+
+        //Calculate if and how current cell is flipped
+        auto [flipHorizontal, flipVertical] = CellGrid::getFlipStateAt(detailCells.at(t_step),
+                x, y, padGrid);
+
+        //Create bounded mask
+        const cv::Mat mask(detailCells.at(t_step).getCellMask(flipHorizontal, flipVertical),
+                           boundedRect);
+
+        //If cell entropy exceeds threshold return true
+        if (CellGrid::calculateEntropy(mask, cell) >= CellGrid::MAX_ENTROPY() * 0.7)
+            return {std::nullopt, true};
+    }
+
+    //Cell is valid
+    return {0, false};
+}
+
+//Creates grid from states
+void GridViewer::createGrid(const CellGrid::mosaicBestFit &states,
+                            const int gridHeight, const int gridWidth)
+{
+    std::vector<cv::Mat> newGrid, newEdgeGrid;
+
+    //For all size steps in results
+    for (size_t step = 0; step < states.size(); ++step)
+    {
+        //Create new grids
+        newGrid.push_back(cv::Mat(gridHeight, gridWidth, CV_8UC1, cv::Scalar(0)));
+        newEdgeGrid.push_back(cv::Mat(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0)));
+
+        //For all cells
+        for (int y = -padGrid; y < static_cast<int>(states.at(step).size()) - padGrid; ++y)
         {
-            const cv::Rect detailRoi = cv::Rect(detailXStart, detailYStart,
-                                                detailXEnd - detailXStart,
-                                                detailYEnd - detailYStart);
+            for (int x = -padGrid;
+                 x < static_cast<int>(states.at(step).at(y + padGrid).size()) - padGrid; ++x)
+            {
+                //Cell in valid state
+                if (states.at(step).at(static_cast<size_t>(y + padGrid)).
+                        at(static_cast<size_t>(x + padGrid)).first.has_value())
+                {
+                    const cv::Rect unboundedRect = CellGrid::getRectAt(cells.at(step), x, y);
 
-            //Create bounded detail mask
-            const cv::Mat detailMask(t_detailCellShape.getCellMask(flipHorizontal, flipVertical),
-                                     cv::Range(detailYStart - detailUnboundedRect.y,
-                                               detailYEnd - detailUnboundedRect.y),
-                                     cv::Range(detailXStart - detailUnboundedRect.x,
-                                               detailXEnd - detailUnboundedRect.x));
+                    //Bound cell within grid dimensions
+                    const int yStart = std::clamp(unboundedRect.y, 0, gridHeight);
+                    const int yEnd = std::clamp(unboundedRect.br().y, 0, gridHeight);
+                    const int xStart = std::clamp(unboundedRect.x, 0, gridWidth);
+                    const int xEnd = std::clamp(unboundedRect.br().x, 0, gridWidth);
 
-            //If cell entropy exceeds threshold return false
-            const cv::Mat cellImage(detailImage, detailRoi);
-            if (CellGrid::calculateEntropy(detailMask, cellImage) >= CellGrid::MAX_ENTROPY() * 0.7)
-                return false;
+                    const cv::Rect roi = cv::Rect(xStart, yStart, xEnd - xStart, yEnd - yStart);
+
+                    cv::Mat gridPart(newGrid.at(step), roi);
+                    cv::Mat edgeGridPart(newEdgeGrid.at(step), roi);
+
+                    //Calculate if and how current cell is flipped
+                    auto [flipHorizontal, flipVertical] = CellGrid::getFlipStateAt(cells.at(step),
+                            x, y, padGrid);
+
+                    //Create bounded mask
+                    const cv::Mat mask(cells.at(step).getCellMask(flipHorizontal, flipVertical),
+                                       cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                                       cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+
+                    //Create bounded edge mask
+                    const cv::Mat edgeMask(getEdgeCell(step, flipHorizontal, flipVertical),
+                                       cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                                       cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+
+                    //Copy cell to grid
+                    cv::bitwise_or(gridPart, mask, gridPart);
+                    cv::bitwise_or(edgeGridPart, edgeMask, edgeGridPart);
+                }
+            }
         }
     }
 
-    //Create bounded edge mask
-    const cv::Mat edgeMask(getEdgeCell(t_step, flipHorizontal, flipVertical),
-                           cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
-                           cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+    //Combine grids
+    for (size_t i = newGrid.size() - 1; i > 0; --i)
+    {
+        cv::Mat mask;
+        cv::bitwise_not(newGrid.at(i - 1), mask);
 
-    //Copy cell to grid
-    cv::bitwise_or(gridPart, mask, gridPart);
-    cv::bitwise_or(edgeGridPart, edgeMask, edgeGridPart);
+        cv::bitwise_or(newGrid.at(i - 1), newGrid.at(i), newGrid.at(i - 1), mask);
+        cv::bitwise_or(newEdgeGrid.at(i - 1), newEdgeGrid.at(i), newEdgeGrid.at(i - 1), mask);
+    }
 
-    return true;
+    //Make black pixels transparent
+    UtilityFuncs::matMakeTransparent(newGrid.at(0), newGrid.at(0), 0);
+
+    grid = QImage(newGrid.at(0).data, gridWidth, gridHeight, static_cast<int>(newGrid.at(0).step),
+                  QImage::Format_RGBA8888).copy();
+    edgeGrid = QImage(newEdgeGrid.at(0).data, gridWidth, gridHeight,
+                      static_cast<int>(newEdgeGrid.at(0).step), QImage::Format_RGBA8888).copy();
 }
 
 //Generates grid preview
 void GridViewer::updateGrid()
 {
+    gridState.clear();
     //No cell mask, no grid
     if (cells.at(0).getCellMask(0, 0).empty())
     {
@@ -173,12 +214,10 @@ void GridViewer::updateGrid()
     }
 
     //Calculate grid size
-    const int gridHeight = (!background.isNull()) ? background.height()
+    const int gridHeight = (!background.isNull()) ? detailImage.rows
                                                   : static_cast<int>(height() / MIN_ZOOM);
-    const int gridWidth = (!background.isNull()) ? background.width()
+    const int gridWidth = (!background.isNull()) ? detailImage.cols
                                                  : static_cast<int>(width() / MIN_ZOOM);
-
-    std::vector<cv::Mat> newGrid, newEdgeGrid;
 
     //Stores grid bounds starting with full grid size
     std::vector<GridBounds> bounds(2);
@@ -188,12 +227,11 @@ void GridViewer::updateGrid()
 
     for (size_t step = 0; step <= sizeSteps && !bounds.at(activeBound).empty(); ++step)
     {
-        //Create new grids
-        newGrid.push_back(cv::Mat(gridHeight, gridWidth, CV_8UC1, cv::Scalar(0)));
-        newEdgeGrid.push_back(cv::Mat(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0)));
-
-        const cv::Point gridSize = CellGrid::calculateGridSize(cells.at(step),
+        const cv::Point gridSize = CellGrid::calculateGridSize(detailCells.at(step),
                                                                gridWidth, gridHeight, padGrid);
+
+        gridState.push_back(CellGrid::stepBestFit(static_cast<size_t>(gridSize.y),
+                            std::vector<CellGrid::cellBestFit>(static_cast<size_t>(gridSize.x))));
 
         //Clear previous bounds
         bounds.at(!activeBound).clear();
@@ -202,12 +240,18 @@ void GridViewer::updateGrid()
         {
             for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
             {
-                if (!createCell(cells.at(step), detailCells.at(step), x, y,
-                                newGrid.at(step), newEdgeGrid.at(step),
-                                bounds.at(activeBound), step))
+                //Find cell state
+                const CellGrid::cellBestFit state = findCellState(x, y, bounds.at(activeBound),
+                                                                  step);
+
+                gridState.at(step).at(static_cast<size_t>(y + padGrid)).
+                        at(static_cast<size_t>(x + padGrid)) = state;
+
+                //If cell entropy exceeded
+                if (state.second)
                 {
                     //Get cell bounds
-                    cv::Rect cellBounds = CellGrid::getRectAt(cells.at(step), x, y);
+                    cv::Rect cellBounds = CellGrid::getRectAt(detailCells.at(step), x, y);
 
                     //Bound cell within grid dimensions
                     int yStart = std::clamp(cellBounds.y, 0, gridHeight);
@@ -239,23 +283,8 @@ void GridViewer::updateGrid()
             bounds.at(activeBound).mergeBounds();
     }
 
-    //Combine grids
-    for (size_t i = newGrid.size() - 1; i > 0; --i)
-    {
-        cv::Mat mask;
-        cv::bitwise_not(newGrid.at(i - 1), mask);
-
-        cv::bitwise_or(newGrid.at(i - 1), newGrid.at(i), newGrid.at(i - 1), mask);
-        cv::bitwise_or(newEdgeGrid.at(i - 1), newEdgeGrid.at(i), newEdgeGrid.at(i - 1), mask);
-    }
-
-    //Make black pixels transparent
-    UtilityFuncs::matMakeTransparent(newGrid.at(0), newGrid.at(0), 0);
-
-    grid = QImage(newGrid.at(0).data, gridWidth, gridHeight, static_cast<int>(newGrid.at(0).step),
-                  QImage::Format_RGBA8888).copy();
-    edgeGrid = QImage(newEdgeGrid.at(0).data, gridWidth, gridHeight,
-                      static_cast<int>(newEdgeGrid.at(0).step), QImage::Format_RGBA8888).copy();
+    createGrid(gridState, (!background.isNull()) ? backImage.rows : gridHeight,
+                          (!background.isNull()) ? backImage.cols : gridWidth);
     update();
 }
 
@@ -280,8 +309,6 @@ void GridViewer::setCellShape(const CellShape &t_cellShape)
 
         //Update detail cell
         setDetail(detail, true);
-        //Update size steps for all cells
-        setSizeSteps(sizeSteps, true);
     }
     else
     {
@@ -386,7 +413,16 @@ void GridViewer::setDetail(const int t_detail, const bool t_reset)
             const int cellSize = cells.at(0).getCellMask(0, 0).rows;
             detailCells.at(0) = cells.at(0).resized(cellSize * detail, cellSize * detail);
         }
+
+        //Update size steps for all cells
+        setSizeSteps(sizeSteps, true);
     }
+}
+
+//Returns state of current grid
+CellGrid::mosaicBestFit GridViewer::getGridState() const
+{
+    return gridState;
 }
 
 //Called when the spinbox value is changed, updates grid zoom

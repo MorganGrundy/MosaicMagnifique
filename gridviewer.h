@@ -11,6 +11,7 @@
 
 #include "cellshape.h"
 #include "gridbounds.h"
+#include "cellgrid.h"
 
 class GridViewer : public QWidget
 {
@@ -29,6 +30,8 @@ public:
 
     void setDetail(const int t_detail = 100, const bool t_reset = false);
 
+    CellGrid::mosaicBestFit getGridState() const;
+
 public slots:
     void zoomChanged(double t_value);
     void edgeDetectChanged(int t_state);
@@ -39,10 +42,15 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
 
 private:
-    bool createCell(const CellShape &t_cellShape, const CellShape &t_detailCellShape,
-                    const int t_x, const int t_y,
+    bool createCell(const int t_x, const int t_y,
                     cv::Mat &t_grid, cv::Mat &t_edgeGrid, const GridBounds &t_bounds,
                     size_t t_step = 0);
+
+    CellGrid::cellBestFit findCellState(const int x, const int y, const GridBounds &t_bounds,
+                                        const size_t t_step = 0) const;
+
+    void createGrid(const CellGrid::mosaicBestFit &states,
+                    const int gridHeight, const int gridWidth);
 
     cv::Mat &getEdgeCell(size_t t_sizeStep, bool t_flipHorizontal, bool t_flipVertical);
 
@@ -69,6 +77,8 @@ private:
     double zoom;
 
     const int padGrid = 2;
+
+    CellGrid::mosaicBestFit gridState;
 };
 
 #endif // GRIDVIEWER_H

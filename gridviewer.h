@@ -62,7 +62,7 @@ private:
 
     size_t sizeSteps;
 
-    cv::Mat backImage, detailImage;
+    cv::Mat backImage;
     QImage background;
 
     double detail;

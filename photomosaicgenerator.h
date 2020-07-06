@@ -24,7 +24,9 @@ public:
     void setMode(const Mode t_mode = Mode::RGB_EUCLIDEAN);
 
     void setCellShape(const CellShape &t_cellShape);
+    void setGridState(const CellGrid::mosaicBestFit &t_gridState);
     void setSizeSteps(const size_t t_steps);
+
     void setRepeat(int t_repeatRange = 0, int t_repeatAddition = 0);
 
     cv::Mat generate();
@@ -41,6 +43,7 @@ private:
     Mode m_mode;
 
     CellShape m_cellShape;
+    CellGrid::mosaicBestFit m_gridState;
     size_t sizeSteps;
 
     int m_repeatRange, m_repeatAddition;
@@ -48,22 +51,18 @@ private:
     std::pair<cv::Mat, std::vector<cv::Mat>> resizeAndCvtColor();
     void resizeImages(std::vector<cv::Mat> &t_images, const double t_ratio = 0.5);
 
-    CellGrid::cellBestFit
-    findCellBestFit(const CellShape &t_cellShape, const int x, const int y, const bool t_pad,
-                    const size_t t_step, const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
-                    const CellGrid::stepBestFit &t_grid,
-                    const GridBounds &t_bounds) const;
+    std::optional<size_t> findCellBestFit(const CellShape &t_cellShape,
+                                          const CellShape &t_detailCellShape,
+                                          const int x, const int y, const bool t_pad,
+                                          const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
+                                          const CellGrid::stepBestFit &t_grid) const;
 
     int findBestFitEuclidean(const cv::Mat &cell, const cv::Mat &mask,
                              const std::vector<cv::Mat> &library,
-                             const std::map<size_t, int> &repeats,
-                             const int yStart, const int yEnd,
-                             const int xStart, const int xEnd) const;
+                             const std::map<size_t, int> &repeats, const cv::Rect &t_bounds) const;
     int findBestFitCIEDE2000(const cv::Mat &cell, const cv::Mat &mask,
                              const std::vector<cv::Mat> &library,
-                             const std::map<size_t, int> &repeats,
-                             const int yStart, const int yEnd,
-                             const int xStart, const int xEnd) const;
+                             const std::map<size_t, int> &repeats, const cv::Rect &t_bounds) const;
 
     std::map<size_t, int> calculateRepeats(const CellGrid::stepBestFit &grid,
                                            const int x, const int y) const;

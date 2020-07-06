@@ -965,8 +965,9 @@ void MainWindow::generatePhotomosaic()
     else if (ui->comboMode->currentText() == "CIEDE2000")
         generator.setMode(PhotomosaicGenerator::Mode::CIEDE2000);
 
-    if (ui->checkCellShape->isChecked())
-        generator.setCellShape(ui->widgetCellShapeViewer->getCellShape());
+    generator.setCellShape(ui->widgetGridPreview->getCellShape());
+
+    generator.setGridState(ui->widgetGridPreview->getGridState());
 
     generator.setSizeSteps(ui->spinMinCellSize->getHalveSteps());
 

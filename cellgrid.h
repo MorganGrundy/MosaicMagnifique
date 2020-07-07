@@ -13,6 +13,8 @@ public:
     typedef std::vector<std::vector<cellBestFit>> stepBestFit;
     typedef std::vector<stepBestFit> mosaicBestFit;
 
+    static const int PAD_GRID = 2;
+
     static cv::Point calculateGridSize(const CellShape &t_cellShape,
                                        const int t_imageWidth, const int t_imageHeight,
                                        const int t_pad);

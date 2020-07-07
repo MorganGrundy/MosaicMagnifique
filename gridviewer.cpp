@@ -110,7 +110,7 @@ CellGrid::cellBestFit GridViewer::findCellState(const int x, const int y,
 
         //Calculate if and how current cell is flipped
         auto [flipHorizontal, flipVertical] = CellGrid::getFlipStateAt(cells.at(t_step),
-                x, y, padGrid);
+                                                                       x, y, CellGrid::PAD_GRID);
 
         //Resizes bounded rect for detail cells
         const cv::Rect boundedDetailRect(boundedRect.x * detail, boundedRect.y * detail,
@@ -147,14 +147,16 @@ void GridViewer::createGrid(const CellGrid::mosaicBestFit &states,
         newEdgeGrid.push_back(cv::Mat(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0)));
 
         //For all cells
-        for (int y = -padGrid; y < static_cast<int>(states.at(step).size()) - padGrid; ++y)
+        for (int y = -CellGrid::PAD_GRID;
+             y < static_cast<int>(states.at(step).size()) - CellGrid::PAD_GRID; ++y)
         {
-            for (int x = -padGrid;
-                 x < static_cast<int>(states.at(step).at(y + padGrid).size()) - padGrid; ++x)
+            for (int x = -CellGrid::PAD_GRID;
+                 x < static_cast<int>(states.at(step).at(y + CellGrid::PAD_GRID).size())
+                         - CellGrid::PAD_GRID; ++x)
             {
                 //Cell in valid state
-                if (states.at(step).at(static_cast<size_t>(y + padGrid)).
-                        at(static_cast<size_t>(x + padGrid)).first.has_value())
+                if (states.at(step).at(y + CellGrid::PAD_GRID).
+                    at(x + CellGrid::PAD_GRID).first.has_value())
                 {
                     const cv::Rect unboundedRect = CellGrid::getRectAt(cells.at(step), x, y);
 
@@ -175,7 +177,7 @@ void GridViewer::createGrid(const CellGrid::mosaicBestFit &states,
 
                     //Calculate if and how current cell is flipped
                     auto [flipHorizontal, flipVertical] = CellGrid::getFlipStateAt(cells.at(step),
-                            x, y, padGrid);
+                                                                        x, y, CellGrid::PAD_GRID);
 
                     //Create bounded mask
                     const cv::Mat mask(cells.at(step).getCellMask(flipHorizontal, flipVertical),
@@ -240,7 +242,8 @@ void GridViewer::updateGrid()
     for (size_t step = 0; step <= sizeSteps && !bounds.at(activeBound).empty(); ++step)
     {
         const cv::Point gridSize = CellGrid::calculateGridSize(cells.at(step),
-                                                               gridWidth, gridHeight, padGrid);
+                                                               gridWidth, gridHeight,
+                                                               CellGrid::PAD_GRID);
 
         gridState.push_back(CellGrid::stepBestFit(static_cast<size_t>(gridSize.y),
                             std::vector<CellGrid::cellBestFit>(static_cast<size_t>(gridSize.x))));
@@ -248,16 +251,16 @@ void GridViewer::updateGrid()
         //Clear previous bounds
         bounds.at(!activeBound).clear();
         //Create all cells in grid
-        for (int y = -padGrid; y < gridSize.y - padGrid; ++y)
+        for (int y = -CellGrid::PAD_GRID; y < gridSize.y - CellGrid::PAD_GRID; ++y)
         {
-            for (int x = -padGrid; x < gridSize.x - padGrid; ++x)
+            for (int x = -CellGrid::PAD_GRID; x < gridSize.x - CellGrid::PAD_GRID; ++x)
             {
                 //Find cell state
                 const CellGrid::cellBestFit state = findCellState(x, y, bounds.at(activeBound),
                                                                   step);
 
-                gridState.at(step).at(static_cast<size_t>(y + padGrid)).
-                        at(static_cast<size_t>(x + padGrid)) = state;
+                gridState.at(step).at(static_cast<size_t>(y + CellGrid::PAD_GRID)).
+                        at(static_cast<size_t>(x + CellGrid::PAD_GRID)) = state;
 
                 //If cell entropy exceeded
                 if (state.second)

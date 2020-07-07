@@ -76,8 +76,6 @@ private:
     const double MIN_ZOOM, MAX_ZOOM;
     double zoom;
 
-    const int padGrid = 2;
-
     CellGrid::mosaicBestFit gridState;
 };
 

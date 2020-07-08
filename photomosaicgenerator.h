@@ -35,7 +35,6 @@ public:
 #endif
 
 private:
-
     cv::Mat m_img;
     std::vector<cv::Mat> m_lib;
 
@@ -51,11 +50,17 @@ private:
     std::pair<cv::Mat, std::vector<cv::Mat>> resizeAndCvtColor();
     void resizeImages(std::vector<cv::Mat> &t_images, const double t_ratio = 0.5);
 
-    std::optional<size_t> findCellBestFit(const CellShape &t_cellShape,
-                                          const CellShape &t_detailCellShape,
-                                          const int x, const int y, const bool t_pad,
-                                          const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
-                                          const CellGrid::stepBestFit &t_grid) const;
+    std::optional<size_t> findCellBestFit(
+        const CellShape &t_cellShape,
+        const CellShape &t_detailCellShape,
+        const int x, const int y, const bool t_pad,
+        const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
+        const CellGrid::stepBestFit &t_grid) const;
+
+    std::pair<cv::Mat, cv::Rect> getCellAt(
+        const CellShape &t_cellShape, const CellShape &t_detailCellShape,
+        const int x, const int y, const bool t_pad,
+        const cv::Mat &t_image) const;
 
     int findBestFitEuclidean(const cv::Mat &cell, const cv::Mat &mask,
                              const std::vector<cv::Mat> &library,

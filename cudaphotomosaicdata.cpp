@@ -35,6 +35,7 @@ bool CUDAPhotomosaicData::mallocData()
     size_t freeMem, totalMem;
     gpuErrchk(cudaMemGetInfo(&freeMem, &totalMem));
 
+    const size_t cellStateSize = noCellImages;
     const size_t cellImageSize = fullSize;
     const size_t libraryImagesSize = fullSize * noLibraryImages;
     const size_t maskImagesSize = pixelCount * 4;
@@ -45,12 +46,13 @@ bool CUDAPhotomosaicData::mallocData()
     const size_t lowestVariantSize = 1;
 
     const size_t bestFitSize = noCellImages;
-    const size_t repeatsSize = noLibraryImages;
+    const size_t repeatsSize = noLibraryImages + 1;
     const size_t targetAreaSize = 4;
 
     const size_t staticMemory = (libraryImagesSize + maskImagesSize) * sizeof(uchar)
-            + (maxVariantSize) * sizeof(double)
-            + (bestFitSize + repeatsSize) * sizeof(size_t);
+                                + (maxVariantSize) * sizeof(double)
+                                + (bestFitSize + repeatsSize) * sizeof(size_t)
+                                + (cellStateSize) * sizeof(bool);
 
     const size_t batchScalingMemory = (cellImageSize) * sizeof(uchar)
             + (variantsSize + reductionMemorySize + lowestVariantSize) * sizeof(double)
@@ -70,23 +72,31 @@ bool CUDAPhotomosaicData::mallocData()
     noOfBatch = (noCellImages + batchSize - 1) / batchSize;
     batchSize = (noCellImages + noOfBatch - 1) / noOfBatch;
 
-    //Allocate host memory for cell images, target areas, and best fits
+    //Allocate host memory for cell states, cell images, target areas, and best fits
+    if (!(HOST_cellStates = static_cast<bool *>(malloc(cellStateSize * sizeof(bool)))))
+    {
+        fprintf(stderr, "Failed to allocate host memory for cell states\n");
+        return false;
+    }
     if (!(HOST_cellImages = static_cast<uchar *>(malloc(cellImageSize * noCellImages
                                                         * sizeof(uchar)))))
     {
         fprintf(stderr, "Failed to allocate host memory for cell images\n");
+        free(HOST_cellStates);
         return false;
     }
     if (!(HOST_targetAreas = static_cast<size_t *>(malloc(targetAreaSize * noCellImages
                                                           * sizeof(size_t)))))
     {
         fprintf(stderr, "Failed to allocate host memory for target areas\n");
+        free(HOST_cellStates);
         free(HOST_cellImages);
         return false;
     }
-    if (!(HOST_bestFit = static_cast<size_t *>(malloc(noCellImages * sizeof(size_t)))))
+    if (!(HOST_bestFit = static_cast<size_t *>(malloc(bestFitSize * sizeof(size_t)))))
     {
         fprintf(stderr, "Failed to allocate host memory for best fits\n");
+        free(HOST_cellStates);
         free(HOST_cellImages);
         free(HOST_targetAreas);
         return false;
@@ -131,6 +141,7 @@ void CUDAPhotomosaicData::freeData()
     if (dataIsAllocated)
     {
         //Free host memory
+        free(HOST_cellStates);
         free(HOST_cellImages);
         free(HOST_targetAreas);
         free(HOST_bestFit);
@@ -202,6 +213,19 @@ size_t CUDAPhotomosaicData::getBatchIndex()
 size_t CUDAPhotomosaicData::getBlockSize()
 {
     return blockSize;
+}
+
+//Set cell state at given position to given state
+void CUDAPhotomosaicData::setCellState(const int x, const int y, const bool t_cellState)
+{
+    const size_t index = y * noXCellImages + x;
+    HOST_cellStates[index] = t_cellState;
+}
+
+//Returns pointer to cell state on GPU
+bool CUDAPhotomosaicData::getCellState(const size_t i)
+{
+    return HOST_cellStates[currentBatchIndex * batchSize + i];
 }
 
 //Copies cell image to host memory at index i

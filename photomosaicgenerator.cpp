@@ -267,14 +267,20 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
         {
             for (int x = -CellGrid::PAD_GRID; x < gridWidth - CellGrid::PAD_GRID; ++x)
             {
-                fprintf(stderr, "(x: %i, y: %i)\n", x, y);
                 //If user hits cancel in QProgressDialog then return empty mat
                 if (wasCanceled())
                     return cv::Mat();
 
+                const CellGrid::cellBestFit &cellState = m_gridState.at(step).
+                                                         at(y + CellGrid::PAD_GRID).
+                                                         at(x + CellGrid::PAD_GRID);
+
+                //Set cell state
+                photomosaicData.setCellState(x + CellGrid::PAD_GRID, y + CellGrid::PAD_GRID,
+                                             cellState.first.has_value());
+
                 //If cell entropy not exceeded
-                if (m_gridState.at(step).at(y + CellGrid::PAD_GRID).
-                    at(x + CellGrid::PAD_GRID).first.has_value())
+                if (cellState.first.has_value())
                 {
                     const size_t index = (y + CellGrid::PAD_GRID) * gridWidth
                                          + (x + CellGrid::PAD_GRID);
@@ -305,6 +311,12 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
         {
             for (int x = -CellGrid::PAD_GRID; x < gridWidth - CellGrid::PAD_GRID; ++x)
             {
+                CellGrid::cellBestFit &cellState = m_gridState.at(step).at(y + CellGrid::PAD_GRID).
+                                                   at(x + CellGrid::PAD_GRID);
+                //Skip if cell invalid
+                if (!cellState.first.has_value())
+                    continue;
+
                 const size_t index = (y + CellGrid::PAD_GRID) * gridWidth + x + CellGrid::PAD_GRID;
                 if (resultFlat[index] >= resizedLib.size())
                 {
@@ -312,8 +324,7 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
                     continue;
                 }
 
-                m_gridState.at(step).at(y + CellGrid::PAD_GRID).at(x + CellGrid::PAD_GRID).first
-                    = resultFlat[index];
+                cellState.first = resultFlat[index];
             }
         }
 

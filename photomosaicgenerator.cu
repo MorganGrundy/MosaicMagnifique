@@ -255,6 +255,10 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
         for (size_t i = 0; i < batchSize
              && batchIndex * batchSize + i < photomosaicData.noCellImages; ++i)
         {
+            //Skip if cell invalid
+            if (!photomosaicData.getCellState(i))
+                continue;
+
             const int x = (batchIndex * batchSize + static_cast<int>(i))
                     % static_cast<int>(photomosaicData.noXCellImages);
             const int y = (batchIndex * batchSize + static_cast<int>(i))
@@ -296,6 +300,10 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
         for (size_t i = 0; i < batchSize
              && batchIndex * batchSize + i < photomosaicData.noCellImages; ++i)
         {
+            //Skip if cell invalid
+            if (!photomosaicData.getCellState(i))
+                continue;
+
             //Calculate repeats
             photomosaicData.clearRepeats();
             const int x = (batchIndex * batchSize + static_cast<int>(i))

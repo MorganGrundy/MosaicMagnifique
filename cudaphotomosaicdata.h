@@ -49,6 +49,11 @@ public:
     //Returns block size
     size_t getBlockSize();
 
+    //Set cell state at given position to given state
+    void setCellState(const int x, const int y, const bool t_cellState);
+    //Returns cell state
+    bool getCellState(const size_t i);
+
     //Copies cell image to host memory at index i
     void setCellImage(const cv::Mat &t_cellImage, const size_t i);
     //Returns pointer to cell image on GPU
@@ -117,6 +122,8 @@ private:
     size_t batchSize; //Number of cells in each batch
 
     size_t blockSize; //Number of threads per block
+
+    bool *HOST_cellStates; //Stores on host all cell states
 
     uchar *HOST_cellImages; //Stores on host all cells from main image
     uchar *cellImage; //Stores cells from the main image

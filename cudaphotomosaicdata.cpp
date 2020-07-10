@@ -46,7 +46,7 @@ bool CUDAPhotomosaicData::mallocData()
     const size_t lowestVariantSize = 1;
 
     const size_t bestFitSize = noCellImages;
-    const size_t repeatsSize = noLibraryImages + 1;
+    const size_t repeatsSize = noLibraryImages;
     const size_t targetAreaSize = 4;
 
     const size_t staticMemory = (libraryImagesSize + maskImagesSize) * sizeof(uchar)
@@ -126,6 +126,10 @@ bool CUDAPhotomosaicData::mallocData()
     repeats = bestFit + bestFitSize;
     targetArea = repeats + repeatsSize;
 
+    //Batch allocate memory for cell states
+    gpuErrchk(cudaMalloc(&mem, cellStateSize * sizeof(bool)));
+    cellStates = static_cast<bool *>(mem);
+
     //Set max variant
     const double doubleMax = std::numeric_limits<double>::max();
     gpuErrchk(cudaMemcpy(maxVariant, &doubleMax, sizeof(double), cudaMemcpyHostToDevice));
@@ -152,8 +156,11 @@ void CUDAPhotomosaicData::freeData()
         //Free double memory (variants, reduction memory, lowest variant)
         gpuErrchk(cudaFree(variants));
 
-        //Free size_t memory (best fit, repeats, target
+        //Free size_t memory (best fit, repeats, target area)
         gpuErrchk(cudaFree(bestFit));
+
+        //Free bool memory (cell states)
+        gpuErrchk(cudaFree(cellStates));
 
         dataIsAllocated = false;
         currentBatchIndex = -1;
@@ -222,10 +229,22 @@ void CUDAPhotomosaicData::setCellState(const int x, const int y, const bool t_ce
     HOST_cellStates[index] = t_cellState;
 }
 
-//Returns pointer to cell state on GPU
+//Returns cell state
 bool CUDAPhotomosaicData::getCellState(const size_t i)
 {
     return HOST_cellStates[currentBatchIndex * batchSize + i];
+}
+
+//Copies cell state to GPU
+void CUDAPhotomosaicData::copyCellState()
+{
+    gpuErrchk(cudaMemcpy(cellStates, HOST_cellStates, noCellImages, cudaMemcpyHostToDevice));
+}
+
+//Returns pointer to cell state on GPU
+bool *CUDAPhotomosaicData::getCellStateGPU(const size_t i)
+{
+    return cellStates + currentBatchIndex * batchSize + i;
 }
 
 //Copies cell image to host memory at index i

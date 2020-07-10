@@ -275,7 +275,7 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
                                                          at(y + CellGrid::PAD_GRID).
                                                          at(x + CellGrid::PAD_GRID);
 
-                //Set cell state
+                //Set cell state on host
                 photomosaicData.setCellState(x + CellGrid::PAD_GRID, y + CellGrid::PAD_GRID,
                                              cellState.first.has_value());
 
@@ -301,6 +301,9 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
                 setValue(value() + progressStep);
             }
         }
+
+        //Copy cell states to GPU
+        photomosaicData.copyCellState();
 
         //Calculate differences
         differenceGPU(photomosaicData);

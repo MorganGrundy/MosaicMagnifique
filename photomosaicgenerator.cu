@@ -191,7 +191,7 @@ void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, size_t noLibIm, uchar *
 
 //Calculates repeats in range
 __global__
-void calculateRepeats(size_t *bestFit, size_t *repeats,
+void calculateRepeats(bool *states, size_t *bestFit, size_t *repeats,
                       const int noXCell,
                       const int leftRange, const int rightRange,
                       const int upRange,
@@ -201,12 +201,14 @@ void calculateRepeats(size_t *bestFit, size_t *repeats,
     {
         for (int x = -leftRange; x <= rightRange; ++x)
         {
-            repeats[bestFit[y * noXCell + x]] += repeatAddition;
+            if (states[y * noXCell + x])
+                repeats[bestFit[y * noXCell + x]] += repeatAddition;
         }
     }
     for (int x = -leftRange; x < 0; ++x)
     {
-        repeats[bestFit[x]] += repeatAddition;
+        if (states[x])
+            repeats[bestFit[x]] += repeatAddition;
     }
 }
 
@@ -316,7 +318,8 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
                                             static_cast<int>(photomosaicData.noXCellImages)
                                             - x - 1);
             const int upRange = std::min(static_cast<int>(photomosaicData.repeatRange), y);
-            calculateRepeats<<<1, 1>>>(photomosaicData.getBestFit(i), photomosaicData.getRepeats(),
+            calculateRepeats<<<1, 1>>>(photomosaicData.getCellStateGPU(i),
+                                       photomosaicData.getBestFit(i), photomosaicData.getRepeats(),
                                        static_cast<int>(photomosaicData.noXCellImages),
                                        leftRange, rightRange, upRange,
                                        photomosaicData.repeatAddition);

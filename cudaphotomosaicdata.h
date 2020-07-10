@@ -53,6 +53,10 @@ public:
     void setCellState(const int x, const int y, const bool t_cellState);
     //Returns cell state
     bool getCellState(const size_t i);
+    //Copies cell state to GPU
+    void copyCellState();
+    //Returns cell state on GPU
+    bool *getCellStateGPU(const size_t i);
 
     //Copies cell image to host memory at index i
     void setCellImage(const cv::Mat &t_cellImage, const size_t i);
@@ -124,6 +128,7 @@ private:
     size_t blockSize; //Number of threads per block
 
     bool *HOST_cellStates; //Stores on host all cell states
+    bool *cellStates; //Stores all cell states
 
     uchar *HOST_cellImages; //Stores on host all cells from main image
     uchar *cellImage; //Stores cells from the main image

@@ -238,9 +238,17 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
         const int gridHeight = static_cast<int>(m_gridState.at(step).size());
         const int gridWidth = static_cast<int>(m_gridState.at(step).at(0).size());
 
+        //Count number of valid cells
+        size_t validCells = 0;
+        for (auto row: m_gridState.at(step))
+            validCells += std::count_if(row.begin(), row.end(),
+                                        [](const CellGrid::cellBestFit &bestFit) {
+                                            return bestFit.first.has_value();
+                                        });
+
         //Allocate memory on GPU and copy data from CPU to GPU
         CUDAPhotomosaicData photomosaicData(detailCellSize, resizedLib.front().channels(),
-                                            gridWidth, gridHeight, resizedLib.size(),
+                                            gridWidth, gridHeight, validCells, resizedLib.size(),
                                             m_mode != PhotomosaicGenerator::Mode::CIEDE2000,
                                             m_repeatRange, m_repeatAddition);
         if (!photomosaicData.mallocData())
@@ -262,6 +270,9 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
         //Stores cell image
         cv::Mat cell(detailCellSize, detailCellSize, m_img.type(), cv::Scalar(0));
 
+        //Stores next data index
+        size_t dataIndex = 0;
+
         //Copy input from host to CUDA device
         for (int y = -CellGrid::PAD_GRID; y < gridHeight - CellGrid::PAD_GRID; ++y)
         {
@@ -282,20 +293,23 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
                 //If cell entropy not exceeded
                 if (cellState.first.has_value())
                 {
-                    const size_t index = (y + CellGrid::PAD_GRID) * gridWidth
-                                         + (x + CellGrid::PAD_GRID);
+                    //Sets cell position
+                    photomosaicData.setCellPosition(x + CellGrid::PAD_GRID, y + CellGrid::PAD_GRID,
+                                                    dataIndex);
 
                     //Move cell image to GPU
                     auto [cell, cellBounds] = getCellAt(normalCellShape, detailCellShape,
                                                         x, y, CellGrid::PAD_GRID, mainImage);
-                    photomosaicData.setCellImage(cell, index);
+                    photomosaicData.setCellImage(cell, dataIndex);
 
                     //Move cell bounds to GPU
                     const size_t targetArea[4]{static_cast<size_t>(cellBounds.y),
                                                static_cast<size_t>(cellBounds.br().y),
                                                static_cast<size_t>(cellBounds.x),
                                                static_cast<size_t>(cellBounds.br().x)};
-                    photomosaicData.setTargetArea(targetArea, index);
+                    photomosaicData.setTargetArea(targetArea, dataIndex);
+
+                    ++dataIndex;
                 }
 
                 setValue(value() + progressStep);

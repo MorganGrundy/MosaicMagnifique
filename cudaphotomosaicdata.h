@@ -23,6 +23,7 @@ class CUDAPhotomosaicData
 public:
     CUDAPhotomosaicData(const size_t t_imageSize, const size_t t_imageChannels,
                         const size_t t_noXCellImages, const size_t t_noYCellImages,
+                        const size_t t_noValidCells,
                         const size_t t_noLibraryImages,
                         const bool t_euclidean,
                         const size_t t_repeatRange, const size_t t_repeatAddition);
@@ -48,6 +49,11 @@ public:
 
     //Returns block size
     size_t getBlockSize();
+
+    //Set cell position at given index
+    void setCellPosition(const size_t x, const size_t y, const size_t i);
+    //Returns cell position at given index
+    std::pair<size_t, size_t> getCellPosition(const size_t i);
 
     //Set cell state at given position to given state
     void setCellState(const int x, const int y, const bool t_cellState);
@@ -112,6 +118,7 @@ public:
 
     const size_t noXCellImages, noYCellImages; //Number of cell images per row and column
     const size_t noCellImages; //Number of cell images
+    const size_t noValidCells; //Number of valid cells
     const size_t noLibraryImages; //Number of library images
 
     const bool euclidean; //Which difference formula to use euclidean (true) or CIEDE2000 (false)
@@ -126,6 +133,8 @@ private:
     size_t batchSize; //Number of cells in each batch
 
     size_t blockSize; //Number of threads per block
+
+    std::vector<std::pair<size_t, size_t>> HOST_cellPositions; //Stores on host cell positions
 
     bool *HOST_cellStates; //Stores on host all cell states
     bool *cellStates; //Stores all cell states

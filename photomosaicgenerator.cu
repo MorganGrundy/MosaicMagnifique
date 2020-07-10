@@ -255,16 +255,15 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
     {
         //Loop over all data in batch
         for (size_t i = 0; i < batchSize
-             && batchIndex * batchSize + i < photomosaicData.noCellImages; ++i)
+             && batchIndex * batchSize + i < photomosaicData.noValidCells; ++i)
         {
             //Skip if cell invalid
             if (!photomosaicData.getCellState(i))
                 continue;
 
-            const int x = (batchIndex * batchSize + static_cast<int>(i))
-                    % static_cast<int>(photomosaicData.noXCellImages);
-            const int y = (batchIndex * batchSize + static_cast<int>(i))
-                    / static_cast<int>(photomosaicData.noXCellImages);
+            std::pair<size_t, size_t> pos = photomosaicData.getCellPosition(i);
+            const int x = static_cast<int>(pos.first);
+            const int y = static_cast<int>(pos.second);
 
             //Calculate differences
             numBlocks = (photomosaicData.pixelCount * photomosaicData.noLibraryImages
@@ -300,7 +299,7 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
 
         //Loop over all data in batch
         for (size_t i = 0; i < batchSize
-             && batchIndex * batchSize + i < photomosaicData.noCellImages; ++i)
+             && batchIndex * batchSize + i < photomosaicData.noValidCells; ++i)
         {
             //Skip if cell invalid
             if (!photomosaicData.getCellState(i))
@@ -308,10 +307,10 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
 
             //Calculate repeats
             photomosaicData.clearRepeats();
-            const int x = (batchIndex * batchSize + static_cast<int>(i))
-                    % static_cast<int>(photomosaicData.noXCellImages);
-            const int y = (batchIndex * batchSize + static_cast<int>(i))
-                    / static_cast<int>(photomosaicData.noXCellImages);
+
+            std::pair<size_t, size_t> pos = photomosaicData.getCellPosition(i);
+            const int x = static_cast<int>(pos.first);
+            const int y = static_cast<int>(pos.second);
 
             const int leftRange = std::min(static_cast<int>(photomosaicData.repeatRange), x);
             const int rightRange = std::min(static_cast<int>(photomosaicData.repeatRange),

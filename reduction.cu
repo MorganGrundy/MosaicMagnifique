@@ -119,8 +119,12 @@ void reduceAddData(CUDAPhotomosaicData &photomosaicData, cudaStream_t stream[8],
         //Loop over all data in batch
         for (size_t i = 0; i < photomosaicData.getBatchSize()
              && photomosaicData.getBatchIndex() * photomosaicData.getBatchSize() + i
-             < photomosaicData.noCellImages; ++i)
+             < photomosaicData.noValidCells; ++i)
         {
+            //Skip if cell invalid
+            if (!photomosaicData.getCellState(i))
+                continue;
+
             //Reduce
             switch (threads)
             {
@@ -218,8 +222,12 @@ void reduceAddData(CUDAPhotomosaicData &photomosaicData, cudaStream_t stream[8],
         //Loop over all data in batch
         for (size_t i = 0; i < photomosaicData.getBatchSize()
              && photomosaicData.getBatchIndex() * photomosaicData.getBatchSize() + i
-             < photomosaicData.noCellImages; ++i)
+             < photomosaicData.noValidCells; ++i)
         {
+            //Skip if cell invalid
+            if (!photomosaicData.getCellState(i))
+                continue;
+
             //Copy results back to data
             gpuErrchk(cudaMemcpy(photomosaicData.getVariants(i),
                                  photomosaicData.getReductionMemory(i),

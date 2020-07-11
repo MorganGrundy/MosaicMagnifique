@@ -10,6 +10,8 @@
 #include <QSpacerItem>
 
 #include "cellshape.h"
+#include "gridbounds.h"
+#include "cellgrid.h"
 
 class GridViewer : public QWidget
 {
@@ -22,7 +24,13 @@ public:
     void setCellShape(const CellShape &t_cellShape);
     CellShape &getCellShape();
 
+    void setSizeSteps(const size_t t_steps, const bool t_reset = false);
+
     void setBackground(const cv::Mat &t_background);
+
+    void setDetail(const int t_detail = 100, const bool t_reset = false);
+
+    CellGrid::mosaicBestFit getGridState() const;
 
 public slots:
     void zoomChanged(double t_value);
@@ -34,21 +42,41 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
 
 private:
+    bool createCell(const int t_x, const int t_y,
+                    cv::Mat &t_grid, cv::Mat &t_edgeGrid, const GridBounds &t_bounds,
+                    size_t t_step = 0);
+
+    CellGrid::cellBestFit findCellState(const int x, const int y, const GridBounds &t_bounds,
+                                        const size_t t_step = 0) const;
+
+    void createGrid(const CellGrid::mosaicBestFit &states,
+                    const int gridHeight, const int gridWidth);
+
+    cv::Mat &getEdgeCell(size_t t_sizeStep, bool t_flipHorizontal, bool t_flipVertical);
+
     QGridLayout *layout;
     QLabel *labelZoom;
     QDoubleSpinBox *spinZoom;
     QCheckBox *checkEdgeDetect;
     QSpacerItem *hSpacer, *vSpacer;
 
-    CellShape cellShape;
+    size_t sizeSteps;
+
+    cv::Mat backImage;
     QImage background;
 
-    cv::Mat cell, cellFlippedH, cellFlippedV, cellFlippedHV;
-    cv::Mat edgeCell, edgeCellFlippedH, edgeCellFlippedV, edgeCellFlippedHV;
+    double detail;
+
+    std::vector<CellShape> cells;
+    std::vector<CellShape> detailCells;
+    std::vector<std::vector<cv::Mat>> edgeCells;
+
     QImage grid, edgeGrid;
 
     const double MIN_ZOOM, MAX_ZOOM;
     double zoom;
+
+    CellGrid::mosaicBestFit gridState;
 };
 
 #endif // GRIDVIEWER_H

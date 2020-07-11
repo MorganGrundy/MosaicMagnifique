@@ -14,10 +14,13 @@ TARGET = Photomosaic
 DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
+	cellgrid.cpp \
 	cellshape.cpp \
 	colourvisualisation.cpp \
 	customgraphicsview.cpp \
+	gridbounds.cpp \
     gridviewer.cpp \
+	halvingspinbox.cpp \
 	imageviewer.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -25,10 +28,13 @@ SOURCES += \
     utilityfuncs.cpp
 
 HEADERS += \
+	cellgrid.h \
 	cellshape.h \
 	colourvisualisation.h \
 	customgraphicsview.h \
+	gridbounds.h \
     gridviewer.h \
+	halvingspinbox.h \
 	imageviewer.h \
     mainwindow.h \
     photomosaicgenerator.h \

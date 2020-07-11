@@ -57,9 +57,6 @@ public:
 
     bool empty() const;
 
-    cv::Point calculateGridSize(const int t_imageWidth, const int t_imageHeight, const int t_pad);
-    cv::Rect getRectAt(const int t_x, const int t_y) const;
-
 private:
     cv::Mat m_cellMask;
     cv::Mat m_cellMaskFlippedH, m_cellMaskFlippedV, m_cellMaskFlippedHV;

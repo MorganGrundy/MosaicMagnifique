@@ -191,7 +191,7 @@ void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, size_t noLibIm, uchar *
 
 //Calculates repeats in range
 __global__
-void calculateRepeats(size_t *bestFit, size_t *repeats,
+void calculateRepeats(bool *states, size_t *bestFit, size_t *repeats,
                       const int noXCell,
                       const int leftRange, const int rightRange,
                       const int upRange,
@@ -201,12 +201,14 @@ void calculateRepeats(size_t *bestFit, size_t *repeats,
     {
         for (int x = -leftRange; x <= rightRange; ++x)
         {
-            repeats[bestFit[y * noXCell + x]] += repeatAddition;
+            if (states[y * noXCell + x])
+                repeats[bestFit[y * noXCell + x]] += repeatAddition;
         }
     }
     for (int x = -leftRange; x < 0; ++x)
     {
-        repeats[bestFit[x]] += repeatAddition;
+        if (states[x])
+            repeats[bestFit[x]] += repeatAddition;
     }
 }
 
@@ -253,12 +255,15 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
     {
         //Loop over all data in batch
         for (size_t i = 0; i < batchSize
-             && batchIndex * batchSize + i < photomosaicData.noCellImages; ++i)
+             && batchIndex * batchSize + i < photomosaicData.noValidCells; ++i)
         {
-            const int x = (batchIndex * batchSize + static_cast<int>(i))
-                    % static_cast<int>(photomosaicData.noXCellImages);
-            const int y = (batchIndex * batchSize + static_cast<int>(i))
-                    / static_cast<int>(photomosaicData.noXCellImages);
+            //Skip if cell invalid
+            if (!photomosaicData.getCellState(i))
+                continue;
+
+            std::pair<size_t, size_t> pos = photomosaicData.getCellPosition(i);
+            const int x = static_cast<int>(pos.first);
+            const int y = static_cast<int>(pos.second);
 
             //Calculate differences
             numBlocks = (photomosaicData.pixelCount * photomosaicData.noLibraryImages
@@ -294,21 +299,26 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
 
         //Loop over all data in batch
         for (size_t i = 0; i < batchSize
-             && batchIndex * batchSize + i < photomosaicData.noCellImages; ++i)
+             && batchIndex * batchSize + i < photomosaicData.noValidCells; ++i)
         {
+            //Skip if cell invalid
+            if (!photomosaicData.getCellState(i))
+                continue;
+
             //Calculate repeats
             photomosaicData.clearRepeats();
-            const int x = (batchIndex * batchSize + static_cast<int>(i))
-                    % static_cast<int>(photomosaicData.noXCellImages);
-            const int y = (batchIndex * batchSize + static_cast<int>(i))
-                    / static_cast<int>(photomosaicData.noXCellImages);
+
+            std::pair<size_t, size_t> pos = photomosaicData.getCellPosition(i);
+            const int x = static_cast<int>(pos.first);
+            const int y = static_cast<int>(pos.second);
 
             const int leftRange = std::min(static_cast<int>(photomosaicData.repeatRange), x);
             const int rightRange = std::min(static_cast<int>(photomosaicData.repeatRange),
                                             static_cast<int>(photomosaicData.noXCellImages)
                                             - x - 1);
             const int upRange = std::min(static_cast<int>(photomosaicData.repeatRange), y);
-            calculateRepeats<<<1, 1>>>(photomosaicData.getBestFit(i), photomosaicData.getRepeats(),
+            calculateRepeats<<<1, 1>>>(photomosaicData.getCellStateGPU(i),
+                                       photomosaicData.getBestFit(i), photomosaicData.getRepeats(),
                                        static_cast<int>(photomosaicData.noXCellImages),
                                        leftRange, rightRange, upRange,
                                        photomosaicData.repeatAddition);

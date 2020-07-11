@@ -151,6 +151,44 @@ std::vector<cv::Mat> UtilityFuncs::batchResizeMat(const std::vector<cv::Mat> &im
     return result;
 }
 
+//Takes a grayscale image as src
+//Converts to RGBA and makes pixels of target value transparent
+//Returns result in dst
+void UtilityFuncs::matMakeTransparent(const cv::Mat &t_src, cv::Mat &t_dst, const int t_targetValue)
+{
+    cv::Mat tmp;
+    cv::cvtColor(t_src, tmp, cv::COLOR_GRAY2RGBA);
+
+    //Make black pixels transparent
+    int channels = tmp.channels();
+    int nRows = tmp.rows;
+    int nCols = tmp.cols * channels;
+    if (tmp.isContinuous())
+    {
+        nCols *= nRows;
+        nRows = 1;
+    }
+    uchar *p;
+    for (int i = 0; i < nRows; ++i)
+    {
+        p = tmp.ptr<uchar>(i);
+        for (int j = 0; j < nCols; j += channels)
+        {
+            if (p[j] == t_targetValue)
+                p[j+3] = 0;
+        }
+    }
+    t_dst = tmp;
+}
+
+//Replace dst with edge detected version of src
+void UtilityFuncs::edgeDetect(const cv::Mat &t_src, cv::Mat &t_dst)
+{
+    float kernelData[9] = {-1, -1, -1, -1, 8, -1, -1, -1, -1};
+    const cv::Mat kernel(3, 3, CV_32FC1, kernelData);
+    cv::filter2D(t_src, t_dst, -1, kernel, cv::Point(-1, -1), 0, cv::BORDER_CONSTANT);
+}
+
 //Outputs a OpenCV mat to a QDataStream
 //Can be used to save a OpenCV mat to a file
 QDataStream &operator<<(QDataStream &t_out, const cv::Mat &t_mat)

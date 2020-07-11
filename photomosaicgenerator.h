@@ -6,6 +6,8 @@
 
 #include "cellshape.h"
 #include "utilityfuncs.h"
+#include "gridbounds.h"
+#include "cellgrid.h"
 
 class PhotomosaicGenerator : private QProgressDialog
 {
@@ -20,7 +22,11 @@ public:
     void setLibrary(const std::vector<cv::Mat> &t_lib);
     void setDetail(const int t_detail = 100);
     void setMode(const Mode t_mode = Mode::RGB_EUCLIDEAN);
+
     void setCellShape(const CellShape &t_cellShape);
+    void setGridState(const CellGrid::mosaicBestFit &t_gridState);
+    void setSizeSteps(const size_t t_steps);
+
     void setRepeat(int t_repeatRange = 0, int t_repeatAddition = 0);
 
     cv::Mat generate();
@@ -36,29 +42,38 @@ private:
     Mode m_mode;
 
     CellShape m_cellShape;
+    CellGrid::mosaicBestFit m_gridState;
+    size_t sizeSteps;
 
     int m_repeatRange, m_repeatAddition;
 
     std::pair<cv::Mat, std::vector<cv::Mat>> resizeAndCvtColor();
+    void resizeImages(std::vector<cv::Mat> &t_images, const double t_ratio = 0.5);
+
+    std::optional<size_t> findCellBestFit(
+        const CellShape &t_cellShape,
+        const CellShape &t_detailCellShape,
+        const int x, const int y, const bool t_pad,
+        const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
+        const CellGrid::stepBestFit &t_grid) const;
+
+    std::pair<cv::Mat, cv::Rect> getCellAt(
+        const CellShape &t_cellShape, const CellShape &t_detailCellShape,
+        const int x, const int y, const bool t_pad,
+        const cv::Mat &t_image) const;
 
     int findBestFitEuclidean(const cv::Mat &cell, const cv::Mat &mask,
                              const std::vector<cv::Mat> &library,
-                             const std::map<size_t, int> &repeats,
-                             const int yStart, const int yEnd,
-                             const int xStart, const int xEnd) const;
+                             const std::map<size_t, int> &repeats, const cv::Rect &t_bounds) const;
     int findBestFitCIEDE2000(const cv::Mat &cell, const cv::Mat &mask,
                              const std::vector<cv::Mat> &library,
-                             const std::map<size_t, int> &repeats,
-                             const int yStart, const int yEnd,
-                             const int xStart, const int xEnd) const;
+                             const std::map<size_t, int> &repeats, const cv::Rect &t_bounds) const;
 
-    std::map<size_t, int> calculateRepeats(const std::vector<std::vector<size_t>> &grid,
-                                           const cv::Point &gridSize,
+    std::map<size_t, int> calculateRepeats(const CellGrid::stepBestFit &grid,
                                            const int x, const int y) const;
 
     double degToRad(const double deg) const;
-    cv::Mat combineResults(const cv::Point gridSize,
-                           const std::vector<std::vector<cv::Mat>> &result);
+    cv::Mat combineResults(const CellGrid::mosaicBestFit &results);
 };
 
 #endif // PHOTOMOSAICGENERATOR_H

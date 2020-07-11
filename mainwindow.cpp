@@ -113,6 +113,11 @@ MainWindow::MainWindow(QWidget *t_parent)
             SLOT(photomosaicHeightChanged(int)));
     connect(ui->buttonPhotomosaicSize, SIGNAL(released()), this, SLOT(loadImageSize()));
 
+    connect(ui->spinDetail, SIGNAL(valueChanged(int)), this, SLOT(photomosaicDetailChanged(int)));
+
+    connect(ui->spinCellSize, SIGNAL(valueChanged(int)), this, SLOT(cellSizeChanged(int)));
+    connect(ui->spinMinCellSize, SIGNAL(valueChanged(int)),
+            this, SLOT(minimumCellSizeChanged(int)));
     connect(ui->checkCellShape, SIGNAL(clicked(bool)), this, SLOT(enableCellShape(bool)));
 
     connect(ui->buttonGenerate, SIGNAL(released()), this, SLOT(generatePhotomosaic()));
@@ -157,13 +162,13 @@ MainWindow::MainWindow(QWidget *t_parent)
     ui->comboCUDA->hide();
 #endif
 
-    //Sets grid preview to default square cell
-    ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(ui->spinCellSize->value(),
-                                                          ui->spinCellSize->value(),
-                                                          CV_8UC1, cv::Scalar(255))));
+    //Sets default cell size
+    ui->spinCellSize->setValue(100);
 
     //tabWidget starts on Generator Settings tab
     ui->tabWidget->setCurrentIndex(2);
+
+    ui->spinDetail->setValue(100);
 }
 
 MainWindow::~MainWindow()
@@ -183,6 +188,7 @@ void MainWindow::tabChanged(int t_index)
                                                 .resized(ui->spinCellSize->value(),
                                                          ui->spinCellSize->value()));
             cellShapeChanged = false;
+            ui->widgetGridPreview->updateGrid();
         }
     }
 }
@@ -200,23 +206,27 @@ void MainWindow::saveCellShape()
 
     //mcs = Mosaic Cell Shape
     QString filename = QFileDialog::getExistingDirectory(this, tr("Save custom cell shape"));
-    filename += '/' + ui->lineCustomCellName->text() + ".mcs";
-    qDebug() << filename;
-    QFile file(filename);
-    file.open(QIODevice::WriteOnly);
-    if (file.isWritable())
+
+    if (!filename.isNull())
     {
-        QDataStream out(&file);
-        //Write header with "magic number" and version
-        out << static_cast<quint32>(CellShape::MCS_MAGIC);
-        out << static_cast<qint32>(CellShape::MCS_VERSION);
+        filename += '/' + ui->lineCustomCellName->text() + ".mcs";
+        qDebug() << filename;
+        QFile file(filename);
+        file.open(QIODevice::WriteOnly);
+        if (file.isWritable())
+        {
+            QDataStream out(&file);
+            //Write header with "magic number" and version
+            out << static_cast<quint32>(CellShape::MCS_MAGIC);
+            out << static_cast<qint32>(CellShape::MCS_VERSION);
 
-        out.setVersion(QDataStream::Qt_5_13);
+            out.setVersion(QDataStream::Qt_5_13);
 
-        //Write cell mask and offsets
-        out << cellShape;
+            //Write cell mask and offsets
+            out << cellShape;
 
-        file.close();
+            file.close();
+        }
     }
 }
 
@@ -226,88 +236,93 @@ void MainWindow::loadCellShape()
     //mcs = Mosaic Cell Shape
     QString filename = QFileDialog::getOpenFileName(this, tr("Select custom cell shape to load"),
                                                     "", tr("Mosaic Cell Shape") + " (*.mcs)");
-    QFile file(filename);
-    file.open(QIODevice::ReadOnly);
-    if (file.isReadable())
+
+    if (!filename.isNull())
     {
-        QDataStream in(&file);
-
-        //Read and check magic number
-        quint32 magic;
-        in >> magic;
-        if (magic != CellShape::MCS_MAGIC)
+        QFile file(filename);
+        file.open(QIODevice::ReadOnly);
+        if (file.isReadable())
         {
-            QMessageBox msgBox;
-            msgBox.setText(filename + tr(" is not a valid .mcs file"));
-            msgBox.exec();
-            return;
-        }
+            QDataStream in(&file);
 
-        //Read the version
-        qint32 version;
-        in >> version;
-        if (version <= CellShape::MCS_VERSION && version >= 4)
-            in.setVersion(QDataStream::Qt_5_13);
-        else
-        {
-            QMessageBox msgBox;
-            if (version < UtilityFuncs::VERSION_NO)
-                msgBox.setText(filename + tr(" uses an outdated file version"));
+            //Read and check magic number
+            quint32 magic;
+            in >> magic;
+            if (magic != CellShape::MCS_MAGIC)
+            {
+                QMessageBox msgBox;
+                msgBox.setText(filename + tr(" is not a valid .mcs file"));
+                msgBox.exec();
+                return;
+            }
+
+            //Read the version
+            qint32 version;
+            in >> version;
+            if (version <= CellShape::MCS_VERSION && version >= 4)
+                in.setVersion(QDataStream::Qt_5_13);
             else
-                msgBox.setText(filename + tr(" uses a newer file version"));
-            msgBox.exec();
-            return;
+            {
+                QMessageBox msgBox;
+                if (version < UtilityFuncs::VERSION_NO)
+                    msgBox.setText(filename + tr(" uses an outdated file version"));
+                else
+                    msgBox.setText(filename + tr(" uses a newer file version"));
+                msgBox.exec();
+                return;
+            }
+
+            //Read cell mask and offsets
+            CellShape cellShape;
+            std::pair<CellShape &, const int> cellAndVersion(cellShape, version);
+            in >> cellAndVersion;
+            //Blocks signals to prevent grid update until all values loaded
+            //Update cell spacing
+            ui->spinCustomCellSpacingCol->blockSignals(true);
+            ui->spinCustomCellSpacingRow->blockSignals(true);
+            ui->spinCustomCellSpacingCol->setValue(cellShape.getColSpacing());
+            ui->spinCustomCellSpacingRow->setValue(cellShape.getRowSpacing());
+            ui->spinCustomCellSpacingCol->blockSignals(false);
+            ui->spinCustomCellSpacingRow->blockSignals(false);
+
+            //Update cell alternate spacing
+            ui->checkCellAlternateColSpacing->setChecked(
+                        cellShape.getAlternateColSpacing() != cellShape.getColSpacing());
+            ui->checkCellAlternateRowSpacing->setChecked(
+                        cellShape.getAlternateRowSpacing() != cellShape.getRowSpacing());
+            ui->spinCellAlternateColSpacing->blockSignals(true);
+            ui->spinCellAlternateRowSpacing->blockSignals(true);
+            ui->spinCellAlternateColSpacing->setValue(cellShape.getAlternateColSpacing());
+            ui->spinCellAlternateRowSpacing->setValue(cellShape.getAlternateRowSpacing());
+            ui->spinCellAlternateColSpacing->blockSignals(false);
+            ui->spinCellAlternateRowSpacing->blockSignals(false);
+
+            //Update cell alternate offset
+            ui->spinCustomCellAlternateColOffset->blockSignals(true);
+            ui->spinCustomCellAlternateRowOffset->blockSignals(true);
+            ui->spinCustomCellAlternateColOffset->setValue(cellShape.getAlternateColOffset());
+            ui->spinCustomCellAlternateRowOffset->setValue(cellShape.getAlternateRowOffset());
+            ui->spinCustomCellAlternateColOffset->blockSignals(false);
+            ui->spinCustomCellAlternateRowOffset->blockSignals(false);
+
+            //Update cell flip states
+            //No need to block signals as setChecked does not trigger clicked signal
+            ui->checkCellColFlipH->setChecked(cellShape.getColFlipHorizontal());
+            ui->checkCellColFlipV->setChecked(cellShape.getColFlipVertical());
+            ui->checkCellRowFlipH->setChecked(cellShape.getRowFlipHorizontal());
+            ui->checkCellRowFlipV->setChecked(cellShape.getRowFlipVertical());
+
+            //Extract cell name from filename
+            QString cellName = filename.right(filename.size() - filename.lastIndexOf('/') - 1);
+            cellName.chop(4);
+            ui->lineCustomCellName->setText(cellName);
+
+            file.close();
+
+            ui->widgetCellShapeViewer->setCellShape(cellShape);
+            ui->widgetCellShapeViewer->updateGrid();
+            cellShapeChanged = true;
         }
-
-        //Read cell mask and offsets
-        CellShape cellShape;
-        std::pair<CellShape &, const int> cellAndVersion(cellShape, version);
-        in >> cellAndVersion;
-        //Blocks signals to prevent grid update until all values loaded
-        //Update cell spacing
-        ui->spinCustomCellSpacingCol->blockSignals(true);
-        ui->spinCustomCellSpacingRow->blockSignals(true);
-        ui->spinCustomCellSpacingCol->setValue(cellShape.getColSpacing());
-        ui->spinCustomCellSpacingRow->setValue(cellShape.getRowSpacing());
-        ui->spinCustomCellSpacingCol->blockSignals(false);
-        ui->spinCustomCellSpacingRow->blockSignals(false);
-
-        //Update cell alternate spacing
-        ui->checkCellAlternateColSpacing->setChecked(
-                    cellShape.getAlternateColSpacing() != cellShape.getColSpacing());
-        ui->checkCellAlternateRowSpacing->setChecked(
-                    cellShape.getAlternateRowSpacing() != cellShape.getRowSpacing());
-        ui->spinCellAlternateColSpacing->blockSignals(true);
-        ui->spinCellAlternateRowSpacing->blockSignals(true);
-        ui->spinCellAlternateColSpacing->setValue(cellShape.getAlternateColSpacing());
-        ui->spinCellAlternateRowSpacing->setValue(cellShape.getAlternateRowSpacing());
-        ui->spinCellAlternateColSpacing->blockSignals(false);
-        ui->spinCellAlternateRowSpacing->blockSignals(false);
-
-        //Update cell alternate offset
-        ui->spinCustomCellAlternateColOffset->blockSignals(true);
-        ui->spinCustomCellAlternateRowOffset->blockSignals(true);
-        ui->spinCustomCellAlternateColOffset->setValue(cellShape.getAlternateColOffset());
-        ui->spinCustomCellAlternateRowOffset->setValue(cellShape.getAlternateRowOffset());
-        ui->spinCustomCellAlternateColOffset->blockSignals(false);
-        ui->spinCustomCellAlternateRowOffset->blockSignals(false);
-
-        //Update cell flip states
-        //No need to block signals as setChecked does not trigger clicked signal
-        ui->checkCellColFlipH->setChecked(cellShape.getColFlipHorizontal());
-        ui->checkCellColFlipV->setChecked(cellShape.getColFlipVertical());
-        ui->checkCellRowFlipH->setChecked(cellShape.getRowFlipHorizontal());
-        ui->checkCellRowFlipV->setChecked(cellShape.getRowFlipVertical());
-
-        //Extract cell name from filename
-        QString cellName = filename.right(filename.size() - filename.lastIndexOf('/') - 1);
-        cellName.chop(4);
-        ui->lineCustomCellName->setText(cellName);
-
-        file.close();
-
-        ui->widgetCellShapeViewer->setCellShape(cellShape);
-        cellShapeChanged = true;
     }
 }
 
@@ -332,6 +347,7 @@ void MainWindow::selectCellMask()
         CellShape cellShape(tmp);
 
         ui->widgetCellShapeViewer->setCellShape(cellShape);
+        ui->widgetCellShapeViewer->updateGrid();
         ui->lineCellMask->setText(filename);
 
         ui->spinCustomCellSpacingCol->blockSignals(true);
@@ -583,30 +599,34 @@ void MainWindow::saveLibrary()
     //mil = Mosaic Image Library
     QString filename = QFileDialog::getSaveFileName(this, tr("Save image library"), "",
                                                     tr("Mosaic Image Library") + " (*.mil)");
-    QFile file(filename);
-    file.open(QIODevice::WriteOnly);
-    if (file.isWritable())
-    {
-        QDataStream out(&file);
-        //Write header with "magic number" and version
-        out << static_cast<quint32>(UtilityFuncs::MIL_MAGIC);
-        out << static_cast<qint32>(UtilityFuncs::MIL_VERSION);
 
-        out.setVersion(QDataStream::Qt_5_13);
-        //Write images and names
-        out << imageSize;
-        out << allImages.size();
-        progressBar->setRange(0, allImages.size());
-        progressBar->setValue(0);
-        progressBar->setVisible(true);
-        for (auto listItem: allImages.keys())
+    if (!filename.isNull())
+    {
+        QFile file(filename);
+        file.open(QIODevice::WriteOnly);
+        if (file.isWritable())
         {
-            out << allImages[listItem].first;
-            out << listItem.text();
-            progressBar->setValue(progressBar->value() + 1);
+            QDataStream out(&file);
+            //Write header with "magic number" and version
+            out << static_cast<quint32>(UtilityFuncs::MIL_MAGIC);
+            out << static_cast<qint32>(UtilityFuncs::MIL_VERSION);
+
+            out.setVersion(QDataStream::Qt_5_13);
+            //Write images and names
+            out << imageSize;
+            out << allImages.size();
+            progressBar->setRange(0, allImages.size());
+            progressBar->setValue(0);
+            progressBar->setVisible(true);
+            for (auto listItem: allImages.keys())
+            {
+                out << allImages[listItem].first;
+                out << listItem.text();
+                progressBar->setValue(progressBar->value() + 1);
+            }
+            progressBar->setVisible(false);
+            file.close();
         }
-        progressBar->setVisible(false);
-        file.close();
     }
 }
 
@@ -616,72 +636,78 @@ void MainWindow::loadLibrary()
     // mil = Mosaic Image Library
     QString filename = QFileDialog::getOpenFileName(this, tr("Select image library to load"), "",
                                                     tr("Mosaic Image Library") + " (*.mil)");
-    QFile file(filename);
-    file.open(QIODevice::ReadOnly);
-    if (file.isReadable())
+
+    if (!filename.isNull())
     {
-        QDataStream in(&file);
-
-        //Read and check magic number
-        quint32 magic;
-        in >> magic;
-        if (magic != UtilityFuncs::MIL_MAGIC)
+        QFile file(filename);
+        file.open(QIODevice::ReadOnly);
+        if (file.isReadable())
         {
-            QMessageBox msgBox;
-            msgBox.setText(filename + tr(" is not a valid .mil file"));
-            msgBox.exec();
-            return;
-        }
+            QDataStream in(&file);
 
-        //Read the version
-        qint32 version;
-        in >> version;
-        if (version == UtilityFuncs::MIL_VERSION)
-            in.setVersion(QDataStream::Qt_5_13);
-        else
-        {
-            QMessageBox msgBox;
-            if (version < UtilityFuncs::VERSION_NO)
-                msgBox.setText(filename + tr(" uses an outdated file version"));
+            //Read and check magic number
+            quint32 magic;
+            in >> magic;
+            if (magic != UtilityFuncs::MIL_MAGIC)
+            {
+                QMessageBox msgBox;
+                msgBox.setText(filename + tr(" is not a valid .mil file"));
+                msgBox.exec();
+                return;
+            }
+
+            //Read the version
+            qint32 version;
+            in >> version;
+            if (version == UtilityFuncs::MIL_VERSION)
+                in.setVersion(QDataStream::Qt_5_13);
             else
-                msgBox.setText(filename + tr(" uses a newer file version"));
-            msgBox.exec();
-            return;
+            {
+                QMessageBox msgBox;
+                if (version < UtilityFuncs::VERSION_NO)
+                    msgBox.setText(filename + tr(" uses an outdated file version"));
+                else
+                    msgBox.setText(filename + tr(" uses a newer file version"));
+                msgBox.exec();
+                return;
+            }
+
+            allImages.clear();
+            ui->listPhoto->clear();
+
+            //Read images and names
+            in >> imageSize;
+            ui->spinLibCellSize->setValue(imageSize);
+            ui->spinCellSize->setValue(imageSize);
+            int numberOfImage;
+            in >> numberOfImage;
+            progressBar->setRange(0, numberOfImage);
+            progressBar->setValue(0);
+            progressBar->setVisible(true);
+            while (numberOfImage > 0)
+            {
+                --numberOfImage;
+                cv::Mat image;
+                in >> image;
+
+                QString name;
+                in >> name;
+
+                QListWidgetItem listItem(QIcon(UtilityFuncs::matToQPixmap(image)), name);
+                ui->listPhoto->addItem(new QListWidgetItem(listItem));
+
+                allImages.insert(listItem, {image, image});
+                progressBar->setValue(progressBar->value() + 1);
+            }
+            progressBar->setVisible(false);
+
+            file.close();
+
+            //Update tab widget to show new image count next to Image Library
+            ui->tabWidget->setTabText(1, tr("Image Library (")
+                                      + QString::number(allImages.size()) + ")");
         }
-
-        allImages.clear();
-        ui->listPhoto->clear();
-
-        //Read images and names
-        in >> imageSize;
-        ui->spinLibCellSize->setValue(imageSize);
-        ui->spinCellSize->setValue(imageSize);
-        int numberOfImage;
-        in >> numberOfImage;
-        progressBar->setRange(0, numberOfImage);
-        progressBar->setValue(0);
-        progressBar->setVisible(true);
-        while (numberOfImage > 0)
-        {
-            --numberOfImage;
-            cv::Mat image;
-            in >> image;
-
-            QString name;
-            in >> name;
-
-            QListWidgetItem listItem(QIcon(UtilityFuncs::matToQPixmap(image)), name);
-            ui->listPhoto->addItem(new QListWidgetItem(listItem));
-
-            allImages.insert(listItem, {image, image});
-            progressBar->setValue(progressBar->value() + 1);
-        }
-        progressBar->setVisible(false);
-
-        file.close();
     }
-    //Update tab widget to show new image count next to Image Library
-    ui->tabWidget->setTabText(1, tr("Image Library (") + QString::number(allImages.size()) + ")");
 }
 
 //Prompts user for a main image
@@ -701,6 +727,7 @@ void MainWindow::selectMainImage()
         if (mainImage.empty())
         {
             ui->widgetGridPreview->setBackground(cv::Mat());
+            ui->widgetGridPreview->updateGrid();
             QMessageBox msgBox;
             msgBox.setText(tr("The main image \"") + ui->lineMainImage->text() +
                            tr("\" failed to load"));
@@ -720,9 +747,9 @@ void MainWindow::selectMainImage()
         ui->widgetGridPreview->setBackground(
                     UtilityFuncs::resizeImage(mainImage, mainImage.rows, mainImage.cols,
                                               UtilityFuncs::ResizeType::INCLUSIVE));
+
+        ui->widgetGridPreview->updateGrid();
     }
-    else
-        ui->widgetGridPreview->setBackground(cv::Mat());
 }
 
 //Opens colour visualisation window
@@ -773,6 +800,7 @@ void MainWindow::photomosaicWidthChanged(int i)
                         UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
                                                   ui->spinPhotomosaicWidth->value(),
                                                   UtilityFuncs::ResizeType::INCLUSIVE));
+            ui->widgetGridPreview->updateGrid();
         }
     }
 }
@@ -786,15 +814,16 @@ void MainWindow::photomosaicHeightChanged(int i)
         ui->spinPhotomosaicWidth->blockSignals(true);
         ui->spinPhotomosaicWidth->setValue(static_cast<int>(i * photomosaicSizeRatio));
         ui->spinPhotomosaicWidth->blockSignals(false);
+    }
 
-        //Updates image size in grid preview
-        if (!mainImage.empty())
-        {
-            ui->widgetGridPreview->setBackground(
-                        UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
-                                                  ui->spinPhotomosaicWidth->value(),
-                                                  UtilityFuncs::ResizeType::INCLUSIVE));
-        }
+    //Updates image size in grid preview
+    if (!mainImage.empty())
+    {
+        ui->widgetGridPreview->setBackground(
+                    UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
+                                              ui->spinPhotomosaicWidth->value(),
+                                              UtilityFuncs::ResizeType::INCLUSIVE));
+        ui->widgetGridPreview->updateGrid();
     }
 }
 
@@ -814,31 +843,72 @@ void MainWindow::loadImageSize()
         photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) /
                 ui->spinPhotomosaicHeight->value();
 
-
         //Resize main image to user entered size
         ui->widgetGridPreview->setBackground(
                     UtilityFuncs::resizeImage(mainImage, mainImage.rows, mainImage.cols,
                                               UtilityFuncs::ResizeType::INCLUSIVE));
+        ui->widgetGridPreview->updateGrid();
     }
 }
 
-//Enables/disables non-square cell shapes, GUI widgets for choosing
-void MainWindow::enableCellShape(bool t_state)
+//Updates grid preview when detail level changes
+void MainWindow::photomosaicDetailChanged(int i)
 {
-    if (t_state)
+    ui->widgetGridPreview->setDetail(i);
+    if (!mainImage.empty())
+        ui->widgetGridPreview->updateGrid();
+}
+
+//Updates grid preview and minimum cell size spin box
+void MainWindow::cellSizeChanged(int t_value)
+{
+    ui->lineCellShape->setEnabled(ui->checkCellShape->isChecked());
+    if (ui->checkCellShape->isChecked())
     {
-        ui->lineCellShape->setEnabled(true);
         ui->widgetGridPreview->setCellShape(ui->widgetCellShapeViewer->getCellShape().
                                             resized(ui->spinCellSize->value(),
                                                     ui->spinCellSize->value()));
     }
     else
     {
-        ui->lineCellShape->setEnabled(false);
         ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(ui->spinCellSize->value(),
                                                               ui->spinCellSize->value(),
                                                               CV_8UC1, cv::Scalar(255))));
     }
+
+    ui->spinMinCellSize->blockSignals(true);
+    ui->spinMinCellSize->setMaximum(t_value);
+    ui->spinMinCellSize->stepBy(0);
+    ui->spinMinCellSize->blockSignals(false);
+
+    ui->widgetGridPreview->setSizeSteps(ui->spinMinCellSize->getHalveSteps());
+    ui->widgetGridPreview->updateGrid();
+}
+
+//Updates grid preview
+void MainWindow::minimumCellSizeChanged(int /*t_value*/)
+{
+    ui->widgetGridPreview->setSizeSteps(ui->spinMinCellSize->getHalveSteps());
+    ui->widgetGridPreview->updateGrid();
+}
+
+//Enables/disables non-square cell shapes, GUI widgets for choosing
+void MainWindow::enableCellShape(bool t_state)
+{
+    ui->lineCellShape->setEnabled(t_state);
+    if (t_state)
+    {
+        ui->widgetGridPreview->setCellShape(ui->widgetCellShapeViewer->getCellShape().
+                                            resized(ui->spinCellSize->value(),
+                                                    ui->spinCellSize->value()));
+    }
+    else
+    {
+        ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(ui->spinCellSize->value(),
+                                                              ui->spinCellSize->value(),
+                                                              CV_8UC1, cv::Scalar(255))));
+    }
+    ui->widgetGridPreview->updateGrid();
 }
 
 //Changes CUDA device
@@ -895,8 +965,11 @@ void MainWindow::generatePhotomosaic()
     else if (ui->comboMode->currentText() == "CIEDE2000")
         generator.setMode(PhotomosaicGenerator::Mode::CIEDE2000);
 
-    if (ui->checkCellShape->isChecked())
-        generator.setCellShape(ui->widgetCellShapeViewer->getCellShape());
+    generator.setCellShape(ui->widgetGridPreview->getCellShape());
+
+    generator.setGridState(ui->widgetGridPreview->getGridState());
+
+    generator.setSizeSteps(ui->spinMinCellSize->getHalveSteps());
 
     generator.setRepeat(ui->spinRepeatRange->value(), ui->spinRepeatAddition->value());
 

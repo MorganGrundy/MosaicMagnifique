@@ -163,12 +163,12 @@ MainWindow::MainWindow(QWidget *t_parent)
 #endif
 
     //Sets default cell size
-    ui->spinCellSize->setValue(100);
+    ui->spinCellSize->setValue(128);
 
     //tabWidget starts on Generator Settings tab
     ui->tabWidget->setCurrentIndex(2);
 
-    ui->spinDetail->setValue(100);
+    ui->spinDetail->setValue(128);
 }
 
 MainWindow::~MainWindow()
@@ -446,16 +446,20 @@ void MainWindow::cellRowFlipVerticalChanged(bool t_state)
 //Enables/disables cell alternate row spacing
 void MainWindow::enableCellAlternateRowSpacing(bool t_state)
 {
-    ui->spinCellAlternateRowSpacing->setEnabled(t_state);
+    if (!t_state)
+        ui->spinCellAlternateRowSpacing->setValue(ui->spinCustomCellSpacingRow->value());
 
+    ui->spinCellAlternateRowSpacing->setEnabled(t_state);
     cellShapeChanged = true;
 }
 
 //Enables/disables cell alternate column spacing
 void MainWindow::enableCellAlternateColSpacing(bool t_state)
 {
-    ui->spinCellAlternateColSpacing->setEnabled(t_state);
+    if (!t_state)
+        ui->spinCellAlternateColSpacing->setValue(ui->spinCustomCellSpacingCol->value());
 
+    ui->spinCellAlternateColSpacing->setEnabled(t_state);
     cellShapeChanged = true;
 }
 

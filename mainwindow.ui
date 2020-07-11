@@ -75,7 +75,7 @@ border: 0px;
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideNone</enum>
@@ -960,7 +960,7 @@ border: 1px solid dimgray;
              <number>10000</number>
             </property>
             <property name="value">
-             <number>100</number>
+             <number>128</number>
             </property>
            </widget>
           </item>

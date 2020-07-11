@@ -9,7 +9,7 @@
 class CellGrid
 {
 public:
-    typedef std::pair<std::optional<size_t>, bool> cellBestFit;
+    typedef std::optional<size_t> cellBestFit;
     typedef std::vector<std::vector<cellBestFit>> stepBestFit;
     typedef std::vector<stepBestFit> mosaicBestFit;
 

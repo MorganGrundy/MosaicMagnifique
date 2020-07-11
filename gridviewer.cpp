@@ -66,9 +66,9 @@ void GridViewer::setEdgeDetect(bool t_state)
 }
 
 //Finds state of cell at current position and step in detail image
-CellGrid::cellBestFit GridViewer::findCellState(const int x, const int y,
-                                                const GridBounds &t_bounds,
-                                                const size_t t_step) const
+std::pair<CellGrid::cellBestFit, bool> GridViewer::findCellState(const int x, const int y,
+                                                                 const GridBounds &t_bounds,
+                                                                 const size_t t_step) const
 {
     const cv::Rect unboundedRect = CellGrid::getRectAt(cells.at(t_step), x, y);
 
@@ -156,7 +156,7 @@ void GridViewer::createGrid(const CellGrid::mosaicBestFit &states,
             {
                 //Cell in valid state
                 if (states.at(step).at(y + CellGrid::PAD_GRID).
-                    at(x + CellGrid::PAD_GRID).first.has_value())
+                    at(x + CellGrid::PAD_GRID).has_value())
                 {
                     const cv::Rect unboundedRect = CellGrid::getRectAt(cells.at(step), x, y);
 
@@ -256,14 +256,13 @@ void GridViewer::updateGrid()
             for (int x = -CellGrid::PAD_GRID; x < gridSize.x - CellGrid::PAD_GRID; ++x)
             {
                 //Find cell state
-                const CellGrid::cellBestFit state = findCellState(x, y, bounds.at(activeBound),
-                                                                  step);
+                const auto [bestFit, entropy] = findCellState(x, y, bounds.at(activeBound), step);
 
                 gridState.at(step).at(static_cast<size_t>(y + CellGrid::PAD_GRID)).
-                        at(static_cast<size_t>(x + CellGrid::PAD_GRID)) = state;
+                        at(static_cast<size_t>(x + CellGrid::PAD_GRID)) = bestFit;
 
                 //If cell entropy exceeded
-                if (state.second)
+                if (entropy)
                 {
                     //Get cell bounds
                     cv::Rect cellBounds = CellGrid::getRectAt(cells.at(step), x, y);

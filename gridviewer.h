@@ -46,8 +46,9 @@ private:
                     cv::Mat &t_grid, cv::Mat &t_edgeGrid, const GridBounds &t_bounds,
                     size_t t_step = 0);
 
-    CellGrid::cellBestFit findCellState(const int x, const int y, const GridBounds &t_bounds,
-                                        const size_t t_step = 0) const;
+    std::pair<CellGrid::cellBestFit, bool>
+    findCellState(const int x, const int y, const GridBounds &t_bounds,
+                  const size_t t_step = 0) const;
 
     void createGrid(const CellGrid::mosaicBestFit &states,
                     const int gridHeight, const int gridWidth);

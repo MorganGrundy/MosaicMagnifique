@@ -243,7 +243,7 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
         for (auto row: m_gridState.at(step))
             validCells += std::count_if(row.begin(), row.end(),
                                         [](const CellGrid::cellBestFit &bestFit) {
-                                            return bestFit.first.has_value();
+                                            return bestFit.has_value();
                                         });
 
         //Allocate memory on GPU and copy data from CPU to GPU
@@ -288,10 +288,10 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
 
                 //Set cell state on host
                 photomosaicData.setCellState(x + CellGrid::PAD_GRID, y + CellGrid::PAD_GRID,
-                                             cellState.first.has_value());
+                                             cellState.has_value());
 
-                //If cell entropy not exceeded
-                if (cellState.first.has_value())
+                //If cell valid
+                if (cellState.has_value())
                 {
                     //Sets cell position
                     photomosaicData.setCellPosition(x + CellGrid::PAD_GRID, y + CellGrid::PAD_GRID,
@@ -331,7 +331,7 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
                 CellGrid::cellBestFit &cellState = m_gridState.at(step).at(y + CellGrid::PAD_GRID).
                                                    at(x + CellGrid::PAD_GRID);
                 //Skip if cell invalid
-                if (!cellState.first.has_value())
+                if (!cellState.has_value())
                     continue;
 
                 const size_t index = (y + CellGrid::PAD_GRID) * gridWidth + x + CellGrid::PAD_GRID;
@@ -341,7 +341,7 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
                     continue;
                 }
 
-                cellState.first = resultFlat[index];
+                cellState = resultFlat[index];
             }
         }
 
@@ -437,13 +437,13 @@ cv::Mat PhotomosaicGenerator::generate()
                 if (wasCanceled())
                     return cv::Mat();
 
-                //If cell entropy not exceeded
+                //If cell is valid
                 if (m_gridState.at(step).at(y + CellGrid::PAD_GRID).
-                    at(x + CellGrid::PAD_GRID).first.has_value())
+                    at(x + CellGrid::PAD_GRID).has_value())
                 {
                     //Find cell best fit
                     m_gridState.at(step).at(static_cast<size_t>(y + CellGrid::PAD_GRID)).
-                            at(static_cast<size_t>(x + CellGrid::PAD_GRID)).first =
+                            at(static_cast<size_t>(x + CellGrid::PAD_GRID)) =
                             findCellBestFit(normalCellShape, detailCellShape, x, y,
                                             CellGrid::PAD_GRID, mainImage, resizedLib,
                                             m_gridState.at(step));
@@ -485,7 +485,7 @@ std::map<size_t, int> PhotomosaicGenerator::calculateRepeats(
         for (int repeatX = repeatStartX; repeatX <= repeatEndX; ++repeatX)
         {
             const std::optional<size_t> cell = grid.at(static_cast<size_t>(repeatY)).
-                    at(static_cast<size_t>(repeatX)).first;
+                    at(static_cast<size_t>(repeatX));
             if (cell.has_value())
             {
                 const auto it = repeats.find(cell.value());
@@ -501,7 +501,7 @@ std::map<size_t, int> PhotomosaicGenerator::calculateRepeats(
     for (int repeatX = repeatStartX; repeatX < x; ++repeatX)
     {
         const std::optional<size_t> cell = grid.at(static_cast<size_t>(y)).
-                at(static_cast<size_t>(repeatX)).first;
+                at(static_cast<size_t>(repeatX));
         if (cell.has_value())
         {
             const auto it = repeats.find(cell.value());
@@ -765,8 +765,8 @@ cv::Mat PhotomosaicGenerator::combineResults(const CellGrid::mosaicBestFit &resu
                 const CellGrid::cellBestFit &cellData = results.at(step).
                         at(static_cast<size_t>(y + CellGrid::PAD_GRID)).
                         at(static_cast<size_t>(x + CellGrid::PAD_GRID));
-                //Skip cells that are empty or entropy exceeded threshold
-                if (!cellData.first.has_value() || cellData.second)
+                //Skip invalid cells
+                if (!cellData.has_value())
                 {
                     //Increment progress bar
                     setValue(value() + progressStep);
@@ -796,7 +796,7 @@ cv::Mat PhotomosaicGenerator::combineResults(const CellGrid::mosaicBestFit &resu
                                           cellLocalBound);
 
                 //Adds cells to mosaic step
-                const cv::Mat libBounded(libImg.at(cellData.first.value()), cellLocalBound);
+                const cv::Mat libBounded(libImg.at(cellData.value()), cellLocalBound);
                 libBounded.copyTo(mosaicStep(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)),
                                   maskBounded);
 

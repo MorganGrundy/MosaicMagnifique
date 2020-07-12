@@ -1,3 +1,22 @@
+/*
+	Copyright © 2018-2020, Morgan Grundy
+
+	This file is part of Mosaic Magnifique.
+
+    Mosaic Magnifique is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mosaic Magnifique is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "photomosaicgenerator.h"
 
 #include <cmath>
@@ -193,7 +212,7 @@ std::pair<cv::Mat, cv::Rect> PhotomosaicGenerator::getCellAt(
 
     //Resize image cell to detail level
     cell = UtilityFuncs::resizeImage(cell, cellMask.rows, cellMask.cols,
-                                     UtilityFuncs::ResizeType::EXCLUSIVE);
+                                     UtilityFuncs::ResizeType::EXACT);
 
     //Resizes bounds of cell in local space to detail level
     const cv::Rect detailCellLocalBound(cellLocalBound.x * m_detail, cellLocalBound.y * m_detail,

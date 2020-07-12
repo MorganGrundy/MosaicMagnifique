@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Photomosaic</string>
+   <string>Mosaic Magnifique</string>
   </property>
   <property name="styleSheet">
    <string notr="true">QWidget {
@@ -75,7 +75,7 @@ border: 0px;
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideNone</enum>

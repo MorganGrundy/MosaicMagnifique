@@ -1,3 +1,22 @@
+/*
+	Copyright © 2018-2020, Morgan Grundy
+
+	This file is part of Mosaic Magnifique.
+
+    Mosaic Magnifique is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mosaic Magnifique is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -530,7 +549,7 @@ void MainWindow::addImages()
 
     //Resize to images to current library size
     images = UtilityFuncs::batchResizeMat(originalImages, imageSize, imageSize,
-                                          UtilityFuncs::ResizeType::EXCLUSIVE, progressBar);
+                                          UtilityFuncs::ResizeType::EXACT, progressBar);
 
     auto nameIt = names.cbegin();
     auto imageIt = images.cbegin();
@@ -581,7 +600,7 @@ void MainWindow::updateCellSize()
         images.push_back(image.second);
 
     images = UtilityFuncs::batchResizeMat(images, imageSize, imageSize,
-                                          UtilityFuncs::ResizeType::EXCLUSIVE, progressBar);
+                                          UtilityFuncs::ResizeType::EXACT, progressBar);
 
     auto it = images.cbegin();
     for (auto listItem: allImages.keys())
@@ -955,7 +974,7 @@ void MainWindow::generatePhotomosaic()
     if (library.front().cols != ui->spinCellSize->value())
         library = UtilityFuncs::batchResizeMat(library, ui->spinCellSize->value(),
                                                ui->spinCellSize->value(),
-                                               UtilityFuncs::ResizeType::EXCLUSIVE, progressBar);
+                                               UtilityFuncs::ResizeType::EXACT, progressBar);
 
     //Generate Photomosaic
     PhotomosaicGenerator generator(this);

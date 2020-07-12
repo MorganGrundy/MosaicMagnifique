@@ -1,3 +1,22 @@
+/*
+	Copyright © 2018-2020, Morgan Grundy
+
+	This file is part of Mosaic Magnifique.
+
+    Mosaic Magnifique is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Mosaic Magnifique is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #ifndef SHARED_CPP_
 #define SHARED_CPP_
 
@@ -38,8 +57,12 @@ cv::Mat UtilityFuncs::resizeImage(const cv::Mat &t_img,
 
     //Resizes image
     cv::Mat result;
-    cv::resize(t_img, result, cv::Size(static_cast<int>(resizeFactor * t_img.cols),
-                                       static_cast<int>(resizeFactor * t_img.rows)), 0, 0, flags);
+    if (t_type == ResizeType::EXACT)
+        cv::resize(t_img, result, cv::Size(t_targetWidth, t_targetHeight), 0, 0, flags);
+    else
+        cv::resize(t_img, result, cv::Size(static_cast<int>(resizeFactor * t_img.cols),
+                                           static_cast<int>(resizeFactor * t_img.rows)),
+                   0, 0, flags);
     return result;
 }
 
@@ -123,10 +146,14 @@ std::vector<cv::Mat> UtilityFuncs::batchResizeMat(const std::vector<cv::Mat> &im
 
         //Resize image
         src.at(i).upload(images.at(i), stream);
-        cv::cuda::resize(src.at(i), dst.at(i),
-                         cv::Size(static_cast<int>(resizeFactor * src.at(i).cols),
-                                  static_cast<int>(resizeFactor * src.at(i).rows)),
-                         0, 0, flags, stream);
+        if (t_type == ResizeType::EXACT)
+            cv::cuda::resize(src.at(i), dst.at(i), cv::Size(t_targetWidth, t_targetHeight),
+                             0, 0, flags, stream);
+        else
+            cv::cuda::resize(src.at(i), dst.at(i),
+                             cv::Size(static_cast<int>(resizeFactor * src.at(i).cols),
+                                      static_cast<int>(resizeFactor * src.at(i).rows)),
+                             0, 0, flags, stream);
         dst.at(i).download(result.at(i), stream);
     }
     stream.waitForCompletion();

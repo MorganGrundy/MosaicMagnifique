@@ -320,9 +320,8 @@ uchar *CUDAPhotomosaicData::getLibraryImages()
 void CUDAPhotomosaicData::setMaskImage(const cv::Mat &t_maskImage, const bool t_flippedHorizontal,
                                        const bool t_flippedVertical)
 {
-    gpuErrchk(cudaMemcpy(maskImages + pixelCount * (static_cast<int>(t_flippedHorizontal)
-                                                    + static_cast<int>(t_flippedVertical) * 2),
-                         t_maskImage.data, pixelCount * sizeof(uchar),
+    const size_t offset = pixelCount * (t_flippedHorizontal + t_flippedVertical * 2);
+    gpuErrchk(cudaMemcpy(maskImages + offset, t_maskImage.data, pixelCount * sizeof(uchar),
                          cudaMemcpyHostToDevice));
 }
 
@@ -352,8 +351,8 @@ uchar *CUDAPhotomosaicData::getMaskImage(const int t_gridX, const int t_gridY)
     if (m_rowFlipVertical && t_gridY % 2 == 1)
         flipVertical = !flipVertical;
 
-    return maskImages + pixelCount * (static_cast<int>(flipHorizontal)
-                                      + static_cast<int>(flipVertical) * 2);
+    const size_t offset = pixelCount * (flipHorizontal + flipVertical * 2);
+    return maskImages + offset;
 }
 
 //Copies target area to host memory at index i

@@ -122,8 +122,8 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGenerator::resizeAndCvtColor
         //Resize image
         src.at(i).upload(m_lib.at(i), stream);
         cv::cuda::resize(src.at(i), dst.at(i),
-                         cv::Size(static_cast<int>(m_detail * src.at(i).cols),
-                                  static_cast<int>(m_detail * src.at(i).rows)),
+                         cv::Size(std::round(m_detail * src.at(i).cols),
+                                  std::round(m_detail * src.at(i).rows)),
                          0, 0, flags, stream);
         if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
             cv::cuda::cvtColor(dst.at(i), dst.at(i), cv::COLOR_BGR2Lab, 0, stream);
@@ -137,8 +137,8 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGenerator::resizeAndCvtColor
     for (size_t i = 0; i < m_lib.size(); ++i)
     {
         cv::resize(m_lib.at(i), result.at(i),
-                   cv::Size(static_cast<int>(m_detail * m_lib.at(i).cols),
-                            static_cast<int>(m_detail * m_lib.at(i).rows)), 0, 0, flags);
+                   cv::Size(std::round(m_detail * m_lib.at(i).cols),
+                            std::round(m_detail * m_lib.at(i).rows)), 0, 0, flags);
         cv::cvtColor(result.at(i), result.at(i), cv::COLOR_BGR2Lab);
     }
 
@@ -163,8 +163,8 @@ void PhotomosaicGenerator::resizeImages(std::vector<cv::Mat> &t_images, const do
         //Resize image
         src.at(i).upload(t_images.at(i), stream);
         cv::cuda::resize(src.at(i), dst.at(i),
-                         cv::Size(static_cast<int>(t_ratio * src.at(i).cols),
-                                  static_cast<int>(t_ratio * src.at(i).rows)),
+                         cv::Size(std::round(t_ratio * src.at(i).cols),
+                                  std::round(t_ratio * src.at(i).rows)),
                          0, 0, flags, stream);
         dst.at(i).download(t_images.at(i), stream);
     }
@@ -174,8 +174,8 @@ void PhotomosaicGenerator::resizeImages(std::vector<cv::Mat> &t_images, const do
     for (size_t i = 0; i < t_images.size(); ++i)
     {
         cv::resize(t_images.at(i), t_images.at(i),
-                   cv::Size(static_cast<int>(t_ratio * t_images.at(i).cols),
-                            static_cast<int>(t_ratio * t_images.at(i).rows)), 0, 0, flags);
+                   cv::Size(std::round(t_ratio * t_images.at(i).cols),
+                            std::round(t_ratio * t_images.at(i).rows)), 0, 0, flags);
     }
 
 

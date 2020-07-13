@@ -89,6 +89,8 @@ public slots:
     void generatePhotomosaic();
 
 private:
+    void clampDetail();
+
     Ui::MainWindow *ui;
     QProgressBar *progressBar;
 

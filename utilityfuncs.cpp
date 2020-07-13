@@ -60,8 +60,8 @@ cv::Mat UtilityFuncs::resizeImage(const cv::Mat &t_img,
     if (t_type == ResizeType::EXACT)
         cv::resize(t_img, result, cv::Size(t_targetWidth, t_targetHeight), 0, 0, flags);
     else
-        cv::resize(t_img, result, cv::Size(static_cast<int>(resizeFactor * t_img.cols),
-                                           static_cast<int>(resizeFactor * t_img.rows)),
+        cv::resize(t_img, result, cv::Size(std::round(resizeFactor * t_img.cols),
+                                           std::round(resizeFactor * t_img.rows)),
                    0, 0, flags);
     return result;
 }
@@ -151,8 +151,8 @@ std::vector<cv::Mat> UtilityFuncs::batchResizeMat(const std::vector<cv::Mat> &im
                              0, 0, flags, stream);
         else
             cv::cuda::resize(src.at(i), dst.at(i),
-                             cv::Size(static_cast<int>(resizeFactor * src.at(i).cols),
-                                      static_cast<int>(resizeFactor * src.at(i).rows)),
+                             cv::Size(std::round(resizeFactor * src.at(i).cols),
+                                      std::round(resizeFactor * src.at(i).rows)),
                              0, 0, flags, stream);
         dst.at(i).download(result.at(i), stream);
     }

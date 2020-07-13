@@ -813,7 +813,7 @@ void MainWindow::photomosaicWidthChanged(int i)
     {
         //Blocks signals while changing value to prevent infinite loop
         ui->spinPhotomosaicHeight->blockSignals(true);
-        ui->spinPhotomosaicHeight->setValue(static_cast<int>(i / photomosaicSizeRatio));
+        ui->spinPhotomosaicHeight->setValue(std::round(i / photomosaicSizeRatio));
         ui->spinPhotomosaicHeight->blockSignals(false);
 
         //Updates image size in grid preview
@@ -835,7 +835,7 @@ void MainWindow::photomosaicHeightChanged(int i)
     {
         //Blocks signals while changing value to prevent infinite loop
         ui->spinPhotomosaicWidth->blockSignals(true);
-        ui->spinPhotomosaicWidth->setValue(static_cast<int>(i * photomosaicSizeRatio));
+        ui->spinPhotomosaicWidth->setValue(std::floor(i * photomosaicSizeRatio));
         ui->spinPhotomosaicWidth->blockSignals(false);
     }
 
@@ -875,9 +875,11 @@ void MainWindow::loadImageSize()
 }
 
 //Updates grid preview when detail level changes
-void MainWindow::photomosaicDetailChanged(int i)
+void MainWindow::photomosaicDetailChanged(int /*i*/)
 {
-    ui->widgetGridPreview->setDetail(i);
+    clampDetail();
+
+    ui->widgetGridPreview->setDetail(ui->spinDetail->value());
     if (!mainImage.empty())
         ui->widgetGridPreview->updateGrid();
 }
@@ -885,24 +887,23 @@ void MainWindow::photomosaicDetailChanged(int i)
 //Updates grid preview and minimum cell size spin box
 void MainWindow::cellSizeChanged(int t_value)
 {
-    ui->lineCellShape->setEnabled(ui->checkCellShape->isChecked());
-    if (ui->checkCellShape->isChecked())
-    {
-        ui->widgetGridPreview->setCellShape(ui->widgetCellShapeViewer->getCellShape().
-                                            resized(ui->spinCellSize->value(),
-                                                    ui->spinCellSize->value()));
-    }
-    else
-    {
-        ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(ui->spinCellSize->value(),
-                                                              ui->spinCellSize->value(),
-                                                              CV_8UC1, cv::Scalar(255))));
-    }
-
     ui->spinMinCellSize->blockSignals(true);
     ui->spinMinCellSize->setMaximum(t_value);
     ui->spinMinCellSize->stepBy(0);
     ui->spinMinCellSize->blockSignals(false);
+
+    clampDetail();
+
+    if (ui->checkCellShape->isChecked())
+    {
+        ui->widgetGridPreview->setCellShape(ui->widgetCellShapeViewer->getCellShape().
+                                            resized(t_value, t_value));
+    }
+    else
+    {
+        ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(t_value, t_value,
+                                                              CV_8UC1, cv::Scalar(255))));
+    }
 
     ui->widgetGridPreview->setSizeSteps(ui->spinMinCellSize->getHalveSteps());
     ui->widgetGridPreview->updateGrid();
@@ -911,6 +912,8 @@ void MainWindow::cellSizeChanged(int t_value)
 //Updates grid preview
 void MainWindow::minimumCellSizeChanged(int /*t_value*/)
 {
+    clampDetail();
+
     ui->widgetGridPreview->setSizeSteps(ui->spinMinCellSize->getHalveSteps());
     ui->widgetGridPreview->updateGrid();
 }
@@ -1010,4 +1013,17 @@ void MainWindow::generatePhotomosaic()
     //Displays Photomosaic
     ImageViewer *imageViewer = new ImageViewer(this, mosaic, duration);
     imageViewer->show();
+}
+
+//Clamps detail level so that cell size never reaches 0px
+//Returns if detail was clamped
+void MainWindow::clampDetail()
+{
+    const int minCellSize = ui->spinMinCellSize->value();
+    const double detailLevel = ui->spinDetail->value() / 100.0;
+    if (std::floor(minCellSize * detailLevel) < 1)
+    {
+        const int minDetail = std::ceil(100.0 / minCellSize);
+        ui->spinDetail->setValue(minDetail);
+    }
 }

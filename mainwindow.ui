@@ -1463,7 +1463,7 @@ border: 1px solid dimgray;
                    <string>Controls detail level when comparing images</string>
                   </property>
                   <property name="whatsThis">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Controls the detail level when comparing images.&lt;/p&gt;&lt;p&gt;Lowering detail allows Photomosaics to be generated faster, but results in less detail being identifiable from main image.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Controls the detail level when comparing images.&lt;/p&gt;&lt;p&gt;Lowering detail allows Photomosaics to be generated faster, but results in less detail being identifiable from main image.&lt;/p&gt;&lt;p&gt;If detail level ever results in a cell being 0px (empty) the detail is increased automatically.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
                   <property name="styleSheet">
                    <string notr="true">QSpinBox {

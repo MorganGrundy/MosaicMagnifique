@@ -248,9 +248,9 @@ void GridViewer::updateGrid()
 
     //Calculate grid size
     const int gridHeight = (!background.isNull()) ? backImage.rows
-                                                  : static_cast<int>(height() / MIN_ZOOM);
+                                                  : std::floor(height() / MIN_ZOOM);
     const int gridWidth = (!background.isNull()) ? backImage.cols
-                                                 : static_cast<int>(width() / MIN_ZOOM);
+                                                 : std::floor(width() / MIN_ZOOM);
 
     //Stores grid bounds starting with full grid size
     std::vector<GridBounds> bounds(2);

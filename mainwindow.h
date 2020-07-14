@@ -84,7 +84,9 @@ public slots:
     void cellSizeChanged(int t_value);
     void minimumCellSizeChanged(int t_value);
     void enableCellShape(bool t_state);
+#ifdef CUDA
     void CUDADeviceChanged(int t_index);
+#endif
 
     void generatePhotomosaic();
 

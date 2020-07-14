@@ -22,7 +22,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 CONFIG += c++17 CUDA OPENCV_W_CUDA
 DEFINES += _USE_MATH_DEFINES
 
-TARGET = Photomosaic
+TARGET = "Mosaic Magnifique"
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -68,20 +68,14 @@ CONFIG( debug, debug|release ) {
 	# debug
 	LIBS += -L$$(OPENCV_DIR)/lib \
 	-lopencv_core411d \
-	-lopencv_highgui411d \
 	-lopencv_imgcodecs411d \
-	-lopencv_imgproc411d \
-	-lopencv_features2d411d \
-	-lopencv_calib3d411d
+	-lopencv_imgproc411d
 } else {
 	# release
 	LIBS += -L$$(OPENCV_DIR)/lib \
 	-lopencv_core411 \
-	-lopencv_highgui411 \
 	-lopencv_imgcodecs411 \
-	-lopencv_imgproc411 \
-	-lopencv_features2d411 \
-	-lopencv_calib3d411
+	-lopencv_imgproc411
 }
 
 CUDA {
@@ -129,14 +123,7 @@ QMAKE_LIBDIR += $$CUDA_DIR/lib/$$SYSTEM_NAME \
 CUDA_INC = $$join(INCLUDEPATH,'" -I"','-I"','"')
 
 # Add the necessary libraries
-CUDA_LIB_NAMES = cudart_static kernel32 user32 gdi32 winspool comdlg32 \
-				 advapi32 shell32 ole32 oleaut32 uuid odbc32 odbccp32 \
-				 #freeglut glew32
-
-for(lib, CUDA_LIB_NAMES) {
-	CUDA_LIBS += -l$$lib
-}
-LIBS += $$CUDA_LIBS
+LIBS += -lcuda -lcudart
 
 # Configuration of the Cuda compiler
 CONFIG(debug, debug|release) {
@@ -146,8 +133,8 @@ CONFIG(debug, debug|release) {
 	cuda_d.commands = $$CUDA_DIR/bin/nvcc.exe -D_DEBUG $$NVCC_OPTIONS $$CUDA_INC $$LIBS \
 					  --machine $$SYSTEM_TYPE -arch=$$CUDA_ARCH \
 					  --compile -cudart static -g -DWIN32 -D_MBCS \
-					  -Xcompiler "/wd4819,/EHsc,/W3,/nologo,/Od,/Zi,/RTC1" \
-					  -Xcompiler $$MSVCRT_LINK_FLAG_DEBUG \
+					  -Xcompiler "/wd4819,/EHsc,/W3,/nologo,/Od,/Zi,/RTC1,/FS" \
+					  -Xcompiler $$MSVCRT_LINK_FLAG_DEBUG\
 					  -c -o ${QMAKE_FILE_OUT} ${QMAKE_FILE_NAME}
 	cuda_d.dependency_type = TYPE_C
 	QMAKE_EXTRA_COMPILERS += cuda_d
@@ -159,7 +146,7 @@ else {
 	cuda.commands = $$CUDA_DIR/bin/nvcc.exe $$NVCC_OPTIONS $$CUDA_INC $$LIBS \
 					--machine $$SYSTEM_TYPE -arch=$$CUDA_ARCH \
 					--compile -cudart static -DWIN32 -D_MBCS \
-					-Xcompiler "/wd4819,/EHsc,/W3,/nologo,/O2,/Zi" \
+					-Xcompiler "/wd4819,/EHsc,/W3,/nologo,/O2,/Zi,/FS" \
 					-Xcompiler $$MSVCRT_LINK_FLAG_RELEASE \
 					-c -o ${QMAKE_FILE_OUT} ${QMAKE_FILE_NAME}
 	cuda.dependency_type = TYPE_C

@@ -34,13 +34,16 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <chrono>
-#include <cuda_runtime.h>
 
 #include "utilityfuncs.h"
 #include "photomosaicgenerator.h"
 #include "imageviewer.h"
 #include "colourvisualisation.h"
+
+#ifdef CUDA
+#include <cuda_runtime.h>
 #include "cudaphotomosaicdata.h"
+#endif
 
 #ifdef OPENCV_W_CUDA
 #include <opencv2/cudawarping.hpp>
@@ -937,11 +940,13 @@ void MainWindow::enableCellShape(bool t_state)
     ui->widgetGridPreview->updateGrid();
 }
 
+#ifdef CUDA
 //Changes CUDA device
 void MainWindow::CUDADeviceChanged(int t_index)
 {
     gpuErrchk(cudaSetDevice(t_index));
 }
+#endif
 
 //Attempts to generate and display a Photomosaic for current settings
 void MainWindow::generatePhotomosaic()

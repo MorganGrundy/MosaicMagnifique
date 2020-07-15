@@ -14,7 +14,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+    along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "mainwindow.h"
@@ -242,7 +242,7 @@ void MainWindow::saveCellShape()
             out << static_cast<quint32>(CellShape::MCS_MAGIC);
             out << static_cast<qint32>(CellShape::MCS_VERSION);
 
-            out.setVersion(QDataStream::Qt_5_13);
+            out.setVersion(out.version());
 
             //Write cell mask and offsets
             out << cellShape;
@@ -282,7 +282,7 @@ void MainWindow::loadCellShape()
             qint32 version;
             in >> version;
             if (version <= CellShape::MCS_VERSION && version >= 4)
-                in.setVersion(QDataStream::Qt_5_13);
+                in.setVersion(in.version());
             else
             {
                 QMessageBox msgBox;
@@ -637,7 +637,7 @@ void MainWindow::saveLibrary()
             out << static_cast<quint32>(UtilityFuncs::MIL_MAGIC);
             out << static_cast<qint32>(UtilityFuncs::MIL_VERSION);
 
-            out.setVersion(QDataStream::Qt_5_13);
+            out.setVersion(out.version());
             //Write images and names
             out << imageSize;
             out << allImages.size();
@@ -686,7 +686,7 @@ void MainWindow::loadLibrary()
             qint32 version;
             in >> version;
             if (version == UtilityFuncs::MIL_VERSION)
-                in.setVersion(QDataStream::Qt_5_13);
+                in.setVersion(in.version());
             else
             {
                 QMessageBox msgBox;

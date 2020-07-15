@@ -13,7 +13,7 @@
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+#    along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 
 QT += core gui
 
@@ -22,7 +22,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 CONFIG += c++17 CUDA OPENCV_W_CUDA
 DEFINES += _USE_MATH_DEFINES
 
-TARGET = "Mosaic Magnifique"
+TARGET = MosaicMagnifique
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings

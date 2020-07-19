@@ -112,7 +112,7 @@
   <customwidget>
    <class>CustomGraphicsView</class>
    <extends>QGraphicsView</extends>
-   <header>customgraphicsview.h</header>
+   <header location="global">customgraphicsview.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

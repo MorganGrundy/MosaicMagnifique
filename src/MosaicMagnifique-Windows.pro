@@ -21,6 +21,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17 CUDA OPENCV_W_CUDA
 DEFINES += _USE_MATH_DEFINES
+DESTDIR = ..
 
 TARGET = MosaicMagnifique
 
@@ -36,13 +37,13 @@ SOURCES += \
 	colourvisualisation.cpp \
 	customgraphicsview.cpp \
 	gridbounds.cpp \
-    gridviewer.cpp \
+	gridviewer.cpp \
 	halvingspinbox.cpp \
 	imageviewer.cpp \
-    main.cpp \
-    mainwindow.cpp \
-    photomosaicgenerator.cpp \
-    utilityfuncs.cpp
+	main.cpp \
+	mainwindow.cpp \
+	photomosaicgenerator.cpp \
+	utilityfuncs.cpp
 
 HEADERS += \
 	cellgrid.h \
@@ -50,17 +51,20 @@ HEADERS += \
 	colourvisualisation.h \
 	customgraphicsview.h \
 	gridbounds.h \
-    gridviewer.h \
+	gridviewer.h \
 	halvingspinbox.h \
 	imageviewer.h \
-    mainwindow.h \
-    photomosaicgenerator.h \
-    utilityfuncs.h
+	mainwindow.h \
+	photomosaicgenerator.h \
+	utilityfuncs.h
 
 FORMS += \
-    colourvisualisation.ui \
-    imageviewer.ui \
-    mainwindow.ui
+	colourvisualisation.ui \
+	imageviewer.ui \
+	mainwindow.ui
+
+RESOURCES += \
+	ui.qrc
 
 # OpenCV libraries
 INCLUDEPATH += $$(OPENCV_SDK_DIR)/include
@@ -168,11 +172,3 @@ CONFIG( debug, debug|release ) {
 	-lopencv_cudaimgproc411
 }
 }
-
-# Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
-!isEmpty(target.path): INSTALLS += target
-
-RESOURCES += \
-	ui.qrc

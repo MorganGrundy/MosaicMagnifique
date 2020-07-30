@@ -2,7 +2,7 @@
 A GUI based application for generating Photomosaics.
 
 ## Pre-built
-Download the pre-built Windows app from: https://gitlab.com/MorganGrundy/photo-mosaic/-/releases  
+Download the pre-built Windows app from: https://github.com/MorganGrundy/MosaicMagnifique/releases  
 Only use the CUDA version if you have a [CUDA-capable GPU](https://developer.nvidia.com/cuda-gpus) or the app will just crash.  
 You may need to run the included vc_redist executable first.
 
@@ -31,7 +31,7 @@ OpenCV Contrib usage controlled by "CONFIG += OPENCV_W_CUDA" in .pro file.
 Linux .pro file requires [pkg-config](https://www.freedesktop.org/wiki/Software/pkg-config/) for linking OpenCV.
 
 ### Ubuntu
-The provided [install-ubuntu.mk](https://gitlab.com/MorganGrundy/photo-mosaic/-/blob/master/install-ubuntu.mk) makefile can be used to easily install dependencies and build Mosaic Magnifique. Tested on Ubuntu 20.04.  
+The provided [install-ubuntu.mk](https://github.com/MorganGrundy/MosaicMagnifique/blob/master/install-ubuntu.mk) makefile can be used to easily install dependencies and build Mosaic Magnifique. Tested on Ubuntu 20.04.  
 `make -f install-ubuntu.mk all`  
 or instead can install dependencies separately:  
 `make -f install-ubuntu.mk gcc`  
@@ -51,7 +51,7 @@ In configuring step give cmake: -DOPENCV_GENERATE_PKGCONFIG=ON -DCMAKE_BUILD_TYP
 And for minimal build give cmake module list: -DBUILD_LIST=core,highgui,imgcodecs,imgproc
 
 #### Mosaic Magnifique
-Download source from: https://gitlab.com/MorganGrundy/photo-mosaic/-/releases  
+Download source from: https://github.com/MorganGrundy/MosaicMagnifique/releases  
 Create sub-directory "build"  
 From build run:  
 `qmake ../src/MosaicMagnifique-Linux.pro`  
@@ -59,7 +59,7 @@ From build run:
 
 ## Windows
 ### Batch script
-The provided [install-windows.bat](https://gitlab.com/MorganGrundy/photo-mosaic/-/blob/master/install-windows.bat) batch script can be used to help install OpenCV and build Mosaic Magnifique, but not MSVC/CUDA/Qt.  
+The provided [install-windows.cmd](https://github.com/MorganGrundy/MosaicMagnifique/blob/master/install-windows.cmd) batch script can be used to help install OpenCV and build Mosaic Magnifique, but not MSVC/CUDA/Qt.  
 It has an additional dependency: [wget](https://www.gnu.org/software/wget/). Set environment variable %wgetdir% to the directory containing wget.exe.  
 After installing other dependencies, run the script with admin (Setting OpenCV environment variables requires admin) from command line:  
 `set mode=all`  
@@ -89,7 +89,7 @@ If you are using CUDA you can give cmake: -DWITH_CUDA:BOOL=ON -DOPENCV_EXTRA_MOD
 And add the relevant contrib modules to module list: -DBUILDLIST=core,highgui,imgcodecs,imgproc,cudaarithm,cudawarping,cudaimgproc,cudafilters
 
 #### Mosaic Magnifique
-Download source from: https://gitlab.com/MorganGrundy/photo-mosaic/-/releases  
+Download source from: https://github.com/MorganGrundy/MosaicMagnifique/releases  
 Create sub-directory "build"  
 From build run:  
 `qmake ../src/MosaicMagnifique-Windows.pro -spec win32-msvc`  

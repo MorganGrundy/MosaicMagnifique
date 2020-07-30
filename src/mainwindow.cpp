@@ -166,6 +166,7 @@ MainWindow::MainWindow(QWidget *t_parent)
     //No devices so disable CUDA controls
     if (gpuDeviceCount == 0)
     {
+        ui->checkCUDA->setChecked(false);
         ui->checkCUDA->setEnabled(false);
         ui->comboCUDA->setEnabled(false);
     }

@@ -16,14 +16,17 @@
 #    along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 
 QT += core gui
-
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++17 CUDA OPENCV_W_CUDA
+#CONFIG += CUDA # Controls CUDA usage
+#CONFIG += OPENCV_W_CUDA # Controls OpenCV w/ CUDA usage
+CONFIG += c++17
+
 DEFINES += _USE_MATH_DEFINES
-DESTDIR = ..
 
 TARGET = MosaicMagnifique
+
+win32:RC_ICONS += MosaicMagnifique.ico
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -67,19 +70,19 @@ RESOURCES += \
 	ui.qrc
 
 # OpenCV libraries
-INCLUDEPATH += $$(OPENCV_SDK_DIR)/include
+INCLUDEPATH += $$(OPENCV_DIR)/../../include
 CONFIG( debug, debug|release ) {
 	# debug
 	LIBS += -L$$(OPENCV_DIR)/lib \
-	-lopencv_core411d \
-	-lopencv_imgcodecs411d \
-	-lopencv_imgproc411d
+	-lopencv_core440d \
+	-lopencv_imgcodecs440d \
+	-lopencv_imgproc440d
 } else {
 	# release
 	LIBS += -L$$(OPENCV_DIR)/lib \
-	-lopencv_core411 \
-	-lopencv_imgcodecs411 \
-	-lopencv_imgproc411
+	-lopencv_core440 \
+	-lopencv_imgcodecs440 \
+	-lopencv_imgproc440
 }
 
 CUDA {
@@ -162,13 +165,13 @@ OPENCV_W_CUDA {
 DEFINES += OPENCV_W_CUDA
 CONFIG( debug, debug|release ) {
 	# debug
-	LIBS += -lopencv_cudaarithm411d \
-	-lopencv_cudawarping411d \
-	-lopencv_cudaimgproc411d
+	LIBS += -lopencv_cudaarithm440d \
+	-lopencv_cudawarping440d \
+	-lopencv_cudaimgproc440d
 } else {
 	# release
-	LIBS += -lopencv_cudaarithm411 \
-	-lopencv_cudawarping411 \
-	-lopencv_cudaimgproc411
+	LIBS += -lopencv_cudaarithm440 \
+	-lopencv_cudawarping440 \
+	-lopencv_cudaimgproc440
 }
 }

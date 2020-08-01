@@ -11,7 +11,7 @@ You may need to run the included vc_redist executable first.
 | Name | Version | Modules |
 | - | - | - |
 | [GCC](https://gcc.gnu.org/)/[MinGW](http://www.mingw.org/) <br> or <br> [MSVC](https://visualstudio.microsoft.com/visual-cpp-build-tools/) | >= 5.3.1 <br> <br> >= 2017 | |
-| [Qt](https://www.qt.io/) | >= 5.13.1 | core, gui, svg, widgets |
+| [Qt](https://www.qt.io/) | >= 5.9.5 | core, gui, svg, widgets |
 | [OpenCV](https://opencv.org/) | >= 4.1.1 | core, highgui, imgcodecs, imgproc |
 
 ## Optional dependencies

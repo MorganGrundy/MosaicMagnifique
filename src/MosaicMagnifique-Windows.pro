@@ -21,6 +21,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 #CONFIG += CUDA # Controls CUDA usage
 #CONFIG += OPENCV_W_CUDA # Controls OpenCV w/ CUDA usage
 CONFIG += c++17
+QMAKE_CXXFLAGS += /std:c++17
 
 DEFINES += _USE_MATH_DEFINES
 

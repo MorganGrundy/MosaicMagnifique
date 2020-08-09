@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: "[BUG]"
+title: "[BUG] *Short Descriptor*"
 labels: bug
 assignees: MorganGrundy
 

@@ -72,8 +72,16 @@ QDataStream &operator<<(QDataStream &t_out, const CellShape &t_cellShape)
 //Reads the CellShape from a QDataStream
 QDataStream &operator>>(QDataStream &t_in, std::pair<CellShape &, const int> t_cellShape)
 {
+    //Sets cell mask and flipped masks
     t_in >> t_cellShape.first.m_cellMask;
+    cv::flip(t_cellShape.first.m_cellMask, t_cellShape.first.m_cellMaskFlippedH, 1);
+    cv::flip(t_cellShape.first.m_cellMask, t_cellShape.first.m_cellMaskFlippedV, 0);
+    cv::flip(t_cellShape.first.m_cellMask, t_cellShape.first.m_cellMaskFlippedHV, -1);
+
+    //Set spacing
     t_in >> t_cellShape.first.m_rowSpacing >> t_cellShape.first.m_colSpacing;
+
+    //Set alternate spacing
     if (t_cellShape.second > 5)
     {
         t_in >> t_cellShape.first.m_alternateRowSpacing >> t_cellShape.first.m_alternateColSpacing;
@@ -84,16 +92,14 @@ QDataStream &operator>>(QDataStream &t_in, std::pair<CellShape &, const int> t_c
         t_cellShape.first.m_alternateColSpacing = t_cellShape.first.m_colSpacing;
     }
 
+    //Set alternate offset
     t_in >> t_cellShape.first.m_alternateRowOffset >> t_cellShape.first.m_alternateColOffset;
+
+    //Set flip states
     if (t_cellShape.second > 4)
     {
         t_in >> t_cellShape.first.m_colFlipHorizontal >> t_cellShape.first.m_colFlipVertical;
         t_in >> t_cellShape.first.m_rowFlipHorizontal >> t_cellShape.first.m_rowFlipVertical;
-
-        //Create flipped cell
-        cv::flip(t_cellShape.first.m_cellMask, t_cellShape.first.m_cellMaskFlippedH, 1);
-        cv::flip(t_cellShape.first.m_cellMask, t_cellShape.first.m_cellMaskFlippedV, 0);
-        cv::flip(t_cellShape.first.m_cellMask, t_cellShape.first.m_cellMaskFlippedHV, -1);
     }
 
     return t_in;

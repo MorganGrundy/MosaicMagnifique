@@ -31,7 +31,7 @@ OpenCV Contrib usage controlled by "CONFIG += OPENCV_W_CUDA" in .pro file.
 Linux .pro file requires [pkg-config](https://www.freedesktop.org/wiki/Software/pkg-config/) for linking OpenCV.
 
 ### Ubuntu
-The provided [install-ubuntu.mk](https://github.com/MorganGrundy/MosaicMagnifique/blob/master/install-ubuntu.mk) makefile can be used to easily install dependencies and build Mosaic Magnifique. Tested on Ubuntu 20.04.  
+The provided [install-ubuntu.mk](https://github.com/MorganGrundy/MosaicMagnifique/blob/master/install-ubuntu.mk) makefile can be used to easily install dependencies and build Mosaic Magnifique. Tested on Ubuntu 20.04 + 18.04.  
 `make -f install-ubuntu.mk all`  
 or instead can install dependencies separately:  
 `make -f install-ubuntu.mk gcc`  

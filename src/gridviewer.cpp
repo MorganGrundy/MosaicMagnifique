@@ -512,7 +512,8 @@ void GridViewer::resizeEvent(QResizeEvent * /*event*/)
 //Ctrl is a modifier key that allows for faster zooming (x10)
 void GridViewer::wheelEvent(QWheelEvent *event)
 {
-    zoom += event->delta() / ((event->modifiers().testFlag(Qt::ControlModifier)) ? 1200.0 : 12000.0);
+    zoom += event->angleDelta().y() /
+            ((event->modifiers().testFlag(Qt::ControlModifier)) ? 1200.0 : 12000.0);
     zoom = std::clamp(zoom, MIN_ZOOM, MAX_ZOOM);
 
     spinZoom->blockSignals(true);

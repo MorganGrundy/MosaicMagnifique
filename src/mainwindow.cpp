@@ -287,7 +287,7 @@ void MainWindow::loadCellShape()
             else
             {
                 QMessageBox msgBox;
-                if (version < UtilityFuncs::VERSION_NO)
+                if (version < CellShape::MCS_VERSION)
                     msgBox.setText(filename + tr(" uses an outdated file version"));
                 else
                     msgBox.setText(filename + tr(" uses a newer file version"));
@@ -691,7 +691,7 @@ void MainWindow::loadLibrary()
             else
             {
                 QMessageBox msgBox;
-                if (version < UtilityFuncs::VERSION_NO)
+                if (version < UtilityFuncs::MIL_VERSION)
                     msgBox.setText(filename + tr(" uses an outdated file version"));
                 else
                     msgBox.setText(filename + tr(" uses a newer file version"));

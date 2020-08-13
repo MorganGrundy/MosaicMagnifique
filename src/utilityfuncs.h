@@ -24,13 +24,12 @@
 #include <QPixmap>
 #include <QProgressBar>
 
-class UtilityFuncs
+namespace UtilityFuncs
 {
-public:
     //Current version number
-    static const int VERSION_NO = 100;
-    static const int MIL_VERSION = 2;
-    static const unsigned int MIL_MAGIC = 0xADBE2480;
+    const int VERSION_NO = 301;
+    const int MIL_VERSION = 2;
+    const unsigned int MIL_MAGIC = 0xADBE2480;
 
     //Enum class that represents the two different resize types, used in resizeImage
     enum class ResizeType {INCLUSIVE, EXCLUSIVE, EXACT};
@@ -42,9 +41,21 @@ public:
     //type = EXCLUSIVE:
     //(height = targetHeight && width >= targetWidth) ||
     //    (height >= targetHeight && width = targetWidth)
-    static cv::Mat resizeImage(const cv::Mat &t_img,
-                               const int t_targetHeight, const int t_targetWidth,
-                               const ResizeType t_type);
+    cv::Mat resizeImage(const cv::Mat &t_img, const int t_targetHeight, const int t_targetWidth,
+                        const ResizeType t_type);
+
+    //Returns copy of all mats resized to the target height
+    //If OpenCV CUDA is available then will resize on gpu
+    //type = INCLUSIVE:
+    //(height = targetHeight && width <= targetWidth) ||
+    //    (height <= targetHeight && width = targetWidth)
+    //type = EXCLUSIVE:
+    //(height = targetHeight && width >= targetWidth) ||
+    //    (height >= targetHeight && width = targetWidth)
+    std::vector<cv::Mat> batchResizeMat(const std::vector<cv::Mat> &images,
+                                        const int t_targetHeight, const int t_targetWidth,
+                                        const ResizeType t_type,
+                                        QProgressBar *progressBar = nullptr);
 
     //Enum class that represents the two different methods of squaring an image
     enum class SquareMethod {PAD, CROP};
@@ -54,26 +65,18 @@ public:
     //Pads the image's smaller dimension with black pixels
     //method = CROP:
     //Crops the image's larger dimension with focus at image centre
-    static void imageToSquare(cv::Mat& t_img, const SquareMethod t_method);
+    void imageToSquare(cv::Mat& t_img, const SquareMethod t_method);
 
     //Converts an OpenCV Mat to a QPixmap and returns
-    static QPixmap matToQPixmap(const cv::Mat &t_mat);
-
-    static std::vector<cv::Mat> batchResizeMat(const std::vector<cv::Mat> &images,
-                                               const int t_targetHeight, const int t_targetWidth,
-                                               const ResizeType t_type,
-                                               QProgressBar *progressBar = nullptr);
+    QPixmap matToQPixmap(const cv::Mat &t_mat);
 
     //Takes a grayscale image as src
     //Converts to RGBA and makes pixels of target value transparent
     //Returns result in dst
-    static void matMakeTransparent(const cv::Mat &t_src, cv::Mat &t_dst, const int t_targetValue);
+    void matMakeTransparent(const cv::Mat &t_src, cv::Mat &t_dst, const int t_targetValue);
 
     //Replace dst with edge detected version of src
-    static void edgeDetect(const cv::Mat &t_src, cv::Mat &t_dst);
-
-private:
-    UtilityFuncs() {}
+    void edgeDetect(const cv::Mat &t_src, cv::Mat &t_dst);
 };
 
 //Outputs a OpenCV mat to a QDataStream

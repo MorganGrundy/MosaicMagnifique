@@ -66,6 +66,75 @@ cv::Mat UtilityFuncs::resizeImage(const cv::Mat &t_img,
     return result;
 }
 
+//Returns copy of all mats resized to the target height
+//If OpenCV CUDA is available then will resize on gpu
+//type = INCLUSIVE:
+//(height = targetHeight && width <= targetWidth) || (height <= targetHeight && width = targetWidth)
+//type = EXCLUSIVE:
+//(height = targetHeight && width >= targetWidth) || (height >= targetHeight && width = targetWidth)
+std::vector<cv::Mat> UtilityFuncs::batchResizeMat(const std::vector<cv::Mat> &images,
+                                                  const int t_targetHeight, const int t_targetWidth,
+                                                  const ResizeType t_type, QProgressBar *progressBar)
+{
+    std::vector<cv::Mat> result(images.size(), cv::Mat());
+
+#ifdef OPENCV_W_CUDA
+    if (progressBar != nullptr)
+    {
+        progressBar->setMaximum(0);
+        progressBar->setValue(0);
+        progressBar->setVisible(true);
+    }
+
+    cv::cuda::Stream stream;
+    std::vector<cv::cuda::GpuMat> src(images.size()), dst(images.size());
+    for (size_t i = 0; i < images.size(); ++i)
+    {
+        //Calculates resize factor
+        double resizeFactor = static_cast<double>(t_targetHeight) / images.at(i).rows;
+        if ((t_type == ResizeType::EXCLUSIVE &&
+             t_targetWidth < resizeFactor * images.at(i).cols) ||
+            (t_type == ResizeType::INCLUSIVE &&
+             t_targetWidth > resizeFactor * images.at(i).cols))
+            resizeFactor = static_cast<double>(t_targetWidth) / images.at(i).cols;
+
+        //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
+        cv::InterpolationFlags flags = (resizeFactor < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
+
+        //Resize image
+        src.at(i).upload(images.at(i), stream);
+        if (t_type == ResizeType::EXACT)
+            cv::cuda::resize(src.at(i), dst.at(i), cv::Size(t_targetWidth, t_targetHeight),
+                             0, 0, flags, stream);
+        else
+            cv::cuda::resize(src.at(i), dst.at(i),
+                             cv::Size(std::round(resizeFactor * src.at(i).cols),
+                                      std::round(resizeFactor * src.at(i).rows)),
+                             0, 0, flags, stream);
+        dst.at(i).download(result.at(i), stream);
+    }
+    stream.waitForCompletion();
+#else
+    if (progressBar != nullptr)
+    {
+        progressBar->setMaximum(static_cast<int>(images.size()));
+        progressBar->setValue(0);
+        progressBar->setVisible(true);
+    }
+
+    for (size_t i = 0; i < images.size(); ++i)
+    {
+        result.at(i) = UtilityFuncs::resizeImage(images.at(i), t_targetHeight, t_targetWidth,
+                                                 t_type);
+        if (progressBar != nullptr)
+            progressBar->setValue(progressBar->value() + 1);
+    }
+#endif
+    progressBar->setVisible(false);
+
+    return result;
+}
+
 //Ensures image rows == cols
 //method = PAD:
 //Pads the image's smaller dimension with black pixels
@@ -106,76 +175,6 @@ QPixmap UtilityFuncs::matToQPixmap(const cv::Mat &t_mat)
     return QPixmap::fromImage(QImage(t_mat.data, t_mat.cols, t_mat.rows,
                                      static_cast<int>(t_mat.step),
                                      QImage::Format_RGB888).rgbSwapped());
-}
-
-//Returns copy of all mats resized to the target height
-//Assumes all mat are same size
-//If OpenCV CUDA is available then can resize on gpu for better performance (main purpose of func)
-//type = INCLUSIVE:
-//(height = targetHeight && width <= targetWidth) || (height <= targetHeight && width = targetWidth)
-//type = EXCLUSIVE:
-//(height = targetHeight && width >= targetWidth) || (height >= targetHeight && width = targetWidth)
-std::vector<cv::Mat> UtilityFuncs::batchResizeMat(const std::vector<cv::Mat> &images,
-                                               const int t_targetHeight, const int t_targetWidth,
-                                               const ResizeType t_type, QProgressBar *progressBar)
-{
-    std::vector<cv::Mat> result(images.size(), cv::Mat());
-
-#ifdef OPENCV_W_CUDA
-    if (progressBar != nullptr)
-    {
-        progressBar->setMaximum(0);
-        progressBar->setValue(0);
-        progressBar->setVisible(true);
-    }
-
-    cv::cuda::Stream stream;
-    std::vector<cv::cuda::GpuMat> src(images.size()), dst(images.size());
-    for (size_t i = 0; i < images.size(); ++i)
-    {
-        //Calculates resize factor
-        double resizeFactor = static_cast<double>(t_targetHeight) / images.at(i).rows;
-        if ((t_type == ResizeType::EXCLUSIVE &&
-             t_targetWidth < resizeFactor * images.at(i).cols) ||
-                (t_type == ResizeType::INCLUSIVE &&
-                 t_targetWidth > resizeFactor * images.at(i).cols))
-            resizeFactor = static_cast<double>(t_targetWidth) / images.at(i).cols;
-
-        //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
-        cv::InterpolationFlags flags = (resizeFactor < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
-
-        //Resize image
-        src.at(i).upload(images.at(i), stream);
-        if (t_type == ResizeType::EXACT)
-            cv::cuda::resize(src.at(i), dst.at(i), cv::Size(t_targetWidth, t_targetHeight),
-                             0, 0, flags, stream);
-        else
-            cv::cuda::resize(src.at(i), dst.at(i),
-                             cv::Size(std::round(resizeFactor * src.at(i).cols),
-                                      std::round(resizeFactor * src.at(i).rows)),
-                             0, 0, flags, stream);
-        dst.at(i).download(result.at(i), stream);
-    }
-    stream.waitForCompletion();
-#else
-    if (progressBar != nullptr)
-    {
-        progressBar->setMaximum(static_cast<int>(images.size()));
-        progressBar->setValue(0);
-        progressBar->setVisible(true);
-    }
-
-    for (size_t i = 0; i < images.size(); ++i)
-    {
-        result.at(i) = UtilityFuncs::resizeImage(images.at(i), t_targetHeight, t_targetWidth,
-                                                 t_type);
-        if (progressBar != nullptr)
-            progressBar->setValue(progressBar->value() + 1);
-    }
-#endif
-    progressBar->setVisible(false);
-
-    return result;
 }
 
 //Takes a grayscale image as src

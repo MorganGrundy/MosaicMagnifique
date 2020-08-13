@@ -144,7 +144,7 @@ std::pair<CellGrid::cellBestFit, bool> GridViewer::findCellState(const int x, co
                 UtilityFuncs::ResizeType::EXCLUSIVE);
 
         //If cell entropy exceeds threshold return true
-        if (CellGrid::calculateEntropy(mask, cell) >= CellGrid::MAX_ENTROPY() * 0.7)
+        if (CellGrid::calculateEntropy(mask, cell) >= CellGrid::MAX_ENTROPY * 0.7)
             return {std::nullopt, true};
     }
 

@@ -25,7 +25,7 @@ CustomGraphicsView::CustomGraphicsView(QWidget *t_parent)
 {
     setCacheMode(CacheBackground);
     setViewportUpdateMode(BoundingRectViewportUpdate);
-    setRenderHint(QPainter::HighQualityAntialiasing);
+    setRenderHint(QPainter::Antialiasing);
 
     setDragMode(QGraphicsView::ScrollHandDrag);
     setTransformationAnchor(AnchorUnderMouse);
@@ -50,13 +50,17 @@ void CustomGraphicsView::wheelEvent(QWheelEvent *event)
     //Ctrl-scrollwheel modifies image zoom
     if (event->modifiers() == Qt::ControlModifier)
     {
-        zoom((event->delta() > 0) ? zoomScale : 1.0 / zoomScale);
+        zoom((event->angleDelta().y() > 0) ? zoomScale : 1.0 / zoomScale);
     }
     //Shift-scrollwheel scrolls horizontally
     else if (event->modifiers() == Qt::ShiftModifier)
     {
-        QWheelEvent horizontalScrollEvent(event->pos(), event->delta(), event->buttons(),
-                                          Qt::NoModifier, Qt::Horizontal);
+        //Swap vertical and horizontal delta
+        QPoint pixelDelta(event->pixelDelta().y(), event->pixelDelta().x());
+        QPoint angleDelta(event->angleDelta().y(), event->angleDelta().x());
+        QWheelEvent horizontalScrollEvent(event->position(), event->globalPosition(),
+                                          pixelDelta, angleDelta, event->buttons(),
+                                          Qt::NoModifier, event->phase(), event->inverted());
         QGraphicsView::wheelEvent(&horizontalScrollEvent);
     }
     //Vertical scrolling

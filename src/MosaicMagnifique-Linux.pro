@@ -37,13 +37,14 @@ SOURCES += \
 	colourvisualisation.cpp \
 	customgraphicsview.cpp \
 	gridbounds.cpp \
-    	gridviewer.cpp \
+	gridviewer.cpp \
 	halvingspinbox.cpp \
+	imagehistogramcompare.cpp \
 	imageviewer.cpp \
-    	main.cpp \
-    	mainwindow.cpp \
-    	photomosaicgenerator.cpp \
-    	utilityfuncs.cpp
+	main.cpp \
+	mainwindow.cpp \
+	photomosaicgenerator.cpp \
+	utilityfuncs.cpp
 
 HEADERS += \
 	cellgrid.h \
@@ -51,17 +52,18 @@ HEADERS += \
 	colourvisualisation.h \
 	customgraphicsview.h \
 	gridbounds.h \
-    	gridviewer.h \
+	gridviewer.h \
 	halvingspinbox.h \
+	imagehistogramcompare.h \
 	imageviewer.h \
-    	mainwindow.h \
-    	photomosaicgenerator.h \
-    	utilityfuncs.h
+	mainwindow.h \
+	photomosaicgenerator.h \
+	utilityfuncs.h
 
 FORMS += \
-    	colourvisualisation.ui \
-    	imageviewer.ui \
-    	mainwindow.ui
+	colourvisualisation.ui \
+	imageviewer.ui \
+	mainwindow.ui
 
 RESOURCES += \
 	ui.qrc

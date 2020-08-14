@@ -789,9 +789,7 @@ void MainWindow::compareColours()
     for (auto pair: allImages.values())
         libImages.push_back(pair.first);
 
-    ColourVisualisation *colourVisualisation = new ColourVisualisation(this, mainImage,
-                                                                       libImages.data(),
-                                                                       libImages.size());
+    ColourVisualisation *colourVisualisation = new ColourVisualisation(this, mainImage, libImages);
     colourVisualisation->show();
 }
 

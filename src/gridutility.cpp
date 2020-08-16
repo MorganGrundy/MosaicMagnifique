@@ -17,12 +17,12 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "cellgrid.h"
+#include "gridutility.h"
 
 #include <opencv2/imgproc.hpp>
 
 //Calculates the number of given cells needed to fill an image of given size
-cv::Point CellGrid::calculateGridSize(const CellShape &t_cellShape,
+cv::Point GridUtility::calculateGridSize(const CellShape &t_cellShape,
                                       const int t_imageWidth, const int t_imageHeight,
                                       const int t_pad)
 {
@@ -52,7 +52,7 @@ cv::Point CellGrid::calculateGridSize(const CellShape &t_cellShape,
 }
 
 //Returns rect of cell shape at the given grid position
-cv::Rect CellGrid::getRectAt(const CellShape &t_cellShape, const int t_x, const int t_y)
+cv::Rect GridUtility::getRectAt(const CellShape &t_cellShape, const int t_x, const int t_y)
 {
     const int cellsX = t_x / 2;
     const int alternateCellsX = t_x - cellsX;
@@ -84,7 +84,7 @@ cv::Rect CellGrid::getRectAt(const CellShape &t_cellShape, const int t_x, const 
 }
 
 //Returns the flip state of the given cell at given grid position
-std::pair<bool, bool> CellGrid::getFlipStateAt(const CellShape &t_cellShape,
+std::pair<bool, bool> GridUtility::getFlipStateAt(const CellShape &t_cellShape,
                                                const int t_x, const int t_y, const int t_pad)
 {
     bool flipHorizontal = false, flipVertical = false;
@@ -101,7 +101,7 @@ std::pair<bool, bool> CellGrid::getFlipStateAt(const CellShape &t_cellShape,
 }
 
 //Returns the entropy of the given image in the given mask
-double CellGrid::calculateEntropy(const cv::Mat &t_mask, const cv::Mat &t_image)
+double GridUtility::calculateEntropy(const cv::Mat &t_mask, const cv::Mat &t_image)
 {
     if (t_image.empty() || t_mask.empty())
         return 0;

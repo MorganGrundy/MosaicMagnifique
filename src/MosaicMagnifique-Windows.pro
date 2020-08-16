@@ -36,11 +36,13 @@ win32:RC_ICONS += MosaicMagnifique.ico
 DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
-	cellgrid.cpp \
+	cellgroup.cpp \
 	cellshape.cpp \
 	colourvisualisation.cpp \
 	customgraphicsview.cpp \
 	gridbounds.cpp \
+	gridgenerator.cpp \
+	gridutility.cpp \
 	gridviewer.cpp \
 	halvingspinbox.cpp \
 	imagehistogramcompare.cpp \
@@ -51,11 +53,13 @@ SOURCES += \
 	utilityfuncs.cpp
 
 HEADERS += \
-	cellgrid.h \
+	cellgroup.h \
 	cellshape.h \
 	colourvisualisation.h \
 	customgraphicsview.h \
 	gridbounds.h \
+	gridgenerator.h \
+	gridutility.h \
 	gridviewer.h \
 	halvingspinbox.h \
 	imagehistogramcompare.h \

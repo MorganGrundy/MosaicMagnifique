@@ -91,6 +91,8 @@ public slots:
     void generatePhotomosaic();
 
 private:
+    const int defaultCellSize = 128;
+
     void clampDetail();
 
     Ui::MainWindow *ui;

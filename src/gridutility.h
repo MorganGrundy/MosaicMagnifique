@@ -25,7 +25,7 @@
 
 #include "cellshape.h"
 
-namespace CellGrid
+namespace GridUtility
 {
     typedef std::optional<size_t> cellBestFit;
     typedef std::vector<std::vector<cellBestFit>> stepBestFit;

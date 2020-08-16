@@ -34,7 +34,7 @@
 #include <opencv2/cudaimgproc.hpp>
 #endif
 
-#include "cellgrid.h"
+#include "gridutility.h"
 #include "gridbounds.h"
 
 #ifdef CUDA
@@ -79,7 +79,7 @@ void PhotomosaicGenerator::setCellShape(const CellShape &t_cellShape)
     m_cellShape = t_cellShape;
 }
 
-void PhotomosaicGenerator::setGridState(const CellGrid::mosaicBestFit &t_gridState)
+void PhotomosaicGenerator::setGridState(const GridUtility::mosaicBestFit &t_gridState)
 {
     m_gridState = t_gridState;
 }
@@ -189,7 +189,7 @@ std::pair<cv::Mat, cv::Rect> PhotomosaicGenerator::getCellAt(
     const cv::Mat &t_image) const
 {
     //Gets bounds of cell in global space
-    const cv::Rect cellGlobalBound = CellGrid::getRectAt(t_cellShape, x, y);
+    const cv::Rect cellGlobalBound = GridUtility::getRectAt(t_cellShape, x, y);
 
     //Bound cell in image area
     const int yStart = std::clamp(cellGlobalBound.y, 0, t_image.rows);
@@ -202,7 +202,7 @@ std::pair<cv::Mat, cv::Rect> PhotomosaicGenerator::getCellAt(
                                   xEnd - xStart, yEnd - yStart);
 
     //Calculate if and how current cell is flipped
-    auto [flipHorizontal, flipVertical] = CellGrid::getFlipStateAt(t_cellShape, x, y, t_pad);
+    auto [flipHorizontal, flipVertical] = GridUtility::getFlipStateAt(t_cellShape, x, y, t_pad);
 
     //Copies visible part of main image to cell
     cv::Mat cell(cellGlobalBound.height, cellGlobalBound.width, t_image.type(), cv::Scalar(0));
@@ -261,7 +261,7 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
         size_t validCells = 0;
         for (auto row: m_gridState.at(step))
             validCells += std::count_if(row.begin(), row.end(),
-                                        [](const CellGrid::cellBestFit &bestFit) {
+                                        [](const GridUtility::cellBestFit &bestFit) {
                                             return bestFit.has_value();
                                         });
 
@@ -293,32 +293,32 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
         size_t dataIndex = 0;
 
         //Copy input from host to CUDA device
-        for (int y = -CellGrid::PAD_GRID; y < gridHeight - CellGrid::PAD_GRID; ++y)
+        for (int y = -GridUtility::PAD_GRID; y < gridHeight - GridUtility::PAD_GRID; ++y)
         {
-            for (int x = -CellGrid::PAD_GRID; x < gridWidth - CellGrid::PAD_GRID; ++x)
+            for (int x = -GridUtility::PAD_GRID; x < gridWidth - GridUtility::PAD_GRID; ++x)
             {
                 //If user hits cancel in QProgressDialog then return empty mat
                 if (wasCanceled())
                     return cv::Mat();
 
-                const CellGrid::cellBestFit &cellState = m_gridState.at(step).
-                                                         at(y + CellGrid::PAD_GRID).
-                                                         at(x + CellGrid::PAD_GRID);
+                const GridUtility::cellBestFit &cellState = m_gridState.at(step).
+                                                         at(y + GridUtility::PAD_GRID).
+                                                         at(x + GridUtility::PAD_GRID);
 
                 //Set cell state on host
-                photomosaicData.setCellState(x + CellGrid::PAD_GRID, y + CellGrid::PAD_GRID,
+                photomosaicData.setCellState(x + GridUtility::PAD_GRID, y + GridUtility::PAD_GRID,
                                              cellState.has_value());
 
                 //If cell valid
                 if (cellState.has_value())
                 {
                     //Sets cell position
-                    photomosaicData.setCellPosition(x + CellGrid::PAD_GRID, y + CellGrid::PAD_GRID,
+                    photomosaicData.setCellPosition(x + GridUtility::PAD_GRID, y + GridUtility::PAD_GRID,
                                                     dataIndex);
 
                     //Move cell image to GPU
                     auto [cell, cellBounds] = getCellAt(normalCellShape, detailCellShape,
-                                                        x, y, CellGrid::PAD_GRID, mainImage);
+                                                        x, y, GridUtility::PAD_GRID, mainImage);
                     photomosaicData.setCellImage(cell, dataIndex);
 
                     //Move cell bounds to GPU
@@ -343,17 +343,17 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
 
         //Copy results from CUDA device to host
         size_t *resultFlat = photomosaicData.getResults();
-        for (int y = -CellGrid::PAD_GRID; y < gridHeight - CellGrid::PAD_GRID; ++y)
+        for (int y = -GridUtility::PAD_GRID; y < gridHeight - GridUtility::PAD_GRID; ++y)
         {
-            for (int x = -CellGrid::PAD_GRID; x < gridWidth - CellGrid::PAD_GRID; ++x)
+            for (int x = -GridUtility::PAD_GRID; x < gridWidth - GridUtility::PAD_GRID; ++x)
             {
-                CellGrid::cellBestFit &cellState = m_gridState.at(step).at(y + CellGrid::PAD_GRID).
-                                                   at(x + CellGrid::PAD_GRID);
+                GridUtility::cellBestFit &cellState = m_gridState.at(step).at(y + GridUtility::PAD_GRID).
+                                                   at(x + GridUtility::PAD_GRID);
                 //Skip if cell invalid
                 if (!cellState.has_value())
                     continue;
 
-                const size_t index = (y + CellGrid::PAD_GRID) * gridWidth + x + CellGrid::PAD_GRID;
+                const size_t index = (y + GridUtility::PAD_GRID) * gridWidth + x + GridUtility::PAD_GRID;
                 if (resultFlat[index] >= resizedLib.size())
                 {
                     qDebug() << "Error: Failed to find a best fit";
@@ -388,12 +388,12 @@ PhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape,
                                       const CellShape &t_detailCellShape,
                                       const int x, const int y, const bool t_pad,
                                       const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
-                                      const CellGrid::stepBestFit &t_grid) const
+                                      const GridUtility::stepBestFit &t_grid) const
 {
     auto [cell, cellBounds] = getCellAt(t_cellShape, t_detailCellShape, x, y, t_pad, t_image);
 
     //Calculate if and how current cell is flipped
-    const auto [flipHorizontal, flipVertical] = CellGrid::getFlipStateAt(t_cellShape, x, y, t_pad);
+    const auto [flipHorizontal, flipVertical] = GridUtility::getFlipStateAt(t_cellShape, x, y, t_pad);
 
     const cv::Mat &cellMask = t_detailCellShape.getCellMask(flipHorizontal, flipVertical);
 
@@ -445,26 +445,26 @@ cv::Mat PhotomosaicGenerator::generate()
         CellShape detailCellShape(normalCellShape.resized(detailCellSize, detailCellSize));
 
         //Find best match for each cell in grid
-        for (int y = -CellGrid::PAD_GRID;
-             y < static_cast<int>(m_gridState.at(step).size()) - CellGrid::PAD_GRID; ++y)
+        for (int y = -GridUtility::PAD_GRID;
+             y < static_cast<int>(m_gridState.at(step).size()) - GridUtility::PAD_GRID; ++y)
         {
-            for (int x = -CellGrid::PAD_GRID;
-                 x < static_cast<int>(m_gridState.at(step).at(y + CellGrid::PAD_GRID).size())
-                         - CellGrid::PAD_GRID; ++x)
+            for (int x = -GridUtility::PAD_GRID;
+                 x < static_cast<int>(m_gridState.at(step).at(y + GridUtility::PAD_GRID).size())
+                         - GridUtility::PAD_GRID; ++x)
             {
                 //If user hits cancel in QProgressDialog then return empty mat
                 if (wasCanceled())
                     return cv::Mat();
 
                 //If cell is valid
-                if (m_gridState.at(step).at(y + CellGrid::PAD_GRID).
-                    at(x + CellGrid::PAD_GRID).has_value())
+                if (m_gridState.at(step).at(y + GridUtility::PAD_GRID).
+                    at(x + GridUtility::PAD_GRID).has_value())
                 {
                     //Find cell best fit
-                    m_gridState.at(step).at(static_cast<size_t>(y + CellGrid::PAD_GRID)).
-                            at(static_cast<size_t>(x + CellGrid::PAD_GRID)) =
+                    m_gridState.at(step).at(static_cast<size_t>(y + GridUtility::PAD_GRID)).
+                            at(static_cast<size_t>(x + GridUtility::PAD_GRID)) =
                             findCellBestFit(normalCellShape, detailCellShape, x, y,
-                                            CellGrid::PAD_GRID, mainImage, resizedLib,
+                                            GridUtility::PAD_GRID, mainImage, resizedLib,
                                             m_gridState.at(step));
                 }
 
@@ -490,7 +490,7 @@ cv::Mat PhotomosaicGenerator::generate()
 //Calculates the repeat value of each library image in repeat range around x,y
 //Only needs to look at first half of cells as the latter half are not yet used
 std::map<size_t, int> PhotomosaicGenerator::calculateRepeats(
-        const CellGrid::stepBestFit &grid, const int x, const int y) const
+        const GridUtility::stepBestFit &grid, const int x, const int y) const
 {
     std::map<size_t, int> repeats;
     const int repeatStartY = std::clamp(y - m_repeatRange, 0, static_cast<int>(grid.size()));
@@ -739,7 +739,7 @@ double PhotomosaicGenerator::degToRad(const double deg) const
 }
 
 //Combines results into a Photomosaic
-cv::Mat PhotomosaicGenerator::combineResults(const CellGrid::mosaicBestFit &results)
+cv::Mat PhotomosaicGenerator::combineResults(const GridUtility::mosaicBestFit &results)
 {
     //Update progress bar
     setLabelText("Building Photomosaic...");
@@ -774,16 +774,16 @@ cv::Mat PhotomosaicGenerator::combineResults(const CellGrid::mosaicBestFit &resu
         mosaicMaskStep = cv::Mat::zeros(m_img.rows, m_img.cols, CV_8UC1);
 
         //For all cells
-        for (int y = -CellGrid::PAD_GRID; y < static_cast<int>(results.at(step).size())
-                                                  - CellGrid::PAD_GRID; ++y)
+        for (int y = -GridUtility::PAD_GRID; y < static_cast<int>(results.at(step).size())
+                                                  - GridUtility::PAD_GRID; ++y)
         {
-            for (int x = -CellGrid::PAD_GRID;
-                 x < static_cast<int>(results.at(step).at(y + CellGrid::PAD_GRID).size())
-                         - CellGrid::PAD_GRID; ++x)
+            for (int x = -GridUtility::PAD_GRID;
+                 x < static_cast<int>(results.at(step).at(y + GridUtility::PAD_GRID).size())
+                         - GridUtility::PAD_GRID; ++x)
             {
-                const CellGrid::cellBestFit &cellData = results.at(step).
-                        at(static_cast<size_t>(y + CellGrid::PAD_GRID)).
-                        at(static_cast<size_t>(x + CellGrid::PAD_GRID));
+                const GridUtility::cellBestFit &cellData = results.at(step).
+                        at(static_cast<size_t>(y + GridUtility::PAD_GRID)).
+                        at(static_cast<size_t>(x + GridUtility::PAD_GRID));
                 //Skip invalid cells
                 if (!cellData.has_value())
                 {
@@ -793,7 +793,7 @@ cv::Mat PhotomosaicGenerator::combineResults(const CellGrid::mosaicBestFit &resu
                 }
 
                 //Gets bounds of cell in global space
-                const cv::Rect cellGlobalBound = CellGrid::getRectAt(normalCellShape, x, y);
+                const cv::Rect cellGlobalBound = GridUtility::getRectAt(normalCellShape, x, y);
 
                 //Bound cell in image area
                 const int yStart = std::clamp(cellGlobalBound.tl().y, 0, m_img.rows);
@@ -808,7 +808,7 @@ cv::Mat PhotomosaicGenerator::combineResults(const CellGrid::mosaicBestFit &resu
 
                 //Calculate if and how current cell is flipped
                 const auto [flipHorizontal, flipVertical] =
-                    CellGrid::getFlipStateAt(normalCellShape, x, y, CellGrid::PAD_GRID);
+                    GridUtility::getFlipStateAt(normalCellShape, x, y, GridUtility::PAD_GRID);
 
                 //Creates mask bounded
                 const cv::Mat maskBounded(normalCellShape.getCellMask(flipHorizontal, flipVertical),

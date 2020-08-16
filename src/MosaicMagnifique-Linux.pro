@@ -33,10 +33,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
 	cellgrid.cpp \
+	cellgroup.cpp \
 	cellshape.cpp \
 	colourvisualisation.cpp \
 	customgraphicsview.cpp \
 	gridbounds.cpp \
+	gridgenerator.cpp \
 	gridviewer.cpp \
 	halvingspinbox.cpp \
 	imagehistogramcompare.cpp \
@@ -48,10 +50,12 @@ SOURCES += \
 
 HEADERS += \
 	cellgrid.h \
+	cellgroup.h \
 	cellshape.h \
 	colourvisualisation.h \
 	customgraphicsview.h \
 	gridbounds.h \
+	gridgenerator.h \
 	gridviewer.h \
 	halvingspinbox.h \
 	imagehistogramcompare.h \

@@ -186,12 +186,20 @@ MainWindow::MainWindow(QWidget *t_parent)
 #endif
 
     //Sets default cell size
-    ui->spinCellSize->setValue(128);
+    ui->spinCellSize->setValue(defaultCellSize);
 
     //tabWidget starts on Generator Settings tab
     ui->tabWidget->setCurrentIndex(2);
 
-    ui->spinDetail->setValue(128);
+    //Sets default detail level
+    ui->spinDetail->setValue(100);
+
+    //Sets cell shape editor to default cell shape
+    CellShape defaultCellShape = cv::Mat(defaultCellSize, defaultCellSize,
+                          CV_8UC1, cv::Scalar(255));
+    ui->widgetCellShapeViewer->getCellGroup().setCellShape(defaultCellShape);
+    ui->spinCustomCellSpacingCol->setValue(defaultCellSize);
+    ui->spinCustomCellSpacingRow->setValue(defaultCellSize);
 }
 
 MainWindow::~MainWindow()
@@ -207,9 +215,9 @@ void MainWindow::tabChanged(int t_index)
     {
         if (ui->checkCellShape->isChecked() && cellShapeChanged)
         {
-            ui->widgetGridPreview->setCellShape(ui->widgetCellShapeViewer->getCellShape()
-                                                .resized(ui->spinCellSize->value(),
-                                                         ui->spinCellSize->value()));
+            ui->widgetGridPreview->getCellGroup().setCellShape(
+                ui->widgetCellShapeViewer->getCellGroup().getCell(0)
+                    .resized(ui->spinCellSize->value(), ui->spinCellSize->value()));
             cellShapeChanged = false;
             ui->widgetGridPreview->updateGrid();
         }
@@ -219,7 +227,7 @@ void MainWindow::tabChanged(int t_index)
 //Saves the custom cell shape to a file
 void MainWindow::saveCellShape()
 {
-    CellShape &cellShape = ui->widgetCellShapeViewer->getCellShape();
+    CellShape &cellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
     if (cellShape.getCellMask(0, 0).empty())
     {
         QMessageBox::information(this, tr("Failed to save custom cell shape"),
@@ -342,7 +350,7 @@ void MainWindow::loadCellShape()
 
             file.close();
 
-            ui->widgetCellShapeViewer->setCellShape(cellShape);
+            ui->widgetCellShapeViewer->getCellGroup().setCellShape(cellShape);
             ui->widgetCellShapeViewer->updateGrid();
             cellShapeChanged = true;
         }
@@ -369,7 +377,7 @@ void MainWindow::selectCellMask()
     {
         CellShape cellShape(tmp);
 
-        ui->widgetCellShapeViewer->setCellShape(cellShape);
+        ui->widgetCellShapeViewer->getCellGroup().setCellShape(cellShape);
         ui->widgetCellShapeViewer->updateGrid();
         ui->lineCellMask->setText(filename);
 
@@ -395,7 +403,11 @@ void MainWindow::cellSpacingColChanged(int t_value)
 {
     if (!ui->spinCellAlternateColSpacing->isEnabled())
         ui->spinCellAlternateColSpacing->setValue(t_value);
-    ui->widgetCellShapeViewer->getCellShape().setColSpacing(t_value);
+
+    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
+    newCellShape.setColSpacing(t_value);
+
+    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->widgetCellShapeViewer->updateGrid();
 
     cellShapeChanged = true;
@@ -406,7 +418,11 @@ void MainWindow::cellSpacingRowChanged(int t_value)
 {
     if (!ui->spinCellAlternateRowSpacing->isEnabled())
         ui->spinCellAlternateRowSpacing->setValue(t_value);
-    ui->widgetCellShapeViewer->getCellShape().setRowSpacing(t_value);
+
+    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
+    newCellShape.setRowSpacing(t_value);
+
+    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->widgetCellShapeViewer->updateGrid();
 
     cellShapeChanged = true;
@@ -415,7 +431,10 @@ void MainWindow::cellSpacingRowChanged(int t_value)
 //Update custom cell row offset x
 void MainWindow::cellAlternateColOffsetChanged(int t_value)
 {
-    ui->widgetCellShapeViewer->getCellShape().setAlternateColOffset(t_value);
+    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
+    newCellShape.setAlternateColOffset(t_value);
+
+    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->widgetCellShapeViewer->updateGrid();
 
     cellShapeChanged = true;
@@ -424,7 +443,10 @@ void MainWindow::cellAlternateColOffsetChanged(int t_value)
 //Update custom cell row offset y
 void MainWindow::cellAlternateRowOffsetChanged(int t_value)
 {
-    ui->widgetCellShapeViewer->getCellShape().setAlternateRowOffset(t_value);
+    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
+    newCellShape.setAlternateRowOffset(t_value);
+
+    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->widgetCellShapeViewer->updateGrid();
 
     cellShapeChanged = true;
@@ -433,7 +455,10 @@ void MainWindow::cellAlternateRowOffsetChanged(int t_value)
 //Update custom cell alternate column horizontal flipping
 void MainWindow::cellColumnFlipHorizontalChanged(bool t_state)
 {
-    ui->widgetCellShapeViewer->getCellShape().setColFlipHorizontal(t_state);
+    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
+    newCellShape.setColFlipHorizontal(t_state);
+
+    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->widgetCellShapeViewer->updateGrid();
 
     cellShapeChanged = true;
@@ -442,7 +467,10 @@ void MainWindow::cellColumnFlipHorizontalChanged(bool t_state)
 //Update custom cell alternate column vertical flipping
 void MainWindow::cellColumnFlipVerticalChanged(bool t_state)
 {
-    ui->widgetCellShapeViewer->getCellShape().setColFlipVertical(t_state);
+    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
+    newCellShape.setColFlipVertical(t_state);
+
+    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->widgetCellShapeViewer->updateGrid();
 
     cellShapeChanged = true;
@@ -451,7 +479,10 @@ void MainWindow::cellColumnFlipVerticalChanged(bool t_state)
 //Update custom cell alternate row horizontal flipping
 void MainWindow::cellRowFlipHorizontalChanged(bool t_state)
 {
-    ui->widgetCellShapeViewer->getCellShape().setRowFlipHorizontal(t_state);
+    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
+    newCellShape.setRowFlipHorizontal(t_state);
+
+    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->widgetCellShapeViewer->updateGrid();
 
     cellShapeChanged = true;
@@ -460,7 +491,10 @@ void MainWindow::cellRowFlipHorizontalChanged(bool t_state)
 //Update custom cell alternate row vertical flipping
 void MainWindow::cellRowFlipVerticalChanged(bool t_state)
 {
-    ui->widgetCellShapeViewer->getCellShape().setRowFlipVertical(t_state);
+    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
+    newCellShape.setRowFlipVertical(t_state);
+
+    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->widgetCellShapeViewer->updateGrid();
 
     cellShapeChanged = true;
@@ -491,7 +525,10 @@ void MainWindow::cellAlternateRowSpacingChanged(int t_value)
 {
     if (ui->checkCellAlternateRowSpacing->isEnabled())
     {
-        ui->widgetCellShapeViewer->getCellShape().setAlternateRowSpacing(t_value);
+        CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
+        newCellShape.setAlternateRowSpacing(t_value);
+
+        ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
         ui->widgetCellShapeViewer->updateGrid();
 
         cellShapeChanged = true;
@@ -503,7 +540,10 @@ void MainWindow::cellAlternateColSpacingChanged(int t_value)
 {
     if (ui->checkCellAlternateColSpacing->isEnabled())
     {
-        ui->widgetCellShapeViewer->getCellShape().setAlternateColSpacing(t_value);
+        CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
+        newCellShape.setAlternateColSpacing(t_value);
+
+        ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
         ui->widgetCellShapeViewer->updateGrid();
 
         cellShapeChanged = true;
@@ -881,7 +921,7 @@ void MainWindow::photomosaicDetailChanged(int /*i*/)
 {
     clampDetail();
 
-    ui->widgetGridPreview->setDetail(ui->spinDetail->value());
+    ui->widgetGridPreview->getCellGroup().setDetail(ui->spinDetail->value());
     if (!mainImage.empty())
         ui->widgetGridPreview->updateGrid();
 }
@@ -898,16 +938,17 @@ void MainWindow::cellSizeChanged(int t_value)
 
     if (ui->checkCellShape->isChecked())
     {
-        ui->widgetGridPreview->setCellShape(ui->widgetCellShapeViewer->getCellShape().
-                                            resized(t_value, t_value));
+        ui->widgetGridPreview->getCellGroup().setCellShape(
+            ui->widgetCellShapeViewer->getCellGroup().getCell(0).resized(t_value, t_value));
     }
     else
     {
-        ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(t_value, t_value,
-                                                              CV_8UC1, cv::Scalar(255))));
+        ui->widgetGridPreview->getCellGroup().setCellShape(
+            CellShape(cv::Mat(t_value, t_value, CV_8UC1, cv::Scalar(255))));
     }
 
-    ui->widgetGridPreview->setSizeSteps(ui->spinMinCellSize->getHalveSteps());
+    ui->widgetGridPreview->getCellGroup().setSizeSteps(ui->spinMinCellSize->getHalveSteps());
+
     ui->widgetGridPreview->updateGrid();
 }
 
@@ -916,7 +957,7 @@ void MainWindow::minimumCellSizeChanged(int /*t_value*/)
 {
     clampDetail();
 
-    ui->widgetGridPreview->setSizeSteps(ui->spinMinCellSize->getHalveSteps());
+    ui->widgetGridPreview->getCellGroup().setSizeSteps(ui->spinMinCellSize->getHalveSteps());
     ui->widgetGridPreview->updateGrid();
 }
 
@@ -926,15 +967,15 @@ void MainWindow::enableCellShape(bool t_state)
     ui->lineCellShape->setEnabled(t_state);
     if (t_state)
     {
-        ui->widgetGridPreview->setCellShape(ui->widgetCellShapeViewer->getCellShape().
-                                            resized(ui->spinCellSize->value(),
-                                                    ui->spinCellSize->value()));
+        ui->widgetGridPreview->getCellGroup().setCellShape(
+            ui->widgetCellShapeViewer->getCellGroup().getCell(0).
+            resized(ui->spinCellSize->value(), ui->spinCellSize->value()));
     }
     else
     {
-        ui->widgetGridPreview->setCellShape(CellShape(cv::Mat(ui->spinCellSize->value(),
-                                                              ui->spinCellSize->value(),
-                                                              CV_8UC1, cv::Scalar(255))));
+        ui->widgetGridPreview->getCellGroup().setCellShape(
+            CellShape(cv::Mat(ui->spinCellSize->value(), ui->spinCellSize->value(),
+                              CV_8UC1, cv::Scalar(255))));
     }
     ui->widgetGridPreview->updateGrid();
 }
@@ -995,7 +1036,7 @@ void MainWindow::generatePhotomosaic()
     else if (ui->comboMode->currentText() == "CIEDE2000")
         generator.setMode(PhotomosaicGenerator::Mode::CIEDE2000);
 
-    generator.setCellShape(ui->widgetGridPreview->getCellShape());
+    generator.setCellShape(ui->widgetGridPreview->getCellGroup().getCell(0));
 
     generator.setGridState(ui->widgetGridPreview->getGridState());
 

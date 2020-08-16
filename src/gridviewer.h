@@ -30,49 +30,51 @@
 
 #include "cellshape.h"
 #include "gridbounds.h"
-#include "cellgrid.h"
+#include "gridutility.h"
+#include "cellgroup.h"
 
 class GridViewer : public QWidget
 {
     Q_OBJECT
 public:
     explicit GridViewer(QWidget *parent = nullptr);
+    //Changes state of edge detection in grid preview
     void setEdgeDetect(bool t_state);
+
+    //Gets grid state of current options and creates grid
     void updateGrid();
 
-    void setCellShape(const CellShape &t_cellShape);
-    CellShape &getCellShape();
+    //Returns reference to cell group
+    CellGroup &getCellGroup();
 
-    void setSizeSteps(const size_t t_steps, const bool t_reset = false);
-
+    //Sets the background image in grid
     void setBackground(const cv::Mat &t_background);
 
-    void setDetail(const int t_detail = 100, const bool t_reset = false);
-
-    CellGrid::mosaicBestFit getGridState() const;
+    //Returns state of current grid
+    GridUtility::mosaicBestFit getGridState() const;
 
 public slots:
+    //Called when the spinbox value is changed, updates grid zoom
     void zoomChanged(double t_value);
+
+    //Changes if grid preview shows edge detected or normal cells
     void edgeDetectChanged(int t_state);
 
 protected:
+    //Displays grid
     void paintEvent(QPaintEvent *event) override;
+
+    //Updates display of grid
+    //If no back image then creates new grid
     void resizeEvent(QResizeEvent *event) override;
+
+    //Change zoom of grid preview based on mouse scrollwheel movement
+    //Ctrl is a modifier key that allows for faster zooming (x10)
     void wheelEvent(QWheelEvent *event) override;
 
 private:
-    bool createCell(const int t_x, const int t_y,
-                    cv::Mat &t_grid, cv::Mat &t_edgeGrid, const GridBounds &t_bounds,
-                    size_t t_step = 0);
-
-    std::pair<CellGrid::cellBestFit, bool>
-    findCellState(const int x, const int y, const GridBounds &t_bounds,
-                  const size_t t_step = 0) const;
-
-    void createGrid(const CellGrid::mosaicBestFit &states,
-                    const int gridHeight, const int gridWidth);
-
-    cv::Mat &getEdgeCell(size_t t_sizeStep, bool t_flipHorizontal, bool t_flipVertical);
+    //Creates grid from grid state and cells
+    void createGrid(const int gridHeight, const int gridWidth);
 
     QGridLayout *layout;
     QLabel *labelZoom;
@@ -80,23 +82,17 @@ private:
     QCheckBox *checkEdgeDetect;
     QSpacerItem *hSpacer, *vSpacer;
 
-    size_t sizeSteps;
-
     cv::Mat backImage;
     QImage background;
 
-    double detail;
-
-    std::vector<CellShape> cells;
-    std::vector<CellShape> detailCells;
-    std::vector<std::vector<cv::Mat>> edgeCells;
+    CellGroup m_cells;
 
     QImage grid, edgeGrid;
 
     const double MIN_ZOOM, MAX_ZOOM;
     double zoom;
 
-    CellGrid::mosaicBestFit gridState;
+    GridUtility::mosaicBestFit gridState;
 };
 
 #endif // GRIDVIEWER_H

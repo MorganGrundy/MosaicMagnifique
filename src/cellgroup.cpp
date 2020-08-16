@@ -36,6 +36,12 @@ void CellGroup::setCellShape(const CellShape &t_cellShape)
     }
 }
 
+//Returns size of top level cell
+int CellGroup::getCellSize(const size_t t_sizeStep, const bool t_detail) const
+{
+    return getCell(t_sizeStep, t_detail).getCellMask(false, false).rows;
+}
+
 //Sets the detail level
 void CellGroup::setDetail(const int t_detail, const bool t_reset)
 {
@@ -109,26 +115,27 @@ size_t CellGroup::getSizeSteps() const
 }
 
 //Returns reference to normal and detail cell shapes
-CellShape &CellGroup::getCell(size_t t_sizeStep, bool t_detail)
+CellShape &CellGroup::getCell(const size_t t_sizeStep, const bool t_detail)
 {
     return t_detail ? detailCells.at(t_sizeStep) : cells.at(t_sizeStep);
 }
 
 //Returns const reference to normal and detail cell shapes
-const CellShape &CellGroup::getCell(size_t t_sizeStep, bool t_detail) const
+const CellShape &CellGroup::getCell(const size_t t_sizeStep, const bool t_detail) const
 {
     return t_detail ? detailCells.at(t_sizeStep) : cells.at(t_sizeStep);
 }
 
 //Returns reference to an edge cell mask
-cv::Mat &CellGroup::getEdgeCell(size_t t_sizeStep, bool t_flipHorizontal, bool t_flipVertical)
+cv::Mat &CellGroup::getEdgeCell(const size_t t_sizeStep, const bool t_flipHorizontal,
+                                const bool t_flipVertical)
 {
     return edgeCells.at(t_sizeStep).at(t_flipHorizontal + t_flipVertical * 2);
 }
 
 //Returns const reference to an edge cell mask
-const cv::Mat &CellGroup::getEdgeCell(size_t t_sizeStep,
-                                      bool t_flipHorizontal, bool t_flipVertical) const
+const cv::Mat &CellGroup::getEdgeCell(const size_t t_sizeStep, const bool t_flipHorizontal,
+                                      const bool t_flipVertical) const
 {
     return edgeCells.at(t_sizeStep).at(t_flipHorizontal + t_flipVertical * 2);
 }

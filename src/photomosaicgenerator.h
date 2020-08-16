@@ -27,6 +27,7 @@
 #include "utilityfuncs.h"
 #include "gridbounds.h"
 #include "gridutility.h"
+#include "cellgroup.h"
 
 class PhotomosaicGenerator : private QProgressDialog
 {
@@ -37,19 +38,29 @@ public:
     PhotomosaicGenerator(QWidget *t_parent = nullptr);
     ~PhotomosaicGenerator();
 
+    //Sets main image
     void setMainImage(const cv::Mat &t_img);
+
+    //Sets library images
     void setLibrary(const std::vector<cv::Mat> &t_lib);
-    void setDetail(const int t_detail = 100);
+
+    //Sets photomosaic mode
     void setMode(const Mode t_mode = Mode::RGB_EUCLIDEAN);
 
-    void setCellShape(const CellShape &t_cellShape);
-    void setGridState(const GridUtility::mosaicBestFit &t_gridState);
-    void setSizeSteps(const size_t t_steps);
+    //Sets cell group
+    void setCellGroup(const CellGroup &t_cellGroup);
 
+    //Sets grid state
+    void setGridState(const GridUtility::mosaicBestFit &t_gridState);
+
+    //Sets repeat range and addition
     void setRepeat(int t_repeatRange = 0, int t_repeatAddition = 0);
 
+    //Returns a Photomosaic of the main image made of the library images
     cv::Mat generate();
 #ifdef CUDA
+    //Returns a Photomosaic of the main image made of the library images
+    //Generates using CUDA
     cv::Mat cudaGenerate();
 #endif
 
@@ -57,18 +68,21 @@ private:
     cv::Mat m_img;
     std::vector<cv::Mat> m_lib;
 
-    double m_detail;
     Mode m_mode;
 
-    CellShape m_cellShape;
+    CellGroup m_cells;
     GridUtility::mosaicBestFit m_gridState;
-    size_t sizeSteps;
 
     int m_repeatRange, m_repeatAddition;
 
+    //Converts colour space of main image and library images
+    //Resizes library based on detail level
+    //Returns results
     std::pair<cv::Mat, std::vector<cv::Mat>> resizeAndCvtColor();
+    //Resizes vector of images based on ratio
     void resizeImages(std::vector<cv::Mat> &t_images, const double t_ratio = 0.5);
 
+    //Returns best fit index for cell if it is the grid
     std::optional<size_t> findCellBestFit(
         const CellShape &t_cellShape,
         const CellShape &t_detailCellShape,
@@ -76,22 +90,36 @@ private:
         const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
         const GridUtility::stepBestFit &t_grid) const;
 
+    //Returns the cell image at given position and it's local bounds
     std::pair<cv::Mat, cv::Rect> getCellAt(
         const CellShape &t_cellShape, const CellShape &t_detailCellShape,
         const int x, const int y, const bool t_pad,
         const cv::Mat &t_image) const;
 
+    //Compares pixels in the cell against the library images
+    //Returns the index of the library image with the smallest difference
+    //Used for mode RGB_EUCLIDEAN and CIE76
+    //(CIE76 is just a euclidean formulae in a different colour space)
     int findBestFitEuclidean(const cv::Mat &cell, const cv::Mat &mask,
                              const std::vector<cv::Mat> &library,
                              const std::map<size_t, int> &repeats, const cv::Rect &t_bounds) const;
+
+    //Compares pixels in the cell against the library images
+    //Returns the index of the library image with the smallest difference
+    //Used for mode CIEDE2000
     int findBestFitCIEDE2000(const cv::Mat &cell, const cv::Mat &mask,
                              const std::vector<cv::Mat> &library,
                              const std::map<size_t, int> &repeats, const cv::Rect &t_bounds) const;
 
+    //Calculates the repeat value of each library image in repeat range around x,y
+    //Only needs to look at first half of cells as the latter half are not yet used
     std::map<size_t, int> calculateRepeats(const GridUtility::stepBestFit &grid,
                                            const int x, const int y) const;
 
+    //Converts degrees to radians
     double degToRad(const double deg) const;
+
+    //Combines results into a Photomosaic
     cv::Mat combineResults(const GridUtility::mosaicBestFit &results);
 };
 

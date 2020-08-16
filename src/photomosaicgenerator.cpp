@@ -46,7 +46,7 @@
 #endif
 
 PhotomosaicGenerator::PhotomosaicGenerator(QWidget *t_parent)
-    : QProgressDialog{t_parent}, m_img{}, m_lib{}, m_detail{100}, m_mode{Mode::RGB_EUCLIDEAN},
+    : QProgressDialog{t_parent}, m_img{}, m_lib{}, m_mode{Mode::RGB_EUCLIDEAN},
       m_repeatRange{0}, m_repeatAddition{0}
 {
     setWindowModality(Qt::WindowModal);
@@ -54,41 +54,37 @@ PhotomosaicGenerator::PhotomosaicGenerator(QWidget *t_parent)
 
 PhotomosaicGenerator::~PhotomosaicGenerator() {}
 
+//Sets main image
 void PhotomosaicGenerator::setMainImage(const cv::Mat &t_img)
 {
     m_img = t_img;
 }
 
+//Sets library images
 void PhotomosaicGenerator::setLibrary(const std::vector<cv::Mat> &t_lib)
 {
     m_lib = t_lib;
 }
 
-void PhotomosaicGenerator::setDetail(const int t_detail)
-{
-    m_detail = (t_detail < 1) ? 0.01 : t_detail / 100.0;
-}
-
+//Sets photomosaic mode
 void PhotomosaicGenerator::setMode(const Mode t_mode)
 {
     m_mode = t_mode;
 }
 
-void PhotomosaicGenerator::setCellShape(const CellShape &t_cellShape)
+//Sets cell group
+void PhotomosaicGenerator::setCellGroup(const CellGroup &t_cellGroup)
 {
-    m_cellShape = t_cellShape;
+    m_cells = t_cellGroup;
 }
 
+//Sets grid state
 void PhotomosaicGenerator::setGridState(const GridUtility::mosaicBestFit &t_gridState)
 {
     m_gridState = t_gridState;
 }
 
-void PhotomosaicGenerator::setSizeSteps(const size_t t_steps)
-{
-    sizeSteps = t_steps;
-}
-
+//Sets repeat range and addition
 void PhotomosaicGenerator::setRepeat(int t_repeatRange, int t_repeatAddition)
 {
     m_repeatRange = t_repeatRange;
@@ -100,46 +96,65 @@ void PhotomosaicGenerator::setRepeat(int t_repeatRange, int t_repeatAddition)
 //Returns results
 std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGenerator::resizeAndCvtColor()
 {
+    //No resize or cvt color needed
+    if (m_cells.getDetail() == 1 && m_mode == Mode::RGB_EUCLIDEAN)
+        return {m_img, m_lib};
+
     cv::Mat resultMain;
     std::vector<cv::Mat> result(m_lib.size(), cv::Mat());
 
     //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
-    cv::InterpolationFlags flags = (m_detail < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
+    cv::InterpolationFlags flags = (m_cells.getDetail() < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
 
 #ifdef OPENCV_W_CUDA
     cv::cuda::Stream stream;
     //Main image
-    cv::cuda::GpuMat main;
-    main.upload(m_img, stream);
     if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
+    {
+        cv::cuda::GpuMat main;
+        main.upload(m_img, stream);
         cv::cuda::cvtColor(main, main, cv::COLOR_BGR2Lab, 0, stream);
-    main.download(resultMain, stream);
+        main.download(resultMain, stream);
+    }
+    else
+        resultMain = m_img;
 
     //Library image
-    std::vector<cv::cuda::GpuMat> src(m_lib.size()), dst(m_lib.size());
+    std::vector<cv::cuda::GpuMat> src(m_lib.size());
     for (size_t i = 0; i < m_lib.size(); ++i)
     {
         //Resize image
         src.at(i).upload(m_lib.at(i), stream);
-        cv::cuda::resize(src.at(i), dst.at(i),
-                         cv::Size(std::round(m_detail * src.at(i).cols),
-                                  std::round(m_detail * src.at(i).rows)),
-                         0, 0, flags, stream);
+        if (m_cells.getDetail() != 1)
+            cv::cuda::resize(src.at(i), src.at(i),
+                             cv::Size(std::round(m_cells.getCellSize(0, true)),
+                                      std::round(m_cells.getCellSize(0, true))),
+                             0, 0, flags, stream);
+
         if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
-            cv::cuda::cvtColor(dst.at(i), dst.at(i), cv::COLOR_BGR2Lab, 0, stream);
-        dst.at(i).download(result.at(i), stream);
+            cv::cuda::cvtColor(src.at(i), src.at(i), cv::COLOR_BGR2Lab, 0, stream);
+        src.at(i).download(result.at(i), stream);
     }
     stream.waitForCompletion();
 #else
     //Main image
-    cv::cvtColor(m_img, resultMain, cv::COLOR_BGR2Lab);
+    if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
+        cv::cvtColor(m_img, resultMain, cv::COLOR_BGR2Lab);
+    else
+        resultMain = m_img;
+
     //Library image
     for (size_t i = 0; i < m_lib.size(); ++i)
     {
-        cv::resize(m_lib.at(i), result.at(i),
-                   cv::Size(std::round(m_detail * m_lib.at(i).cols),
-                            std::round(m_detail * m_lib.at(i).rows)), 0, 0, flags);
-        cv::cvtColor(result.at(i), result.at(i), cv::COLOR_BGR2Lab);
+        if (m_cells.getDetail() != 1)
+            cv::resize(m_lib.at(i), result.at(i),
+                       cv::Size(std::round(m_cells.getCellSize(0, true)),
+                                std::round(m_cells.getCellSize(0, true))), 0, 0, flags);
+        else
+            result.at(i) = m_lib.at(i).clone();
+
+        if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
+            cv::cvtColor(result.at(i), result.at(i), cv::COLOR_BGR2Lab);
     }
 
 
@@ -215,9 +230,10 @@ std::pair<cv::Mat, cv::Rect> PhotomosaicGenerator::getCellAt(
                                      UtilityFuncs::ResizeType::EXACT);
 
     //Resizes bounds of cell in local space to detail level
-    const cv::Rect detailCellLocalBound(cellLocalBound.x * m_detail, cellLocalBound.y * m_detail,
-                                        cellLocalBound.width * m_detail,
-                                        cellLocalBound.height * m_detail);
+    const cv::Rect detailCellLocalBound(cellLocalBound.x * m_cells.getDetail(),
+                                        cellLocalBound.y * m_cells.getDetail(),
+                                        cellLocalBound.width * m_cells.getDetail(),
+                                        cellLocalBound.height * m_cells.getDetail());
 
     return {cell, detailCellLocalBound};
 }
@@ -234,9 +250,6 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
     //Resizes library based on detail level
     auto [mainImage, resizedLib] = resizeAndCvtColor();
 
-    //Stores cell shape, halved at each size step
-    CellShape normalCellShape(m_cellShape);
-
     for (size_t step = 0; step < m_gridState.size(); ++step)
     {
         //Initialise progress bar
@@ -249,9 +262,10 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
         }
         const int progressStep = std::pow(4, (m_gridState.size() - 1) - step);
 
-        //Create detail cell shape
-        const int detailCellSize = normalCellShape.getCellMask(0, 0).rows * m_detail;
-        CellShape detailCellShape(normalCellShape.resized(detailCellSize, detailCellSize));
+        //Reference to cell shapes
+        const CellShape &normalCellShape = m_cells.getCell(step);
+        const CellShape &detailCellShape = m_cells.getCell(step, true);
+        const int detailCellSize = m_cells.getCellSize(step, true);
 
         //Stores grid size
         const int gridHeight = static_cast<int>(m_gridState.at(step).size());
@@ -371,8 +385,6 @@ cv::Mat PhotomosaicGenerator::cudaGenerate()
         if ((step + 1) < m_gridState.size())
         {
             //Halve cell size
-            normalCellShape = normalCellShape.resized(normalCellShape.getCellMask(0, 0).cols / 2,
-                                                      normalCellShape.getCellMask(0, 0).rows / 2);
             resizeImages(resizedLib);
         }
     }
@@ -424,9 +436,6 @@ cv::Mat PhotomosaicGenerator::generate()
     //Resizes library based on detail level
     auto [mainImage, resizedLib] = resizeAndCvtColor();
 
-    //Stores cell shape, halved at each size step
-    CellShape normalCellShape(m_cellShape);
-
     //For all size steps, stop if no bounds for step
     for (size_t step = 0; step < m_gridState.size(); ++step)
     {
@@ -440,9 +449,9 @@ cv::Mat PhotomosaicGenerator::generate()
         }
         const int progressStep = std::pow(4, (m_gridState.size() - 1) - step);
 
-        //Create detail cell shape
-        const int detailCellSize = normalCellShape.getCellMask(0, 0).rows * m_detail;
-        CellShape detailCellShape(normalCellShape.resized(detailCellSize, detailCellSize));
+        //Reference to cell shapes
+        const CellShape &normalCellShape = m_cells.getCell(step);
+        const CellShape &detailCellShape = m_cells.getCell(step, true);
 
         //Find best match for each cell in grid
         for (int y = -GridUtility::PAD_GRID;
@@ -477,8 +486,6 @@ cv::Mat PhotomosaicGenerator::generate()
         if ((step + 1) < m_gridState.size())
         {
             //Halve cell size
-            normalCellShape = normalCellShape.resized(normalCellShape.getCellMask(0, 0).cols / 2,
-                                                      normalCellShape.getCellMask(0, 0).rows / 2);
             resizeImages(resizedLib);
         }
     }
@@ -553,7 +560,8 @@ int PhotomosaicGenerator::findBestFitEuclidean(const cv::Mat &cell, const cv::Ma
         //For cell and library image compare the corresponding pixels
         //Sum all pixel differences for total image difference
         const uchar *p_main, *p_im, *p_mask;
-        for (int row = t_bounds.y; row < t_bounds.br().y && row < cell.rows && variant < bestVariant; ++row)
+        for (int row = t_bounds.y;
+             row < t_bounds.br().y && row < cell.rows && variant < bestVariant; ++row)
         {
             p_main = cell.ptr<uchar>(row);
             p_im = library.at(i).ptr<uchar>(row);
@@ -599,7 +607,8 @@ int PhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell, const cv::Ma
         //For cell and library image compare the corresponding pixels
         //Sum all pixel differences for total image difference
         const uchar *p_main, *p_im, *p_mask;
-        for (int row = t_bounds.y; row < t_bounds.br().y && row < cell.rows && variant < bestVariant; ++row)
+        for (int row = t_bounds.y;
+             row < t_bounds.br().y && row < cell.rows && variant < bestVariant; ++row)
         {
             p_main = cell.ptr<uchar>(row);
             p_im = library.at(i).ptr<uchar>(row);
@@ -754,21 +763,16 @@ cv::Mat PhotomosaicGenerator::combineResults(const GridUtility::mosaicBestFit &r
     //Stores library images, halved at each size step
     std::vector<cv::Mat> libImg(m_lib);
 
-    //Stores cell shape, halved at each size step
-    CellShape normalCellShape(m_cellShape);
-
     //For all size steps in results
     for (size_t step = 0; step < results.size(); ++step)
     {
         const int progressStep = std::pow(4, (m_gridState.size() - 1) - step);
 
-        //Halve cell size
+        //Halve library images on each size step
         if (step != 0)
-        {
-            normalCellShape = normalCellShape.resized(normalCellShape.getCellMask(0, 0).cols / 2,
-                                                      normalCellShape.getCellMask(0, 0).rows / 2);
             resizeImages(libImg);
-        }
+
+        const CellShape &normalCellShape = m_cells.getCell(step);
 
         mosaicStep = cv::Mat::zeros(m_img.rows, m_img.cols, m_img.type());
         mosaicMaskStep = cv::Mat::zeros(m_img.rows, m_img.cols, CV_8UC1);

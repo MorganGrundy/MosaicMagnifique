@@ -12,6 +12,8 @@ public:
 
     //Sets cell shape
     void setCellShape(const CellShape &t_cellShape);
+    //Returns size of top level cell
+    int getCellSize(const size_t t_sizeStep, const bool t_detail = false) const;
 
     //Sets detail level
     void setDetail(const int t_detail = 100, const bool t_reset = false);
@@ -24,13 +26,15 @@ public:
     size_t getSizeSteps() const;
 
     //Returns reference to normal and detail cell shapes
-    CellShape &getCell(size_t t_sizeStep, bool t_detail = false);
+    CellShape &getCell(const size_t t_sizeStep, const bool t_detail = false);
     //Return const reference to normal and detail cell shapes
-    const CellShape &getCell(size_t t_sizeStep, bool t_detail = false) const;
+    const CellShape &getCell(const size_t t_sizeStep, const bool t_detail = false) const;
     //Returns reference to an edge cell mask
-    cv::Mat &getEdgeCell(size_t t_sizeStep, bool t_flipHorizontal, bool t_flipVertical);
+    cv::Mat &getEdgeCell(const size_t t_sizeStep, const bool t_flipHorizontal,
+                         const bool t_flipVertical);
     //Returns const reference to an edge cell mask
-    const cv::Mat &getEdgeCell(size_t t_sizeStep, bool t_flipHorizontal, bool t_flipVertical) const;
+    const cv::Mat &getEdgeCell(const size_t t_sizeStep, const bool t_flipHorizontal,
+                               const bool t_flipVertical) const;
 
 private:
     std::vector<CellShape> cells;

@@ -1028,7 +1028,6 @@ void MainWindow::generatePhotomosaic()
     PhotomosaicGenerator generator(this);
     generator.setMainImage(mainImage);
     generator.setLibrary(library);
-    generator.setDetail(ui->spinDetail->value());
     if (ui->comboMode->currentText() == "RGB Euclidean")
         generator.setMode(PhotomosaicGenerator::Mode::RGB_EUCLIDEAN);
     else if (ui->comboMode->currentText() == "CIE76")
@@ -1036,11 +1035,9 @@ void MainWindow::generatePhotomosaic()
     else if (ui->comboMode->currentText() == "CIEDE2000")
         generator.setMode(PhotomosaicGenerator::Mode::CIEDE2000);
 
-    generator.setCellShape(ui->widgetGridPreview->getCellGroup().getCell(0));
+    generator.setCellGroup(ui->widgetGridPreview->getCellGroup());
 
     generator.setGridState(ui->widgetGridPreview->getGridState());
-
-    generator.setSizeSteps(ui->spinMinCellSize->getHalveSteps());
 
     generator.setRepeat(ui->spinRepeatRange->value(), ui->spinRepeatAddition->value());
 

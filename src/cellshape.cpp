@@ -128,7 +128,8 @@ void CellShape::setCellMask(const cv::Mat &t_cellMask)
 }
 
 //Returns the cell mask
-cv::Mat CellShape::getCellMask(const bool t_flippedHorizontal, const bool t_flippedVertical) const
+const cv::Mat &CellShape::getCellMask(const bool t_flippedHorizontal,
+                                      const bool t_flippedVertical) const
 {
     if (t_flippedHorizontal)
     {

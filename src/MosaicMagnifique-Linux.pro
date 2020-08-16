@@ -32,7 +32,6 @@ TARGET = MosaicMagnifique
 DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
-	cellgrid.cpp \
 	cellgroup.cpp \
 	cellshape.cpp \
 	colourvisualisation.cpp \
@@ -49,7 +48,6 @@ SOURCES += \
 	utilityfuncs.cpp
 
 HEADERS += \
-	cellgrid.h \
 	cellgroup.h \
 	cellshape.h \
 	colourvisualisation.h \

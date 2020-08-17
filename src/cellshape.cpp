@@ -22,7 +22,7 @@
 #include <opencv2/imgproc.hpp>
 #include <QDebug>
 
-#include "utilityfuncs.h"
+#include "imageutility.h"
 
 CellShape::CellShape()
     : m_cellMask{}, m_rowSpacing{0}, m_colSpacing{0},
@@ -116,7 +116,7 @@ void CellShape::setCellMask(const cv::Mat &t_cellMask)
         cv::threshold(t_cellMask, result, 127.0, 255.0, cv::THRESH_BINARY);
         m_cellMask = result;
 
-        UtilityFuncs::imageToSquare(m_cellMask, UtilityFuncs::SquareMethod::PAD);
+        ImageUtility::imageToSquare(m_cellMask, ImageUtility::SquareMethod::PAD);
 
         //Create flipped cells
         cv::flip(m_cellMask, m_cellMaskFlippedH, 1);
@@ -273,8 +273,8 @@ CellShape CellShape::resized(const int t_cols, const int t_rows) const
         return CellShape(*this);
     }
 
-    const cv::Mat resizedMask = UtilityFuncs::resizeImage(m_cellMask, t_rows, t_cols,
-                                                          UtilityFuncs::ResizeType::EXACT);
+    const cv::Mat resizedMask = ImageUtility::resizeImage(m_cellMask, t_rows, t_cols,
+                                                          ImageUtility::ResizeType::EXACT);
 
     CellShape result(resizedMask);
     //Resize spacing and offset

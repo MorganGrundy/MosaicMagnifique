@@ -41,11 +41,11 @@ SOURCES += \
 	gridviewer.cpp \
 	halvingspinbox.cpp \
 	imagehistogramcompare.cpp \
+	imageutility.cpp \
 	imageviewer.cpp \
 	main.cpp \
 	mainwindow.cpp \
-	photomosaicgenerator.cpp \
-	utilityfuncs.cpp
+	photomosaicgenerator.cpp
 
 HEADERS += \
 	cellgroup.h \
@@ -57,6 +57,7 @@ HEADERS += \
 	gridviewer.h \
 	halvingspinbox.h \
 	imagehistogramcompare.h \
+	imageutility.h \
 	imageviewer.h \
 	mainwindow.h \
 	photomosaicgenerator.h \

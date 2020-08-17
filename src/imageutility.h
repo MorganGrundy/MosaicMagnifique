@@ -24,7 +24,7 @@
 #include <QPixmap>
 #include <QProgressBar>
 
-namespace UtilityFuncs
+namespace ImageUtility
 {
     //Current version number
     const int VERSION_NO = 301;

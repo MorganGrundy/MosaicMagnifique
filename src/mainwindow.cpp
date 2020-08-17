@@ -35,7 +35,7 @@
 #include <opencv2/highgui.hpp>
 #include <chrono>
 
-#include "utilityfuncs.h"
+#include "imageutility.h"
 #include "photomosaicgenerator.h"
 #include "imageviewer.h"
 #include "colourvisualisation.h"
@@ -577,7 +577,7 @@ void MainWindow::addImages()
         }
 
         //Square image with focus on center and resize to image size
-        UtilityFuncs::imageToSquare(image, UtilityFuncs::SquareMethod::CROP);
+        ImageUtility::imageToSquare(image, ImageUtility::SquareMethod::CROP);
         originalImages.push_back(image);
 
         //Extracts filename and extension from full path
@@ -592,15 +592,15 @@ void MainWindow::addImages()
     }
 
     //Resize to images to current library size
-    images = UtilityFuncs::batchResizeMat(originalImages, imageSize, imageSize,
-                                          UtilityFuncs::ResizeType::EXACT, progressBar);
+    images = ImageUtility::batchResizeMat(originalImages, imageSize, imageSize,
+                                          ImageUtility::ResizeType::EXACT, progressBar);
 
     auto nameIt = names.cbegin();
     auto imageIt = images.cbegin();
     for (auto image: originalImages)
     {
         //Add image to library
-        QListWidgetItem listItem(QIcon(UtilityFuncs::matToQPixmap(*imageIt)), *nameIt);
+        QListWidgetItem listItem(QIcon(ImageUtility::matToQPixmap(*imageIt)), *nameIt);
         ui->listPhoto->addItem(new QListWidgetItem(listItem));
 
         //Store QListWidgetItem with resized and original OpenCV Mat
@@ -643,14 +643,14 @@ void MainWindow::updateCellSize()
     for (auto image: allImages.values())
         images.push_back(image.second);
 
-    images = UtilityFuncs::batchResizeMat(images, imageSize, imageSize,
-                                          UtilityFuncs::ResizeType::EXACT, progressBar);
+    images = ImageUtility::batchResizeMat(images, imageSize, imageSize,
+                                          ImageUtility::ResizeType::EXACT, progressBar);
 
     auto it = images.cbegin();
     for (auto listItem: allImages.keys())
     {
         allImages[listItem].first = *it;
-        listItem.setIcon(QIcon(UtilityFuncs::matToQPixmap(*it)));
+        listItem.setIcon(QIcon(ImageUtility::matToQPixmap(*it)));
         ui->listPhoto->addItem(new QListWidgetItem(listItem));
 
         ++it;
@@ -675,8 +675,8 @@ void MainWindow::saveLibrary()
         {
             QDataStream out(&file);
             //Write header with "magic number" and version
-            out << static_cast<quint32>(UtilityFuncs::MIL_MAGIC);
-            out << static_cast<qint32>(UtilityFuncs::MIL_VERSION);
+            out << static_cast<quint32>(ImageUtility::MIL_MAGIC);
+            out << static_cast<qint32>(ImageUtility::MIL_VERSION);
 
             out.setVersion(out.version());
             //Write images and names
@@ -715,7 +715,7 @@ void MainWindow::loadLibrary()
             //Read and check magic number
             quint32 magic;
             in >> magic;
-            if (magic != UtilityFuncs::MIL_MAGIC)
+            if (magic != ImageUtility::MIL_MAGIC)
             {
                 QMessageBox msgBox;
                 msgBox.setText(filename + tr(" is not a valid .mil file"));
@@ -726,12 +726,12 @@ void MainWindow::loadLibrary()
             //Read the version
             qint32 version;
             in >> version;
-            if (version == UtilityFuncs::MIL_VERSION)
+            if (version == ImageUtility::MIL_VERSION)
                 in.setVersion(in.version());
             else
             {
                 QMessageBox msgBox;
-                if (version < UtilityFuncs::MIL_VERSION)
+                if (version < ImageUtility::MIL_VERSION)
                     msgBox.setText(filename + tr(" uses an outdated file version"));
                 else
                     msgBox.setText(filename + tr(" uses a newer file version"));
@@ -760,7 +760,7 @@ void MainWindow::loadLibrary()
                 QString name;
                 in >> name;
 
-                QListWidgetItem listItem(QIcon(UtilityFuncs::matToQPixmap(image)), name);
+                QListWidgetItem listItem(QIcon(ImageUtility::matToQPixmap(image)), name);
                 ui->listPhoto->addItem(new QListWidgetItem(listItem));
 
                 allImages.insert(listItem, {image, image});
@@ -812,8 +812,8 @@ void MainWindow::selectMainImage()
 
         //Gives main image to grid preview
         ui->widgetGridPreview->setBackground(
-                    UtilityFuncs::resizeImage(mainImage, mainImage.rows, mainImage.cols,
-                                              UtilityFuncs::ResizeType::INCLUSIVE));
+                    ImageUtility::resizeImage(mainImage, mainImage.rows, mainImage.cols,
+                                              ImageUtility::ResizeType::INCLUSIVE));
 
         ui->widgetGridPreview->updateGrid();
     }
@@ -862,9 +862,9 @@ void MainWindow::photomosaicWidthChanged(int i)
         if (!mainImage.empty())
         {
             ui->widgetGridPreview->setBackground(
-                        UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
+                        ImageUtility::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
                                                   ui->spinPhotomosaicWidth->value(),
-                                                  UtilityFuncs::ResizeType::INCLUSIVE));
+                                                  ImageUtility::ResizeType::INCLUSIVE));
             ui->widgetGridPreview->updateGrid();
         }
     }
@@ -885,9 +885,9 @@ void MainWindow::photomosaicHeightChanged(int i)
     if (!mainImage.empty())
     {
         ui->widgetGridPreview->setBackground(
-                    UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
+                    ImageUtility::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
                                               ui->spinPhotomosaicWidth->value(),
-                                              UtilityFuncs::ResizeType::INCLUSIVE));
+                                              ImageUtility::ResizeType::INCLUSIVE));
         ui->widgetGridPreview->updateGrid();
     }
 }
@@ -910,8 +910,8 @@ void MainWindow::loadImageSize()
 
         //Resize main image to user entered size
         ui->widgetGridPreview->setBackground(
-                    UtilityFuncs::resizeImage(mainImage, mainImage.rows, mainImage.cols,
-                                              UtilityFuncs::ResizeType::INCLUSIVE));
+                    ImageUtility::resizeImage(mainImage, mainImage.rows, mainImage.cols,
+                                              ImageUtility::ResizeType::INCLUSIVE));
         ui->widgetGridPreview->updateGrid();
     }
 }
@@ -1011,18 +1011,18 @@ void MainWindow::generatePhotomosaic()
         return;
     }
     //Resize main image to user entered size
-    mainImage = UtilityFuncs::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
+    mainImage = ImageUtility::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
                                           ui->spinPhotomosaicWidth->value(),
-                                          UtilityFuncs::ResizeType::INCLUSIVE);
+                                          ImageUtility::ResizeType::INCLUSIVE);
 
     std::vector<cv::Mat> library;
     for (auto pair: allImages.values())
         library.push_back(pair.first);
 
     if (library.front().cols != ui->spinCellSize->value())
-        library = UtilityFuncs::batchResizeMat(library, ui->spinCellSize->value(),
+        library = ImageUtility::batchResizeMat(library, ui->spinCellSize->value(),
                                                ui->spinCellSize->value(),
-                                               UtilityFuncs::ResizeType::EXACT, progressBar);
+                                               ImageUtility::ResizeType::EXACT, progressBar);
 
     //Generate Photomosaic
     PhotomosaicGenerator generator(this);

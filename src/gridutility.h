@@ -33,17 +33,21 @@ namespace GridUtility
 
     const int PAD_GRID = 2;
 
+    //Calculates the number of given cells needed to fill an image of given size
     cv::Point calculateGridSize(const CellShape &t_cellShape,
                                 const int t_imageWidth, const int t_imageHeight,
                                 const int t_pad);
 
+    //Returns rect of cell shape at the given grid position
     cv::Rect getRectAt(const CellShape &t_cellShape, const int t_x, const int t_y);
 
+    //Returns the flip state of the given cell at given grid position
     std::pair<bool, bool> getFlipStateAt(const CellShape &t_cellShape,
                                          const int t_x, const int t_y, const int t_pad);
 
     //Maximum possible entropy value
     const double MAX_ENTROPY = 8.0;
+    //Returns the entropy of the given image in the given mask
     double calculateEntropy(const cv::Mat &t_mask, const cv::Mat &t_image);
 };
 

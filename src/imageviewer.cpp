@@ -24,7 +24,7 @@
 #include <QLabel>
 #include <opencv2/highgui.hpp>
 
-#include "utilityfuncs.h"
+#include "imageutility.h"
 #include "customgraphicsview.h"
 
 ImageViewer::ImageViewer(QWidget *t_parent)
@@ -50,7 +50,7 @@ ImageViewer::ImageViewer(QWidget *t_parent, const cv::Mat &t_image, const double
     connect(ui->fitButton, SIGNAL(released()), ui->graphicsView, SLOT(fitToView()));
 
     //Adds image to view
-    const QPixmap pixmap = UtilityFuncs::matToQPixmap(t_image);
+    const QPixmap pixmap = ImageUtility::matToQPixmap(t_image);
     QGraphicsScene *scene = new QGraphicsScene();
     scene->setItemIndexMethod(QGraphicsScene::NoIndex);
     scene->addPixmap(pixmap);

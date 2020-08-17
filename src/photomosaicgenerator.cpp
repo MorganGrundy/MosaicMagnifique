@@ -226,8 +226,8 @@ std::pair<cv::Mat, cv::Rect> PhotomosaicGenerator::getCellAt(
     const cv::Mat &cellMask = t_detailCellShape.getCellMask(flipHorizontal, flipVertical);
 
     //Resize image cell to detail level
-    cell = UtilityFuncs::resizeImage(cell, cellMask.rows, cellMask.cols,
-                                     UtilityFuncs::ResizeType::EXACT);
+    cell = ImageUtility::resizeImage(cell, cellMask.rows, cellMask.cols,
+                                     ImageUtility::ResizeType::EXACT);
 
     //Resizes bounds of cell in local space to detail level
     const cv::Rect detailCellLocalBound(cellLocalBound.x * m_cells.getDetail(),

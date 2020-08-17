@@ -24,7 +24,7 @@
 #include <opencv2/core/mat.hpp>
 
 #include "cellshape.h"
-#include "utilityfuncs.h"
+#include "imageutility.h"
 #include "gridbounds.h"
 #include "gridutility.h"
 #include "cellgroup.h"

@@ -27,7 +27,7 @@
 #include <QWheelEvent>
 
 #include "gridutility.h"
-#include "utilityfuncs.h"
+#include "imageutility.h"
 #include "gridgenerator.h"
 
 GridViewer::GridViewer(QWidget *parent)
@@ -281,7 +281,7 @@ void GridViewer::createGrid(const int gridHeight, const int gridWidth)
     }
 
     //Make black pixels transparent
-    UtilityFuncs::matMakeTransparent(newGrid.at(0), newGrid.at(0), 0);
+    ImageUtility::matMakeTransparent(newGrid.at(0), newGrid.at(0), 0);
 
     grid = QImage(newGrid.at(0).data, gridWidth, gridHeight, static_cast<int>(newGrid.at(0).step),
                   QImage::Format_RGBA8888).copy();

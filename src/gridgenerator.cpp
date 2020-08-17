@@ -1,6 +1,6 @@
 #include "gridgenerator.h"
 
-#include "utilityfuncs.h"
+#include "imageutility.h"
 #include "cellgroup.h"
 
 GridGenerator::GridGenerator()
@@ -150,8 +150,8 @@ GridGenerator::findCellState(const CellGroup &t_cells, const cv::Mat &t_mainImag
                            boundedDetailRect);
 
         //Resize image cell to size of mask
-        cell = UtilityFuncs::resizeImage(cell, mask.rows, mask.cols,
-                                         UtilityFuncs::ResizeType::EXCLUSIVE);
+        cell = ImageUtility::resizeImage(cell, mask.rows, mask.cols,
+                                         ImageUtility::ResizeType::EXCLUSIVE);
 
         //If cell entropy exceeds threshold return true
         if (GridUtility::calculateEntropy(mask, cell) >= GridUtility::MAX_ENTROPY * 0.7)

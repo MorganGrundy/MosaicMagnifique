@@ -1,6 +1,6 @@
 #include "cellgroup.h"
 
-#include "utilityfuncs.h"
+#include "imageutility.h"
 
 CellGroup::CellGroup() : cells{1}, detailCells{1}, edgeCells{1, std::vector<cv::Mat>(4)},
     detail{1}, sizeSteps{1}
@@ -15,10 +15,10 @@ void CellGroup::setCellShape(const CellShape &t_cellShape)
     {
         //Create edge cell
         cv::Mat cellMask;
-        UtilityFuncs::edgeDetect(cells.at(0).getCellMask(0, 0), cellMask);
+        ImageUtility::edgeDetect(cells.at(0).getCellMask(0, 0), cellMask);
 
         //Make black pixels transparent
-        UtilityFuncs::matMakeTransparent(cellMask, getEdgeCell(0, false, false), 0);
+        ImageUtility::matMakeTransparent(cellMask, getEdgeCell(0, false, false), 0);
 
         //Create flipped edge cell
         cv::flip(getEdgeCell(0, false, false), getEdgeCell(0, true, false), 1);
@@ -96,9 +96,9 @@ void CellGroup::setSizeSteps(const size_t t_steps, const bool t_reset)
 
             //Create edge cell mask
             cv::Mat cellMask;
-            UtilityFuncs::edgeDetect(cells.at(step).getCellMask(0, 0), cellMask);
+            ImageUtility::edgeDetect(cells.at(step).getCellMask(0, 0), cellMask);
             //Make black pixels transparent
-            UtilityFuncs::matMakeTransparent(cellMask, getEdgeCell(step, false, false), 0);
+            ImageUtility::matMakeTransparent(cellMask, getEdgeCell(step, false, false), 0);
 
             cv::flip(getEdgeCell(0, false, false), getEdgeCell(step, true, false), 1);
             cv::flip(getEdgeCell(0, false, false), getEdgeCell(step, false, true), 0);

@@ -20,7 +20,7 @@
 #ifndef SHARED_CPP_
 #define SHARED_CPP_
 
-#include "utilityfuncs.h"
+#include "imageutility.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -39,7 +39,7 @@
 //(height = targetHeight && width <= targetWidth) || (height <= targetHeight && width = targetWidth)
 //type = EXCLUSIVE:
 //(height = targetHeight && width >= targetWidth) || (height >= targetHeight && width = targetWidth)
-cv::Mat UtilityFuncs::resizeImage(const cv::Mat &t_img,
+cv::Mat ImageUtility::resizeImage(const cv::Mat &t_img,
                                   const int t_targetHeight, const int t_targetWidth,
                                   const ResizeType t_type)
 {
@@ -72,7 +72,7 @@ cv::Mat UtilityFuncs::resizeImage(const cv::Mat &t_img,
 //(height = targetHeight && width <= targetWidth) || (height <= targetHeight && width = targetWidth)
 //type = EXCLUSIVE:
 //(height = targetHeight && width >= targetWidth) || (height >= targetHeight && width = targetWidth)
-std::vector<cv::Mat> UtilityFuncs::batchResizeMat(const std::vector<cv::Mat> &images,
+std::vector<cv::Mat> ImageUtility::batchResizeMat(const std::vector<cv::Mat> &images,
                                                   const int t_targetHeight, const int t_targetWidth,
                                                   const ResizeType t_type, QProgressBar *progressBar)
 {
@@ -124,7 +124,7 @@ std::vector<cv::Mat> UtilityFuncs::batchResizeMat(const std::vector<cv::Mat> &im
 
     for (size_t i = 0; i < images.size(); ++i)
     {
-        result.at(i) = UtilityFuncs::resizeImage(images.at(i), t_targetHeight, t_targetWidth,
+        result.at(i) = ImageUtility::resizeImage(images.at(i), t_targetHeight, t_targetWidth,
                                                  t_type);
         if (progressBar != nullptr)
             progressBar->setValue(progressBar->value() + 1);
@@ -140,7 +140,7 @@ std::vector<cv::Mat> UtilityFuncs::batchResizeMat(const std::vector<cv::Mat> &im
 //Pads the image's smaller dimension with black pixels
 //method = CROP:
 //Crops the image's larger dimension with focus at image centre
-void UtilityFuncs::imageToSquare(cv::Mat& t_img, const SquareMethod t_method)
+void ImageUtility::imageToSquare(cv::Mat& t_img, const SquareMethod t_method)
 {
     //Already square
     if (t_img.cols == t_img.rows)
@@ -170,7 +170,7 @@ void UtilityFuncs::imageToSquare(cv::Mat& t_img, const SquareMethod t_method)
 }
 
 //Converts an OpenCV Mat to a QPixmap and returns
-QPixmap UtilityFuncs::matToQPixmap(const cv::Mat &t_mat)
+QPixmap ImageUtility::matToQPixmap(const cv::Mat &t_mat)
 {
     return QPixmap::fromImage(QImage(t_mat.data, t_mat.cols, t_mat.rows,
                                      static_cast<int>(t_mat.step),
@@ -180,7 +180,7 @@ QPixmap UtilityFuncs::matToQPixmap(const cv::Mat &t_mat)
 //Takes a grayscale image as src
 //Converts to RGBA and makes pixels of target value transparent
 //Returns result in dst
-void UtilityFuncs::matMakeTransparent(const cv::Mat &t_src, cv::Mat &t_dst, const int t_targetValue)
+void ImageUtility::matMakeTransparent(const cv::Mat &t_src, cv::Mat &t_dst, const int t_targetValue)
 {
     cv::Mat tmp;
     cv::cvtColor(t_src, tmp, cv::COLOR_GRAY2RGBA);
@@ -208,7 +208,7 @@ void UtilityFuncs::matMakeTransparent(const cv::Mat &t_src, cv::Mat &t_dst, cons
 }
 
 //Replace dst with edge detected version of src
-void UtilityFuncs::edgeDetect(const cv::Mat &t_src, cv::Mat &t_dst)
+void ImageUtility::edgeDetect(const cv::Mat &t_src, cv::Mat &t_dst)
 {
     float kernelData[9] = {-1, -1, -1, -1, 8, -1, -1, -1, -1};
     const cv::Mat kernel(3, 3, CV_32FC1, kernelData);

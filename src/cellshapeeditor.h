@@ -24,7 +24,7 @@ public:
     const CellShape &getCellShape();
 
     //Returns cell shape name
-    const QString getCellShapeName();
+    const QString getCellShapeName() const;
 
 public slots:
     //Saves the cell shape to a file

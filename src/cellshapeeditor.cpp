@@ -81,7 +81,7 @@ const CellShape &CellShapeEditor::getCellShape()
 }
 
 //Returns cell shape name
-const QString CellShapeEditor::getCellShapeName()
+const QString CellShapeEditor::getCellShapeName() const
 {
     return ui->lineCellName->text();
 }

@@ -50,7 +50,7 @@
 #endif
 
 MainWindow::MainWindow(QWidget *t_parent)
-    : QMainWindow(t_parent), ui(new Ui::MainWindow)
+    : QMainWindow{t_parent}, ui{new Ui::MainWindow}
 {
     ui->setupUi(this);
 
@@ -74,20 +74,13 @@ MainWindow::MainWindow(QWidget *t_parent)
 
     connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
 
-    //Setup image library list
-    ui->listPhoto->setResizeMode(QListWidget::ResizeMode::Adjust);
-    ui->listPhoto->setIconSize(ui->listPhoto->gridSize() - QSize(14, 14));
-    imageSize = ui->spinLibCellSize->value();
-
-    //Connects image library tab buttons to appropriate methods
-    connect(ui->buttonAdd, SIGNAL(released()), this, SLOT(addImages()));
-    connect(ui->buttonDelete, SIGNAL(released()), this, SLOT(deleteImages()));
-    connect(ui->buttonLibCellSize, SIGNAL(released()), this, SLOT(updateCellSize()));
-    connect(ui->buttonSave, SIGNAL(released()), this, SLOT(saveLibrary()));
-    connect(ui->buttonLoad, SIGNAL(released()), this, SLOT(loadLibrary()));
-
     photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) /
-            ui->spinPhotomosaicHeight->value();
+                           ui->spinPhotomosaicHeight->value();
+
+    //Image Library Editor
+    ui->imageLibraryEditor->setProgressBar(progressBar);
+    connect(ui->imageLibraryEditor, SIGNAL(imageLibraryChanged(int)),
+            this, SLOT(updateImageLibraryCount(int)));
 
     //Connects generator settings to appropriate methods
     connect(ui->buttonMainImage, SIGNAL(released()), this, SLOT(selectMainImage()));
@@ -182,231 +175,10 @@ void MainWindow::tabChanged(int t_index)
     }
 }
 
-//Used to add images to the image library
-//Creates a QFileDialog allowing the user to select images
-void MainWindow::addImages()
+//Updates image library count in tab widget
+void MainWindow::updateImageLibraryCount(int t_newSize)
 {
-    QStringList filenames = QFileDialog::getOpenFileNames(this, tr("Select image to add"), "",
-                                                          "Image Files (*.bmp *.dib *.jpeg *.jpg "
-                                                          "*.jpe *.jp2 *.png *.pbm *.pgm *.ppm "
-                                                          "*.pxm *.pnm *.sr *.ras *.tiff *.tif "
-                                                          "*.hdr *.pic)");
-
-    progressBar->setMaximum(filenames.size());
-    progressBar->setValue(0);
-    progressBar->setVisible(true);
-    std::vector<cv::Mat> originalImages;
-    std::vector<cv::Mat> images;
-    std::vector<QString> names;
-    //For all files selected by user load and add to library
-    for (auto filename: filenames)
-    {
-        cv::Mat image = cv::imread(filename.toStdString());
-        if (image.empty())
-        {
-            qDebug() << "Could not open or find the image";
-            continue;
-        }
-
-        //Square image with focus on center and resize to image size
-        ImageUtility::imageToSquare(image, ImageUtility::SquareMethod::CROP);
-        originalImages.push_back(image);
-
-        //Extracts filename and extension from full path
-        QString name;
-        for (auto it = filename.cbegin() + filename.lastIndexOf('/') + 1, end = filename.cend();
-             it != end; ++it)
-        {
-            name += (*it);
-        }
-        names.push_back(name);
-        progressBar->setValue(progressBar->value() + 1);
-    }
-
-    //Resize to images to current library size
-    images = ImageUtility::batchResizeMat(originalImages, imageSize, imageSize,
-                                          ImageUtility::ResizeType::EXACT, progressBar);
-
-    auto nameIt = names.cbegin();
-    auto imageIt = images.cbegin();
-    for (auto image: originalImages)
-    {
-        //Add image to library
-        QListWidgetItem listItem(QIcon(ImageUtility::matToQPixmap(*imageIt)), *nameIt);
-        ui->listPhoto->addItem(new QListWidgetItem(listItem));
-
-        //Store QListWidgetItem with resized and original OpenCV Mat
-        allImages.insert(listItem, {*imageIt, image});
-
-        ++nameIt;
-        ++imageIt;
-    }
-
-    //Update tab widget to show new image count next to Image Library
-    ui->tabWidget->setTabText(1, tr("Image Library (") + QString::number(allImages.size()) + ")");
-}
-
-//Deletes selected images
-void MainWindow::deleteImages()
-{
-    auto selectedItems = ui->listPhoto->selectedItems();
-    for (auto item: selectedItems)
-        allImages.remove(*item);
-
-    qDeleteAll(selectedItems);
-
-    //Update tab widget to show new image count next to Image Library
-    ui->tabWidget->setTabText(1, tr("Image Library (") + QString::number(allImages.size()) + ")");
-}
-
-//Reads the cell size from ui spin box, then resizes all images
-void MainWindow::updateCellSize()
-{
-    auto t1 = std::chrono::high_resolution_clock::now();
-
-    if (imageSize == ui->spinLibCellSize->value())
-        return;
-
-    imageSize = ui->spinLibCellSize->value();
-    ui->spinCellSize->setValue(imageSize);
-    ui->listPhoto->clear();
-
-    std::vector<cv::Mat> images;
-    for (auto image: allImages.values())
-        images.push_back(image.second);
-
-    images = ImageUtility::batchResizeMat(images, imageSize, imageSize,
-                                          ImageUtility::ResizeType::EXACT, progressBar);
-
-    auto it = images.cbegin();
-    for (auto listItem: allImages.keys())
-    {
-        allImages[listItem].first = *it;
-        listItem.setIcon(QIcon(ImageUtility::matToQPixmap(*it)));
-        ui->listPhoto->addItem(new QListWidgetItem(listItem));
-
-        ++it;
-    }
-
-    qDebug() << "Time: " << std::chrono::duration_cast<std::chrono::microseconds>(
-                    std::chrono::high_resolution_clock::now() - t1).count() << "\xC2\xB5s";
-}
-
-//Saves the image library to a file
-void MainWindow::saveLibrary()
-{
-    //mil = Mosaic Image Library
-    QString filename = QFileDialog::getSaveFileName(this, tr("Save image library"), "",
-                                                    tr("Mosaic Image Library") + " (*.mil)");
-
-    if (!filename.isNull())
-    {
-        QFile file(filename);
-        file.open(QIODevice::WriteOnly);
-        if (file.isWritable())
-        {
-            QDataStream out(&file);
-            //Write header with "magic number" and version
-            out << static_cast<quint32>(ImageUtility::MIL_MAGIC);
-            out << static_cast<qint32>(ImageUtility::MIL_VERSION);
-
-            out.setVersion(QDataStream::Qt_5_0);
-            //Write images and names
-            out << imageSize;
-            out << allImages.size();
-            progressBar->setRange(0, allImages.size());
-            progressBar->setValue(0);
-            progressBar->setVisible(true);
-            for (auto listItem: allImages.keys())
-            {
-                out << allImages[listItem].first;
-                out << listItem.text();
-                progressBar->setValue(progressBar->value() + 1);
-            }
-            progressBar->setVisible(false);
-            file.close();
-        }
-    }
-}
-
-//Loads an image library from a file
-void MainWindow::loadLibrary()
-{
-    // mil = Mosaic Image Library
-    QString filename = QFileDialog::getOpenFileName(this, tr("Select image library to load"), "",
-                                                    tr("Mosaic Image Library") + " (*.mil)");
-
-    if (!filename.isNull())
-    {
-        QFile file(filename);
-        file.open(QIODevice::ReadOnly);
-        if (file.isReadable())
-        {
-            QDataStream in(&file);
-
-            //Read and check magic number
-            quint32 magic;
-            in >> magic;
-            if (magic != ImageUtility::MIL_MAGIC)
-            {
-                QMessageBox msgBox;
-                msgBox.setText(filename + tr(" is not a valid .mil file"));
-                msgBox.exec();
-                return;
-            }
-
-            //Read the version
-            qint32 version;
-            in >> version;
-            if (version == ImageUtility::MIL_VERSION)
-                in.setVersion(QDataStream::Qt_5_0);
-            else
-            {
-                QMessageBox msgBox;
-                if (version < ImageUtility::MIL_VERSION)
-                    msgBox.setText(filename + tr(" uses an outdated file version"));
-                else
-                    msgBox.setText(filename + tr(" uses a newer file version"));
-                msgBox.exec();
-                return;
-            }
-
-            allImages.clear();
-            ui->listPhoto->clear();
-
-            //Read images and names
-            in >> imageSize;
-            ui->spinLibCellSize->setValue(imageSize);
-            ui->spinCellSize->setValue(imageSize);
-            int numberOfImage;
-            in >> numberOfImage;
-            progressBar->setRange(0, numberOfImage);
-            progressBar->setValue(0);
-            progressBar->setVisible(true);
-            while (numberOfImage > 0)
-            {
-                --numberOfImage;
-                cv::Mat image;
-                in >> image;
-
-                QString name;
-                in >> name;
-
-                QListWidgetItem listItem(QIcon(ImageUtility::matToQPixmap(image)), name);
-                ui->listPhoto->addItem(new QListWidgetItem(listItem));
-
-                allImages.insert(listItem, {image, image});
-                progressBar->setValue(progressBar->value() + 1);
-            }
-            progressBar->setVisible(false);
-
-            file.close();
-
-            //Update tab widget to show new image count next to Image Library
-            ui->tabWidget->setTabText(1, tr("Image Library (")
-                                      + QString::number(allImages.size()) + ")");
-        }
-    }
+    ui->tabWidget->setTabText(1, tr("Image Library (") + QString::number(t_newSize) + ")");
 }
 
 //Prompts user for a main image
@@ -454,14 +226,11 @@ void MainWindow::selectMainImage()
 //Opens colour visualisation window
 void MainWindow::compareColours()
 {
-    if (allImages.size() == 0 || mainImage.empty())
+    if (ui->imageLibraryEditor->getImageLibrarySize() == 0 || mainImage.empty())
         return;
 
-    std::vector<cv::Mat> libImages;
-    for (auto pair: allImages.values())
-        libImages.push_back(pair.first);
-
-    ColourVisualisation *colourVisualisation = new ColourVisualisation(this, mainImage, libImages);
+    ColourVisualisation *colourVisualisation =
+        new ColourVisualisation(this, mainImage, ui->imageLibraryEditor->getImageLibrary());
     colourVisualisation->show();
 }
 
@@ -621,7 +390,7 @@ void MainWindow::CUDADeviceChanged(int t_index)
 void MainWindow::generatePhotomosaic()
 {
     //Check library contains images
-    if (allImages.size() == 0)
+    if (ui->imageLibraryEditor->getImageLibrarySize() == 0)
     {
         QMessageBox msgBox;
         msgBox.setText(tr("The library is empty, please add some images"));
@@ -644,9 +413,7 @@ void MainWindow::generatePhotomosaic()
                                           ui->spinPhotomosaicWidth->value(),
                                           ImageUtility::ResizeType::INCLUSIVE);
 
-    std::vector<cv::Mat> library;
-    for (auto pair: allImages.values())
-        library.push_back(pair.first);
+    std::vector<cv::Mat> library = ui->imageLibraryEditor->getImageLibrary();
 
     if (library.front().cols != ui->spinCellSize->value())
         library = ImageUtility::batchResizeMat(library, ui->spinCellSize->value(),

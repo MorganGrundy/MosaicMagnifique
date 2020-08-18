@@ -23,7 +23,6 @@
 #include <QMainWindow>
 #include <memory>
 #include <QMap>
-#include <QListWidgetItem>
 #include <QProgressBar>
 #include <opencv2/core/mat.hpp>
 
@@ -45,11 +44,7 @@ public slots:
     void tabChanged(int t_index);
 
     //Image Library tab
-    void addImages();
-    void deleteImages();
-    void updateCellSize();
-    void saveLibrary();
-    void loadLibrary();
+    void updateImageLibraryCount(int t_newSize);
 
     //Generator Settings tab
     void selectMainImage();
@@ -75,9 +70,6 @@ private:
     QProgressBar *progressBar;
 
     double photomosaicSizeRatio;
-
-    int imageSize;
-    QMap<QListWidgetItem, std::pair<cv::Mat, cv::Mat>> allImages;
 
     cv::Mat mainImage;
 };

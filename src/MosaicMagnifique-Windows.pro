@@ -47,6 +47,7 @@ SOURCES += \
 	gridviewer.cpp \
 	halvingspinbox.cpp \
 	imagehistogramcompare.cpp \
+	imagelibraryeditor.cpp \
 	imageutility.cpp \
 	imageviewer.cpp \
 	main.cpp \
@@ -65,6 +66,7 @@ HEADERS += \
 	gridviewer.h \
 	halvingspinbox.h \
 	imagehistogramcompare.h \
+	imagelibraryeditor.h \
 	imageutility.h \
 	imageviewer.h \
 	mainwindow.h \
@@ -73,6 +75,7 @@ HEADERS += \
 FORMS += \
 	cellshapeeditor.ui \
 	colourvisualisation.ui \
+	imagelibraryeditor.ui \
 	imageviewer.ui \
 	mainwindow.ui
 

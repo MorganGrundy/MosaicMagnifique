@@ -34,6 +34,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
 	cellgroup.cpp \
 	cellshape.cpp \
+	cellshapeeditor.cpp \
 	colourvisualisation.cpp \
 	customgraphicsview.cpp \
 	gridbounds.cpp \
@@ -50,6 +51,7 @@ SOURCES += \
 HEADERS += \
 	cellgroup.h \
 	cellshape.h \
+	cellshapeeditor.h \
 	colourvisualisation.h \
 	customgraphicsview.h \
 	gridbounds.h \

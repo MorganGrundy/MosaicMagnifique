@@ -74,42 +74,6 @@ MainWindow::MainWindow(QWidget *t_parent)
 
     connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
 
-    cellShapeChanged = false;
-    //Connects custom cell shapes tab to appropriate methods
-    connect(ui->buttonSaveCustomCell, SIGNAL(released()), this, SLOT(saveCellShape()));
-    connect(ui->buttonLoadCustomCell, SIGNAL(released()), this, SLOT(loadCellShape()));
-    connect(ui->lineCustomCellName, SIGNAL(textChanged(const QString &)), this,
-            SLOT(cellNameChanged(const QString &)));
-    connect(ui->buttonCellMask, SIGNAL(released()), this, SLOT(selectCellMask()));
-    //Cell spacing
-    connect(ui->spinCustomCellSpacingCol, SIGNAL(valueChanged(int)), this,
-            SLOT(cellSpacingColChanged(int)));
-    connect(ui->spinCustomCellSpacingRow, SIGNAL(valueChanged(int)), this,
-            SLOT(cellSpacingRowChanged(int)));
-    //Cell alternate offset
-    connect(ui->spinCustomCellAlternateColOffset, SIGNAL(valueChanged(int)), this,
-            SLOT(cellAlternateColOffsetChanged(int)));
-    connect(ui->spinCustomCellAlternateRowOffset, SIGNAL(valueChanged(int)), this,
-            SLOT(cellAlternateRowOffsetChanged(int)));
-    //Cell flipping
-    connect(ui->checkCellColFlipH, SIGNAL(clicked(bool)), this,
-            SLOT(cellColumnFlipHorizontalChanged(bool)));
-    connect(ui->checkCellColFlipV, SIGNAL(clicked(bool)), this,
-            SLOT(cellColumnFlipVerticalChanged(bool)));
-    connect(ui->checkCellRowFlipH, SIGNAL(clicked(bool)), this,
-            SLOT(cellRowFlipHorizontalChanged(bool)));
-    connect(ui->checkCellRowFlipV, SIGNAL(clicked(bool)), this,
-            SLOT(cellRowFlipVerticalChanged(bool)));
-    //Cell alternate spacing
-    connect(ui->checkCellAlternateRowSpacing, SIGNAL(toggled(bool)), this,
-            SLOT(enableCellAlternateRowSpacing(bool)));
-    connect(ui->checkCellAlternateColSpacing, SIGNAL(toggled(bool)), this,
-            SLOT(enableCellAlternateColSpacing(bool)));
-    connect(ui->spinCellAlternateRowSpacing, SIGNAL(valueChanged(int)), this,
-            SLOT(cellAlternateRowSpacingChanged(int)));
-    connect(ui->spinCellAlternateColSpacing, SIGNAL(valueChanged(int)), this,
-            SLOT(cellAlternateColSpacingChanged(int)));
-
     //Setup image library list
     ui->listPhoto->setResizeMode(QListWidget::ResizeMode::Adjust);
     ui->listPhoto->setIconSize(ui->listPhoto->gridSize() - QSize(14, 14));
@@ -186,20 +150,13 @@ MainWindow::MainWindow(QWidget *t_parent)
 #endif
 
     //Sets default cell size
-    ui->spinCellSize->setValue(defaultCellSize);
+    ui->spinCellSize->setValue(CellShape::DEFAULT_CELL_SIZE);
 
     //tabWidget starts on Generator Settings tab
     ui->tabWidget->setCurrentIndex(2);
 
     //Sets default detail level
     ui->spinDetail->setValue(100);
-
-    //Sets cell shape editor to default cell shape
-    CellShape defaultCellShape = cv::Mat(defaultCellSize, defaultCellSize,
-                          CV_8UC1, cv::Scalar(255));
-    ui->widgetCellShapeViewer->getCellGroup().setCellShape(defaultCellShape);
-    ui->spinCustomCellSpacingCol->setValue(defaultCellSize);
-    ui->spinCustomCellSpacingRow->setValue(defaultCellSize);
 }
 
 MainWindow::~MainWindow()
@@ -213,340 +170,15 @@ void MainWindow::tabChanged(int t_index)
     //Generator settings tab
     if (t_index == 2)
     {
-        if (ui->checkCellShape->isChecked() && cellShapeChanged)
+        ui->lineCellShape->setText(ui->cellShapeEditor->getCellShapeName());
+        if (ui->checkCellShape->isChecked() && ui->cellShapeEditor->isCellShapeChanged())
         {
             ui->widgetGridPreview->getCellGroup().setCellShape(
-                ui->widgetCellShapeViewer->getCellGroup().getCell(0)
+                ui->cellShapeEditor->getCellShape()
                     .resized(ui->spinCellSize->value(), ui->spinCellSize->value()));
-            cellShapeChanged = false;
+
             ui->widgetGridPreview->updateGrid();
         }
-    }
-}
-
-//Saves the custom cell shape to a file
-void MainWindow::saveCellShape()
-{
-    CellShape &cellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
-    if (cellShape.getCellMask(0, 0).empty())
-    {
-        QMessageBox::information(this, tr("Failed to save custom cell shape"),
-                                 tr("No cell mask was provided"));
-        return;
-    }
-
-    //mcs = Mosaic Cell Shape
-    QString filename = QFileDialog::getExistingDirectory(this, tr("Save custom cell shape"));
-
-    if (!filename.isNull())
-    {
-        filename += '/' + ui->lineCustomCellName->text() + ".mcs";
-        qDebug() << filename;
-        QFile file(filename);
-        file.open(QIODevice::WriteOnly);
-        if (file.isWritable())
-        {
-            QDataStream out(&file);
-            //Write header with "magic number" and version
-            out << static_cast<quint32>(CellShape::MCS_MAGIC);
-            out << static_cast<qint32>(CellShape::MCS_VERSION);
-
-            out.setVersion(out.version());
-
-            //Write cell mask and offsets
-            out << cellShape;
-
-            file.close();
-        }
-    }
-}
-
-//Loads a custom cell shape from a file for editing
-void MainWindow::loadCellShape()
-{
-    //mcs = Mosaic Cell Shape
-    QString filename = QFileDialog::getOpenFileName(this, tr("Select custom cell shape to load"),
-                                                    "", tr("Mosaic Cell Shape") + " (*.mcs)");
-
-    if (!filename.isNull())
-    {
-        QFile file(filename);
-        file.open(QIODevice::ReadOnly);
-        if (file.isReadable())
-        {
-            QDataStream in(&file);
-
-            //Read and check magic number
-            quint32 magic;
-            in >> magic;
-            if (magic != CellShape::MCS_MAGIC)
-            {
-                QMessageBox msgBox;
-                msgBox.setText(filename + tr(" is not a valid .mcs file"));
-                msgBox.exec();
-                return;
-            }
-
-            //Read the version
-            qint32 version;
-            in >> version;
-            if (version <= CellShape::MCS_VERSION && version >= 4)
-                in.setVersion(in.version());
-            else
-            {
-                QMessageBox msgBox;
-                if (version < CellShape::MCS_VERSION)
-                    msgBox.setText(filename + tr(" uses an outdated file version"));
-                else
-                    msgBox.setText(filename + tr(" uses a newer file version"));
-                msgBox.exec();
-                return;
-            }
-
-            //Read cell mask and offsets
-            CellShape cellShape;
-            std::pair<CellShape &, const int> cellAndVersion(cellShape, version);
-            in >> cellAndVersion;
-            //Blocks signals to prevent grid update until all values loaded
-            //Update cell spacing
-            ui->spinCustomCellSpacingCol->blockSignals(true);
-            ui->spinCustomCellSpacingRow->blockSignals(true);
-            ui->spinCustomCellSpacingCol->setValue(cellShape.getColSpacing());
-            ui->spinCustomCellSpacingRow->setValue(cellShape.getRowSpacing());
-            ui->spinCustomCellSpacingCol->blockSignals(false);
-            ui->spinCustomCellSpacingRow->blockSignals(false);
-
-            //Update cell alternate spacing
-            ui->checkCellAlternateColSpacing->setChecked(
-                        cellShape.getAlternateColSpacing() != cellShape.getColSpacing());
-            ui->checkCellAlternateRowSpacing->setChecked(
-                        cellShape.getAlternateRowSpacing() != cellShape.getRowSpacing());
-            ui->spinCellAlternateColSpacing->blockSignals(true);
-            ui->spinCellAlternateRowSpacing->blockSignals(true);
-            ui->spinCellAlternateColSpacing->setValue(cellShape.getAlternateColSpacing());
-            ui->spinCellAlternateRowSpacing->setValue(cellShape.getAlternateRowSpacing());
-            ui->spinCellAlternateColSpacing->blockSignals(false);
-            ui->spinCellAlternateRowSpacing->blockSignals(false);
-
-            //Update cell alternate offset
-            ui->spinCustomCellAlternateColOffset->blockSignals(true);
-            ui->spinCustomCellAlternateRowOffset->blockSignals(true);
-            ui->spinCustomCellAlternateColOffset->setValue(cellShape.getAlternateColOffset());
-            ui->spinCustomCellAlternateRowOffset->setValue(cellShape.getAlternateRowOffset());
-            ui->spinCustomCellAlternateColOffset->blockSignals(false);
-            ui->spinCustomCellAlternateRowOffset->blockSignals(false);
-
-            //Update cell flip states
-            //No need to block signals as setChecked does not trigger clicked signal
-            ui->checkCellColFlipH->setChecked(cellShape.getColFlipHorizontal());
-            ui->checkCellColFlipV->setChecked(cellShape.getColFlipVertical());
-            ui->checkCellRowFlipH->setChecked(cellShape.getRowFlipHorizontal());
-            ui->checkCellRowFlipV->setChecked(cellShape.getRowFlipVertical());
-
-            //Extract cell name from filename
-            QString cellName = filename.right(filename.size() - filename.lastIndexOf('/') - 1);
-            cellName.chop(4);
-            ui->lineCustomCellName->setText(cellName);
-
-            file.close();
-
-            ui->widgetCellShapeViewer->getCellGroup().setCellShape(cellShape);
-            ui->widgetCellShapeViewer->updateGrid();
-            cellShapeChanged = true;
-        }
-    }
-}
-
-//Copies cell name from cell shape tab to generator settings tab
-void MainWindow::cellNameChanged(const QString &text)
-{
-    ui->lineCellShape->setText(text);
-}
-
-//Prompts user for a cell mask image
-//If an image is given converts to a binary image
-void MainWindow::selectCellMask()
-{
-    QString filename = QFileDialog::getOpenFileName(this, tr("Select cell mask"), "",
-                                                    "Image Files (*.bmp *.dib *.jpeg *.jpg "
-                                                    "*.jpe *.jp2 *.png *.pbm *.pgm *.ppm "
-                                                    "*.pxm *.pnm *.sr *.ras *.tiff *.tif "
-                                                    "*.hdr *.pic)");
-    cv::Mat tmp = cv::imread(filename.toStdString(), cv::IMREAD_GRAYSCALE);
-    if (!tmp.empty())
-    {
-        CellShape cellShape(tmp);
-
-        ui->widgetCellShapeViewer->getCellGroup().setCellShape(cellShape);
-        ui->widgetCellShapeViewer->updateGrid();
-        ui->lineCellMask->setText(filename);
-
-        ui->spinCustomCellSpacingCol->blockSignals(true);
-        ui->spinCustomCellSpacingRow->blockSignals(true);
-        ui->spinCustomCellAlternateColOffset->blockSignals(true);
-        ui->spinCustomCellAlternateRowOffset->blockSignals(true);
-        ui->spinCustomCellSpacingCol->setValue(tmp.cols);
-        ui->spinCustomCellSpacingRow->setValue(tmp.rows);
-        ui->spinCustomCellAlternateColOffset->setValue(0);
-        ui->spinCustomCellAlternateRowOffset->setValue(0);
-        ui->spinCustomCellSpacingCol->blockSignals(false);
-        ui->spinCustomCellSpacingRow->blockSignals(false);
-        ui->spinCustomCellAlternateColOffset->blockSignals(false);
-        ui->spinCustomCellAlternateRowOffset->blockSignals(false);
-
-        cellShapeChanged = true;
-    }
-}
-
-//Update custom cell column spacing
-void MainWindow::cellSpacingColChanged(int t_value)
-{
-    if (!ui->spinCellAlternateColSpacing->isEnabled())
-        ui->spinCellAlternateColSpacing->setValue(t_value);
-
-    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
-    newCellShape.setColSpacing(t_value);
-
-    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->widgetCellShapeViewer->updateGrid();
-
-    cellShapeChanged = true;
-}
-
-//Update custom cell column offset y
-void MainWindow::cellSpacingRowChanged(int t_value)
-{
-    if (!ui->spinCellAlternateRowSpacing->isEnabled())
-        ui->spinCellAlternateRowSpacing->setValue(t_value);
-
-    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
-    newCellShape.setRowSpacing(t_value);
-
-    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->widgetCellShapeViewer->updateGrid();
-
-    cellShapeChanged = true;
-}
-
-//Update custom cell row offset x
-void MainWindow::cellAlternateColOffsetChanged(int t_value)
-{
-    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
-    newCellShape.setAlternateColOffset(t_value);
-
-    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->widgetCellShapeViewer->updateGrid();
-
-    cellShapeChanged = true;
-}
-
-//Update custom cell row offset y
-void MainWindow::cellAlternateRowOffsetChanged(int t_value)
-{
-    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
-    newCellShape.setAlternateRowOffset(t_value);
-
-    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->widgetCellShapeViewer->updateGrid();
-
-    cellShapeChanged = true;
-}
-
-//Update custom cell alternate column horizontal flipping
-void MainWindow::cellColumnFlipHorizontalChanged(bool t_state)
-{
-    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
-    newCellShape.setColFlipHorizontal(t_state);
-
-    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->widgetCellShapeViewer->updateGrid();
-
-    cellShapeChanged = true;
-}
-
-//Update custom cell alternate column vertical flipping
-void MainWindow::cellColumnFlipVerticalChanged(bool t_state)
-{
-    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
-    newCellShape.setColFlipVertical(t_state);
-
-    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->widgetCellShapeViewer->updateGrid();
-
-    cellShapeChanged = true;
-}
-
-//Update custom cell alternate row horizontal flipping
-void MainWindow::cellRowFlipHorizontalChanged(bool t_state)
-{
-    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
-    newCellShape.setRowFlipHorizontal(t_state);
-
-    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->widgetCellShapeViewer->updateGrid();
-
-    cellShapeChanged = true;
-}
-
-//Update custom cell alternate row vertical flipping
-void MainWindow::cellRowFlipVerticalChanged(bool t_state)
-{
-    CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
-    newCellShape.setRowFlipVertical(t_state);
-
-    ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->widgetCellShapeViewer->updateGrid();
-
-    cellShapeChanged = true;
-}
-
-//Enables/disables cell alternate row spacing
-void MainWindow::enableCellAlternateRowSpacing(bool t_state)
-{
-    if (!t_state)
-        ui->spinCellAlternateRowSpacing->setValue(ui->spinCustomCellSpacingRow->value());
-
-    ui->spinCellAlternateRowSpacing->setEnabled(t_state);
-    cellShapeChanged = true;
-}
-
-//Enables/disables cell alternate column spacing
-void MainWindow::enableCellAlternateColSpacing(bool t_state)
-{
-    if (!t_state)
-        ui->spinCellAlternateColSpacing->setValue(ui->spinCustomCellSpacingCol->value());
-
-    ui->spinCellAlternateColSpacing->setEnabled(t_state);
-    cellShapeChanged = true;
-}
-
-//Updates cell alternate row spacing
-void MainWindow::cellAlternateRowSpacingChanged(int t_value)
-{
-    if (ui->checkCellAlternateRowSpacing->isEnabled())
-    {
-        CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
-        newCellShape.setAlternateRowSpacing(t_value);
-
-        ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
-        ui->widgetCellShapeViewer->updateGrid();
-
-        cellShapeChanged = true;
-    }
-}
-
-//Updates cell alternate column spacing
-void MainWindow::cellAlternateColSpacingChanged(int t_value)
-{
-    if (ui->checkCellAlternateColSpacing->isEnabled())
-    {
-        CellShape newCellShape = ui->widgetCellShapeViewer->getCellGroup().getCell(0);
-        newCellShape.setAlternateColSpacing(t_value);
-
-        ui->widgetCellShapeViewer->getCellGroup().setCellShape(newCellShape);
-        ui->widgetCellShapeViewer->updateGrid();
-
-        cellShapeChanged = true;
     }
 }
 
@@ -678,7 +310,7 @@ void MainWindow::saveLibrary()
             out << static_cast<quint32>(ImageUtility::MIL_MAGIC);
             out << static_cast<qint32>(ImageUtility::MIL_VERSION);
 
-            out.setVersion(out.version());
+            out.setVersion(QDataStream::Qt_5_0);
             //Write images and names
             out << imageSize;
             out << allImages.size();
@@ -727,7 +359,7 @@ void MainWindow::loadLibrary()
             qint32 version;
             in >> version;
             if (version == ImageUtility::MIL_VERSION)
-                in.setVersion(in.version());
+                in.setVersion(QDataStream::Qt_5_0);
             else
             {
                 QMessageBox msgBox;
@@ -939,12 +571,11 @@ void MainWindow::cellSizeChanged(int t_value)
     if (ui->checkCellShape->isChecked())
     {
         ui->widgetGridPreview->getCellGroup().setCellShape(
-            ui->widgetCellShapeViewer->getCellGroup().getCell(0).resized(t_value, t_value));
+            ui->cellShapeEditor->getCellShape().resized(t_value, t_value));
     }
     else
     {
-        ui->widgetGridPreview->getCellGroup().setCellShape(
-            CellShape(cv::Mat(t_value, t_value, CV_8UC1, cv::Scalar(255))));
+        ui->widgetGridPreview->getCellGroup().setCellShape(CellShape(CellShape::DEFAULT_CELL_SIZE));
     }
 
     ui->widgetGridPreview->getCellGroup().setSizeSteps(ui->spinMinCellSize->getHalveSteps());
@@ -968,14 +599,12 @@ void MainWindow::enableCellShape(bool t_state)
     if (t_state)
     {
         ui->widgetGridPreview->getCellGroup().setCellShape(
-            ui->widgetCellShapeViewer->getCellGroup().getCell(0).
-            resized(ui->spinCellSize->value(), ui->spinCellSize->value()));
+            ui->cellShapeEditor->getCellShape().resized(ui->spinCellSize->value(),
+                                                        ui->spinCellSize->value()));
     }
     else
     {
-        ui->widgetGridPreview->getCellGroup().setCellShape(
-            CellShape(cv::Mat(ui->spinCellSize->value(), ui->spinCellSize->value(),
-                              CV_8UC1, cv::Scalar(255))));
+        ui->widgetGridPreview->getCellGroup().setCellShape(CellShape(ui->spinCellSize->value()));
     }
     ui->widgetGridPreview->updateGrid();
 }

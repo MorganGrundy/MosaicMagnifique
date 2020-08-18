@@ -30,10 +30,15 @@ public:
     static const int MCS_VERSION = 6;
     static const unsigned int MCS_MAGIC = 0x87AECFB1;
 
+    //Default cell size
+    static const size_t DEFAULT_CELL_SIZE = 128;
+
     //Constructors
     CellShape();
     CellShape(const cv::Mat &t_cellMask);
     CellShape(const CellShape &t_cellShape);
+    //Constructor for default cell shape
+    CellShape(const size_t t_size);
 
     //Operators
     friend QDataStream &operator<<(QDataStream &t_out, const CellShape &t_cellShape);

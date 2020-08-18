@@ -44,28 +44,6 @@ public:
 public slots:
     void tabChanged(int t_index);
 
-    //Custom Cell Shapes tab
-    void saveCellShape();
-    void loadCellShape();
-    void cellNameChanged(const QString &text);
-    void selectCellMask();
-    //Cell spacing
-    void cellSpacingColChanged(int t_value);
-    void cellSpacingRowChanged(int t_value);
-    //Cell alternate offset
-    void cellAlternateColOffsetChanged(int t_value);
-    void cellAlternateRowOffsetChanged(int t_value);
-    //Cell flipping
-    void cellColumnFlipHorizontalChanged(bool t_state);
-    void cellColumnFlipVerticalChanged(bool t_state);
-    void cellRowFlipHorizontalChanged(bool t_state);
-    void cellRowFlipVerticalChanged(bool t_state);
-    //Cell alternate spacing
-    void enableCellAlternateRowSpacing(bool t_state);
-    void enableCellAlternateColSpacing(bool t_state);
-    void cellAlternateRowSpacingChanged(int t_value);
-    void cellAlternateColSpacingChanged(int t_value);
-
     //Image Library tab
     void addImages();
     void deleteImages();
@@ -91,14 +69,10 @@ public slots:
     void generatePhotomosaic();
 
 private:
-    const int defaultCellSize = 128;
-
     void clampDetail();
 
     Ui::MainWindow *ui;
     QProgressBar *progressBar;
-
-    bool cellShapeChanged;
 
     double photomosaicSizeRatio;
 

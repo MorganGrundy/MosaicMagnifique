@@ -57,6 +57,12 @@ CellShape::CellShape(const CellShape &t_cellShape)
       m_rowFlipHorizontal{t_cellShape.getRowFlipHorizontal()},
       m_rowFlipVertical{t_cellShape.getRowFlipVertical()} {}
 
+//Constructor for default cell shape
+CellShape::CellShape(const size_t t_size)
+    : CellShape{cv::Mat(static_cast<int>(t_size), static_cast<int>(t_size),
+                        CV_8UC1, cv::Scalar(255))}
+{}
+
 //Writes the CellShape to a QDataStream
 QDataStream &operator<<(QDataStream &t_out, const CellShape &t_cellShape)
 {

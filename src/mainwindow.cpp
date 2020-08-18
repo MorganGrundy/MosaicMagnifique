@@ -77,6 +77,15 @@ MainWindow::MainWindow(QWidget *t_parent)
     photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) /
                            ui->spinPhotomosaicHeight->value();
 
+    //Cell Shape Editor
+    cellShapeChanged = false;
+    newCellShape = CellShape(CellShape::DEFAULT_CELL_SIZE);
+
+    connect(ui->cellShapeEditor, SIGNAL(cellShapeChanged(const CellShape &)),
+            this, SLOT(updateCellShape(const CellShape &)));
+    connect(ui->cellShapeEditor, SIGNAL(cellNameChanged(const QString &)),
+            this, SLOT(updateCellName(const QString &)));
+
     //Image Library Editor
     ui->imageLibraryEditor->setProgressBar(progressBar);
     connect(ui->imageLibraryEditor, SIGNAL(imageLibraryChanged(int)),
@@ -163,16 +172,29 @@ void MainWindow::tabChanged(int t_index)
     //Generator settings tab
     if (t_index == 2)
     {
-        ui->lineCellShape->setText(ui->cellShapeEditor->getCellShapeName());
-        if (ui->checkCellShape->isChecked() && ui->cellShapeEditor->isCellShapeChanged())
+        if (ui->checkCellShape->isChecked() && cellShapeChanged)
         {
+            cellShapeChanged = false;
+
             ui->widgetGridPreview->getCellGroup().setCellShape(
-                ui->cellShapeEditor->getCellShape()
-                    .resized(ui->spinCellSize->value(), ui->spinCellSize->value()));
+                newCellShape.resized(ui->spinCellSize->value(), ui->spinCellSize->value()));
 
             ui->widgetGridPreview->updateGrid();
         }
     }
+}
+
+//Updates cell shape
+void MainWindow::updateCellShape(const CellShape &t_cellShape)
+{
+    newCellShape = t_cellShape;
+    cellShapeChanged = true;
+}
+
+//Update cell shape name
+void MainWindow::updateCellName(const QString &t_name)
+{
+    ui->lineCellShape->setText(t_name);
 }
 
 //Updates image library count in tab widget
@@ -339,8 +361,7 @@ void MainWindow::cellSizeChanged(int t_value)
 
     if (ui->checkCellShape->isChecked())
     {
-        ui->widgetGridPreview->getCellGroup().setCellShape(
-            ui->cellShapeEditor->getCellShape().resized(t_value, t_value));
+        ui->widgetGridPreview->getCellGroup().setCellShape(newCellShape.resized(t_value, t_value));
     }
     else
     {
@@ -368,8 +389,7 @@ void MainWindow::enableCellShape(bool t_state)
     if (t_state)
     {
         ui->widgetGridPreview->getCellGroup().setCellShape(
-            ui->cellShapeEditor->getCellShape().resized(ui->spinCellSize->value(),
-                                                        ui->spinCellSize->value()));
+            newCellShape.resized(ui->spinCellSize->value(), ui->spinCellSize->value()));
     }
     else
     {

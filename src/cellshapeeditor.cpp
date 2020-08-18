@@ -67,25 +67,6 @@ CellShapeEditor::~CellShapeEditor()
     delete ui;
 }
 
-//Returns if the cell shape has been edited
-bool CellShapeEditor::isCellShapeChanged() const
-{
-    return cellShapeChanged;
-}
-
-//Returns current cell shape
-const CellShape &CellShapeEditor::getCellShape()
-{
-    cellShapeChanged = false;
-    return ui->cellShapeViewer->getCellGroup().getCell(0);
-}
-
-//Returns cell shape name
-const QString CellShapeEditor::getCellShapeName() const
-{
-    return ui->lineCellName->text();
-}
-
 //Saves the cell shape to a file
 void CellShapeEditor::saveCellShape()
 {
@@ -184,7 +165,8 @@ void CellShapeEditor::loadCellShape()
             //Give cell shape to grid preview
             ui->cellShapeViewer->getCellGroup().setCellShape(cellShape);
             ui->cellShapeViewer->updateGrid();
-            cellShapeChanged = true;
+            emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
+            emit cellNameChanged(ui->lineCellName->text());
         }
     }
 }
@@ -209,7 +191,7 @@ void CellShapeEditor::loadCellMask()
         //Give cell shape to grid preview
         ui->cellShapeViewer->getCellGroup().setCellShape(cellShape);
         ui->cellShapeViewer->updateGrid();
-        cellShapeChanged = true;
+        emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
     }
 }
 
@@ -227,7 +209,7 @@ void CellShapeEditor::cellSpacingColChanged(int t_value)
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->cellShapeViewer->updateGrid();
-    cellShapeChanged = true;
+    emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
 //Update cell shape column row spacing
@@ -244,7 +226,7 @@ void CellShapeEditor::cellSpacingRowChanged(int t_value)
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->cellShapeViewer->updateGrid();
-    cellShapeChanged = true;
+    emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
 //Update cell shape alternate column offset
@@ -257,7 +239,7 @@ void CellShapeEditor::cellAlternateOffsetColChanged(int t_value)
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->cellShapeViewer->updateGrid();
-    cellShapeChanged = true;
+    emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
 //Update cell shape alternate row offset
@@ -270,7 +252,7 @@ void CellShapeEditor::cellAlternateOffsetRowChanged(int t_value)
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->cellShapeViewer->updateGrid();
-    cellShapeChanged = true;
+    emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
 //Update cell shape alternate column horizontal flipping
@@ -283,7 +265,7 @@ void CellShapeEditor::cellColumnFlipHorizontalChanged(bool t_state)
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->cellShapeViewer->updateGrid();
-    cellShapeChanged = true;
+    emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
 //Update cell shape alternate column vertical flipping
@@ -296,7 +278,7 @@ void CellShapeEditor::cellColumnFlipVerticalChanged(bool t_state)
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->cellShapeViewer->updateGrid();
-    cellShapeChanged = true;
+    emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
 //Update cell shape alternate row horizontal flipping
@@ -309,7 +291,7 @@ void CellShapeEditor::cellRowFlipHorizontalChanged(bool t_state)
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->cellShapeViewer->updateGrid();
-    cellShapeChanged = true;
+    emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
 //Update cell shape alternate row vertical flipping
@@ -322,7 +304,7 @@ void CellShapeEditor::cellRowFlipVerticalChanged(bool t_state)
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
     ui->cellShapeViewer->updateGrid();
-    cellShapeChanged = true;
+    emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
 //Enables/disables cell shape alternate row spacing
@@ -357,7 +339,7 @@ void CellShapeEditor::cellAlternateSpacingRowChanged(int t_value)
         //Give cell shape to grid preview
         ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
         ui->cellShapeViewer->updateGrid();
-        cellShapeChanged = true;
+        emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
     }
 }
 
@@ -373,7 +355,7 @@ void CellShapeEditor::cellAlternateSpacingColChanged(int t_value)
         //Give cell shape to grid preview
         ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
         ui->cellShapeViewer->updateGrid();
-        cellShapeChanged = true;
+        emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
     }
 }
 

@@ -43,7 +43,11 @@ public:
 public slots:
     void tabChanged(int t_index);
 
-    //Image Library tab
+    //Cell Shape Editor
+    void updateCellShape(const CellShape &t_cellShape);
+    void updateCellName(const QString &t_name);
+
+    //Image Library Editor
     void updateImageLibraryCount(int t_newSize);
 
     //Generator Settings tab
@@ -68,6 +72,9 @@ private:
 
     Ui::MainWindow *ui;
     QProgressBar *progressBar;
+
+    bool cellShapeChanged;
+    CellShape newCellShape;
 
     double photomosaicSizeRatio;
 

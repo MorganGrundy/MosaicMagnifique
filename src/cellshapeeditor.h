@@ -17,15 +17,6 @@ public:
     explicit CellShapeEditor(QWidget *parent = nullptr);
     ~CellShapeEditor();
 
-    //Returns if the cell shape has been edited
-    bool isCellShapeChanged() const;
-
-    //Returns current cell shape
-    const CellShape &getCellShape();
-
-    //Returns cell shape name
-    const QString getCellShapeName() const;
-
 public slots:
     //Saves the cell shape to a file
     void saveCellShape();
@@ -63,11 +54,12 @@ public slots:
     //Updates cell alternate column spacing
     void cellAlternateSpacingColChanged(int t_value);
 
+signals:
+    void cellShapeChanged(const CellShape &t_cellShape) const;
+    void cellNameChanged(const QString &t_name) const;
+
 private:
     Ui::CellShapeEditor *ui;
-
-    //Stores if the cell shape has been changed
-    bool cellShapeChanged;
 
     //Loads settings from given cell shape
     void loadSettingsFromCellShape(const CellShape &t_cellShape);

@@ -36,9 +36,11 @@ SOURCES += \
 	cellshape.cpp \
 	cellshapeeditor.cpp \
 	colourvisualisation.cpp \
+	cpuphotomosaicgenerator.cpp \
 	customgraphicsview.cpp \
 	gridbounds.cpp \
 	gridgenerator.cpp \
+	gridutility.cpp \
 	gridviewer.cpp \
 	halvingspinbox.cpp \
 	imagehistogramcompare.cpp \
@@ -47,16 +49,18 @@ SOURCES += \
 	imageviewer.cpp \
 	main.cpp \
 	mainwindow.cpp \
-	photomosaicgenerator.cpp
+	photomosaicgeneratorbase.cpp
 
 HEADERS += \
 	cellgroup.h \
 	cellshape.h \
 	cellshapeeditor.h \
 	colourvisualisation.h \
+	cpuphotomosaicgenerator.h \
 	customgraphicsview.h \
 	gridbounds.h \
 	gridgenerator.h \
+	gridutility.h \
 	gridviewer.h \
 	halvingspinbox.h \
 	imagehistogramcompare.h \
@@ -64,11 +68,12 @@ HEADERS += \
 	imageutility.h \
 	imageviewer.h \
 	mainwindow.h \
-	photomosaicgenerator.h \
-	utilityfuncs.h
+	photomosaicgeneratorbase.h
 
 FORMS += \
+	cellshapeeditor.ui \
 	colourvisualisation.ui \
+	imagelibraryeditor.ui \
 	imageviewer.ui \
 	mainwindow.ui
 

@@ -36,13 +36,14 @@
 #include <chrono>
 
 #include "imageutility.h"
-#include "photomosaicgenerator.h"
 #include "imageviewer.h"
 #include "colourvisualisation.h"
+#include "cpuphotomosaicgenerator.h"
 
 #ifdef CUDA
 #include <cuda_runtime.h>
 #include "cudaphotomosaicdata.h"
+#include "cudaphotomosaicgenerator.h"
 #endif
 
 #ifdef OPENCV_W_CUDA
@@ -441,36 +442,45 @@ void MainWindow::generatePhotomosaic()
                                                ImageUtility::ResizeType::EXACT, progressBar);
 
     //Generate Photomosaic
-    PhotomosaicGenerator generator(this);
-    generator.setMainImage(mainImage);
-    generator.setLibrary(library);
-    if (ui->comboMode->currentText() == "RGB Euclidean")
-        generator.setMode(PhotomosaicGenerator::Mode::RGB_EUCLIDEAN);
-    else if (ui->comboMode->currentText() == "CIE76")
-        generator.setMode(PhotomosaicGenerator::Mode::CIE76);
-    else if (ui->comboMode->currentText() == "CIEDE2000")
-        generator.setMode(PhotomosaicGenerator::Mode::CIEDE2000);
+    PhotomosaicGeneratorBase *generator;
 
-    generator.setCellGroup(ui->widgetGridPreview->getCellGroup());
-
-    generator.setGridState(ui->widgetGridPreview->getGridState());
-
-    generator.setRepeat(ui->spinRepeatRange->value(), ui->spinRepeatAddition->value());
-
-    const auto startTime = std::chrono::high_resolution_clock::now();
+    //Choose which generator to use
 #ifdef CUDA
-    const cv::Mat mosaic = (ui->checkCUDA->isChecked()) ? generator.cudaGenerate()
-                                                        : generator.generate();
-#else
-    const cv::Mat mosaic = generator.generate();
+    if (ui->checkCUDA->isChecked())
+        generator = new CUDAPhotomosaicGenerator(this);
+    else
 #endif
+        generator = new CPUPhotomosaicGenerator(this);
+
+    //Set generator settings
+    generator->setMainImage(mainImage);
+    generator->setLibrary(library);
+
+    if (ui->comboMode->currentText() == "RGB Euclidean")
+        generator->setMode(PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN);
+    else if (ui->comboMode->currentText() == "CIE76")
+        generator->setMode(PhotomosaicGeneratorBase::Mode::CIE76);
+    else if (ui->comboMode->currentText() == "CIEDE2000")
+        generator->setMode(PhotomosaicGeneratorBase::Mode::CIEDE2000);
+
+    generator->setCellGroup(ui->widgetGridPreview->getCellGroup());
+    generator->setGridState(ui->widgetGridPreview->getGridState());
+    generator->setRepeat(ui->spinRepeatRange->value(), ui->spinRepeatAddition->value());
+
+    //Generate Photomosaic and measure time
+    const auto startTime = std::chrono::high_resolution_clock::now();
+    const cv::Mat mosaic = generator->generate();
     const double duration = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::high_resolution_clock::now() - startTime).count() / 1000.0;
-    qDebug() << "Generator time: " << duration << "s";
+
+    delete generator;
 
     //Displays Photomosaic
-    ImageViewer *imageViewer = new ImageViewer(this, mosaic, duration);
-    imageViewer->show();
+    if (!mosaic.empty())
+    {
+        ImageViewer *imageViewer = new ImageViewer(this, mosaic, duration);
+        imageViewer->show();
+    }
 }
 
 //Clamps detail level so that cell size never reaches 0px

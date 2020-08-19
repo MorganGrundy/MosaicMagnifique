@@ -40,6 +40,7 @@ SOURCES += \
 	cellshape.cpp \
 	cellshapeeditor.cpp \
 	colourvisualisation.cpp \
+	cpuphotomosaicgenerator.cpp \
 	customgraphicsview.cpp \
 	gridbounds.cpp \
 	gridgenerator.cpp \
@@ -52,13 +53,14 @@ SOURCES += \
 	imageviewer.cpp \
 	main.cpp \
 	mainwindow.cpp \
-	photomosaicgenerator.cpp
+	photomosaicgeneratorbase.cpp
 
 HEADERS += \
 	cellgroup.h \
 	cellshape.h \
 	cellshapeeditor.h \
 	colourvisualisation.h \
+	cpuphotomosaicgenerator.h \
 	customgraphicsview.h \
 	gridbounds.h \
 	gridgenerator.h \
@@ -70,7 +72,7 @@ HEADERS += \
 	imageutility.h \
 	imageviewer.h \
 	mainwindow.h \
-	photomosaicgenerator.h
+	photomosaicgeneratorbase.h
 
 FORMS += \
 	cellshapeeditor.ui \
@@ -111,10 +113,12 @@ CUDA_HEADERS += \
 	reduction.cuh
 
 SOURCES += \
-	cudaphotomosaicdata.cpp
+	cudaphotomosaicdata.cpp \
+	cudaphotomosaicgenerator.cpp
 
 HEADERS += \
-	cudaphotomosaicdata.h
+	cudaphotomosaicdata.h \
+	cudaphotomosaicgenerator.h
 
 DISTFILES += \
 	reduction.cuh

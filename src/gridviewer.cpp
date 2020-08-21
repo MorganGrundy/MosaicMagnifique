@@ -31,32 +31,9 @@
 #include "gridgenerator.h"
 
 GridViewer::GridViewer(QWidget *parent)
-    : QWidget(parent), m_cells{}, MIN_ZOOM{0.5}, MAX_ZOOM{10}, zoom{1}
+    : CustomGraphicsView(parent), m_cells{}
 {
     layout = new QGridLayout(this);
-
-    labelZoom = new QLabel("Zoom:", this);
-    labelZoom->setStyleSheet("QWidget {"
-                             "background-color: rgb(60, 60, 60);"
-                             "color: rgb(255, 255, 255);"
-                             "border-color: rgb(0, 0, 0);"
-                             "}");
-    layout->addWidget(labelZoom, 0, 0);
-
-    spinZoom = new QDoubleSpinBox(this);
-    spinZoom->setStyleSheet("QWidget {"
-                           "background-color: rgb(60, 60, 60);"
-                           "color: rgb(255, 255, 255);"
-                           "}"
-                           "QDoubleSpinBox {"
-                           "border: 1px solid dimgray;"
-                           "}");
-    spinZoom->setRange(MIN_ZOOM * 100, MAX_ZOOM * 100);
-    spinZoom->setValue(zoom * 100);
-    spinZoom->setSuffix("%");
-    spinZoom->setButtonSymbols(QDoubleSpinBox::PlusMinus);
-    connect(spinZoom, SIGNAL(valueChanged(double)), this, SLOT(zoomChanged(double)));
-    layout->addWidget(spinZoom, 0, 1);
 
     checkEdgeDetect = new QCheckBox("Edge Detect:", this);
     checkEdgeDetect->setLayoutDirection(Qt::LayoutDirection::RightToLeft);
@@ -67,13 +44,19 @@ GridViewer::GridViewer(QWidget *parent)
                                    "}");
     checkEdgeDetect->setCheckState(Qt::Checked);
     connect(checkEdgeDetect, SIGNAL(stateChanged(int)), this, SLOT(edgeDetectChanged(int)));
-    layout->addWidget(checkEdgeDetect, 0, 2);
+    layout->addWidget(checkEdgeDetect, 0, 0);
 
     hSpacer = new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum);
-    layout->addItem(hSpacer, 0, 3);
+    layout->addItem(hSpacer, 0, 1);
 
     vSpacer = new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding);
     layout->addItem(vSpacer, 1, 0);
+}
+
+GridViewer::~GridViewer()
+{
+    if (scene != nullptr)
+        delete scene;
 }
 
 //Changes state of edge detection in grid preview
@@ -86,8 +69,8 @@ void GridViewer::setEdgeDetect(bool t_state)
 void GridViewer::updateGrid()
 {
     //Height & Width to use when no back image
-    const int viewerHeight = height() / MIN_ZOOM;
-    const int viewerWidth = width() / MIN_ZOOM;
+    const int viewerHeight = viewport()->rect().height();
+    const int viewerWidth = viewport()->rect().width();
     gridState = GridGenerator::getGridState(m_cells, backImage, viewerHeight, viewerWidth);
 
     //Calculate grid size
@@ -95,7 +78,42 @@ void GridViewer::updateGrid()
     const int gridWidth = (backImage.empty()) ? viewerWidth : backImage.cols;
 
     createGrid(gridHeight, gridWidth);
-    update();
+    updateView();
+}
+
+//Clears scene and sets new background and grid
+void GridViewer::updateView()
+{
+    //Delete current scene
+    if (scene != nullptr)
+        delete scene;
+
+    //Create new scene
+    //Must be a better way to do this, but clear seems to keep size of previous image somehow?
+    scene = new QGraphicsScene(this);
+    scene->setItemIndexMethod(QGraphicsScene::NoIndex);
+    setScene(scene);
+
+    //Set background image
+    if (!background.isNull())
+    {
+        scene->addPixmap(background);
+    }
+
+    //Set grid image
+    if (checkEdgeDetect->isChecked())
+    {
+        if (!edgeGrid.isNull())
+        {
+            scene->addPixmap(edgeGrid);
+        }
+    }
+    else if (!grid.isNull())
+    {
+        scene->addPixmap(grid);
+    }
+
+    fitToView();
 }
 
 //Returns reference to cell group
@@ -109,17 +127,9 @@ void GridViewer::setBackground(const cv::Mat &t_background)
 {
     backImage = t_background;
     if (t_background.empty())
-    {
-        background = QImage();
-    }
+        background = QPixmap();
     else
-    {
-        cv::Mat inverted(t_background.rows, t_background.cols, t_background.type());
-        cv::cvtColor(t_background, inverted, cv::COLOR_BGR2RGB);
-
-        background = QImage(inverted.data, inverted.cols, inverted.rows,
-                            static_cast<int>(inverted.step), QImage::Format_RGB888).copy();
-    }
+        background = ImageUtility::matToQPixmap(t_background);
 }
 
 //Returns state of current grid
@@ -128,57 +138,10 @@ GridUtility::mosaicBestFit GridViewer::getGridState() const
     return gridState;
 }
 
-//Called when the spinbox value is changed, updates grid zoom
-void GridViewer::zoomChanged(double t_value)
-{
-    zoom = t_value / 100.0;
-    update();
-}
-
 //Changes if grid preview shows edge detected or normal cells
 void GridViewer::edgeDetectChanged(int /*t_state*/)
 {
-    update();
-}
-
-//Displays grid
-void GridViewer::paintEvent(QPaintEvent * /*event*/)
-{
-    QPainter painter(this);
-
-    double ratio;
-    QRectF sourceRect(0, 0, 0, 0);
-
-    //Draw background
-    if (!background.isNull())
-    {
-        //Calculate ratio between background and GridViewer size
-        ratio = background.width() / static_cast<double>(width());
-        if (height() * ratio < background.height())
-            ratio = background.height() / static_cast<double>(height());
-
-        sourceRect.setSize(QSizeF((ratio * width()) / zoom, (ratio * height()) / zoom));
-
-        painter.drawImage(QRectF(QPointF(0,0), QSizeF(width(), height())), background, sourceRect);
-    }
-    else
-        sourceRect.setSize(QSizeF(width() / zoom, height() / zoom));
-
-    //Draw grid
-    if (checkEdgeDetect->isChecked())
-    {
-        if (!edgeGrid.isNull())
-        {
-            QImage croppedGrid = edgeGrid.copy(0, 0, background.width(), background.height());
-            painter.drawImage(QRectF(QPointF(0,0), QSizeF(width(), height())),
-                              croppedGrid, sourceRect);
-        }
-    }
-    else if (!grid.isNull())
-    {
-        QImage croppedGrid = grid.copy(0, 0, background.width(), background.height());
-        painter.drawImage(QRectF(QPointF(0,0), QSizeF(width(), height())), croppedGrid, sourceRect);
-    }
+    updateView();
 }
 
 //Updates display of grid
@@ -187,23 +150,6 @@ void GridViewer::resizeEvent(QResizeEvent * /*event*/)
 {
     if (background.isNull())
         updateGrid();
-    else
-        update();
-}
-
-//Change zoom of grid preview based on mouse scrollwheel movement
-//Ctrl is a modifier key that allows for faster zooming (x10)
-void GridViewer::wheelEvent(QWheelEvent *event)
-{
-    zoom += event->angleDelta().y() /
-            ((event->modifiers().testFlag(Qt::ControlModifier)) ? 1200.0 : 12000.0);
-    zoom = std::clamp(zoom, MIN_ZOOM, MAX_ZOOM);
-
-    spinZoom->blockSignals(true);
-    spinZoom->setValue(zoom * 100);
-    spinZoom->blockSignals(false);
-
-    update();
 }
 
 //Creates grid from grid state and cells
@@ -283,8 +229,6 @@ void GridViewer::createGrid(const int gridHeight, const int gridWidth)
     //Make black pixels transparent
     ImageUtility::matMakeTransparent(newGrid.at(0), newGrid.at(0), 0);
 
-    grid = QImage(newGrid.at(0).data, gridWidth, gridHeight, static_cast<int>(newGrid.at(0).step),
-                  QImage::Format_RGBA8888).copy();
-    edgeGrid = QImage(newEdgeGrid.at(0).data, gridWidth, gridHeight,
-                      static_cast<int>(newEdgeGrid.at(0).step), QImage::Format_RGBA8888).copy();
+    grid = ImageUtility::matToQPixmap(newGrid.at(0), QImage::Format_RGBA8888);
+    edgeGrid = ImageUtility::matToQPixmap(newEdgeGrid.at(0), QImage::Format_RGBA8888);
 }

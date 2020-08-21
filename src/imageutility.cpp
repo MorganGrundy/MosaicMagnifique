@@ -170,11 +170,12 @@ void ImageUtility::imageToSquare(cv::Mat& t_img, const SquareMethod t_method)
 }
 
 //Converts an OpenCV Mat to a QPixmap and returns
-QPixmap ImageUtility::matToQPixmap(const cv::Mat &t_mat)
+QPixmap ImageUtility::matToQPixmap(const cv::Mat &t_mat,
+                                   const QImage::Format t_format)
 {
     return QPixmap::fromImage(QImage(t_mat.data, t_mat.cols, t_mat.rows,
                                      static_cast<int>(t_mat.step),
-                                     QImage::Format_RGB888).rgbSwapped());
+                                     t_format).rgbSwapped());
 }
 
 //Takes a grayscale image as src

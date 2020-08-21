@@ -21,7 +21,7 @@
 #include <QDebug>
 
 CustomGraphicsView::CustomGraphicsView(QWidget *t_parent)
-    : QGraphicsView{t_parent}
+    : QGraphicsView{t_parent}, MIN_ZOOM{0.8}, MAX_ZOOM{10}
 {
     setCacheMode(CacheBackground);
     setViewportUpdateMode(BoundingRectViewportUpdate);
@@ -77,29 +77,31 @@ void CustomGraphicsView::zoom(const double factor)
     const QRectF expectedRect = transform().scale(factor, factor).mapRect(sceneRect());
     double expRectLength;
     int viewportLength;
-    int imgLength;
 
-    if (sceneRect().width() > sceneRect().height())
+    //Compares ratio between height and width of viewport(widget) and scene(image, etc...)
+    if (viewport()->rect().width() / sceneRect().width() >
+        viewport()->rect().height() / sceneRect().height())
     {
-        expRectLength = expectedRect.width();
-        viewportLength = viewport()->rect().width();
-        imgLength = sceneRect().width();
+        //Height has lowest ratio
+        expRectLength = expectedRect.height();
+        viewportLength = viewport()->rect().height();
     }
     else
     {
-        expRectLength = expectedRect.height();
-        viewportLength = viewport()->rect().height();
-        imgLength = sceneRect().height();
+        //Width has lowest ratio
+        expRectLength = expectedRect.width();
+        viewportLength = viewport()->rect().width();
     }
 
     //Minimum zoom
-    if (expRectLength < viewportLength / 1.5)
+    if (expRectLength < viewportLength * MIN_ZOOM)
     {
         if (factor < 1)
             return;
     }
+
     //Maximum zoom
-    else if (expRectLength > imgLength * 10)
+    else if (expRectLength > viewportLength * MAX_ZOOM)
     {
         if (factor > 1)
             return;

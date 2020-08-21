@@ -238,9 +238,7 @@ void MainWindow::selectMainImage()
         photomosaicSizeRatio = static_cast<double>(mainImage.cols) / mainImage.rows;
 
         //Gives main image to grid preview
-        ui->widgetGridPreview->setBackground(
-                    ImageUtility::resizeImage(mainImage, mainImage.rows, mainImage.cols,
-                                              ImageUtility::ResizeType::INCLUSIVE));
+        ui->widgetGridPreview->setBackground(mainImage);
 
         ui->widgetGridPreview->updateGrid();
     }

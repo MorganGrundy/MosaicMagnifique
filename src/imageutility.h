@@ -68,7 +68,8 @@ namespace ImageUtility
     void imageToSquare(cv::Mat& t_img, const SquareMethod t_method);
 
     //Converts an OpenCV Mat to a QPixmap and returns
-    QPixmap matToQPixmap(const cv::Mat &t_mat);
+    QPixmap matToQPixmap(const cv::Mat &t_mat,
+                         const QImage::Format t_format = QImage::Format_RGB888);
 
     //Takes a grayscale image as src
     //Converts to RGBA and makes pixels of target value transparent

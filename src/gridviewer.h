@@ -32,17 +32,23 @@
 #include "gridbounds.h"
 #include "gridutility.h"
 #include "cellgroup.h"
+#include "customgraphicsview.h"
 
-class GridViewer : public QWidget
+class GridViewer : public CustomGraphicsView
 {
     Q_OBJECT
 public:
     explicit GridViewer(QWidget *parent = nullptr);
+    ~GridViewer();
+
     //Changes state of edge detection in grid preview
     void setEdgeDetect(bool t_state);
 
     //Gets grid state of current options and creates grid
     void updateGrid();
+
+    //Clears scene and sets new background and grid
+    void updateView();
 
     //Returns reference to cell group
     CellGroup &getCellGroup();
@@ -54,43 +60,30 @@ public:
     GridUtility::mosaicBestFit getGridState() const;
 
 public slots:
-    //Called when the spinbox value is changed, updates grid zoom
-    void zoomChanged(double t_value);
-
     //Changes if grid preview shows edge detected or normal cells
     void edgeDetectChanged(int t_state);
 
 protected:
-    //Displays grid
-    void paintEvent(QPaintEvent *event) override;
-
     //Updates display of grid
     //If no back image then creates new grid
     void resizeEvent(QResizeEvent *event) override;
-
-    //Change zoom of grid preview based on mouse scrollwheel movement
-    //Ctrl is a modifier key that allows for faster zooming (x10)
-    void wheelEvent(QWheelEvent *event) override;
 
 private:
     //Creates grid from grid state and cells
     void createGrid(const int gridHeight, const int gridWidth);
 
     QGridLayout *layout;
-    QLabel *labelZoom;
-    QDoubleSpinBox *spinZoom;
     QCheckBox *checkEdgeDetect;
     QSpacerItem *hSpacer, *vSpacer;
 
+    QGraphicsScene *scene;
+
     cv::Mat backImage;
-    QImage background;
+    QPixmap background;
 
     CellGroup m_cells;
 
-    QImage grid, edgeGrid;
-
-    const double MIN_ZOOM, MAX_ZOOM;
-    double zoom;
+    QPixmap grid, edgeGrid;
 
     GridUtility::mosaicBestFit gridState;
 };

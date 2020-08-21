@@ -40,6 +40,8 @@ private:
 protected:
     //Handles scrollwheel event
     void wheelEvent(QWheelEvent *event) override;
+
+    const double MIN_ZOOM, MAX_ZOOM;
 };
 
 #endif // CUSTOMGRAPHICSVIEW_H

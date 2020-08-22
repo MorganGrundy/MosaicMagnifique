@@ -41,33 +41,55 @@ public:
     ~MainWindow();
 
 public slots:
+    //Updates cell shape in grid preview
     void tabChanged(int t_index);
 
-    //Cell Shape Editor
+    //Updates cell shape
     void updateCellShape(const CellShape &t_cellShape);
+    //Update cell shape name
     void updateCellName(const QString &t_name);
 
-    //Image Library Editor
+    //Updates image library count in tab widget
     void updateImageLibraryCount(int t_newSize);
 
-    //Generator Settings tab
+    //Prompts user for a main image
     void selectMainImage();
+    //Opens colour visualisation window
     void compareColours();
+
+    //Links width and height of photomosaic so they scale together
+    //Updates link icon
     void photomosaicSizeLink();
+    //Updates photomosaic width
     void photomosaicWidthChanged(int i);
+    //Updates photomosaic height
     void photomosaicHeightChanged(int i);
+    //Sets photomosaic size to current main image size
     void loadImageSize();
+
+    //Updates detail level
     void photomosaicDetailChanged(int i);
+
+    //Updates cell size
     void cellSizeChanged(int t_value);
+    //Updates cell grid size steps
     void minimumCellSizeChanged(int t_value);
+    //Enables/disables custom cell shapes
     void enableCellShape(bool t_state);
+
+    //Allows user to manually edit current cell grid
+    void editCellGrid();
+
 #ifdef CUDA
+    //Changes CUDA device
     void CUDADeviceChanged(int t_index);
 #endif
 
+    //Generate and display a Photomosaic for current settings
     void generatePhotomosaic();
 
 private:
+    //Clamps detail level so that cell size never reaches 0px
     void clampDetail();
 
     Ui::MainWindow *ui;

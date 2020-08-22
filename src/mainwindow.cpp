@@ -95,6 +95,7 @@ MainWindow::MainWindow(QWidget *t_parent)
     //Connects generator settings to appropriate methods
     connect(ui->buttonMainImage, SIGNAL(released()), this, SLOT(selectMainImage()));
     connect(ui->buttonCompareColours, SIGNAL(released()), this, SLOT(compareColours()));
+
     connect(ui->buttonPhotomosaicSizeLink, SIGNAL(released()), this, SLOT(photomosaicSizeLink()));
     connect(ui->spinPhotomosaicWidth, SIGNAL(valueChanged(int)), this,
             SLOT(photomosaicWidthChanged(int)));
@@ -108,6 +109,8 @@ MainWindow::MainWindow(QWidget *t_parent)
     connect(ui->spinMinCellSize, SIGNAL(valueChanged(int)),
             this, SLOT(minimumCellSizeChanged(int)));
     connect(ui->checkCellShape, SIGNAL(clicked(bool)), this, SLOT(enableCellShape(bool)));
+
+    connect(ui->buttonEditGrid, SIGNAL(released()), this, SLOT(editCellGrid()));
 
     connect(ui->buttonGenerate, SIGNAL(released()), this, SLOT(generatePhotomosaic()));
 
@@ -167,7 +170,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-//Updates grid preview in generator sett
+//Updates cell shape in grid preview
 void MainWindow::tabChanged(int t_index)
 {
     //Generator settings tab
@@ -214,8 +217,6 @@ void MainWindow::selectMainImage()
                                                     "*.hdr *.pic)");
     if (!filename.isNull())
     {
-        ui->lineMainImage->setText(filename);
-
         //Load main image and check is valid
         mainImage = cv::imread(filename.toStdString());
         if (mainImage.empty())
@@ -229,6 +230,9 @@ void MainWindow::selectMainImage()
             return;
         }
 
+        ui->lineMainImage->setText(filename);
+
+        //Update main image size
         ui->spinPhotomosaicHeight->blockSignals(true);
         ui->spinPhotomosaicWidth->blockSignals(true);
         ui->spinPhotomosaicHeight->setValue(mainImage.rows);
@@ -239,7 +243,6 @@ void MainWindow::selectMainImage()
 
         //Gives main image to grid preview
         ui->widgetGridPreview->setBackground(mainImage);
-
         ui->widgetGridPreview->updateGrid();
     }
 }
@@ -255,12 +258,14 @@ void MainWindow::compareColours()
     colourVisualisation->show();
 }
 
-//Changes icon of photomosaic size link button and saves ratio
+//Links width and height of photomosaic so they scale together
+//Updates link icon
 void MainWindow::photomosaicSizeLink()
 {
     if (ui->buttonPhotomosaicSizeLink->isChecked())
     {
         ui->buttonPhotomosaicSizeLink->setIcon(QIcon(":/img/LinkIcon.png"));
+        //Gets ratio between current width and height
         photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) /
                 ui->spinPhotomosaicHeight->value();
     }
@@ -270,31 +275,33 @@ void MainWindow::photomosaicSizeLink()
     }
 }
 
-//If link is active then when Photomosaic width changes updates height
+//Updates photomosaic width
 void MainWindow::photomosaicWidthChanged(int i)
 {
+    //If size link active, height is scaled with width
     if (ui->buttonPhotomosaicSizeLink->isChecked())
     {
         //Blocks signals while changing value to prevent infinite loop
         ui->spinPhotomosaicHeight->blockSignals(true);
         ui->spinPhotomosaicHeight->setValue(std::round(i / photomosaicSizeRatio));
         ui->spinPhotomosaicHeight->blockSignals(false);
+    }
 
-        //Updates image size in grid preview
-        if (!mainImage.empty())
-        {
-            ui->widgetGridPreview->setBackground(
-                        ImageUtility::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
-                                                  ui->spinPhotomosaicWidth->value(),
-                                                  ImageUtility::ResizeType::INCLUSIVE));
-            ui->widgetGridPreview->updateGrid();
-        }
+    //Updates image size in grid preview
+    if (!mainImage.empty())
+    {
+        ui->widgetGridPreview->setBackground(
+            ImageUtility::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
+                                      ui->spinPhotomosaicWidth->value(),
+                                      ImageUtility::ResizeType::INCLUSIVE));
+        ui->widgetGridPreview->updateGrid();
     }
 }
 
-//If link is active then when Photomosaic height changes updates width
+//Updates photomosaic height
 void MainWindow::photomosaicHeightChanged(int i)
 {
+    //If size link active, width is scaled with height
     if (ui->buttonPhotomosaicSizeLink->isChecked())
     {
         //Blocks signals while changing value to prevent infinite loop
@@ -307,14 +314,14 @@ void MainWindow::photomosaicHeightChanged(int i)
     if (!mainImage.empty())
     {
         ui->widgetGridPreview->setBackground(
-                    ImageUtility::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
-                                              ui->spinPhotomosaicWidth->value(),
-                                              ImageUtility::ResizeType::INCLUSIVE));
+            ImageUtility::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
+                                      ui->spinPhotomosaicWidth->value(),
+                                      ImageUtility::ResizeType::INCLUSIVE));
         ui->widgetGridPreview->updateGrid();
     }
 }
 
-//If a main image has been entered sets the Photomosaic size spinboxes to the image size
+//Sets photomosaic size to current main image size
 void MainWindow::loadImageSize()
 {
     if (!mainImage.empty())
@@ -338,7 +345,7 @@ void MainWindow::loadImageSize()
     }
 }
 
-//Updates grid preview when detail level changes
+//Updates detail level
 void MainWindow::photomosaicDetailChanged(int /*i*/)
 {
     clampDetail();
@@ -348,9 +355,10 @@ void MainWindow::photomosaicDetailChanged(int /*i*/)
         ui->widgetGridPreview->updateGrid();
 }
 
-//Updates grid preview and minimum cell size spin box
+//Updates cell size
 void MainWindow::cellSizeChanged(int t_value)
 {
+    //Updates minimum cell size
     ui->spinMinCellSize->blockSignals(true);
     ui->spinMinCellSize->setMaximum(t_value);
     ui->spinMinCellSize->stepBy(0);
@@ -372,7 +380,7 @@ void MainWindow::cellSizeChanged(int t_value)
     ui->widgetGridPreview->updateGrid();
 }
 
-//Updates grid preview
+//Updates cell grid size steps
 void MainWindow::minimumCellSizeChanged(int /*t_value*/)
 {
     clampDetail();
@@ -381,7 +389,7 @@ void MainWindow::minimumCellSizeChanged(int /*t_value*/)
     ui->widgetGridPreview->updateGrid();
 }
 
-//Enables/disables non-square cell shapes, GUI widgets for choosing
+//Enables/disables custom cell shapes
 void MainWindow::enableCellShape(bool t_state)
 {
     ui->lineCellShape->setEnabled(t_state);
@@ -397,6 +405,12 @@ void MainWindow::enableCellShape(bool t_state)
     ui->widgetGridPreview->updateGrid();
 }
 
+//Allows user to manually edit current cell grid
+void MainWindow::editCellGrid()
+{
+
+}
+
 #ifdef CUDA
 //Changes CUDA device
 void MainWindow::CUDADeviceChanged(int t_index)
@@ -405,7 +419,7 @@ void MainWindow::CUDADeviceChanged(int t_index)
 }
 #endif
 
-//Attempts to generate and display a Photomosaic for current settings
+//Generate and display a Photomosaic for current settings
 void MainWindow::generatePhotomosaic()
 {
     //Check library contains images
@@ -482,7 +496,6 @@ void MainWindow::generatePhotomosaic()
 }
 
 //Clamps detail level so that cell size never reaches 0px
-//Returns if detail was clamped
 void MainWindow::clampDetail()
 {
     const int minCellSize = ui->spinMinCellSize->value();

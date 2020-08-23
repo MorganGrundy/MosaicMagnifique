@@ -50,12 +50,16 @@ public:
     //Clears scene and sets new background and grid
     void updateView();
 
+    //Sets cell group
+    void setCellGroup(const CellGroup &t_cellGroup);
     //Returns reference to cell group
     CellGroup &getCellGroup();
 
     //Sets the background image in grid
     void setBackground(const cv::Mat &t_background);
 
+    //Sets grid state and updates grid
+    void setGridState(const GridUtility::mosaicBestFit &t_gridState);
     //Returns state of current grid
     GridUtility::mosaicBestFit getGridState() const;
 
@@ -68,24 +72,24 @@ protected:
     //If no back image then creates new grid
     void resizeEvent(QResizeEvent *event) override;
 
-private:
     //Creates grid from grid state and cells
     void createGrid(const int gridHeight, const int gridWidth);
 
+    CellGroup m_cells;
+    GridUtility::mosaicBestFit gridState;
+
+    cv::Mat backImage;
+
+private:
     QGridLayout *layout;
     QCheckBox *checkEdgeDetect;
     QSpacerItem *hSpacer, *vSpacer;
 
     QGraphicsScene *scene;
 
-    cv::Mat backImage;
     QPixmap background;
 
-    CellGroup m_cells;
-
     QPixmap grid, edgeGrid;
-
-    GridUtility::mosaicBestFit gridState;
 };
 
 #endif // GRIDVIEWER_H

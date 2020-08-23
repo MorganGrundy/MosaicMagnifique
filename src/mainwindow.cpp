@@ -39,6 +39,7 @@
 #include "imageviewer.h"
 #include "colourvisualisation.h"
 #include "cpuphotomosaicgenerator.h"
+#include "grideditor.h"
 
 #ifdef CUDA
 #include <cuda_runtime.h>
@@ -408,7 +409,36 @@ void MainWindow::enableCellShape(bool t_state)
 //Allows user to manually edit current cell grid
 void MainWindow::editCellGrid()
 {
+    if (!mainImage.empty())
+    {
+        //Create and show grid editor
+        GridEditor gridEditor(this);
+        gridEditor.setWindowModality(Qt::WindowModality::ApplicationModal);
 
+        //Set background and cell group
+        gridEditor.getGridEditViewer()->setBackground(
+            ImageUtility::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
+                                      ui->spinPhotomosaicWidth->value(),
+                                      ImageUtility::ResizeType::INCLUSIVE));
+        gridEditor.getGridEditViewer()->setCellGroup(ui->widgetGridPreview->getCellGroup());
+
+        //When grid editor is closed get the new grid state and give to grid preview
+        connect(&gridEditor, &GridEditor::gridStateChanged,
+                [=](const GridUtility::mosaicBestFit &t_gridState)
+                {
+                    ui->widgetGridPreview->setGridState(t_gridState);
+                    ui->widgetGridPreview->updateView();
+                });
+
+        //Show grid editor
+        gridEditor.show();
+        gridEditor.getGridEditViewer()->updateGrid();
+
+        //Wait till window returns
+        QEventLoop loop;
+        connect(&gridEditor, SIGNAL(destroyed()), &loop, SLOT(quit()));
+        loop.exec();
+    }
 }
 
 #ifdef CUDA

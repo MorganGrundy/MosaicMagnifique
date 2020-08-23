@@ -17,19 +17,35 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CUDAPHOTOMOSAICGENERATORBASE_H
-#define CUDAPHOTOMOSAICGENERATORBASE_H
+#ifndef GRIDEDITOR_H
+#define GRIDEDITOR_H
 
-#include "photomosaicgeneratorbase.h"
+#include <QMainWindow>
 
-//Generates a Photomosaic on GPU using CUDA
-class CUDAPhotomosaicGenerator : public PhotomosaicGeneratorBase
+#include "grideditviewer.h"
+
+namespace Ui {
+class GridEditor;
+}
+
+class GridEditor : public QMainWindow
 {
-public:
-    CUDAPhotomosaicGenerator(QWidget *t_parent = nullptr);
+    Q_OBJECT
 
-    //Returns a Photomosaic of the main image made of the library images
-    cv::Mat generate();
+public:
+    explicit GridEditor(QWidget *parent = nullptr);
+    ~GridEditor();
+
+    GridEditViewer *getGridEditViewer();
+
+signals:
+    void gridStateChanged(const GridUtility::mosaicBestFit &t_gridState);
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
+
+private:
+    Ui::GridEditor *ui;
 };
 
-#endif // CUDAPHOTOMOSAICGENERATORBASE_H
+#endif // GRIDEDITOR_H

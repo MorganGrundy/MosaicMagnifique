@@ -39,6 +39,8 @@ SOURCES += \
 	cpuphotomosaicgenerator.cpp \
 	customgraphicsview.cpp \
 	gridbounds.cpp \
+	grideditor.cpp \
+	grideditviewer.cpp \
 	gridgenerator.cpp \
 	gridutility.cpp \
 	gridviewer.cpp \
@@ -59,6 +61,8 @@ HEADERS += \
 	cpuphotomosaicgenerator.h \
 	customgraphicsview.h \
 	gridbounds.h \
+	grideditor.h \
+	grideditviewer.h \
 	gridgenerator.h \
 	gridutility.h \
 	gridviewer.h \
@@ -73,6 +77,7 @@ HEADERS += \
 FORMS += \
 	cellshapeeditor.ui \
 	colourvisualisation.ui \
+	grideditor.ui \
 	imagelibraryeditor.ui \
 	imageviewer.ui \
 	mainwindow.ui

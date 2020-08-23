@@ -31,7 +31,7 @@
 #include "gridgenerator.h"
 
 GridViewer::GridViewer(QWidget *parent)
-    : CustomGraphicsView(parent), m_cells{}
+    : CustomGraphicsView(parent), m_cells{}, scene{nullptr}
 {
     layout = new QGridLayout(this);
 
@@ -116,6 +116,12 @@ void GridViewer::updateView()
     fitToView();
 }
 
+//Sets cell group
+void GridViewer::setCellGroup(const CellGroup &t_cellGroup)
+{
+    m_cells = t_cellGroup;
+}
+
 //Returns reference to cell group
 CellGroup &GridViewer::getCellGroup()
 {
@@ -130,6 +136,22 @@ void GridViewer::setBackground(const cv::Mat &t_background)
         background = QPixmap();
     else
         background = ImageUtility::matToQPixmap(t_background);
+}
+
+//Sets grid state and updates grid
+void GridViewer::setGridState(const GridUtility::mosaicBestFit &t_gridState)
+{
+    gridState = t_gridState;
+
+    //Height & Width to use when no back image
+    const int viewerHeight = viewport()->rect().height();
+    const int viewerWidth = viewport()->rect().width();
+
+    //Calculate grid size
+    const int gridHeight = (backImage.empty()) ? viewerHeight : backImage.rows;
+    const int gridWidth = (backImage.empty()) ? viewerWidth : backImage.cols;
+
+    createGrid(gridHeight, gridWidth);
 }
 
 //Returns state of current grid
@@ -198,15 +220,16 @@ void GridViewer::createGrid(const int gridHeight, const int gridWidth)
                         m_cells.getCell(step), x, y, GridUtility::PAD_GRID);
 
                     //Create bounded mask
-                    const cv::Mat mask(m_cells.getCell(step).getCellMask(flipHorizontal,
-                                                                         flipVertical),
-                                       cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
-                                       cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+                    const cv::Mat mask(
+                        m_cells.getCell(step).getCellMask(flipHorizontal, flipVertical),
+                        cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                        cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
                     //Create bounded edge mask
-                    const cv::Mat edgeMask(m_cells.getEdgeCell(step, flipHorizontal, flipVertical),
-                                           cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
-                                           cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
+                    const cv::Mat edgeMask(
+                        m_cells.getEdgeCell(step, flipHorizontal, flipVertical),
+                        cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
+                        cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
                     //Copy cell to grid
                     cv::bitwise_or(gridPart, mask, gridPart);

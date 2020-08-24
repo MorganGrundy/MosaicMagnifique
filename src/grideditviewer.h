@@ -30,9 +30,15 @@ class GridEditViewer : public GridViewer
 public:
     explicit GridEditViewer(QWidget *parent = nullptr);
 
+    //Sets current size step for editor
+    void setSizeStep(const size_t t_sizeStep);
+
 protected:
     //Inverts state of clicked cell
     void mousePressEvent(QMouseEvent *event) override;
+
+private:
+    size_t m_sizeStep;
 };
 
 #endif // GRIDEDITVIEWER_H

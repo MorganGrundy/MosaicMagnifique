@@ -411,16 +411,14 @@ void MainWindow::editCellGrid()
 {
     if (!mainImage.empty())
     {
-        //Create and show grid editor
-        GridEditor gridEditor(this);
-        gridEditor.setWindowModality(Qt::WindowModality::ApplicationModal);
-
-        //Set background and cell group
-        gridEditor.getGridEditViewer()->setBackground(
+        //Create grid editor
+        GridEditor gridEditor(
             ImageUtility::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
                                       ui->spinPhotomosaicWidth->value(),
-                                      ImageUtility::ResizeType::INCLUSIVE));
-        gridEditor.getGridEditViewer()->setCellGroup(ui->widgetGridPreview->getCellGroup());
+                                      ImageUtility::ResizeType::INCLUSIVE),
+            ui->widgetGridPreview->getCellGroup(), this);
+
+        gridEditor.setWindowModality(Qt::WindowModality::ApplicationModal);
 
         //When grid editor is closed get the new grid state and give to grid preview
         connect(&gridEditor, &GridEditor::gridStateChanged,
@@ -432,7 +430,6 @@ void MainWindow::editCellGrid()
 
         //Show grid editor
         gridEditor.show();
-        gridEditor.getGridEditViewer()->updateGrid();
 
         //Wait till window returns
         QEventLoop loop;

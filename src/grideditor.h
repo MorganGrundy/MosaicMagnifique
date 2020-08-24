@@ -34,14 +34,17 @@ class GridEditor : public QMainWindow
 
 public:
     explicit GridEditor(QWidget *parent = nullptr);
+    explicit GridEditor(const cv::Mat &t_background, const CellGroup &t_cellGroup,
+                        QWidget *t_parent = nullptr);
     ~GridEditor();
-
-    GridEditViewer *getGridEditViewer();
 
 signals:
     void gridStateChanged(const GridUtility::mosaicBestFit &t_gridState);
 
 protected:
+    //Updates grid
+    void showEvent(QShowEvent *event) override;
+    //Emit grid state when grid editor is closed
     void closeEvent(QCloseEvent *event) override;
 
 private:

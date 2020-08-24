@@ -21,8 +21,14 @@
 
 #include <QDebug>
 
-GridEditViewer::GridEditViewer(QWidget *parent) : GridViewer(parent)
+GridEditViewer::GridEditViewer(QWidget *parent) : GridViewer(parent), m_sizeStep{0}
 {}
+
+//Sets current size step for editor
+void GridEditViewer::setSizeStep(const size_t t_sizeStep)
+{
+    m_sizeStep = t_sizeStep;
+}
 
 //Inverts state of clicked cell
 void GridEditViewer::mousePressEvent(QMouseEvent *event)
@@ -38,14 +44,14 @@ void GridEditViewer::mousePressEvent(QMouseEvent *event)
 
         //For all cells (at top size step)
         for (int y = -GridUtility::PAD_GRID;
-             y < static_cast<int>(gridState.at(0).size()) - GridUtility::PAD_GRID; ++y)
+             y < static_cast<int>(gridState.at(m_sizeStep).size()) - GridUtility::PAD_GRID; ++y)
         {
             for (int x = -GridUtility::PAD_GRID;
-                 x < static_cast<int>(gridState.at(0).at(y + GridUtility::PAD_GRID).size())
+                 x < static_cast<int>(gridState.at(m_sizeStep).at(y + GridUtility::PAD_GRID).size())
                          - GridUtility::PAD_GRID; ++x)
             {
                 //Get cell bounds
-                cv::Rect cellBound = GridUtility::getRectAt(m_cells.getCell(0), x, y);
+                cv::Rect cellBound = GridUtility::getRectAt(m_cells.getCell(m_sizeStep), x, y);
 
                 //Check if click in bounds
                 if ((gridPos.x() >= cellBound.x && gridPos.x() < cellBound.br().x) &&
@@ -55,9 +61,9 @@ void GridEditViewer::mousePressEvent(QMouseEvent *event)
                     QPoint cellPos(gridPos.x() - cellBound.x, gridPos.y() - cellBound.y);
 
                     //Check if click is in active cell area
-                    auto cellFlip = GridUtility::getFlipStateAt(m_cells.getCell(0), x, y,
+                    auto cellFlip = GridUtility::getFlipStateAt(m_cells.getCell(m_sizeStep), x, y,
                                                                 GridUtility::PAD_GRID);
-                    if (m_cells.getCell(0).getCellMask(cellFlip.first, cellFlip.second).
+                    if (m_cells.getCell(m_sizeStep).getCellMask(cellFlip.first, cellFlip.second).
                         at<uchar>(cellPos.x(), cellPos.y()) != 0)
                     {
                         //Add to vector
@@ -82,7 +88,7 @@ void GridEditViewer::mousePressEvent(QMouseEvent *event)
 
             //Get cell state of cell with highest y,x
             GridUtility::cellBestFit &cellState =
-                gridState.at(0).at(cellsAtClick.front().second + GridUtility::PAD_GRID).
+                gridState.at(m_sizeStep).at(cellsAtClick.front().second + GridUtility::PAD_GRID).
                 at(cellsAtClick.front().first + GridUtility::PAD_GRID);
 
             //Toggle cell state

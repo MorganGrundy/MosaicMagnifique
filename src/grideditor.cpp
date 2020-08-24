@@ -25,6 +25,21 @@ GridEditor::GridEditor(QWidget *parent) :
     ui(new Ui::GridEditor)
 {
     ui->setupUi(this);
+
+    //Pass new size step to grid edit viewer
+    connect(&(*ui->spinSizeStep), QOverload<int>::of(&QSpinBox::valueChanged),
+            [=](int t_newValue){
+                ui->gridEditViewer->setSizeStep(static_cast<size_t>(t_newValue));
+            });
+}
+
+GridEditor::GridEditor(const cv::Mat &t_background, const CellGroup &t_cellGroup,
+                       QWidget *t_parent) : GridEditor{t_parent}
+{
+    ui->gridEditViewer->setBackground(t_background);
+    ui->gridEditViewer->setCellGroup(t_cellGroup);
+
+    ui->spinSizeStep->setMaximum(static_cast<int>(t_cellGroup.getSizeSteps()));
 }
 
 GridEditor::~GridEditor()
@@ -32,9 +47,10 @@ GridEditor::~GridEditor()
     delete ui;
 }
 
-GridEditViewer *GridEditor::getGridEditViewer()
+//Updates grid
+void GridEditor::showEvent(QShowEvent */*event*/)
 {
-    return ui->gridEditViewer;
+    ui->gridEditViewer->updateGrid();
 }
 
 //Emit grid state when grid editor is closed

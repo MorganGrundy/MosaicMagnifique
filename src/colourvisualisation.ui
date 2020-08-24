@@ -13,6 +13,13 @@
   <property name="windowTitle">
    <string>Colour Visualisation</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget {
+background-color: rgb(60, 60, 60);
+color: rgb(255, 255, 255);
+border-color: rgb(0, 0, 0);
+}</string>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
@@ -37,7 +44,7 @@
        <bool>false</bool>
       </property>
       <property name="dragDropMode">
-       <enum>QAbstractItemView::NoDragDrop</enum>
+       <enum>QAbstractItemView::DragDrop</enum>
       </property>
       <property name="defaultDropAction">
        <enum>Qt::IgnoreAction</enum>

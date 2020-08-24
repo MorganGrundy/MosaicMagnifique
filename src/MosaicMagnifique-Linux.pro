@@ -51,7 +51,8 @@ SOURCES += \
 	imageviewer.cpp \
 	main.cpp \
 	mainwindow.cpp \
-	photomosaicgeneratorbase.cpp
+	photomosaicgeneratorbase.cpp \
+	quadtree.cpp
 
 HEADERS += \
 	cellgroup.h \
@@ -72,7 +73,8 @@ HEADERS += \
 	imageutility.h \
 	imageviewer.h \
 	mainwindow.h \
-	photomosaicgeneratorbase.h
+	photomosaicgeneratorbase.h \
+	quadtree.h
 
 FORMS += \
 	cellshapeeditor.ui \

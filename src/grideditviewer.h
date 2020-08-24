@@ -24,6 +24,8 @@
 
 #include <QMouseEvent>
 
+#include "quadtree.h"
+
 class GridEditViewer : public GridViewer
 {
     Q_OBJECT
@@ -33,12 +35,19 @@ public:
     //Sets current size step for editor
     void setSizeStep(const size_t t_sizeStep);
 
+    //Gets grid state of current options and creates grid
+    //Creates quadtree of grid
+    void updateGrid();
+
 protected:
     //Inverts state of clicked cell
     void mousePressEvent(QMouseEvent *event) override;
 
 private:
     size_t m_sizeStep;
+
+    //Stores a quadtree of grid cells for each size step
+    std::vector<Quadtree> m_quadtree;
 };
 
 #endif // GRIDEDITVIEWER_H

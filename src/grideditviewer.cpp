@@ -21,13 +21,45 @@
 
 #include <QDebug>
 
-GridEditViewer::GridEditViewer(QWidget *parent) : GridViewer(parent), m_sizeStep{0}
+GridEditViewer::GridEditViewer(QWidget *parent)
+    : GridViewer(parent), m_sizeStep{0}, m_quadtree{}
 {}
 
 //Sets current size step for editor
 void GridEditViewer::setSizeStep(const size_t t_sizeStep)
 {
     m_sizeStep = t_sizeStep;
+}
+
+//Gets grid state of current options and creates grid
+//Creates quadtree of grid
+void GridEditViewer::updateGrid()
+{
+    //Call grid viewer update grid
+    GridViewer::updateGrid();
+
+    //Create a quadtree for each size step
+    m_quadtree = std::vector<Quadtree>(gridState.size(),
+                                       Quadtree(cv::Rect(0, 0, backImage.cols, backImage.rows)));
+
+    //Insert all cells into quadtrees
+    for (size_t step = 0; step < gridState.size(); ++step)
+    {
+        for (int y = -GridUtility::PAD_GRID;
+             y < static_cast<int>(gridState.at(step).size()) - GridUtility::PAD_GRID; ++y)
+        {
+            for (int x = -GridUtility::PAD_GRID;
+                 x < static_cast<int>(gridState.at(step).at(y + GridUtility::PAD_GRID).size())
+                         - GridUtility::PAD_GRID; ++x)
+            {
+                //Get cell bounds
+                const cv::Rect cellBound = GridUtility::getRectAt(m_cells.getCell(step), x, y);
+
+                //Insert cell into quadtree
+                m_quadtree.at(step).insert({cellBound, cv::Point(x, y)});
+            }
+        }
+    }
 }
 
 //Inverts state of clicked cell
@@ -37,39 +69,31 @@ void GridEditViewer::mousePressEvent(QMouseEvent *event)
     if (event->buttons() == Qt::MouseButton::LeftButton)
     {
         //Transform click position to grid position
-        QPoint gridPos = mapToScene(event->pos()).toPoint();
+        const QPoint qGridPos = mapToScene(event->pos()).toPoint();
+        const cv::Point gridPos(qGridPos.x(), qGridPos.y());
 
-        //Stores all cells (x,y) at click position
-        std::vector<std::pair<int, int>> cellsAtClick;
+        //Get all cells with bounds at click position
+        const std::vector<Quadtree::elementType> cellBoundsAtClick =
+            m_quadtree.at(m_sizeStep).query(gridPos);
 
-        //For all cells (at top size step)
-        for (int y = -GridUtility::PAD_GRID;
-             y < static_cast<int>(gridState.at(m_sizeStep).size()) - GridUtility::PAD_GRID; ++y)
+        //Stores all cells at click position
+        std::vector<cv::Point> cellsAtClick;
+
+        //For all clicked bounds check if cell area clicked
+        for (const auto cell: cellBoundsAtClick)
         {
-            for (int x = -GridUtility::PAD_GRID;
-                 x < static_cast<int>(gridState.at(m_sizeStep).at(y + GridUtility::PAD_GRID).size())
-                         - GridUtility::PAD_GRID; ++x)
+            //Transform grid position to cell position
+            const cv::Point cellPos = gridPos - cell.first.tl();
+
+            //Check if click is in active cell area
+            const auto cellFlip = GridUtility::getFlipStateAt(m_cells.getCell(m_sizeStep),
+                                                              cell.second.x, cell.second.y,
+                                                              GridUtility::PAD_GRID);
+            if (m_cells.getCell(m_sizeStep).getCellMask(cellFlip.first, cellFlip.second).
+                at<uchar>(cellPos) != 0)
             {
-                //Get cell bounds
-                cv::Rect cellBound = GridUtility::getRectAt(m_cells.getCell(m_sizeStep), x, y);
-
-                //Check if click in bounds
-                if ((gridPos.x() >= cellBound.x && gridPos.x() < cellBound.br().x) &&
-                    (gridPos.y() >= cellBound.y && gridPos.y() < cellBound.br().y))
-                {
-                    //Transform grid position to cell position
-                    QPoint cellPos(gridPos.x() - cellBound.x, gridPos.y() - cellBound.y);
-
-                    //Check if click is in active cell area
-                    auto cellFlip = GridUtility::getFlipStateAt(m_cells.getCell(m_sizeStep), x, y,
-                                                                GridUtility::PAD_GRID);
-                    if (m_cells.getCell(m_sizeStep).getCellMask(cellFlip.first, cellFlip.second).
-                        at<uchar>(cellPos.x(), cellPos.y()) != 0)
-                    {
-                        //Add to vector
-                        cellsAtClick.push_back({x, y});
-                    }
-                }
+                //Add to vector
+                cellsAtClick.push_back(cell.second);
             }
         }
 
@@ -78,18 +102,18 @@ void GridEditViewer::mousePressEvent(QMouseEvent *event)
         {
             //Sort clicked cells in decreasing y, decreasing x
             std::sort(cellsAtClick.begin(), cellsAtClick.end(),
-                      [](const std::pair<int, int> &cell1, const std::pair<int, int> &cell2)
+                      [](const cv::Point &cell1, const cv::Point &cell2)
                       {
-                          if (cell1.second == cell2.second)
-                              return (cell1.first > cell2.first);
+                          if (cell1.y == cell2.y)
+                              return (cell1.x > cell2.x);
                           else
-                              return (cell1.second > cell2.second);
+                              return (cell1.y > cell2.y);
                       });
 
             //Get cell state of cell with highest y,x
             GridUtility::cellBestFit &cellState =
-                gridState.at(m_sizeStep).at(cellsAtClick.front().second + GridUtility::PAD_GRID).
-                at(cellsAtClick.front().first + GridUtility::PAD_GRID);
+                gridState.at(m_sizeStep).at(cellsAtClick.front().y + GridUtility::PAD_GRID).
+                at(cellsAtClick.front().x + GridUtility::PAD_GRID);
 
             //Toggle cell state
             if (cellState.has_value())

@@ -31,6 +31,24 @@ GridEditor::GridEditor(QWidget *parent) :
             [=](int t_newValue){
                 ui->gridEditViewer->setSizeStep(static_cast<size_t>(t_newValue));
             });
+
+    //Tool buttons
+    connect(ui->buttonGroupTools, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked),
+            [=](QAbstractButton *button)
+            {
+                //Update grid edit viewer active tool
+                if (button->text() == "Single")
+                {
+                    //ui->gridEditViewer->setTool(GridEditViewer::Tool::Single);
+                }
+                else if (button->text() == "Selection")
+                {
+                    //ui->gridEditViewer->setTool(GridEditViewer::Tool::Selection);
+                }
+            });
+
+    //Activate single tool by default
+    ui->toolSingle->click();
 }
 
 GridEditor::GridEditor(const cv::Mat &t_background, const CellGroup &t_cellGroup,

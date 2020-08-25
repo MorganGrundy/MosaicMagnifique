@@ -23,8 +23,13 @@ public:
 
     //Returns all elements at given point
     std::vector<elementType> query(const cv::Point t_point) const;
+    //Returns all elements that intersect rect
+    std::vector<elementType> query(const cv::Rect t_rect) const;
 
 private:
+    //Push_back t_element to t_vector if not already in t_vector
+    void push_back_unique(std::vector<elementType> &t_vector, const elementType &t_element) const;
+
     //Number of elements a node can hold before splitting
     const size_t NODE_CAPACITY = 10;
 

@@ -113,3 +113,61 @@ std::vector<Quadtree::elementType> Quadtree::query(const cv::Point t_point) cons
 
     return elementsAtPoint;
 }
+
+//Returns all elements that intersect rect
+std::vector<Quadtree::elementType> Quadtree::query(const cv::Rect t_rect) const
+{
+    //Store all elements that intersect rect
+    std::vector<elementType> elementsAtRect;
+
+    //If rect and quadrant bound do not intersect then return
+    if ((m_bounds & t_rect).area() == 0)
+        return elementsAtRect;
+
+    //Check if rect and element bounds intersect
+    for (const auto element: m_elements)
+    {
+        if ((element.first & t_rect).area() > 0)
+        {
+            //Add element if not already in
+            push_back_unique(elementsAtRect, element);
+        }
+    }
+
+    //No sub quadrants, return
+    if (!m_quadrantNW)
+        return elementsAtRect;
+
+    //Store elements that intersect rect for sub quadrant
+    std::vector<elementType> quadrantElementsAtPoint;
+    //Get North-West elements that intersect rect
+    quadrantElementsAtPoint = m_quadrantNW->query(t_rect);
+    elementsAtRect.reserve(elementsAtRect.size() + quadrantElementsAtPoint.size());
+    for (auto quadrantElement: quadrantElementsAtPoint)
+        push_back_unique(elementsAtRect, quadrantElement);
+    //Get North-East elements that intersect rect
+    quadrantElementsAtPoint = m_quadrantNE->query(t_rect);
+    elementsAtRect.reserve(elementsAtRect.size() + quadrantElementsAtPoint.size());
+    for (auto quadrantElement: quadrantElementsAtPoint)
+        push_back_unique(elementsAtRect, quadrantElement);
+    //Get South-West elements that intersect rect
+    quadrantElementsAtPoint = m_quadrantSW->query(t_rect);
+    elementsAtRect.reserve(elementsAtRect.size() + quadrantElementsAtPoint.size());
+    for (auto quadrantElement: quadrantElementsAtPoint)
+        push_back_unique(elementsAtRect, quadrantElement);
+    //Get South-East elements that intersect rect
+    quadrantElementsAtPoint = m_quadrantSE->query(t_rect);
+    elementsAtRect.reserve(elementsAtRect.size() + quadrantElementsAtPoint.size());
+    for (auto quadrantElement: quadrantElementsAtPoint)
+        push_back_unique(elementsAtRect, quadrantElement);
+
+    return elementsAtRect;
+}
+
+//Push_back t_element to t_vector if not already in t_vector
+void Quadtree::push_back_unique(std::vector<elementType> &t_vector,
+                                const elementType &t_element) const
+{
+    if (std::find(t_vector.cbegin(), t_vector.cend(), t_element) == t_vector.cend())
+        t_vector.push_back(t_element);
+}

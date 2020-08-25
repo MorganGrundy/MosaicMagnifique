@@ -81,12 +81,13 @@ protected:
 
     cv::Mat backImage;
 
+    QGraphicsScene *scene;
+
 private:
     QGridLayout *layout;
     QCheckBox *checkEdgeDetect;
     QSpacerItem *hSpacer, *vSpacer;
 
-    QGraphicsScene *scene;
     QGraphicsPixmapItem *sceneBackground;
     QGraphicsPixmapItem *sceneGrid;
 

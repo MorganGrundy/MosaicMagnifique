@@ -31,6 +31,7 @@ class GridEditViewer : public GridViewer
     Q_OBJECT
 public:
     explicit GridEditViewer(QWidget *parent = nullptr);
+    ~GridEditViewer();
 
     //Sets current size step for editor
     void setSizeStep(const size_t t_sizeStep);
@@ -39,15 +40,43 @@ public:
     //Creates quadtree of grid
     void updateGrid();
 
+    //Represents the different tools for grid editing
+    //Single - interact with single cell
+    //Selection - interact with all cells in selection
+    enum class Tool {Single, Selection};
+    //Sets active tool
+    void setTool(const Tool t_tool);
+
 protected:
-    //Inverts state of clicked cell
+    //Gets intial click position for selection
     void mousePressEvent(QMouseEvent *event) override;
 
+    //Displays selection
+    void mouseMoveEvent(QMouseEvent *event) override;
+
+    //Inverts state of clicked/selected cell
+    void mouseReleaseEvent(QMouseEvent *event) override;
+
 private:
+    //Toggles state of cell at grid position
+    void editSingle(const cv::Point t_gridPos);
+    //Toggles state of all cells that intersect rect
+    void editSelection(const cv::Rect t_selectionRect);
+
+    //Current size step of grid to edit
     size_t m_sizeStep;
 
     //Stores a quadtree of grid cells for each size step
     std::vector<Quadtree> m_quadtree;
+
+    //Stores active tool
+    Tool m_tool;
+
+    //Position of selection start
+    QPoint m_selectionStart;
+
+    //Rect for displaying selection
+    QGraphicsRectItem *selectionItem;
 };
 
 #endif // GRIDEDITVIEWER_H

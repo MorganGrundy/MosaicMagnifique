@@ -39,11 +39,11 @@ GridEditor::GridEditor(QWidget *parent) :
                 //Update grid edit viewer active tool
                 if (button->text() == "Single")
                 {
-                    //ui->gridEditViewer->setTool(GridEditViewer::Tool::Single);
+                    ui->gridEditViewer->setTool(GridEditViewer::Tool::Single);
                 }
                 else if (button->text() == "Selection")
                 {
-                    //ui->gridEditViewer->setTool(GridEditViewer::Tool::Selection);
+                    ui->gridEditViewer->setTool(GridEditViewer::Tool::Selection);
                 }
             });
 

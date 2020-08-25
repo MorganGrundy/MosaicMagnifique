@@ -31,7 +31,7 @@ namespace ImageUtility
     const int MIL_VERSION = 2;
     const unsigned int MIL_MAGIC = 0xADBE2480;
 
-    //Enum class that represents the two different resize types, used in resizeImage
+    //Represents the different resize types
     enum class ResizeType {INCLUSIVE, EXCLUSIVE, EXACT};
 
     //Returns a resized copy of the given image such that

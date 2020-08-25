@@ -123,7 +123,7 @@ void GridEditViewer::mousePressEvent(QMouseEvent *event)
 
             //Update grid view
             createGrid(backImage.rows, backImage.cols);
-            updateView();
+            updateView(false);
         }
     }
 }

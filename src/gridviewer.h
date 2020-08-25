@@ -27,6 +27,7 @@
 #include <QDoubleSpinBox>
 #include <QCheckBox>
 #include <QSpacerItem>
+#include <QGraphicsPixmapItem>
 
 #include "cellshape.h"
 #include "gridbounds.h"
@@ -48,7 +49,7 @@ public:
     void updateGrid();
 
     //Clears scene and sets new background and grid
-    void updateView();
+    void updateView(bool t_updateTransform = true);
 
     //Sets cell group
     void setCellGroup(const CellGroup &t_cellGroup);
@@ -86,6 +87,8 @@ private:
     QSpacerItem *hSpacer, *vSpacer;
 
     QGraphicsScene *scene;
+    QGraphicsPixmapItem *sceneBackground;
+    QGraphicsPixmapItem *sceneGrid;
 
     QPixmap background;
 

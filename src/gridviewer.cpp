@@ -51,6 +51,19 @@ GridViewer::GridViewer(QWidget *parent)
 
     vSpacer = new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding);
     layout->addItem(vSpacer, 1, 0);
+
+    //Create new scene
+    scene = new QGraphicsScene(this);
+    scene->setItemIndexMethod(QGraphicsScene::NoIndex);
+    setScene(scene);
+
+    //Create scene item for background image
+    sceneBackground = new QGraphicsPixmapItem();
+    scene->addItem(sceneBackground);
+
+    //Create scene item for grid image
+    sceneGrid = new QGraphicsPixmapItem();
+    scene->addItem(sceneGrid);
 }
 
 GridViewer::~GridViewer()
@@ -82,22 +95,18 @@ void GridViewer::updateGrid()
 }
 
 //Clears scene and sets new background and grid
-void GridViewer::updateView()
+void GridViewer::updateView(bool t_updateTransform)
 {
-    //Delete current scene
-    if (scene != nullptr)
-        delete scene;
-
-    //Create new scene
-    //Must be a better way to do this, but clear seems to keep size of previous image somehow?
-    scene = new QGraphicsScene(this);
-    scene->setItemIndexMethod(QGraphicsScene::NoIndex);
-    setScene(scene);
+    //Stores rect of new scene
+    QRectF newSceneRect(0, 0, 0, 0);
 
     //Set background image
     if (!background.isNull())
     {
-        scene->addPixmap(background);
+        sceneBackground->setPixmap(background);
+        //Update scene rect
+        newSceneRect.setWidth(background.width());
+        newSceneRect.setHeight(background.height());
     }
 
     //Set grid image
@@ -105,15 +114,34 @@ void GridViewer::updateView()
     {
         if (!edgeGrid.isNull())
         {
-            scene->addPixmap(edgeGrid);
+            sceneGrid->setPixmap(edgeGrid);
+
+            //Update scene rect
+            if (newSceneRect.width() == 0)
+            {
+                newSceneRect.setWidth(edgeGrid.width());
+                newSceneRect.setHeight(edgeGrid.height());
+            }
         }
     }
     else if (!grid.isNull())
     {
-        scene->addPixmap(grid);
+        sceneGrid->setPixmap(grid);
+
+        //Update scene rect
+        if (newSceneRect.width() == 0)
+        {
+            newSceneRect.setWidth(grid.width());
+            newSceneRect.setHeight(grid.height());
+        }
     }
 
-    fitToView();
+    //Set new scene rect
+    setSceneRect(newSceneRect);
+
+    //Fits scene to view
+    if (t_updateTransform)
+        fitToView();
 }
 
 //Sets cell group

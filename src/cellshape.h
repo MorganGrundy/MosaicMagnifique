@@ -65,17 +65,17 @@ public:
     void setAlternateColOffset(const int t_alternateColOffset);
     int getAlternateColOffset() const;
 
-    void setColFlipHorizontal(const bool t_colFlipHorizontal);
-    bool getColFlipHorizontal() const;
+    void setAlternateColFlipHorizontal(const bool t_colFlipHorizontal);
+    bool getAlternateColFlipHorizontal() const;
 
-    void setColFlipVertical(const bool t_colFlipVertical);
-    bool getColFlipVertical() const;
+    void setAlternateColFlipVertical(const bool t_colFlipVertical);
+    bool getAlternateColFlipVertical() const;
 
-    void setRowFlipHorizontal(const bool t_rowFlipHorizontal);
-    bool getRowFlipHorizontal() const;
+    void setAlternateRowFlipHorizontal(const bool t_rowFlipHorizontal);
+    bool getAlternateRowFlipHorizontal() const;
 
-    void setRowFlipVertical(const bool t_rowFlipVertical);
-    bool getRowFlipVertical() const;
+    void setAlternateRowFlipVertical(const bool t_rowFlipVertical);
+    bool getAlternateRowFlipVertical() const;
 
     CellShape resized(const int t_cols, const int t_rows) const;
 
@@ -87,10 +87,13 @@ private:
 
     int m_rowSpacing, m_colSpacing;
     int m_alternateRowSpacing, m_alternateColSpacing;
+
     //Entire row/col offset by specified value every other row/col
     int m_alternateRowOffset, m_alternateColOffset;
+
     //Controls if and how cells should flip on alternate rows/columns
-    bool m_colFlipHorizontal, m_colFlipVertical, m_rowFlipHorizontal, m_rowFlipVertical;
+    bool m_alternateColFlipHorizontal, m_alternateColFlipVertical,
+        m_alternateRowFlipHorizontal, m_alternateRowFlipVertical;
 };
 
 #endif // CELLSHAPE_H

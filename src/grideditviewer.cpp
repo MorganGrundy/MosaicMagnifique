@@ -152,7 +152,7 @@ void GridEditViewer::editSingle(const cv::Point t_gridPos)
         const auto cellFlip = GridUtility::getFlipStateAt(m_cells.getCell(m_sizeStep),
                                                           cell.second.x, cell.second.y,
                                                           GridUtility::PAD_GRID);
-        if (m_cells.getCell(m_sizeStep).getCellMask(cellFlip.first, cellFlip.second).
+        if (m_cells.getCell(m_sizeStep).getCellMask(cellFlip.horizontal, cellFlip.vertical).
             at<uchar>(cellPos) != 0)
         {
             //Add to vector
@@ -210,8 +210,8 @@ void GridEditViewer::editSelection(const cv::Rect t_selectionRect)
         const auto cellFlip = GridUtility::getFlipStateAt(m_cells.getCell(m_sizeStep),
                                                           cell.second.x, cell.second.y,
                                                           GridUtility::PAD_GRID);
-        const cv::Mat &cellMask = m_cells.getCell(m_sizeStep).getCellMask(cellFlip.first,
-                                                                          cellFlip.second);
+        const cv::Mat &cellMask = m_cells.getCell(m_sizeStep).getCellMask(cellFlip.horizontal,
+                                                                          cellFlip.vertical);
 
         //Check that cell mask active area intersects with selection
         bool intersectFound = (selectIntersect.width == cellMask.cols &&

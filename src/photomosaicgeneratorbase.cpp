@@ -225,13 +225,14 @@ std::pair<cv::Mat, cv::Rect> PhotomosaicGeneratorBase::getCellAt(
                                   xEnd - xStart, yEnd - yStart);
 
     //Calculate if and how current cell is flipped
-    auto [flipHorizontal, flipVertical] = GridUtility::getFlipStateAt(t_cellShape, x, y, t_pad);
+    const auto flipState = GridUtility::getFlipStateAt(t_cellShape, x, y, t_pad);
 
     //Copies visible part of main image to cell
     cv::Mat cell(cellGlobalBound.height, cellGlobalBound.width, t_image.type(), cv::Scalar(0));
     t_image(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)).copyTo(cell(cellLocalBound));
 
-    const cv::Mat &cellMask = t_detailCellShape.getCellMask(flipHorizontal, flipVertical);
+    const cv::Mat &cellMask = t_detailCellShape.getCellMask(flipState.horizontal,
+                                                            flipState.vertical);
 
     //Resize image cell to detail level
     cell = ImageUtility::resizeImage(cell, cellMask.rows, cellMask.cols,
@@ -310,11 +311,12 @@ cv::Mat PhotomosaicGeneratorBase::combineResults(const GridUtility::mosaicBestFi
                                               xEnd - xStart, yEnd - yStart);
 
                 //Calculate if and how current cell is flipped
-                const auto [flipHorizontal, flipVertical] =
-                    GridUtility::getFlipStateAt(normalCellShape, x, y, GridUtility::PAD_GRID);
+                const auto flipState = GridUtility::getFlipStateAt(normalCellShape, x, y,
+                                                                   GridUtility::PAD_GRID);
 
                 //Creates mask bounded
-                const cv::Mat maskBounded(normalCellShape.getCellMask(flipHorizontal, flipVertical),
+                const cv::Mat maskBounded(normalCellShape.getCellMask(flipState.horizontal,
+                                                                      flipState.vertical),
                                           cellLocalBound);
 
                 //Adds cells to mosaic step

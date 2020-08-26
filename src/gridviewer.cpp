@@ -244,18 +244,18 @@ void GridViewer::createGrid(const int gridHeight, const int gridWidth)
                     cv::Mat edgeGridPart(newEdgeGrid.at(step), roi);
 
                     //Calculate if and how current cell is flipped
-                    auto [flipHorizontal, flipVertical] = GridUtility::getFlipStateAt(
-                        m_cells.getCell(step), x, y, GridUtility::PAD_GRID);
+                    const auto flipState = GridUtility::getFlipStateAt(m_cells.getCell(step), x, y,
+                                                                       GridUtility::PAD_GRID);
 
                     //Create bounded mask
                     const cv::Mat mask(
-                        m_cells.getCell(step).getCellMask(flipHorizontal, flipVertical),
+                        m_cells.getCell(step).getCellMask(flipState.horizontal, flipState.vertical),
                         cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                         cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 
                     //Create bounded edge mask
                     const cv::Mat edgeMask(
-                        m_cells.getEdgeCell(step, flipHorizontal, flipVertical),
+                        m_cells.getEdgeCell(step, flipState.horizontal, flipState.vertical),
                         cv::Range(yStart - unboundedRect.y, yEnd - unboundedRect.y),
                         cv::Range(xStart - unboundedRect.x, xEnd - unboundedRect.x));
 

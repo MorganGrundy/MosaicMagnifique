@@ -26,36 +26,38 @@
 
 CellShape::CellShape()
     : m_cellMask{}, m_rowSpacing{0}, m_colSpacing{0},
-      m_alternateRowSpacing{0}, m_alternateColSpacing{0},
-      m_alternateRowOffset{0}, m_alternateColOffset{0},
-      m_colFlipHorizontal{false}, m_colFlipVertical{false},
-      m_rowFlipHorizontal{false}, m_rowFlipVertical{false} {}
+    m_alternateRowSpacing{0}, m_alternateColSpacing{0},
+    m_alternateRowOffset{0}, m_alternateColOffset{0},
+    m_alternateColFlipHorizontal{false}, m_alternateColFlipVertical{false},
+    m_alternateRowFlipHorizontal{false}, m_alternateRowFlipVertical{false}
+{}
 
 CellShape::CellShape(const cv::Mat &t_cellMask)
     : m_rowSpacing{t_cellMask.rows}, m_colSpacing{t_cellMask.cols},
-      m_alternateRowSpacing{t_cellMask.rows}, m_alternateColSpacing{t_cellMask.cols},
-      m_alternateRowOffset{0}, m_alternateColOffset{0},
-      m_colFlipHorizontal{false}, m_colFlipVertical{false},
-      m_rowFlipHorizontal{false}, m_rowFlipVertical{false}
+    m_alternateRowSpacing{t_cellMask.rows}, m_alternateColSpacing{t_cellMask.cols},
+    m_alternateRowOffset{0}, m_alternateColOffset{0},
+    m_alternateColFlipHorizontal{false}, m_alternateColFlipVertical{false},
+    m_alternateRowFlipHorizontal{false}, m_alternateRowFlipVertical{false}
 {
     setCellMask(t_cellMask);
 }
 
 CellShape::CellShape(const CellShape &t_cellShape)
     : m_cellMask{t_cellShape.getCellMask(0, 0)},
-      m_cellMaskFlippedH{t_cellShape.getCellMask(1, 0)},
-      m_cellMaskFlippedV{t_cellShape.getCellMask(0, 1)},
-      m_cellMaskFlippedHV{t_cellShape.getCellMask(1, 1)},
-      m_rowSpacing{t_cellShape.getRowSpacing()},
-      m_colSpacing{t_cellShape.getColSpacing()},
-      m_alternateRowSpacing{t_cellShape.getAlternateRowSpacing()},
-      m_alternateColSpacing{t_cellShape.getAlternateColSpacing()},
-      m_alternateRowOffset{t_cellShape.getAlternateRowOffset()},
-      m_alternateColOffset{t_cellShape.getAlternateColOffset()},
-      m_colFlipHorizontal{t_cellShape.getColFlipHorizontal()},
-      m_colFlipVertical{t_cellShape.getColFlipVertical()},
-      m_rowFlipHorizontal{t_cellShape.getRowFlipHorizontal()},
-      m_rowFlipVertical{t_cellShape.getRowFlipVertical()} {}
+    m_cellMaskFlippedH{t_cellShape.getCellMask(1, 0)},
+    m_cellMaskFlippedV{t_cellShape.getCellMask(0, 1)},
+    m_cellMaskFlippedHV{t_cellShape.getCellMask(1, 1)},
+    m_rowSpacing{t_cellShape.getRowSpacing()},
+    m_colSpacing{t_cellShape.getColSpacing()},
+    m_alternateRowSpacing{t_cellShape.getAlternateRowSpacing()},
+    m_alternateColSpacing{t_cellShape.getAlternateColSpacing()},
+    m_alternateRowOffset{t_cellShape.getAlternateRowOffset()},
+    m_alternateColOffset{t_cellShape.getAlternateColOffset()},
+    m_alternateColFlipHorizontal{t_cellShape.getAlternateColFlipHorizontal()},
+    m_alternateColFlipVertical{t_cellShape.getAlternateColFlipVertical()},
+    m_alternateRowFlipHorizontal{t_cellShape.getAlternateRowFlipHorizontal()},
+    m_alternateRowFlipVertical{t_cellShape.getAlternateRowFlipVertical()}
+{}
 
 //Constructor for default cell shape
 CellShape::CellShape(const size_t t_size)
@@ -70,8 +72,8 @@ QDataStream &operator<<(QDataStream &t_out, const CellShape &t_cellShape)
     t_out << t_cellShape.m_rowSpacing << t_cellShape.m_colSpacing;
     t_out << t_cellShape.m_alternateRowSpacing << t_cellShape.m_alternateColSpacing;
     t_out << t_cellShape.m_alternateRowOffset << t_cellShape.m_alternateColOffset;
-    t_out << t_cellShape.m_colFlipHorizontal << t_cellShape.m_colFlipVertical;
-    t_out << t_cellShape.m_rowFlipHorizontal << t_cellShape.m_rowFlipVertical;
+    t_out << t_cellShape.m_alternateColFlipHorizontal << t_cellShape.m_alternateColFlipVertical;
+    t_out << t_cellShape.m_alternateRowFlipHorizontal << t_cellShape.m_alternateRowFlipVertical;
     return t_out;
 }
 
@@ -104,8 +106,10 @@ QDataStream &operator>>(QDataStream &t_in, std::pair<CellShape &, const int> t_c
     //Set flip states
     if (t_cellShape.second > 4)
     {
-        t_in >> t_cellShape.first.m_colFlipHorizontal >> t_cellShape.first.m_colFlipVertical;
-        t_in >> t_cellShape.first.m_rowFlipHorizontal >> t_cellShape.first.m_rowFlipVertical;
+        t_in >> t_cellShape.first.m_alternateColFlipHorizontal >>
+            t_cellShape.first.m_alternateColFlipVertical;
+        t_in >> t_cellShape.first.m_alternateRowFlipHorizontal >>
+            t_cellShape.first.m_alternateRowFlipVertical;
     }
 
     return t_in;
@@ -223,51 +227,51 @@ int CellShape::getAlternateColOffset() const
 }
 
 //Sets if alternate columns are flipped horizontally
-void CellShape::setColFlipHorizontal(const bool t_colFlipHorizontal)
+void CellShape::setAlternateColFlipHorizontal(const bool t_colFlipHorizontal)
 {
-    m_colFlipHorizontal = t_colFlipHorizontal;
+    m_alternateColFlipHorizontal = t_colFlipHorizontal;
 }
 
 //Returns if alternate columns are flipped horizontally
-bool CellShape::getColFlipHorizontal() const
+bool CellShape::getAlternateColFlipHorizontal() const
 {
-    return m_colFlipHorizontal;
+    return m_alternateColFlipHorizontal;
 }
 
 //Sets if alternate columns are flipped vertically
-void CellShape::setColFlipVertical(const bool t_colFlipVertical)
+void CellShape::setAlternateColFlipVertical(const bool t_colFlipVertical)
 {
-    m_colFlipVertical = t_colFlipVertical;
+    m_alternateColFlipVertical = t_colFlipVertical;
 }
 
 //Sets if alternate columns are flipped vertically
-bool CellShape::getColFlipVertical() const
+bool CellShape::getAlternateColFlipVertical() const
 {
-    return m_colFlipVertical;
+    return m_alternateColFlipVertical;
 }
 
 //Sets if alternate rows are flipped horizontally
-void CellShape::setRowFlipHorizontal(const bool t_rowFlipHorizontal)
+void CellShape::setAlternateRowFlipHorizontal(const bool t_rowFlipHorizontal)
 {
-    m_rowFlipHorizontal = t_rowFlipHorizontal;
+    m_alternateRowFlipHorizontal = t_rowFlipHorizontal;
 }
 
 //Returns if alternate rows are flipped horizontally
-bool CellShape::getRowFlipHorizontal() const
+bool CellShape::getAlternateRowFlipHorizontal() const
 {
-    return m_rowFlipHorizontal;
+    return m_alternateRowFlipHorizontal;
 }
 
 //Sets if alternate rows are flipped vertically
-void CellShape::setRowFlipVertical(const bool t_rowFlipVertical)
+void CellShape::setAlternateRowFlipVertical(const bool t_rowFlipVertical)
 {
-    m_rowFlipVertical = t_rowFlipVertical;
+    m_alternateRowFlipVertical = t_rowFlipVertical;
 }
 
 //Returns if alternate rows are flipped vertically
-bool CellShape::getRowFlipVertical() const
+bool CellShape::getAlternateRowFlipVertical() const
 {
-    return m_rowFlipVertical;
+    return m_alternateRowFlipVertical;
 }
 
 //Returns the cell shape resized to the given size
@@ -296,10 +300,10 @@ CellShape CellShape::resized(const int t_cols, const int t_rows) const
 
     result.setAlternateRowOffset(std::floor(m_alternateRowOffset * vRatio));
     result.setAlternateColOffset(std::floor(m_alternateColOffset * hRatio));
-    result.setColFlipHorizontal(m_colFlipHorizontal);
-    result.setColFlipVertical(m_colFlipVertical);
-    result.setRowFlipHorizontal(m_rowFlipHorizontal);
-    result.setRowFlipVertical(m_rowFlipVertical);
+    result.setAlternateColFlipHorizontal(m_alternateColFlipHorizontal);
+    result.setAlternateColFlipVertical(m_alternateColFlipVertical);
+    result.setAlternateRowFlipHorizontal(m_alternateRowFlipHorizontal);
+    result.setAlternateRowFlipVertical(m_alternateRowFlipVertical);
 
     return result;
 }

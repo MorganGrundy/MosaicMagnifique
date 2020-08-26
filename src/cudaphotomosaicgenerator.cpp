@@ -81,10 +81,10 @@ cv::Mat CUDAPhotomosaicGenerator::generate()
         photomosaicData.setMaskImage(detailCellShape.getCellMask(1, 0), 1, 0);
         photomosaicData.setMaskImage(detailCellShape.getCellMask(0, 1), 0, 1);
         photomosaicData.setMaskImage(detailCellShape.getCellMask(1, 1), 1, 1);
-        photomosaicData.setFlipStates(detailCellShape.getColFlipHorizontal(),
-                                      detailCellShape.getColFlipVertical(),
-                                      detailCellShape.getRowFlipHorizontal(),
-                                      detailCellShape.getRowFlipVertical());
+        photomosaicData.setFlipStates(detailCellShape.getAlternateColFlipHorizontal(),
+                                      detailCellShape.getAlternateColFlipVertical(),
+                                      detailCellShape.getAlternateRowFlipHorizontal(),
+                                      detailCellShape.getAlternateRowFlipVertical());
 
         //Stores cell image
         cv::Mat cell(detailCellSize, detailCellSize, m_img.type(), cv::Scalar(0));
@@ -113,7 +113,8 @@ cv::Mat CUDAPhotomosaicGenerator::generate()
                 if (cellState.has_value())
                 {
                     //Sets cell position
-                    photomosaicData.setCellPosition(x + GridUtility::PAD_GRID, y + GridUtility::PAD_GRID,
+                    photomosaicData.setCellPosition(x + GridUtility::PAD_GRID,
+                                                    y + GridUtility::PAD_GRID,
                                                     dataIndex);
 
                     //Move cell image to GPU

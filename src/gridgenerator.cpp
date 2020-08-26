@@ -154,8 +154,8 @@ GridGenerator::findCellState(const CellGroup &t_cells, const cv::Mat &t_mainImag
         cv::Mat cell(t_mainImage, cv::Range(yStart, yEnd), cv::Range(xStart, xEnd));
 
         //Calculate if and how current cell is flipped
-        auto [flipHorizontal, flipVertical] = GridUtility::getFlipStateAt(
-            t_cells.getCell(t_step),x, y, GridUtility::PAD_GRID);
+        const auto flipState = GridUtility::getFlipStateAt(t_cells.getCell(t_step), x, y,
+                                                           GridUtility::PAD_GRID);
 
         //Resizes bounded rect for detail cells
         const cv::Rect boundedDetailRect(boundedRect.x * t_cells.getDetail(),
@@ -165,7 +165,7 @@ GridGenerator::findCellState(const CellGroup &t_cells, const cv::Mat &t_mainImag
 
         //Create bounded mask of detail cell
         const cv::Mat mask(t_cells.getCell(t_step, true)
-                               .getCellMask(flipHorizontal, flipVertical),
+                               .getCellMask(flipState.horizontal, flipState.vertical),
                            boundedDetailRect);
 
         //Resize image cell to size of mask

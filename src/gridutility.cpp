@@ -84,20 +84,20 @@ cv::Rect GridUtility::getRectAt(const CellShape &t_cellShape, const int t_x, con
 }
 
 //Returns the flip state of the given cell at given grid position
-std::pair<bool, bool> GridUtility::getFlipStateAt(const CellShape &t_cellShape,
-                                               const int t_x, const int t_y, const int t_pad)
+GridUtility::FlipState GridUtility::getFlipStateAt(const CellShape &t_cellShape,
+                                                   const int t_x, const int t_y, const int t_pad)
 {
-    bool flipHorizontal = false, flipVertical = false;
-    if (t_cellShape.getColFlipHorizontal() && (t_x + t_pad) % 2 == 1)
-        flipHorizontal = !flipHorizontal;
-    if (t_cellShape.getRowFlipHorizontal() && (t_y + t_pad) % 2 == 1)
-        flipHorizontal = !flipHorizontal;
-    if (t_cellShape.getColFlipVertical() && (t_x + t_pad) % 2 == 1)
-        flipVertical = !flipVertical;
-    if (t_cellShape.getRowFlipVertical() && (t_y + t_pad) % 2 == 1)
-        flipVertical = !flipVertical;
+    FlipState flipState;
+    if (t_cellShape.getAlternateColFlipHorizontal() && (t_x + t_pad) % 2 == 1)
+        flipState.horizontal = !flipState.horizontal;
+    if (t_cellShape.getAlternateRowFlipHorizontal() && (t_y + t_pad) % 2 == 1)
+        flipState.horizontal = !flipState.horizontal;
+    if (t_cellShape.getAlternateColFlipVertical() && (t_x + t_pad) % 2 == 1)
+        flipState.vertical = !flipState.vertical;
+    if (t_cellShape.getAlternateRowFlipVertical() && (t_y + t_pad) % 2 == 1)
+        flipState.vertical = !flipState.vertical;
 
-    return {flipHorizontal, flipVertical};
+    return flipState;
 }
 
 //Returns the entropy of the given image in the given mask

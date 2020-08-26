@@ -279,7 +279,7 @@ void CellShapeEditor::cellColumnFlipHorizontalChanged(bool t_state)
 {
     //Create new cell shape
     CellShape newCellShape = ui->cellShapeViewer->getCellGroup().getCell(0);
-    newCellShape.setColFlipHorizontal(t_state);
+    newCellShape.setAlternateColFlipHorizontal(t_state);
 
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
@@ -292,7 +292,7 @@ void CellShapeEditor::cellColumnFlipVerticalChanged(bool t_state)
 {
     //Create new cell shape
     CellShape newCellShape = ui->cellShapeViewer->getCellGroup().getCell(0);
-    newCellShape.setColFlipVertical(t_state);
+    newCellShape.setAlternateColFlipVertical(t_state);
 
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
@@ -305,7 +305,7 @@ void CellShapeEditor::cellRowFlipHorizontalChanged(bool t_state)
 {
     //Create new cell shape
     CellShape newCellShape = ui->cellShapeViewer->getCellGroup().getCell(0);
-    newCellShape.setRowFlipHorizontal(t_state);
+    newCellShape.setAlternateRowFlipHorizontal(t_state);
 
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
@@ -318,7 +318,7 @@ void CellShapeEditor::cellRowFlipVerticalChanged(bool t_state)
 {
     //Create new cell shape
     CellShape newCellShape = ui->cellShapeViewer->getCellGroup().getCell(0);
-    newCellShape.setRowFlipVertical(t_state);
+    newCellShape.setAlternateRowFlipVertical(t_state);
 
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
@@ -412,8 +412,8 @@ void CellShapeEditor::loadSettingsFromCellShape(const CellShape &t_cellShape)
 
     //Update cell flip states
     //No need to block signals as setChecked does not trigger clicked signal
-    ui->checkCellColFlipH->setChecked(t_cellShape.getColFlipHorizontal());
-    ui->checkCellColFlipV->setChecked(t_cellShape.getColFlipVertical());
-    ui->checkCellRowFlipH->setChecked(t_cellShape.getRowFlipHorizontal());
-    ui->checkCellRowFlipV->setChecked(t_cellShape.getRowFlipVertical());
+    ui->checkCellColFlipH->setChecked(t_cellShape.getAlternateColFlipHorizontal());
+    ui->checkCellColFlipV->setChecked(t_cellShape.getAlternateColFlipVertical());
+    ui->checkCellRowFlipH->setChecked(t_cellShape.getAlternateRowFlipHorizontal());
+    ui->checkCellRowFlipV->setChecked(t_cellShape.getAlternateRowFlipVertical());
 }

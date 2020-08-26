@@ -41,9 +41,16 @@ namespace GridUtility
     //Returns rect of cell shape at the given grid position
     cv::Rect getRectAt(const CellShape &t_cellShape, const int t_x, const int t_y);
 
+    //Stores horizontal and vertical flip state
+    struct FlipState
+    {
+        bool horizontal = false;
+        bool vertical = false;
+    };
+
     //Returns the flip state of the given cell at given grid position
-    std::pair<bool, bool> getFlipStateAt(const CellShape &t_cellShape,
-                                         const int t_x, const int t_y, const int t_pad);
+    FlipState getFlipStateAt(const CellShape &t_cellShape, const int t_x, const int t_y,
+                             const int t_pad);
 
     //Maximum possible entropy value
     const double MAX_ENTROPY = 8.0;

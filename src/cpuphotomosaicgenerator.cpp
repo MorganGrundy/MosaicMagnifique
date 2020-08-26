@@ -100,9 +100,10 @@ CPUPhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape,
     auto [cell, cellBounds] = getCellAt(t_cellShape, t_detailCellShape, x, y, t_pad, t_image);
 
     //Calculate if and how current cell is flipped
-    const auto [flipHorizontal, flipVertical] = GridUtility::getFlipStateAt(t_cellShape, x, y, t_pad);
+    const auto flipState = GridUtility::getFlipStateAt(t_cellShape, x, y, t_pad);
 
-    const cv::Mat &cellMask = t_detailCellShape.getCellMask(flipHorizontal, flipVertical);
+    const cv::Mat &cellMask = t_detailCellShape.getCellMask(flipState.horizontal,
+                                                            flipState.vertical);
 
     //Calculate repeat value of each library image in repeat range
     const std::map<size_t, int> repeats = calculateRepeats(t_grid, x + t_pad, y + t_pad);

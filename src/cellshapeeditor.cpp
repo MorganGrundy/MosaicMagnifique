@@ -38,6 +38,9 @@ CellShapeEditor::CellShapeEditor(QWidget *parent) :
     connect(ui->buttonSaveCell, SIGNAL(released()), this, SLOT(saveCellShape()));
     connect(ui->buttonLoadCell, SIGNAL(released()), this, SLOT(loadCellShape()));
 
+    //Cell name changed
+    connect(ui->lineCellName, &QLineEdit::textChanged, this, &CellShapeEditor::cellNameChanged);
+
     //Cell mask button
     connect(ui->buttonCellMask, SIGNAL(released()), this, SLOT(loadCellMask()));
 

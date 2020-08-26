@@ -277,8 +277,9 @@ bool CellShape::getAlternateRowFlipVertical() const
 //Returns the cell shape resized to the given size
 CellShape CellShape::resized(const int t_cols, const int t_rows) const
 {
-    //If cell mask is empty then just return copy of cell shape
-    if (empty())
+    //If cell mask is empty or new size is equal to current size
+    //then just return copy of cell shape
+    if (empty() || (t_cols == m_cellMask.cols && t_rows == m_cellMask.rows))
     {
         return CellShape(*this);
     }

@@ -214,7 +214,8 @@ void GridEditViewer::editSelection(const cv::Rect t_selectionRect)
                                                                           cellFlip.second);
 
         //Check that cell mask active area intersects with selection
-        bool intersectFound = false;
+        bool intersectFound = (selectIntersect.width == cellMask.cols &&
+                               selectIntersect.height == cellMask.rows);
         const uchar *p_mask;
         for (int row = selectIntersect.y; row < selectIntersect.br().y && !intersectFound; ++row)
         {
@@ -224,12 +225,14 @@ void GridEditViewer::editSelection(const cv::Rect t_selectionRect)
             {
                 if (p_mask[col] != 0)
                 {
-                    //Add to vector
-                    cellsAtSelect.push_back(cell.second);
                     intersectFound = true;
                 }
             }
         }
+
+        //Add to vector
+        if (intersectFound)
+            cellsAtSelect.push_back(cell.second);
     }
 
     //If a cell intersects with selection

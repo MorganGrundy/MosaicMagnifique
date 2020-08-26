@@ -33,8 +33,8 @@ class ImageViewer : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit ImageViewer(QWidget *t_parent = nullptr);
     explicit ImageViewer(QWidget *t_parent, const cv::Mat &t_image, const double t_duration);
+    explicit ImageViewer(QWidget *t_parent = nullptr);
     ~ImageViewer();
 
 public slots:

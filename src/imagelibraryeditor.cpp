@@ -41,11 +41,12 @@ ImageLibraryEditor::ImageLibraryEditor(QWidget *parent) :
     ui->spinLibCellSize->setValue(m_imageSize);
 
     //Connects image library tab buttons to appropriate methods
-    connect(ui->buttonAdd, SIGNAL(released()), this, SLOT(addImages()));
-    connect(ui->buttonDelete, SIGNAL(released()), this, SLOT(deleteImages()));
-    connect(ui->buttonLibCellSize, SIGNAL(released()), this, SLOT(updateCellSize()));
-    connect(ui->buttonSave, SIGNAL(released()), this, SLOT(saveLibrary()));
-    connect(ui->buttonLoad, SIGNAL(released()), this, SLOT(loadLibrary()));
+    connect(ui->buttonAdd, &QPushButton::released, this, &ImageLibraryEditor::addImages);
+    connect(ui->buttonDelete, &QPushButton::released, this, &ImageLibraryEditor::deleteImages);
+    connect(ui->buttonLibCellSize, &QPushButton::released,
+            this, &ImageLibraryEditor::updateCellSize);
+    connect(ui->buttonSave, &QPushButton::released, this, &ImageLibraryEditor::saveLibrary);
+    connect(ui->buttonLoad, &QPushButton::released, this, &ImageLibraryEditor::loadLibrary);
 }
 
 ImageLibraryEditor::~ImageLibraryEditor()

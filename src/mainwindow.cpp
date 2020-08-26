@@ -74,7 +74,7 @@ MainWindow::MainWindow(QWidget *t_parent)
     ui->statusbar->addPermanentWidget(progressBar);
     ui->statusbar->setSizeGripEnabled(false);
 
-    connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::tabChanged);
 
     photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) /
                            ui->spinPhotomosaicHeight->value();
@@ -83,37 +83,41 @@ MainWindow::MainWindow(QWidget *t_parent)
     cellShapeChanged = false;
     newCellShape = CellShape(CellShape::DEFAULT_CELL_SIZE);
 
-    connect(ui->cellShapeEditor, SIGNAL(cellShapeChanged(const CellShape &)),
-            this, SLOT(updateCellShape(const CellShape &)));
-    connect(ui->cellShapeEditor, SIGNAL(cellNameChanged(const QString &)),
-            this, SLOT(updateCellName(const QString &)));
+    connect(ui->cellShapeEditor, &CellShapeEditor::cellShapeChanged,
+            this, &MainWindow::updateCellShape);
+    connect(ui->cellShapeEditor, &CellShapeEditor::cellNameChanged,
+            this, &MainWindow::updateCellName);
 
     //Image Library Editor
     ui->imageLibraryEditor->setProgressBar(progressBar);
-    connect(ui->imageLibraryEditor, SIGNAL(imageLibraryChanged(int)),
-            this, SLOT(updateImageLibraryCount(int)));
+    connect(ui->imageLibraryEditor, &ImageLibraryEditor::imageLibraryChanged,
+            this, &MainWindow::updateImageLibraryCount);
 
     //Connects generator settings to appropriate methods
-    connect(ui->buttonMainImage, SIGNAL(released()), this, SLOT(selectMainImage()));
-    connect(ui->buttonCompareColours, SIGNAL(released()), this, SLOT(compareColours()));
+    connect(ui->buttonMainImage, &QPushButton::released, this, &MainWindow::selectMainImage);
+    connect(ui->buttonCompareColours, &QPushButton::released, this, &MainWindow::compareColours);
 
-    connect(ui->buttonPhotomosaicSizeLink, SIGNAL(released()), this, SLOT(photomosaicSizeLink()));
-    connect(ui->spinPhotomosaicWidth, SIGNAL(valueChanged(int)), this,
-            SLOT(photomosaicWidthChanged(int)));
-    connect(ui->spinPhotomosaicHeight, SIGNAL(valueChanged(int)), this,
-            SLOT(photomosaicHeightChanged(int)));
-    connect(ui->buttonPhotomosaicSize, SIGNAL(released()), this, SLOT(loadImageSize()));
+    connect(ui->buttonPhotomosaicSizeLink, &QPushButton::released,
+            this, &MainWindow::photomosaicSizeLink);
+    connect(ui->spinPhotomosaicWidth, qOverload<int>(&QSpinBox::valueChanged),
+            this, &MainWindow::photomosaicWidthChanged);
+    connect(ui->spinPhotomosaicHeight, qOverload<int>(&QSpinBox::valueChanged),
+            this, &MainWindow::photomosaicHeightChanged);
+    connect(ui->buttonPhotomosaicSize, &QPushButton::released,
+            this, &MainWindow::loadImageSize);
 
-    connect(ui->spinDetail, SIGNAL(valueChanged(int)), this, SLOT(photomosaicDetailChanged(int)));
+    connect(ui->spinDetail, qOverload<int>(&QSpinBox::valueChanged),
+            this, &MainWindow::photomosaicDetailChanged);
 
-    connect(ui->spinCellSize, SIGNAL(valueChanged(int)), this, SLOT(cellSizeChanged(int)));
-    connect(ui->spinMinCellSize, SIGNAL(valueChanged(int)),
-            this, SLOT(minimumCellSizeChanged(int)));
-    connect(ui->checkCellShape, SIGNAL(clicked(bool)), this, SLOT(enableCellShape(bool)));
+    connect(ui->spinCellSize, qOverload<int>(&QSpinBox::valueChanged),
+            this, &MainWindow::cellSizeChanged);
+    connect(ui->spinMinCellSize, qOverload<int>(&HalvingSpinBox::valueChanged),
+            this, &MainWindow::minimumCellSizeChanged);
+    connect(ui->checkCellShape, &QCheckBox::clicked, this, &MainWindow::enableCellShape);
 
-    connect(ui->buttonEditGrid, SIGNAL(released()), this, SLOT(editCellGrid()));
+    connect(ui->buttonEditGrid, &QPushButton::released, this, &MainWindow::editCellGrid);
 
-    connect(ui->buttonGenerate, SIGNAL(released()), this, SLOT(generatePhotomosaic()));
+    connect(ui->buttonGenerate, &QPushButton::released, this, &MainWindow::generatePhotomosaic);
 
 #ifdef CUDA
     int deviceCount, device;
@@ -143,8 +147,8 @@ MainWindow::MainWindow(QWidget *t_parent)
     }
     else
     {
-        connect(ui->comboCUDA, SIGNAL(currentIndexChanged(int)),
-                this, SLOT(CUDADeviceChanged(int)));
+        connect(ui->comboCUDA, qOverload<int>(&QComboBox::currentIndexChanged),
+                this, &MainWindow::CUDADeviceChanged);
         CUDADeviceChanged(0);
 
         //Initialise CUDA

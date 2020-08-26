@@ -43,7 +43,7 @@ GridViewer::GridViewer(QWidget *parent)
                                    "border-color: rgb(0, 0, 0);"
                                    "}");
     checkEdgeDetect->setCheckState(Qt::Checked);
-    connect(checkEdgeDetect, SIGNAL(stateChanged(int)), this, SLOT(edgeDetectChanged(int)));
+    connect(checkEdgeDetect, &QCheckBox::stateChanged, this, &GridViewer::edgeDetectChanged);
     layout->addWidget(checkEdgeDetect, 0, 0);
 
     hSpacer = new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum);

@@ -27,36 +27,39 @@
 #include "imageutility.h"
 #include "customgraphicsview.h"
 
-ImageViewer::ImageViewer(QWidget *t_parent)
-    : QMainWindow(t_parent), ui(new Ui::ImageViewer)
-{
-    ui->setupUi(this);
-
-    connect(ui->saveButton, SIGNAL(released()), this, SLOT(saveImage()));
-    connect(ui->fitButton, SIGNAL(released()), ui->graphicsView, SLOT(fitToView()));
-}
-
 ImageViewer::ImageViewer(QWidget *t_parent, const cv::Mat &t_image, const double t_duration)
-    : QMainWindow(t_parent), ui(new Ui::ImageViewer), image(t_image)
+    : QMainWindow(t_parent), ui(new Ui::ImageViewer), image{t_image.clone()}
 {
     ui->setupUi(this);
-    //Displays the generation time on statusbar
-    QLabel *label = new QLabel();
-    label->setText(tr("Generated in ") + QString::number(t_duration) + "s");
-    ui->statusbar->addPermanentWidget(label);
 
     //Connects buttons to appropriate methods
-    connect(ui->saveButton, SIGNAL(released()), this, SLOT(saveImage()));
-    connect(ui->fitButton, SIGNAL(released()), ui->graphicsView, SLOT(fitToView()));
+    connect(ui->saveButton, &QPushButton::released, this, &ImageViewer::saveImage);
+    connect(ui->fitButton, &QPushButton::released,
+            ui->graphicsView, &CustomGraphicsView::fitToView);
 
-    //Adds image to view
-    const QPixmap pixmap = ImageUtility::matToQPixmap(t_image);
-    QGraphicsScene *scene = new QGraphicsScene();
-    scene->setItemIndexMethod(QGraphicsScene::NoIndex);
-    scene->addPixmap(pixmap);
-    ui->graphicsView->setScene(scene);
-    ui->graphicsView->setSceneRect(pixmap.rect());
+    if (t_duration > 0)
+    {
+        //Displays the generation time on statusbar
+        QLabel *label = new QLabel();
+        label->setText(tr("Generated in ") + QString::number(t_duration) + "s");
+        ui->statusbar->addPermanentWidget(label);
+    }
+
+    if (!image.empty())
+    {
+        //Adds image to view
+        const QPixmap pixmap = ImageUtility::matToQPixmap(image);
+        QGraphicsScene *scene = new QGraphicsScene();
+        scene->setItemIndexMethod(QGraphicsScene::NoIndex);
+        scene->addPixmap(pixmap);
+        ui->graphicsView->setScene(scene);
+        ui->graphicsView->setSceneRect(pixmap.rect());
+    }
 }
+
+ImageViewer::ImageViewer(QWidget *t_parent)
+    : ImageViewer(t_parent, cv::Mat(), 0)
+{}
 
 ImageViewer::~ImageViewer()
 {

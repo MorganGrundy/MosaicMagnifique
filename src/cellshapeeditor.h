@@ -42,9 +42,6 @@ public slots:
     //Loads a cell shape from a file
     void loadCellShape();
 
-    //
-    //void cellNameChanged(const QString &t_name);
-
     //Loads a cell mask from a image file
     void loadCellMask();
 

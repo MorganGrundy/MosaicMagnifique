@@ -35,47 +35,47 @@ CellShapeEditor::CellShapeEditor(QWidget *parent) :
 
     //Connects ui signals to slots
     //Save and load cell shape
-    connect(ui->buttonSaveCell, SIGNAL(released()), this, SLOT(saveCellShape()));
-    connect(ui->buttonLoadCell, SIGNAL(released()), this, SLOT(loadCellShape()));
+    connect(ui->buttonSaveCell, &QPushButton::released, this, &CellShapeEditor::saveCellShape);
+    connect(ui->buttonLoadCell, &QPushButton::released, this, &CellShapeEditor::loadCellShape);
 
     //Cell name changed
     connect(ui->lineCellName, &QLineEdit::textChanged, this, &CellShapeEditor::cellNameChanged);
 
     //Cell mask button
-    connect(ui->buttonCellMask, SIGNAL(released()), this, SLOT(loadCellMask()));
+    connect(ui->buttonCellMask, &QPushButton::released, this, &CellShapeEditor::loadCellMask);
 
     //Cell spacing changed
-    connect(ui->spinCellSpacingCol, SIGNAL(valueChanged(int)),
-            this, SLOT(cellSpacingColChanged(int)));
-    connect(ui->spinCellSpacingRow, SIGNAL(valueChanged(int)),
-            this, SLOT(cellSpacingRowChanged(int)));
+    connect(ui->spinCellSpacingCol, qOverload<int>(&QSpinBox::valueChanged),
+            this, &CellShapeEditor::cellSpacingColChanged);
+    connect(ui->spinCellSpacingRow, qOverload<int>(&QSpinBox::valueChanged),
+            this, &CellShapeEditor::cellSpacingRowChanged);
 
     //Cell alternate offset changed
-    connect(ui->spinCellAlternateOffsetCol, SIGNAL(valueChanged(int)),
-            this, SLOT(cellAlternateOffsetColChanged(int)));
-    connect(ui->spinCellAlternateOffsetRow, SIGNAL(valueChanged(int)),
-            this, SLOT(cellAlternateOffsetRowChanged(int)));
+    connect(ui->spinCellAlternateOffsetCol, qOverload<int>(&QSpinBox::valueChanged),
+            this, &CellShapeEditor::cellAlternateOffsetColChanged);
+    connect(ui->spinCellAlternateOffsetRow, qOverload<int>(&QSpinBox::valueChanged),
+            this, &CellShapeEditor::cellAlternateOffsetRowChanged);
 
     //Cell flip state changed
-    connect(ui->checkCellColFlipH, SIGNAL(clicked(bool)), this,
-            SLOT(cellColumnFlipHorizontalChanged(bool)));
-    connect(ui->checkCellColFlipV, SIGNAL(clicked(bool)), this,
-            SLOT(cellColumnFlipVerticalChanged(bool)));
-    connect(ui->checkCellRowFlipH, SIGNAL(clicked(bool)), this,
-            SLOT(cellRowFlipHorizontalChanged(bool)));
-    connect(ui->checkCellRowFlipV, SIGNAL(clicked(bool)), this,
-            SLOT(cellRowFlipVerticalChanged(bool)));
+    connect(ui->checkCellColFlipH, &QCheckBox::clicked,
+            this, &CellShapeEditor::cellColumnFlipHorizontalChanged);
+    connect(ui->checkCellColFlipV, &QCheckBox::clicked,
+            this, &CellShapeEditor::cellColumnFlipVerticalChanged);
+    connect(ui->checkCellRowFlipH, &QCheckBox::clicked,
+            this, &CellShapeEditor::cellRowFlipHorizontalChanged);
+    connect(ui->checkCellRowFlipV, &QCheckBox::clicked,
+            this, &CellShapeEditor::cellRowFlipVerticalChanged);
 
     //Cell alternate spacing toggles
-    connect(ui->checkCellAlternateSpacingRow, SIGNAL(toggled(bool)), this,
-            SLOT(enableCellAlternateSpacingRow(bool)));
-    connect(ui->checkCellAlternateSpacingCol, SIGNAL(toggled(bool)), this,
-            SLOT(enableCellAlternateSpacingCol(bool)));
+    connect(ui->checkCellAlternateSpacingRow, &QCheckBox::toggled,
+            this, &CellShapeEditor::enableCellAlternateSpacingRow);
+    connect(ui->checkCellAlternateSpacingCol, &QCheckBox::toggled,
+            this, &CellShapeEditor::enableCellAlternateSpacingCol);
     //Cell alternate spacing changed
-    connect(ui->spinCellAlternateSpacingRow, SIGNAL(valueChanged(int)), this,
-            SLOT(cellAlternateSpacingRowChanged(int)));
-    connect(ui->spinCellAlternateSpacingCol, SIGNAL(valueChanged(int)), this,
-            SLOT(cellAlternateSpacingColChanged(int)));
+    connect(ui->spinCellAlternateSpacingRow, qOverload<int>(&QSpinBox::valueChanged),
+            this, &CellShapeEditor::cellAlternateSpacingRowChanged);
+    connect(ui->spinCellAlternateSpacingCol, qOverload<int>(&QSpinBox::valueChanged),
+            this, &CellShapeEditor::cellAlternateSpacingColChanged);
 
     //Sets cell shape editor to default cell shape
     CellShape defaultCellShape(CellShape::DEFAULT_CELL_SIZE);

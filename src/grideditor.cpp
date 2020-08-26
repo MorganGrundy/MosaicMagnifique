@@ -27,13 +27,13 @@ GridEditor::GridEditor(QWidget *parent) :
     ui->setupUi(this);
 
     //Pass new size step to grid edit viewer
-    connect(&(*ui->spinSizeStep), QOverload<int>::of(&QSpinBox::valueChanged),
+    connect(ui->spinSizeStep, qOverload<int>(&QSpinBox::valueChanged),
             [=](int t_newValue){
                 ui->gridEditViewer->setSizeStep(static_cast<size_t>(t_newValue));
             });
 
     //Tool buttons
-    connect(ui->buttonGroupTools, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked),
+    connect(ui->buttonGroupTools, qOverload<QAbstractButton *>(&QButtonGroup::buttonClicked),
             [=](QAbstractButton *button)
             {
                 //Update grid edit viewer active tool

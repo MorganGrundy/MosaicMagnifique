@@ -44,6 +44,10 @@ namespace GridUtility
     //Stores horizontal and vertical flip state
     struct FlipState
     {
+        FlipState(const bool t_horizontal, const bool t_vertical)
+            : horizontal{t_horizontal}, vertical{t_vertical}
+        {}
+
         bool horizontal = false;
         bool vertical = false;
     };

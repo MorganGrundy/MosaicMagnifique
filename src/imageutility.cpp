@@ -130,7 +130,8 @@ std::vector<cv::Mat> ImageUtility::batchResizeMat(const std::vector<cv::Mat> &im
             progressBar->setValue(progressBar->value() + 1);
     }
 #endif
-    progressBar->setVisible(false);
+    if (progressBar != nullptr)
+        progressBar->setVisible(false);
 
     return result;
 }

@@ -143,7 +143,7 @@ void GridEditViewer::editSingle(const cv::Point t_gridPos)
     std::vector<cv::Point> cellsAtClick;
 
     //For all clicked bounds check if cell area clicked
-    for (const auto cell: cellBoundsAtClick)
+    for (const auto &cell: cellBoundsAtClick)
     {
         //Transform grid position to cell position
         const cv::Point cellPos = t_gridPos - cell.first.tl();
@@ -201,7 +201,7 @@ void GridEditViewer::editSelection(const cv::Rect t_selectionRect)
     std::vector<cv::Point> cellsAtSelect;
 
     //For all selected bounds check if cell area intersects selection
-    for (const auto cell: cellBoundsAtSelect)
+    for (const auto &cell: cellBoundsAtSelect)
     {
         //Get rect of intersection between selection and cell bound
         const cv::Rect selectIntersect = (t_selectionRect & cell.first) - cell.first.tl();
@@ -239,7 +239,7 @@ void GridEditViewer::editSelection(const cv::Rect t_selectionRect)
     if (!cellsAtSelect.empty())
     {
         //Toggle state of selected cells
-        for (auto cell: cellsAtSelect)
+        for (const auto &cell: cellsAtSelect)
         {
             //Get cell state
             GridUtility::cellBestFit &cellState =

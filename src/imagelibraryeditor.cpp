@@ -70,8 +70,9 @@ size_t ImageLibraryEditor::getImageLibrarySize() const
 const std::vector<cv::Mat> ImageLibraryEditor::getImageLibrary() const
 {
     std::vector<cv::Mat> imageLibrary;
-    for (auto pair: m_images.values())
-        imageLibrary.push_back(pair.first);
+
+    for (const auto &image: m_images)
+        imageLibrary.push_back(image.resizedImage);
 
     return imageLibrary;
 }
@@ -98,7 +99,7 @@ void ImageLibraryEditor::addImages()
     std::vector<cv::Mat> resizedImages;
     std::vector<QString> names;
     //For all files selected by user load and add to library
-    for (auto file: files)
+    for (const auto &file: files)
     {
         //Load image
         cv::Mat image = cv::imread(file.toStdString());
@@ -126,14 +127,11 @@ void ImageLibraryEditor::addImages()
     //Add images to list widget
     auto nameIt = names.cbegin();
     auto imageIt = resizedImages.cbegin();
-    for (auto image: originalImages)
+    for (const auto &image: originalImages)
     {
         //Add image to library
-        QListWidgetItem listItem(QIcon(ImageUtility::matToQPixmap(*imageIt)), *nameIt);
-        ui->listPhoto->addItem(new QListWidgetItem(listItem));
-
-        //Store QListWidgetItem with resized and original OpenCV Mat
-        m_images.insert(listItem, {*imageIt, image});
+        m_images.push_back(LibraryImage(image, *imageIt, *nameIt));
+        ui->listPhoto->addItem(m_images.back().listWidget.get());
 
         ++nameIt;
         ++imageIt;
@@ -150,8 +148,15 @@ void ImageLibraryEditor::deleteImages()
 
     //Delete images
     for (auto item: selectedItems)
-        m_images.remove(*item);
-    qDeleteAll(selectedItems);
+    {
+        m_images.erase(std::remove_if(m_images.begin(), m_images.end(),
+                                      [item](const LibraryImage &t_libraryImage)
+                                      {
+                                          return t_libraryImage.listWidget.get() == item;
+                                      }), m_images.end());
+    }
+
+    ui->listPhoto->update();
 
     //Emit new image library size
     emit imageLibraryChanged(m_images.size());
@@ -165,23 +170,28 @@ void ImageLibraryEditor::updateCellSize()
         return;
 
     m_imageSize = ui->spinLibCellSize->value();
-    ui->listPhoto->clear();
+
+    //Get original images
+    std::vector<cv::Mat> originalImages;
+    for (const auto &image: m_images)
+        originalImages.push_back(image.resizedImage);
 
     //Resize images
-    std::vector<cv::Mat> images =
-        ImageUtility::batchResizeMat(getImageLibrary(), m_imageSize, m_imageSize,
+    const std::vector<cv::Mat> images =
+        ImageUtility::batchResizeMat(originalImages, m_imageSize, m_imageSize,
                                      ImageUtility::ResizeType::EXACT, m_progressBar);
 
-    //Update list widget
+    //Update image library with new resized images
     auto it = images.cbegin();
-    for (auto listItem: m_images.keys())
+    for (auto &image: m_images)
     {
-        m_images[listItem].first = *it;
-        listItem.setIcon(QIcon(ImageUtility::matToQPixmap(*it)));
-        ui->listPhoto->addItem(new QListWidgetItem(listItem));
+        image.resizedImage = *it;
+        image.listWidget->setIcon(QIcon(ImageUtility::matToQPixmap(*it)));
 
         ++it;
     }
+
+    ui->listPhoto->update();
 }
 
 //Saves the image library to a file
@@ -211,16 +221,16 @@ void ImageLibraryEditor::saveLibrary()
             //Initialise progress bar
             if (m_progressBar != nullptr)
             {
-                m_progressBar->setRange(0, m_images.size());
+                m_progressBar->setRange(0, static_cast<int>(m_images.size()));
                 m_progressBar->setValue(0);
                 m_progressBar->setVisible(true);
             }
 
             //Write images and names
-            for (auto listItem: m_images.keys())
+            for (const auto &image: m_images)
             {
-                out << m_images[listItem].first;
-                out << listItem.text();
+                out << image.resizedImage;
+                out << image.listWidget->text();
 
                 if (m_progressBar != nullptr)
                     m_progressBar->setValue(m_progressBar->value() + 1);
@@ -307,10 +317,8 @@ void ImageLibraryEditor::loadLibrary()
                 in >> name;
 
                 //Add to list widget
-                QListWidgetItem listItem(QIcon(ImageUtility::matToQPixmap(image)), name);
-                ui->listPhoto->addItem(new QListWidgetItem(listItem));
-
-                m_images.insert(listItem, {image, image});
+                m_images.push_back(LibraryImage(image, image, name));
+                ui->listPhoto->addItem(m_images.back().listWidget.get());
 
                 if (m_progressBar != nullptr)
                     m_progressBar->setValue(m_progressBar->value() + 1);

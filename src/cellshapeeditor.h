@@ -74,8 +74,8 @@ public slots:
     void cellAlternateSpacingColChanged(int t_value);
 
 signals:
-    void cellShapeChanged(const CellShape &t_cellShape) const;
-    void cellNameChanged(const QString &t_name) const;
+    void cellShapeChanged(const CellShape &t_cellShape);
+    void cellNameChanged(const QString &t_name);
 
 private:
     Ui::CellShapeEditor *ui;

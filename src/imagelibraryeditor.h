@@ -25,6 +25,8 @@
 #include <QProgressBar>
 #include <opencv2/core/mat.hpp>
 
+#include "imageutility.h"
+
 namespace Ui {
 class ImageLibraryEditor;
 }
@@ -61,14 +63,32 @@ public slots:
     void loadLibrary();
 
 signals:
-    void imageLibraryChanged(int t_newSize);
+    void imageLibraryChanged(size_t t_newSize);
 
 private:
+    //Stores library image in original size, resized, and it's relevant QListWidgetItem
+    struct LibraryImage
+    {
+        //Constructor
+        LibraryImage(const cv::Mat &t_originalImage, const cv::Mat &t_resizedImage,
+                     const QString &t_name)
+            : originalImage{t_originalImage}, resizedImage{t_resizedImage}
+        {
+            listWidget = std::make_shared<QListWidgetItem>(
+                QIcon(ImageUtility::matToQPixmap(resizedImage)), t_name);
+        }
+
+        cv::Mat originalImage;
+        cv::Mat resizedImage;
+        std::shared_ptr<QListWidgetItem> listWidget;
+    };
+
     Ui::ImageLibraryEditor *ui;
     QProgressBar *m_progressBar;
 
     int m_imageSize;
-    QMap<QListWidgetItem, std::pair<cv::Mat, cv::Mat>> m_images;
+
+    std::vector<LibraryImage> m_images;
 };
 
 #endif // IMAGELIBRARYEDITOR_H

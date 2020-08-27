@@ -207,7 +207,7 @@ void MainWindow::updateCellName(const QString &t_name)
 }
 
 //Updates image library count in tab widget
-void MainWindow::updateImageLibraryCount(int t_newSize)
+void MainWindow::updateImageLibraryCount(size_t t_newSize)
 {
     ui->tabWidget->setTabText(1, tr("Image Library (") + QString::number(t_newSize) + ")");
 }

@@ -50,7 +50,7 @@ public slots:
     void updateCellName(const QString &t_name);
 
     //Updates image library count in tab widget
-    void updateImageLibraryCount(int t_newSize);
+    void updateImageLibraryCount(size_t t_newSize);
 
     //Prompts user for a main image
     void selectMainImage();

@@ -59,7 +59,7 @@ void Quadtree::subdivide()
                  m_bounds.width - m_bounds.width / 2, m_bounds.height - m_bounds.height / 2));
 
     //Insert elements into sub quadrants
-    for (const auto element: m_elements)
+    for (const auto &element: m_elements)
     {
         m_quadrantNW->insert(element);
         m_quadrantNE->insert(element);
@@ -82,7 +82,7 @@ std::vector<Quadtree::elementType> Quadtree::query(const cv::Point t_point) cons
         return elementsAtPoint;
 
     //Check if point in element bounds
-    for (const auto element: m_elements)
+    for (const auto &element: m_elements)
     {
         if (element.first.contains(t_point))
             elementsAtPoint.push_back(element);
@@ -125,7 +125,7 @@ std::vector<Quadtree::elementType> Quadtree::query(const cv::Rect t_rect) const
         return elementsAtRect;
 
     //Check if rect and element bounds intersect
-    for (const auto element: m_elements)
+    for (const auto &element: m_elements)
     {
         if ((element.first & t_rect).area() > 0)
         {
@@ -143,22 +143,22 @@ std::vector<Quadtree::elementType> Quadtree::query(const cv::Rect t_rect) const
     //Get North-West elements that intersect rect
     quadrantElementsAtPoint = m_quadrantNW->query(t_rect);
     elementsAtRect.reserve(elementsAtRect.size() + quadrantElementsAtPoint.size());
-    for (auto quadrantElement: quadrantElementsAtPoint)
+    for (const auto &quadrantElement: quadrantElementsAtPoint)
         push_back_unique(elementsAtRect, quadrantElement);
     //Get North-East elements that intersect rect
     quadrantElementsAtPoint = m_quadrantNE->query(t_rect);
     elementsAtRect.reserve(elementsAtRect.size() + quadrantElementsAtPoint.size());
-    for (auto quadrantElement: quadrantElementsAtPoint)
+    for (const auto &quadrantElement: quadrantElementsAtPoint)
         push_back_unique(elementsAtRect, quadrantElement);
     //Get South-West elements that intersect rect
     quadrantElementsAtPoint = m_quadrantSW->query(t_rect);
     elementsAtRect.reserve(elementsAtRect.size() + quadrantElementsAtPoint.size());
-    for (auto quadrantElement: quadrantElementsAtPoint)
+    for (const auto &quadrantElement: quadrantElementsAtPoint)
         push_back_unique(elementsAtRect, quadrantElement);
     //Get South-East elements that intersect rect
     quadrantElementsAtPoint = m_quadrantSE->query(t_rect);
     elementsAtRect.reserve(elementsAtRect.size() + quadrantElementsAtPoint.size());
-    for (auto quadrantElement: quadrantElementsAtPoint)
+    for (const auto &quadrantElement: quadrantElementsAtPoint)
         push_back_unique(elementsAtRect, quadrantElement);
 
     return elementsAtRect;

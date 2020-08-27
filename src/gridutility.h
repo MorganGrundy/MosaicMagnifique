@@ -47,9 +47,11 @@ namespace GridUtility
         FlipState(const bool t_horizontal, const bool t_vertical)
             : horizontal{t_horizontal}, vertical{t_vertical}
         {}
+        FlipState() : FlipState{false, false}
+        {}
 
-        bool horizontal = false;
-        bool vertical = false;
+        bool horizontal{false};
+        bool vertical{false};
     };
 
     //Returns the flip state of the given cell at given grid position

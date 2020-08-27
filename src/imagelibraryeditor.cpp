@@ -150,7 +150,7 @@ void ImageLibraryEditor::deleteImages()
     for (auto item: selectedItems)
     {
         m_images.erase(std::remove_if(m_images.begin(), m_images.end(),
-                                      [item](const LibraryImage &t_libraryImage)
+                                      [&item](const LibraryImage &t_libraryImage)
                                       {
                                           return t_libraryImage.listWidget.get() == item;
                                       }), m_images.end());

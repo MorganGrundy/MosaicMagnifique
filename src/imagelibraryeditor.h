@@ -74,13 +74,14 @@ private:
                      const QString &t_name)
             : originalImage{t_originalImage}, resizedImage{t_resizedImage}
         {
-            listWidget = std::make_shared<QListWidgetItem>(
+            listWidget = std::make_unique<QListWidgetItem>(
                 QIcon(ImageUtility::matToQPixmap(resizedImage)), t_name);
         }
 
         cv::Mat originalImage;
         cv::Mat resizedImage;
-        std::shared_ptr<QListWidgetItem> listWidget;
+        //Qt ui will just use c-style pointer so no benefit from shared_ptr
+        std::unique_ptr<QListWidgetItem> listWidget;
     };
 
     Ui::ImageLibraryEditor *ui;

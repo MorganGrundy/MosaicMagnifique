@@ -426,7 +426,7 @@ void MainWindow::editCellGrid()
 
         //When grid editor is closed get the new grid state and give to grid preview
         connect(&gridEditor, &GridEditor::gridStateChanged,
-                [=](const GridUtility::mosaicBestFit &t_gridState)
+                [&](const GridUtility::mosaicBestFit &t_gridState)
                 {
                     ui->widgetGridPreview->setGridState(t_gridState);
                     ui->widgetGridPreview->updateView();

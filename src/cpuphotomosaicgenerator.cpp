@@ -24,25 +24,28 @@
 CPUPhotomosaicGenerator::CPUPhotomosaicGenerator(QWidget *t_parent)
     : PhotomosaicGeneratorBase{t_parent} {}
 
-//Returns Photomosaic best fits
-GridUtility::MosaicBestFit CPUPhotomosaicGenerator::generate()
+//Generate best fits for Photomosaic cells
+//Returns true if successful
+bool CPUPhotomosaicGenerator::generateBestFits()
 {
     //Converts colour space of main image and library images
     //Resizes library based on detail level
     auto [mainImage, resizedLib] = resizeAndCvtColor();
 
     //For all size steps, stop if no bounds for step
-    for (size_t step = 0; step < m_gridState.size(); ++step)
+    for (size_t step = 0; step < m_bestFits.size(); ++step)
     {
         //Initialise progress bar
         if (step == 0)
         {
-            setMaximum(m_gridState.at(0).at(0).size() * m_gridState.at(0).size()
-                       * std::pow(4, m_gridState.size() - 1) * (m_gridState.size()));
+            setMaximum(m_bestFits.at(0).at(0).size() * m_bestFits.at(0).size()
+                       * std::pow(4, m_bestFits.size() - 1) * (m_bestFits.size()));
             setValue(0);
             setLabelText("Finding best fits...");
+            show();
+
         }
-        const int progressStep = std::pow(4, (m_gridState.size() - 1) - step);
+        const int progressStep = std::pow(4, (m_bestFits.size() - 1) - step);
 
         //Reference to cell shapes
         const CellShape &normalCellShape = m_cells.getCell(step);
@@ -50,26 +53,26 @@ GridUtility::MosaicBestFit CPUPhotomosaicGenerator::generate()
 
         //Find best match for each cell in grid
         for (int y = -GridUtility::PAD_GRID;
-             y < static_cast<int>(m_gridState.at(step).size()) - GridUtility::PAD_GRID; ++y)
+             y < static_cast<int>(m_bestFits.at(step).size()) - GridUtility::PAD_GRID; ++y)
         {
             for (int x = -GridUtility::PAD_GRID;
-                 x < static_cast<int>(m_gridState.at(step).at(y + GridUtility::PAD_GRID).size())
+                 x < static_cast<int>(m_bestFits.at(step).at(y + GridUtility::PAD_GRID).size())
                          - GridUtility::PAD_GRID; ++x)
             {
                 //If user hits cancel in QProgressDialog then return empty best fit
                 if (wasCanceled())
-                    return GridUtility::MosaicBestFit();
+                    return false;
 
                 //If cell is valid
-                if (m_gridState.at(step).at(y + GridUtility::PAD_GRID).
+                if (m_bestFits.at(step).at(y + GridUtility::PAD_GRID).
                     at(x + GridUtility::PAD_GRID).has_value())
                 {
                     //Find cell best fit
-                    m_gridState.at(step).at(static_cast<size_t>(y + GridUtility::PAD_GRID)).
+                    m_bestFits.at(step).at(static_cast<size_t>(y + GridUtility::PAD_GRID)).
                         at(static_cast<size_t>(x + GridUtility::PAD_GRID)) =
                             findCellBestFit(normalCellShape, detailCellShape, x, y,
                                             GridUtility::PAD_GRID, mainImage, resizedLib,
-                                            m_gridState.at(step));
+                                            m_bestFits.at(step));
                 }
 
                 //Increment progress bar
@@ -78,14 +81,15 @@ GridUtility::MosaicBestFit CPUPhotomosaicGenerator::generate()
         }
 
         //Resize for next step
-        if ((step + 1) < m_gridState.size())
+        if ((step + 1) < m_bestFits.size())
         {
             //Halve cell size
             resizedLib = ImageUtility::batchResizeMat(resizedLib);
         }
     }
 
-    return m_gridState;
+    close();
+    return true;
 }
 
 //Returns best fit index for cell if it is the grid

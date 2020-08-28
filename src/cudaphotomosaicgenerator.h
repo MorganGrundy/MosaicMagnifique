@@ -28,8 +28,9 @@ class CUDAPhotomosaicGenerator : public PhotomosaicGeneratorBase
 public:
     CUDAPhotomosaicGenerator(QWidget *t_parent = nullptr);
 
-    //Returns Photomosaic best fits
-    GridUtility::MosaicBestFit generate() override;
+    //Generate best fits for Photomosaic cells
+    //Returns true if successful
+    bool generateBestFits() override;
 };
 
 #endif // CUDAPHOTOMOSAICGENERATORBASE_H

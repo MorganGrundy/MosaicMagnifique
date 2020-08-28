@@ -56,8 +56,12 @@ public:
     //Sets repeat range and addition
     void setRepeat(int t_repeatRange = 0, int t_repeatAddition = 0);
 
-    //Returns Photomosaic best fits
-    virtual GridUtility::MosaicBestFit generate();
+    //Generate best fits for Photomosaic cells
+    //Returns true if successful
+    virtual bool generateBestFits();
+
+    //Builds photomosaic from mosaic state
+    cv::Mat buildPhotomosaic() const;
 
 protected:
     cv::Mat m_img;
@@ -66,7 +70,9 @@ protected:
     Mode m_mode;
 
     CellGroup m_cells;
-    GridUtility::MosaicBestFit m_gridState;
+
+    //Represents grid state and best fits for Photomosaic cells (after generate)
+    GridUtility::MosaicBestFit m_bestFits;
 
     int m_repeatRange, m_repeatAddition;
 

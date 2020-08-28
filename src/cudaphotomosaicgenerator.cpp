@@ -28,24 +28,26 @@ CUDAPhotomosaicGenerator::CUDAPhotomosaicGenerator(QWidget *t_parent)
 
 size_t differenceGPU(CUDAPhotomosaicData &photomosaicData);
 
-//Returns Photomosaic best fits
-GridUtility::MosaicBestFit CUDAPhotomosaicGenerator::generate()
+//Generate best fits for Photomosaic cells
+//Returns true if successful
+bool CUDAPhotomosaicGenerator::generateBestFits()
 {
     //Converts colour space of main image and library images
     //Resizes library based on detail level
     auto [mainImage, resizedLib] = resizeAndCvtColor();
 
-    for (size_t step = 0; step < m_gridState.size(); ++step)
+    for (size_t step = 0; step < m_bestFits.size(); ++step)
     {
         //Initialise progress bar
         if (step == 0)
         {
-            setMaximum(m_gridState.at(0).at(0).size() * m_gridState.at(0).size()
-                       * std::pow(4, m_gridState.size() - 1) * (m_gridState.size()));
+            setMaximum(m_bestFits.at(0).at(0).size() * m_bestFits.at(0).size()
+                       * std::pow(4, m_bestFits.size() - 1) * (m_bestFits.size()));
             setValue(0);
             setLabelText("Moving data to CUDA device...");
+            show();
         }
-        const int progressStep = std::pow(4, (m_gridState.size() - 1) - step);
+        const int progressStep = std::pow(4, (m_bestFits.size() - 1) - step);
 
         //Reference to cell shapes
         const CellShape &normalCellShape = m_cells.getCell(step);
@@ -53,12 +55,12 @@ GridUtility::MosaicBestFit CUDAPhotomosaicGenerator::generate()
         const int detailCellSize = m_cells.getCellSize(step, true);
 
         //Stores grid size
-        const int gridHeight = static_cast<int>(m_gridState.at(step).size());
-        const int gridWidth = static_cast<int>(m_gridState.at(step).at(0).size());
+        const int gridHeight = static_cast<int>(m_bestFits.at(step).size());
+        const int gridWidth = static_cast<int>(m_bestFits.at(step).at(0).size());
 
         //Count number of valid cells
         size_t validCells = 0;
-        for (auto row: m_gridState.at(step))
+        for (auto row: m_bestFits.at(step))
             validCells += std::count_if(row.begin(), row.end(),
                                         [](const GridUtility::CellBestFit &bestFit) {
                                             return bestFit.has_value();
@@ -70,7 +72,7 @@ GridUtility::MosaicBestFit CUDAPhotomosaicGenerator::generate()
                                             m_mode != PhotomosaicGeneratorBase::Mode::CIEDE2000,
                                             m_repeatRange, m_repeatAddition);
         if (!photomosaicData.mallocData())
-            return GridUtility::MosaicBestFit();
+            return false;
 
         //Move library images to GPU
         photomosaicData.setLibraryImages(resizedLib);
@@ -98,9 +100,9 @@ GridUtility::MosaicBestFit CUDAPhotomosaicGenerator::generate()
             {
                 //If user hits cancel in QProgressDialog then return empty best fit
                 if (wasCanceled())
-                    return GridUtility::MosaicBestFit();
+                    return false;
 
-                const GridUtility::CellBestFit &cellState = m_gridState.at(step).
+                const GridUtility::CellBestFit &cellState = m_bestFits.at(step).
                                                             at(y + GridUtility::PAD_GRID).
                                                             at(x + GridUtility::PAD_GRID);
 
@@ -147,7 +149,7 @@ GridUtility::MosaicBestFit CUDAPhotomosaicGenerator::generate()
         {
             for (int x = -GridUtility::PAD_GRID; x < gridWidth - GridUtility::PAD_GRID; ++x)
             {
-                GridUtility::CellBestFit &cellState = m_gridState.at(step).at(y + GridUtility::PAD_GRID).
+                GridUtility::CellBestFit &cellState = m_bestFits.at(step).at(y + GridUtility::PAD_GRID).
                                                       at(x + GridUtility::PAD_GRID);
                 //Skip if cell invalid
                 if (!cellState.has_value())
@@ -168,12 +170,13 @@ GridUtility::MosaicBestFit CUDAPhotomosaicGenerator::generate()
         photomosaicData.freeData();
 
         //Resize for next step
-        if ((step + 1) < m_gridState.size())
+        if ((step + 1) < m_bestFits.size())
         {
             //Halve cell size
             resizedLib = ImageUtility::batchResizeMat(resizedLib);
         }
     }
 
-    return m_gridState;
+    close();
+    return true;
 }

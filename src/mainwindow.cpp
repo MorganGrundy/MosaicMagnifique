@@ -479,19 +479,18 @@ void MainWindow::generatePhotomosaic()
                                                ImageUtility::ResizeType::EXACT, progressBar);
 
     //Generate Photomosaic
-    std::unique_ptr<PhotomosaicGeneratorBase> generator;
+    std::shared_ptr<PhotomosaicGeneratorBase> generator;
 
     //Choose which generator to use
 #ifdef CUDA
     if (ui->checkCUDA->isChecked())
-        generator = std::make_unique<CUDAPhotomosaicGenerator>(this);
+        generator = std::make_shared<CUDAPhotomosaicGenerator>(this);
     else
 #endif
-        generator = std::make_unique<CPUPhotomosaicGenerator>(this);
+        generator = std::make_shared<CPUPhotomosaicGenerator>(this);
 
     //Set generator settings
-    const cv::Mat &mainImage = ui->widgetGridPreview->getBackground();
-    generator->setMainImage(mainImage);
+    generator->setMainImage(ui->widgetGridPreview->getBackground());
 
     generator->setLibrary(library);
 
@@ -508,18 +507,15 @@ void MainWindow::generatePhotomosaic()
 
     //Generate Photomosaic and measure time
     const auto startTime = std::chrono::high_resolution_clock::now();
-    const GridUtility::MosaicBestFit mosaicBestFit = generator->generate();
+    const bool generateSucceeded = generator->generateBestFits();
     const double duration = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::high_resolution_clock::now() - startTime).count() / 1000.0;
 
-    generator.reset();
-
     //Displays Photomosaic
-    if (!mosaicBestFit.empty())
+    if (generateSucceeded)
     {
         PhotomosaicViewer *photomosaicViewer =
-            new PhotomosaicViewer(this, mainImage, library, ui->widgetGridPreview->getCellGroup(),
-                                  mosaicBestFit, duration);
+            new PhotomosaicViewer(this, generator, duration);
         photomosaicViewer->setAttribute(Qt::WA_DeleteOnClose);
         photomosaicViewer->show();
     }

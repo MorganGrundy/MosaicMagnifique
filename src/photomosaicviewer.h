@@ -27,6 +27,7 @@
 
 #include "cellgroup.h"
 #include "gridutility.h"
+#include "photomosaicgeneratorbase.h"
 
 namespace Ui {
 class PhotomosaicViewer;
@@ -37,9 +38,8 @@ class PhotomosaicViewer : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit PhotomosaicViewer(QWidget *t_parent, const cv::Mat &t_img,
-                               const std::vector<cv::Mat> &t_lib, const CellGroup &t_cells,
-                               const GridUtility::MosaicBestFit &t_mosaicState,
+    explicit PhotomosaicViewer(QWidget *t_parent,
+                               std::shared_ptr<PhotomosaicGeneratorBase> t_photomosaicGenerator,
                                const double t_duration = 0);
     explicit PhotomosaicViewer(QWidget *t_parent = nullptr);
     ~PhotomosaicViewer();
@@ -49,18 +49,10 @@ public slots:
     void savePhotomosaic();
 
 private:
-    //Builds photomosaic from mosaic state
-    void buildPhotomosaic();
-
     Ui::PhotomosaicViewer *ui;
     QGraphicsScene *scene;
 
-    const cv::Mat m_img;
-    const std::vector<cv::Mat> m_lib;
-
-    const CellGroup m_cells;
-    const GridUtility::MosaicBestFit m_mosaicState;
-
+    std::shared_ptr<PhotomosaicGeneratorBase> m_photomosaicGenerator;
     cv::Mat m_photomosaic;
 };
 

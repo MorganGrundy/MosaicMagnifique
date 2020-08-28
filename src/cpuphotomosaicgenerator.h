@@ -28,8 +28,9 @@ class CPUPhotomosaicGenerator : public PhotomosaicGeneratorBase
 public:
     CPUPhotomosaicGenerator(QWidget *t_parent = nullptr);
 
-    //Returns Photomosaic best fits
-    GridUtility::MosaicBestFit generate() override;
+    //Generate best fits for Photomosaic cells
+    //Returns true if successful
+    bool generateBestFits() override;
 
 private:
     //Returns best fit index for cell if it is the grid

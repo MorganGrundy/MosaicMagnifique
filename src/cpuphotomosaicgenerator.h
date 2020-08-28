@@ -28,8 +28,8 @@ class CPUPhotomosaicGenerator : public PhotomosaicGeneratorBase
 public:
     CPUPhotomosaicGenerator(QWidget *t_parent = nullptr);
 
-    //Returns a Photomosaic of the main image made of the library images
-    cv::Mat generate();
+    //Returns Photomosaic best fits
+    GridUtility::MosaicBestFit generate() override;
 
 private:
     //Returns best fit index for cell if it is the grid
@@ -37,11 +37,11 @@ private:
                                           const CellShape &t_detailCellShape,
                                           const int x, const int y, const bool t_pad,
                                           const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
-                                          const GridUtility::stepBestFit &t_grid) const;
+                                          const GridUtility::StepBestFit &t_grid) const;
 
     //Calculates the repeat value of each library image in repeat range around x,y
     //Only needs to look at first half of cells as the latter half are not yet used
-    std::map<size_t, int> calculateRepeats(const GridUtility::stepBestFit &grid,
+    std::map<size_t, int> calculateRepeats(const GridUtility::StepBestFit &grid,
                                            const int x, const int y) const;
 
     //Compares pixels in the cell against the library images

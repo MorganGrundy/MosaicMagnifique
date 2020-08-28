@@ -174,7 +174,7 @@ void GridEditViewer::editSingle(const cv::Point t_gridPos)
                   });
 
         //Get cell state of cell with highest y,x
-        GridUtility::cellBestFit &cellState =
+        GridUtility::CellBestFit &cellState =
             gridState.at(m_sizeStep).at(cellsAtClick.front().y + GridUtility::PAD_GRID).
             at(cellsAtClick.front().x + GridUtility::PAD_GRID);
 
@@ -242,7 +242,7 @@ void GridEditViewer::editSelection(const cv::Rect t_selectionRect)
         for (const auto &cell: cellsAtSelect)
         {
             //Get cell state
-            GridUtility::cellBestFit &cellState =
+            GridUtility::CellBestFit &cellState =
                 gridState.at(m_sizeStep).at(cell.y + GridUtility::PAD_GRID).
                 at(cell.x + GridUtility::PAD_GRID);
 

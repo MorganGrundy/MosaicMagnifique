@@ -39,7 +39,7 @@ public:
     ~GridEditor();
 
 signals:
-    void gridStateChanged(const GridUtility::mosaicBestFit &t_gridState);
+    void gridStateChanged(const GridUtility::MosaicBestFit &t_gridState);
 
 protected:
     //Updates grid

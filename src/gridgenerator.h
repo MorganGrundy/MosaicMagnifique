@@ -31,14 +31,14 @@
 class GridGenerator
 {
 public:
-    static GridUtility::mosaicBestFit getGridState(const CellGroup &t_cells,
+    static GridUtility::MosaicBestFit getGridState(const CellGroup &t_cells,
                                                 const cv::Mat &t_mainImage,
                                                 const int height, const int width);
 
 private:
     GridGenerator();
 
-    static std::pair<GridUtility::cellBestFit, bool>
+    static std::pair<GridUtility::CellBestFit, bool>
     findCellState(const CellGroup &t_cells, const cv::Mat &t_mainImage, const int x, const int y,
                   const GridBounds &t_bounds, const size_t t_step = 0);
 };

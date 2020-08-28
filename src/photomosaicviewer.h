@@ -21,8 +21,12 @@
 #define IMAGEVIEWER_H
 
 #include <QMainWindow>
-
 #include <opencv2/core/mat.hpp>
+#include <QProgressBar>
+#include <QGraphicsScene>
+
+#include "cellgroup.h"
+#include "gridutility.h"
 
 namespace Ui {
 class PhotomosaicViewer;
@@ -33,18 +37,31 @@ class PhotomosaicViewer : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit PhotomosaicViewer(QWidget *t_parent, const cv::Mat &t_image, const double t_duration);
+    explicit PhotomosaicViewer(QWidget *t_parent, const cv::Mat &t_img,
+                               const std::vector<cv::Mat> &t_lib, const CellGroup &t_cells,
+                               const GridUtility::MosaicBestFit &t_mosaicState,
+                               const double t_duration = 0);
     explicit PhotomosaicViewer(QWidget *t_parent = nullptr);
     ~PhotomosaicViewer();
 
 public slots:
     //Allows user to save the Photomosaic as an image file
-    void saveImage();
+    void savePhotomosaic();
 
 private:
-    Ui::PhotomosaicViewer *ui;
+    //Builds photomosaic from mosaic state
+    void buildPhotomosaic();
 
-    const cv::Mat image;
+    Ui::PhotomosaicViewer *ui;
+    QGraphicsScene *scene;
+
+    const cv::Mat m_img;
+    const std::vector<cv::Mat> m_lib;
+
+    const CellGroup m_cells;
+    const GridUtility::MosaicBestFit m_mosaicState;
+
+    cv::Mat m_photomosaic;
 };
 
 #endif // IMAGEVIEWER_H

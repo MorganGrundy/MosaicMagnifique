@@ -24,8 +24,8 @@
 CPUPhotomosaicGenerator::CPUPhotomosaicGenerator(QWidget *t_parent)
     : PhotomosaicGeneratorBase{t_parent} {}
 
-//Returns a Photomosaic of the main image made of the library images
-cv::Mat CPUPhotomosaicGenerator::generate()
+//Returns Photomosaic best fits
+GridUtility::MosaicBestFit CPUPhotomosaicGenerator::generate()
 {
     //Converts colour space of main image and library images
     //Resizes library based on detail level
@@ -56,9 +56,9 @@ cv::Mat CPUPhotomosaicGenerator::generate()
                  x < static_cast<int>(m_gridState.at(step).at(y + GridUtility::PAD_GRID).size())
                          - GridUtility::PAD_GRID; ++x)
             {
-                //If user hits cancel in QProgressDialog then return empty mat
+                //If user hits cancel in QProgressDialog then return empty best fit
                 if (wasCanceled())
-                    return cv::Mat();
+                    return GridUtility::MosaicBestFit();
 
                 //If cell is valid
                 if (m_gridState.at(step).at(y + GridUtility::PAD_GRID).
@@ -85,8 +85,7 @@ cv::Mat CPUPhotomosaicGenerator::generate()
         }
     }
 
-    //Combines all results into single image (mosaic)
-    return combineResults(m_gridState);
+    return m_gridState;
 }
 
 //Returns best fit index for cell if it is the grid
@@ -95,7 +94,7 @@ CPUPhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape,
                                          const CellShape &t_detailCellShape,
                                          const int x, const int y, const bool t_pad,
                                          const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
-                                         const GridUtility::stepBestFit &t_grid) const
+                                         const GridUtility::StepBestFit &t_grid) const
 {
     auto [cell, cellBounds] = getCellAt(t_cellShape, t_detailCellShape, x, y, t_pad, t_image);
 
@@ -128,7 +127,7 @@ CPUPhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape,
 //Calculates the repeat value of each library image in repeat range around x,y
 //Only needs to look at first half of cells as the latter half are not yet used
 std::map<size_t, int> CPUPhotomosaicGenerator::calculateRepeats(
-    const GridUtility::stepBestFit &grid, const int x, const int y) const
+    const GridUtility::StepBestFit &grid, const int x, const int y) const
 {
     std::map<size_t, int> repeats;
     const int repeatStartY = std::clamp(y - m_repeatRange, 0, static_cast<int>(grid.size()));

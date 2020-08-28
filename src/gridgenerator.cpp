@@ -26,11 +26,11 @@ GridGenerator::GridGenerator()
 {}
 
 //Generates grid preview
-GridUtility::mosaicBestFit GridGenerator::getGridState(const CellGroup &t_cells,
+GridUtility::MosaicBestFit GridGenerator::getGridState(const CellGroup &t_cells,
                                                     const cv::Mat &t_mainImage,
                                                     const int height, const int width)
 {
-    GridUtility::mosaicBestFit gridState;
+    GridUtility::MosaicBestFit gridState;
     //No cell mask, no grid
     if (t_cells.getCell(0).getCellMask(0, 0).empty())
         return gridState;
@@ -52,8 +52,8 @@ GridUtility::mosaicBestFit GridGenerator::getGridState(const CellGroup &t_cells,
                                                                gridWidth, gridHeight,
                                                                GridUtility::PAD_GRID);
 
-        gridState.push_back(GridUtility::stepBestFit(static_cast<size_t>(gridSize.y),
-                            std::vector<GridUtility::cellBestFit>(static_cast<size_t>(gridSize.x))));
+        gridState.push_back(GridUtility::StepBestFit(static_cast<size_t>(gridSize.y),
+                            std::vector<GridUtility::CellBestFit>(static_cast<size_t>(gridSize.x))));
 
         //Clear previous bounds
         bounds.at(!activeBound).clear();
@@ -110,7 +110,7 @@ GridUtility::mosaicBestFit GridGenerator::getGridState(const CellGroup &t_cells,
 }
 
 //Finds state of cell at current position and step in detail image
-std::pair<GridUtility::cellBestFit, bool>
+std::pair<GridUtility::CellBestFit, bool>
 GridGenerator::findCellState(const CellGroup &t_cells, const cv::Mat &t_mainImage,
                              const int x, const int y,
                              const GridBounds &t_bounds, const size_t t_step)

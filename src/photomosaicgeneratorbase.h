@@ -51,13 +51,13 @@ public:
     void setCellGroup(const CellGroup &t_cellGroup);
 
     //Sets grid state
-    void setGridState(const GridUtility::mosaicBestFit &t_gridState);
+    void setGridState(const GridUtility::MosaicBestFit &t_gridState);
 
     //Sets repeat range and addition
     void setRepeat(int t_repeatRange = 0, int t_repeatAddition = 0);
 
-    //Returns a Photomosaic of the main image made of the library images
-    virtual cv::Mat generate();
+    //Returns Photomosaic best fits
+    virtual GridUtility::MosaicBestFit generate();
 
 protected:
     cv::Mat m_img;
@@ -66,7 +66,7 @@ protected:
     Mode m_mode;
 
     CellGroup m_cells;
-    GridUtility::mosaicBestFit m_gridState;
+    GridUtility::MosaicBestFit m_gridState;
 
     int m_repeatRange, m_repeatAddition;
 
@@ -80,9 +80,6 @@ protected:
         const CellShape &t_cellShape, const CellShape &t_detailCellShape,
         const int x, const int y, const bool t_pad,
         const cv::Mat &t_image) const;
-
-    //Combines results into a Photomosaic
-    cv::Mat combineResults(const GridUtility::mosaicBestFit &results);
 };
 
 #endif // PHOTOMOSAICGENERATORBASE_H

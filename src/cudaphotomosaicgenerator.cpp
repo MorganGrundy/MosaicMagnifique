@@ -28,9 +28,8 @@ CUDAPhotomosaicGenerator::CUDAPhotomosaicGenerator(QWidget *t_parent)
 
 size_t differenceGPU(CUDAPhotomosaicData &photomosaicData);
 
-//Returns a Photomosaic of the main image made of the library images
-//Generates using CUDA
-cv::Mat CUDAPhotomosaicGenerator::generate()
+//Returns Photomosaic best fits
+GridUtility::MosaicBestFit CUDAPhotomosaicGenerator::generate()
 {
     //Converts colour space of main image and library images
     //Resizes library based on detail level
@@ -61,7 +60,7 @@ cv::Mat CUDAPhotomosaicGenerator::generate()
         size_t validCells = 0;
         for (auto row: m_gridState.at(step))
             validCells += std::count_if(row.begin(), row.end(),
-                                        [](const GridUtility::cellBestFit &bestFit) {
+                                        [](const GridUtility::CellBestFit &bestFit) {
                                             return bestFit.has_value();
                                         });
 
@@ -71,7 +70,7 @@ cv::Mat CUDAPhotomosaicGenerator::generate()
                                             m_mode != PhotomosaicGeneratorBase::Mode::CIEDE2000,
                                             m_repeatRange, m_repeatAddition);
         if (!photomosaicData.mallocData())
-            return cv::Mat();
+            return GridUtility::MosaicBestFit();
 
         //Move library images to GPU
         photomosaicData.setLibraryImages(resizedLib);
@@ -97,11 +96,11 @@ cv::Mat CUDAPhotomosaicGenerator::generate()
         {
             for (int x = -GridUtility::PAD_GRID; x < gridWidth - GridUtility::PAD_GRID; ++x)
             {
-                //If user hits cancel in QProgressDialog then return empty mat
+                //If user hits cancel in QProgressDialog then return empty best fit
                 if (wasCanceled())
-                    return cv::Mat();
+                    return GridUtility::MosaicBestFit();
 
-                const GridUtility::cellBestFit &cellState = m_gridState.at(step).
+                const GridUtility::CellBestFit &cellState = m_gridState.at(step).
                                                             at(y + GridUtility::PAD_GRID).
                                                             at(x + GridUtility::PAD_GRID);
 
@@ -148,7 +147,7 @@ cv::Mat CUDAPhotomosaicGenerator::generate()
         {
             for (int x = -GridUtility::PAD_GRID; x < gridWidth - GridUtility::PAD_GRID; ++x)
             {
-                GridUtility::cellBestFit &cellState = m_gridState.at(step).at(y + GridUtility::PAD_GRID).
+                GridUtility::CellBestFit &cellState = m_gridState.at(step).at(y + GridUtility::PAD_GRID).
                                                       at(x + GridUtility::PAD_GRID);
                 //Skip if cell invalid
                 if (!cellState.has_value())
@@ -176,6 +175,5 @@ cv::Mat CUDAPhotomosaicGenerator::generate()
         }
     }
 
-    //Combines all results into single image (mosaic)
-    return combineResults(m_gridState);
+    return m_gridState;
 }

@@ -27,9 +27,9 @@
 
 namespace GridUtility
 {
-    typedef std::optional<size_t> cellBestFit;
-    typedef std::vector<std::vector<cellBestFit>> stepBestFit;
-    typedef std::vector<stepBestFit> mosaicBestFit;
+    using CellBestFit = std::optional<size_t>;
+    using StepBestFit = std::vector<std::vector<CellBestFit>>;
+    using MosaicBestFit = std::vector<StepBestFit>;
 
     const int PAD_GRID = 2;
 

@@ -28,8 +28,8 @@ class CUDAPhotomosaicGenerator : public PhotomosaicGeneratorBase
 public:
     CUDAPhotomosaicGenerator(QWidget *t_parent = nullptr);
 
-    //Returns a Photomosaic of the main image made of the library images
-    cv::Mat generate();
+    //Returns Photomosaic best fits
+    GridUtility::MosaicBestFit generate() override;
 };
 
 #endif // CUDAPHOTOMOSAICGENERATORBASE_H

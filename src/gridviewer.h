@@ -62,9 +62,9 @@ public:
     const cv::Mat getBackground() const;
 
     //Sets grid state and updates grid
-    void setGridState(const GridUtility::mosaicBestFit &t_gridState);
+    void setGridState(const GridUtility::MosaicBestFit &t_gridState);
     //Returns state of current grid
-    GridUtility::mosaicBestFit getGridState() const;
+    GridUtility::MosaicBestFit getGridState() const;
 
 public slots:
     //Changes if grid preview shows edge detected or normal cells
@@ -79,7 +79,7 @@ protected:
     void createGrid(const int gridHeight, const int gridWidth);
 
     CellGroup m_cells;
-    GridUtility::mosaicBestFit gridState;
+    GridUtility::MosaicBestFit gridState;
 
     cv::Mat backImage;
 

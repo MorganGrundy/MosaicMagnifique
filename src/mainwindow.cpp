@@ -426,7 +426,7 @@ void MainWindow::editCellGrid()
 
         //When grid editor is closed get the new grid state and give to grid preview
         connect(&gridEditor, &GridEditor::gridStateChanged,
-                [&](const GridUtility::mosaicBestFit &t_gridState)
+                [&](const GridUtility::MosaicBestFit &t_gridState)
                 {
                     ui->widgetGridPreview->setGridState(t_gridState);
                     ui->widgetGridPreview->updateView();
@@ -490,7 +490,8 @@ void MainWindow::generatePhotomosaic()
         generator = std::make_unique<CPUPhotomosaicGenerator>(this);
 
     //Set generator settings
-    generator->setMainImage(ui->widgetGridPreview->getBackground());
+    const cv::Mat &mainImage = ui->widgetGridPreview->getBackground();
+    generator->setMainImage(mainImage);
 
     generator->setLibrary(library);
 
@@ -507,16 +508,18 @@ void MainWindow::generatePhotomosaic()
 
     //Generate Photomosaic and measure time
     const auto startTime = std::chrono::high_resolution_clock::now();
-    const cv::Mat mosaic = generator->generate();
+    const GridUtility::MosaicBestFit mosaicBestFit = generator->generate();
     const double duration = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::high_resolution_clock::now() - startTime).count() / 1000.0;
 
     generator.reset();
 
     //Displays Photomosaic
-    if (!mosaic.empty())
+    if (!mosaicBestFit.empty())
     {
-        PhotomosaicViewer *photomosaicViewer = new PhotomosaicViewer(this, mosaic, duration);
+        PhotomosaicViewer *photomosaicViewer =
+            new PhotomosaicViewer(this, mainImage, library, ui->widgetGridPreview->getCellGroup(),
+                                  mosaicBestFit, duration);
         photomosaicViewer->setAttribute(Qt::WA_DeleteOnClose);
         photomosaicViewer->show();
     }

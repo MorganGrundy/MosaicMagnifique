@@ -173,7 +173,7 @@ const cv::Mat GridViewer::getBackground() const
 }
 
 //Sets grid state and updates grid
-void GridViewer::setGridState(const GridUtility::mosaicBestFit &t_gridState)
+void GridViewer::setGridState(const GridUtility::MosaicBestFit &t_gridState)
 {
     gridState = t_gridState;
 
@@ -189,7 +189,7 @@ void GridViewer::setGridState(const GridUtility::mosaicBestFit &t_gridState)
 }
 
 //Returns state of current grid
-GridUtility::mosaicBestFit GridViewer::getGridState() const
+GridUtility::MosaicBestFit GridViewer::getGridState() const
 {
     return gridState;
 }

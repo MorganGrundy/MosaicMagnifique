@@ -79,7 +79,7 @@ void PhotomosaicGeneratorBase::setCellGroup(const CellGroup &t_cellGroup)
 }
 
 //Sets grid state
-void PhotomosaicGeneratorBase::setGridState(const GridUtility::mosaicBestFit &t_gridState)
+void PhotomosaicGeneratorBase::setGridState(const GridUtility::MosaicBestFit &t_gridState)
 {
     m_gridState = t_gridState;
 }
@@ -91,12 +91,12 @@ void PhotomosaicGeneratorBase::setRepeat(int t_repeatRange, int t_repeatAddition
     m_repeatAddition = t_repeatAddition;
 }
 
-//Returns a Photomosaic of the main image made of the library images
-cv::Mat PhotomosaicGeneratorBase::generate()
+//Returns Photomosaic best fits
+GridUtility::MosaicBestFit PhotomosaicGeneratorBase::generate()
 {
     qDebug() << "PhotomosaicGeneratorBase::generate() - "
              << "This is a base class will only return empty cv::Mat";
-    return cv::Mat();
+    return GridUtility::MosaicBestFit();
 }
 
 //Converts colour space of main image and library images
@@ -211,112 +211,4 @@ std::pair<cv::Mat, cv::Rect> PhotomosaicGeneratorBase::getCellAt(
                                         cellLocalBound.height * m_cells.getDetail());
 
     return {cell, detailCellLocalBound};
-}
-
-//Combines results into a Photomosaic
-cv::Mat PhotomosaicGeneratorBase::combineResults(const GridUtility::mosaicBestFit &results)
-{
-    //Update progress bar
-    setLabelText("Building Photomosaic...");
-    setValue(0);
-
-    cv::Mat mosaic = cv::Mat::zeros(m_img.rows, m_img.cols, m_img.type());
-    cv::Mat mosaicStep;
-
-    cv::Mat mosaicMask = cv::Mat::zeros(m_img.rows, m_img.cols, CV_8UC1);
-    cv::Mat mosaicMaskStep;
-
-    //Stores library images, halved at each size step
-    std::vector<cv::Mat> libImg(m_lib);
-
-    //For all size steps in results
-    for (size_t step = 0; step < results.size(); ++step)
-    {
-        const int progressStep = std::pow(4, (m_gridState.size() - 1) - step);
-
-        //Halve library images on each size step
-        if (step != 0)
-            libImg = ImageUtility::batchResizeMat(libImg);
-
-        const CellShape &normalCellShape = m_cells.getCell(step);
-
-        mosaicStep = cv::Mat::zeros(m_img.rows, m_img.cols, m_img.type());
-        mosaicMaskStep = cv::Mat::zeros(m_img.rows, m_img.cols, CV_8UC1);
-
-        //For all cells
-        for (int y = -GridUtility::PAD_GRID; y < static_cast<int>(results.at(step).size())
-                                                  - GridUtility::PAD_GRID; ++y)
-        {
-            for (int x = -GridUtility::PAD_GRID;
-                 x < static_cast<int>(results.at(step).at(y + GridUtility::PAD_GRID).size())
-                         - GridUtility::PAD_GRID; ++x)
-            {
-                const GridUtility::cellBestFit &cellData = results.at(step).
-                        at(static_cast<size_t>(y + GridUtility::PAD_GRID)).
-                        at(static_cast<size_t>(x + GridUtility::PAD_GRID));
-                //Skip invalid cells
-                if (!cellData.has_value())
-                {
-                    //Increment progress bar
-                    setValue(value() + progressStep);
-                    continue;
-                }
-
-                //Gets bounds of cell in global space
-                const cv::Rect cellGlobalBound = GridUtility::getRectAt(normalCellShape, x, y);
-
-                //Bound cell in image area
-                const int yStart = std::clamp(cellGlobalBound.tl().y, 0, m_img.rows);
-                const int yEnd = std::clamp(cellGlobalBound.br().y, 0, m_img.rows);
-                const int xStart = std::clamp(cellGlobalBound.tl().x, 0, m_img.cols);
-                const int xEnd = std::clamp(cellGlobalBound.br().x, 0, m_img.cols);
-
-                //Bounds of cell in local space
-                const cv::Rect cellLocalBound(xStart - cellGlobalBound.x,
-                                              yStart - cellGlobalBound.y,
-                                              xEnd - xStart, yEnd - yStart);
-
-                //Calculate if and how current cell is flipped
-                const auto flipState = GridUtility::getFlipStateAt(normalCellShape, x, y,
-                                                                   GridUtility::PAD_GRID);
-
-                //Creates mask bounded
-                const cv::Mat maskBounded(normalCellShape.getCellMask(flipState.horizontal,
-                                                                      flipState.vertical),
-                                          cellLocalBound);
-
-                //Adds cells to mosaic step
-                const cv::Mat libBounded(libImg.at(cellData.value()), cellLocalBound);
-                libBounded.copyTo(mosaicStep(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)),
-                                  maskBounded);
-
-                //Adds cell mask to mosaic mask step
-                cv::Mat mosaicMaskPart(mosaicMaskStep, cv::Range(yStart, yEnd),
-                                       cv::Range(xStart, xEnd));
-                cv::bitwise_or(mosaicMaskPart, maskBounded, mosaicMaskPart);
-
-                //Increment progress bar
-                setValue(value() + progressStep);
-            }
-        }
-
-        //Combine mosaic step into mosaic
-        if (step != 0)
-        {
-            cv::Mat mask;
-            cv::bitwise_not(mosaicMask, mask);
-            mosaicStep.copyTo(mosaic, mask);
-            mosaicMaskStep.copyTo(mosaicMask, mask);
-            //CopyTo is a shallow copy, clone to make a deep copy
-            mosaic = mosaic.clone();
-            mosaicMask = mosaicMask.clone();
-        }
-        else
-        {
-            mosaic = mosaicStep.clone();
-            mosaicMask = mosaicMaskStep.clone();
-        }
-    }
-
-    return mosaic;
 }

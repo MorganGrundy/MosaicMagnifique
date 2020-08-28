@@ -171,40 +171,6 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGeneratorBase::resizeAndCvtC
     return {resultMain, result};
 }
 
-//Resizes vector of images based on ratio
-void PhotomosaicGeneratorBase::resizeImages(std::vector<cv::Mat> &t_images, const double t_ratio)
-{
-    //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
-    cv::InterpolationFlags flags = (t_ratio < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
-#ifdef OPENCV_W_CUDA
-    cv::cuda::Stream stream;
-
-    //Library image
-    std::vector<cv::cuda::GpuMat> src(t_images.size()), dst(t_images.size());
-    for (size_t i = 0; i < t_images.size(); ++i)
-    {
-        //Resize image
-        src.at(i).upload(t_images.at(i), stream);
-        cv::cuda::resize(src.at(i), dst.at(i),
-                         cv::Size(std::round(t_ratio * src.at(i).cols),
-                                  std::round(t_ratio * src.at(i).rows)),
-                         0, 0, flags, stream);
-        dst.at(i).download(t_images.at(i), stream);
-    }
-    stream.waitForCompletion();
-#else
-    //Library image
-    for (size_t i = 0; i < t_images.size(); ++i)
-    {
-        cv::resize(t_images.at(i), t_images.at(i),
-                   cv::Size(std::round(t_ratio * t_images.at(i).cols),
-                            std::round(t_ratio * t_images.at(i).rows)), 0, 0, flags);
-    }
-
-
-#endif
-}
-
 //Returns the cell image at given position and it's local bounds
 std::pair<cv::Mat, cv::Rect> PhotomosaicGeneratorBase::getCellAt(
     const CellShape &t_cellShape, const CellShape &t_detailCellShape,
@@ -270,7 +236,7 @@ cv::Mat PhotomosaicGeneratorBase::combineResults(const GridUtility::mosaicBestFi
 
         //Halve library images on each size step
         if (step != 0)
-            resizeImages(libImg);
+            libImg = ImageUtility::batchResizeMat(libImg);
 
         const CellShape &normalCellShape = m_cells.getCell(step);
 

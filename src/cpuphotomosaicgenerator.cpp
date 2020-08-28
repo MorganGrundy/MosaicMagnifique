@@ -81,7 +81,7 @@ cv::Mat CPUPhotomosaicGenerator::generate()
         if ((step + 1) < m_gridState.size())
         {
             //Halve cell size
-            resizeImages(resizedLib);
+            resizedLib = ImageUtility::batchResizeMat(resizedLib);
         }
     }
 

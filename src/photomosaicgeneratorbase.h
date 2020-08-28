@@ -74,8 +74,6 @@ protected:
     //Resizes library based on detail level
     //Returns results
     std::pair<cv::Mat, std::vector<cv::Mat>> resizeAndCvtColor();
-    //Resizes vector of images based on ratio
-    void resizeImages(std::vector<cv::Mat> &t_images, const double t_ratio = 0.5);
 
     //Returns the cell image at given position and it's local bounds
     std::pair<cv::Mat, cv::Rect> getCellAt(

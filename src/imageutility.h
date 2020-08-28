@@ -32,30 +32,25 @@ namespace ImageUtility
     const unsigned int MIL_MAGIC = 0xADBE2480;
 
     //Represents the different resize types
+    //INCLUSIVE: Resize such that new size is a subsection of target size
+    //EXCLUSIVE: Resize such that target size is a subsection of new size
+    //EXACT: Resize to exact target size
     enum class ResizeType {INCLUSIVE, EXCLUSIVE, EXACT};
 
-    //Returns a resized copy of the given image such that
-    //type = INCLUSIVE:
-    //(height = targetHeight && width <= targetWidth) ||
-    //    (height <= targetHeight && width = targetWidth)
-    //type = EXCLUSIVE:
-    //(height = targetHeight && width >= targetWidth) ||
-    //    (height >= targetHeight && width = targetWidth)
+    //Returns copy of image resized to target size with given resize type
     cv::Mat resizeImage(const cv::Mat &t_img, const int t_targetHeight, const int t_targetWidth,
                         const ResizeType t_type);
 
-    //Returns copy of all mats resized to the target height
+    //Returns copy of images resized to target size with given resize type
     //If OpenCV CUDA is available then will resize on gpu
-    //type = INCLUSIVE:
-    //(height = targetHeight && width <= targetWidth) ||
-    //    (height <= targetHeight && width = targetWidth)
-    //type = EXCLUSIVE:
-    //(height = targetHeight && width >= targetWidth) ||
-    //    (height >= targetHeight && width = targetWidth)
     std::vector<cv::Mat> batchResizeMat(const std::vector<cv::Mat> &images,
                                         const int t_targetHeight, const int t_targetWidth,
                                         const ResizeType t_type,
                                         QProgressBar *progressBar = nullptr);
+
+    //Returns copy of images resized to (first image size * ratio)
+    std::vector<cv::Mat> batchResizeMat(const std::vector<cv::Mat> &t_images,
+                                        const double t_ratio = 0.5);
 
     //Enum class that represents the two different methods of squaring an image
     enum class SquareMethod {PAD, CROP};

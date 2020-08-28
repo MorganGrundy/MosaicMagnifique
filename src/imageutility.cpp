@@ -34,11 +34,7 @@
 #include <opencv2/cudawarping.hpp>
 #endif
 
-//Returns a resized copy of the given image such that
-//type = INCLUSIVE:
-//(height = targetHeight && width <= targetWidth) || (height <= targetHeight && width = targetWidth)
-//type = EXCLUSIVE:
-//(height = targetHeight && width >= targetWidth) || (height >= targetHeight && width = targetWidth)
+//Returns copy of image resized to target size with given resize type
 cv::Mat ImageUtility::resizeImage(const cv::Mat &t_img,
                                   const int t_targetHeight, const int t_targetWidth,
                                   const ResizeType t_type)
@@ -66,12 +62,8 @@ cv::Mat ImageUtility::resizeImage(const cv::Mat &t_img,
     return result;
 }
 
-//Returns copy of all mats resized to the target height
+//Returns copy of images resized to target size with given resize type
 //If OpenCV CUDA is available then will resize on gpu
-//type = INCLUSIVE:
-//(height = targetHeight && width <= targetWidth) || (height <= targetHeight && width = targetWidth)
-//type = EXCLUSIVE:
-//(height = targetHeight && width >= targetWidth) || (height >= targetHeight && width = targetWidth)
 std::vector<cv::Mat> ImageUtility::batchResizeMat(const std::vector<cv::Mat> &images,
                                                   const int t_targetHeight, const int t_targetWidth,
                                                   const ResizeType t_type, QProgressBar *progressBar)
@@ -134,6 +126,18 @@ std::vector<cv::Mat> ImageUtility::batchResizeMat(const std::vector<cv::Mat> &im
         progressBar->setVisible(false);
 
     return result;
+}
+
+//Returns copy of images resized to (first image size * ratio)
+std::vector<cv::Mat> ImageUtility::batchResizeMat(const std::vector<cv::Mat> &t_images,
+                                                  const double t_ratio)
+{
+    //No images to resize
+    if (t_images.empty())
+        return t_images;
+
+    return batchResizeMat(t_images, std::round(t_ratio * t_images.front().rows),
+                          std::round(t_ratio * t_images.front().cols), ResizeType::EXACT);
 }
 
 //Ensures image rows == cols

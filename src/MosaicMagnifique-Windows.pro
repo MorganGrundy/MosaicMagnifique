@@ -52,10 +52,10 @@ SOURCES += \
 	imagehistogramcompare.cpp \
 	imagelibraryeditor.cpp \
 	imageutility.cpp \
-	imageviewer.cpp \
 	main.cpp \
 	mainwindow.cpp \
 	photomosaicgeneratorbase.cpp \
+	photomosaicviewer.cpp \
 	quadtree.cpp
 
 HEADERS += \
@@ -75,9 +75,9 @@ HEADERS += \
 	imagehistogramcompare.h \
 	imagelibraryeditor.h \
 	imageutility.h \
-	imageviewer.h \
 	mainwindow.h \
 	photomosaicgeneratorbase.h \
+	photomosaicviewer.h \
 	quadtree.h
 
 FORMS += \
@@ -85,8 +85,8 @@ FORMS += \
 	colourvisualisation.ui \
 	grideditor.ui \
 	imagelibraryeditor.ui \
-	imageviewer.ui \
-	mainwindow.ui
+	mainwindow.ui \
+	photomosaicviewer.ui
 
 RESOURCES += \
 	ui.qrc

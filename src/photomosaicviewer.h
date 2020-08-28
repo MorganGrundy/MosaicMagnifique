@@ -25,24 +25,24 @@
 #include <opencv2/core/mat.hpp>
 
 namespace Ui {
-class ImageViewer;
+class PhotomosaicViewer;
 }
 
-class ImageViewer : public QMainWindow
+class PhotomosaicViewer : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit ImageViewer(QWidget *t_parent, const cv::Mat &t_image, const double t_duration);
-    explicit ImageViewer(QWidget *t_parent = nullptr);
-    ~ImageViewer();
+    explicit PhotomosaicViewer(QWidget *t_parent, const cv::Mat &t_image, const double t_duration);
+    explicit PhotomosaicViewer(QWidget *t_parent = nullptr);
+    ~PhotomosaicViewer();
 
 public slots:
     //Allows user to save the Photomosaic as an image file
     void saveImage();
 
 private:
-    Ui::ImageViewer *ui;
+    Ui::PhotomosaicViewer *ui;
 
     const cv::Mat image;
 };

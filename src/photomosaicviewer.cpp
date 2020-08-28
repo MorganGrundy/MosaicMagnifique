@@ -17,8 +17,8 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "imageviewer.h"
-#include "ui_imageviewer.h"
+#include "photomosaicviewer.h"
+#include "ui_photomosaicviewer.h"
 
 #include <QFileDialog>
 #include <QLabel>
@@ -27,13 +27,14 @@
 #include "imageutility.h"
 #include "customgraphicsview.h"
 
-ImageViewer::ImageViewer(QWidget *t_parent, const cv::Mat &t_image, const double t_duration)
-    : QMainWindow(t_parent), ui(new Ui::ImageViewer), image{t_image.clone()}
+PhotomosaicViewer::PhotomosaicViewer(QWidget *t_parent, const cv::Mat &t_image,
+                                     const double t_duration)
+    : QMainWindow(t_parent), ui(new Ui::PhotomosaicViewer), image{t_image.clone()}
 {
     ui->setupUi(this);
 
     //Connects buttons to appropriate methods
-    connect(ui->saveButton, &QPushButton::released, this, &ImageViewer::saveImage);
+    connect(ui->saveButton, &QPushButton::released, this, &PhotomosaicViewer::saveImage);
     connect(ui->fitButton, &QPushButton::released,
             ui->graphicsView, &CustomGraphicsView::fitToView);
 
@@ -57,17 +58,17 @@ ImageViewer::ImageViewer(QWidget *t_parent, const cv::Mat &t_image, const double
     }
 }
 
-ImageViewer::ImageViewer(QWidget *t_parent)
-    : ImageViewer(t_parent, cv::Mat(), 0)
+PhotomosaicViewer::PhotomosaicViewer(QWidget *t_parent)
+    : PhotomosaicViewer(t_parent, cv::Mat(), 0)
 {}
 
-ImageViewer::~ImageViewer()
+PhotomosaicViewer::~PhotomosaicViewer()
 {
     delete ui;
 }
 
 //Allows user to save the Photomosaic as an image file
-void ImageViewer::saveImage()
+void PhotomosaicViewer::saveImage()
 {
     QString filename = QFileDialog::getSaveFileName(this, tr("Save Photomosaic"), "",
                                                     "Image Files (*.bmp *.dib *.jpeg *.jpg "

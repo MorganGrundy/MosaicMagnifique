@@ -58,6 +58,8 @@ public:
 
     //Sets the background image in grid
     void setBackground(const cv::Mat &t_background);
+    //Returns background image
+    const cv::Mat getBackground() const;
 
     //Sets grid state and updates grid
     void setGridState(const GridUtility::mosaicBestFit &t_gridState);

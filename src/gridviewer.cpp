@@ -166,6 +166,12 @@ void GridViewer::setBackground(const cv::Mat &t_background)
         background = ImageUtility::matToQPixmap(t_background);
 }
 
+//Returns background image
+const cv::Mat GridViewer::getBackground() const
+{
+    return backImage;
+}
+
 //Sets grid state and updates grid
 void GridViewer::setGridState(const GridUtility::mosaicBestFit &t_gridState)
 {

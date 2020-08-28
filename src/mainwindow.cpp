@@ -36,7 +36,7 @@
 #include <chrono>
 
 #include "imageutility.h"
-#include "imageviewer.h"
+#include "photomosaicviewer.h"
 #include "colourvisualisation.h"
 #include "cpuphotomosaicgenerator.h"
 #include "grideditor.h"
@@ -453,6 +453,15 @@ void MainWindow::CUDADeviceChanged(int t_index)
 //Generate and display a Photomosaic for current settings
 void MainWindow::generatePhotomosaic()
 {
+    //Check main image is loaded
+    if (ui->widgetGridPreview->getBackground().empty())
+    {
+        QMessageBox msgBox;
+        msgBox.setText(tr("No main image loaded, please load an image"));
+        msgBox.exec();
+        return;
+    }
+
     //Check library contains images
     if (ui->imageLibraryEditor->getImageLibrarySize() == 0)
     {
@@ -462,41 +471,27 @@ void MainWindow::generatePhotomosaic()
         return;
     }
 
-    //Load main image and check is valid
-    cv::Mat mainImage = cv::imread(ui->lineMainImage->text().toStdString());
-    if (mainImage.empty())
-    {
-        QMessageBox msgBox;
-        msgBox.setText(tr("The main image \"") + ui->lineMainImage->text()
-                       + tr("\" failed to load"));
-        msgBox.exec();
-        return;
-    }
-    //Resize main image to user entered size
-    mainImage = ImageUtility::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
-                                          ui->spinPhotomosaicWidth->value(),
-                                          ImageUtility::ResizeType::INCLUSIVE);
-
+    //Resize image library
     std::vector<cv::Mat> library = ui->imageLibraryEditor->getImageLibrary();
-
     if (library.front().cols != ui->spinCellSize->value())
         library = ImageUtility::batchResizeMat(library, ui->spinCellSize->value(),
                                                ui->spinCellSize->value(),
                                                ImageUtility::ResizeType::EXACT, progressBar);
 
     //Generate Photomosaic
-    PhotomosaicGeneratorBase *generator;
+    std::unique_ptr<PhotomosaicGeneratorBase> generator;
 
     //Choose which generator to use
 #ifdef CUDA
     if (ui->checkCUDA->isChecked())
-        generator = new CUDAPhotomosaicGenerator(this);
+        generator = std::make_unique<CUDAPhotomosaicGenerator>(this);
     else
 #endif
-        generator = new CPUPhotomosaicGenerator(this);
+        generator = std::make_unique<CPUPhotomosaicGenerator>(this);
 
     //Set generator settings
-    generator->setMainImage(mainImage);
+    generator->setMainImage(ui->widgetGridPreview->getBackground());
+
     generator->setLibrary(library);
 
     if (ui->comboMode->currentText() == "RGB Euclidean")
@@ -516,13 +511,14 @@ void MainWindow::generatePhotomosaic()
     const double duration = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::high_resolution_clock::now() - startTime).count() / 1000.0;
 
-    delete generator;
+    generator.reset();
 
     //Displays Photomosaic
     if (!mosaic.empty())
     {
-        ImageViewer *imageViewer = new ImageViewer(this, mosaic, duration);
-        imageViewer->show();
+        PhotomosaicViewer *photomosaicViewer = new PhotomosaicViewer(this, mosaic, duration);
+        photomosaicViewer->setAttribute(Qt::WA_DeleteOnClose);
+        photomosaicViewer->show();
     }
 }
 

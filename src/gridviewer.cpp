@@ -195,14 +195,14 @@ GridUtility::MosaicBestFit GridViewer::getGridState() const
 }
 
 //Changes if grid preview shows edge detected or normal cells
-void GridViewer::edgeDetectChanged(int /*t_state*/)
+void GridViewer::edgeDetectChanged([[maybe_unused]] int t_state)
 {
     updateView();
 }
 
 //Updates display of grid
 //If no back image then creates new grid
-void GridViewer::resizeEvent(QResizeEvent * /*event*/)
+void GridViewer::resizeEvent([[maybe_unused]] QResizeEvent *event)
 {
     if (background.isNull())
         updateGrid();

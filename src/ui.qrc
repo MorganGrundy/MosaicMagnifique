@@ -3,4 +3,7 @@
         <file>LinkIcon.png</file>
         <file>UnlinkIcon.png</file>
     </qresource>
+    <qresource prefix="/">
+        <file>MosaicMagnifique.png</file>
+    </qresource>
 </RCC>

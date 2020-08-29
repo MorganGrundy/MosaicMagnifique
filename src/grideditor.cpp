@@ -66,13 +66,13 @@ GridEditor::~GridEditor()
 }
 
 //Updates grid
-void GridEditor::showEvent(QShowEvent * /*event*/)
+void GridEditor::showEvent([[maybe_unused]] QShowEvent *event)
 {
     ui->gridEditViewer->updateGrid();
 }
 
 //Emit grid state when grid editor is closed
-void GridEditor::closeEvent(QCloseEvent * /*event*/)
+void GridEditor::closeEvent([[maybe_unused]] QCloseEvent *event)
 {
     emit gridStateChanged(ui->gridEditViewer->getGridState());
 }

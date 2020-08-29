@@ -26,8 +26,6 @@
 
 namespace ImageUtility
 {
-    //Current version number
-    const int VERSION_NO = 301;
     const int MIL_VERSION = 2;
     const unsigned int MIL_MAGIC = 0xADBE2480;
 

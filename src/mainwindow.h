@@ -22,7 +22,6 @@
 
 #include <QMainWindow>
 #include <memory>
-#include <QMap>
 #include <QProgressBar>
 #include <opencv2/core/mat.hpp>
 
@@ -37,6 +36,9 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    //Current version number
+    const QString VERSION_STR = "3.1.0";
+
     MainWindow(QWidget *t_parent = nullptr);
     ~MainWindow();
 

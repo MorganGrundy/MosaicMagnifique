@@ -20,6 +20,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QDesktopServices>
 #include <QFileDialog>
 #include <memory>
 #include <QStringList>
@@ -78,6 +79,29 @@ MainWindow::MainWindow(QWidget *t_parent)
 
     photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) /
                            ui->spinPhotomosaicHeight->value();
+
+    //Website action opens github pages site
+    connect(ui->actionWebsite, &QAction::triggered, [&]([[maybe_unused]] const bool triggered)
+            {
+                QDesktopServices::openUrl(QUrl("https://morgangrundy.github.io/"));
+            });
+    //Github action opens github repository
+    connect(ui->actionGithub, &QAction::triggered, [&]([[maybe_unused]] const bool triggered)
+            {
+                QDesktopServices::openUrl(QUrl("https://github.com/MorganGrundy/MosaicMagnifique"));
+            });
+    //About action displays Mosaic Magnifique version, and build date and time
+    connect(ui->actionAbout, &QAction::triggered, [&]([[maybe_unused]] const bool triggered)
+            {
+                QMessageBox msgBox;
+                msgBox.setWindowTitle("About Mosaic Magnifique");
+                msgBox.setText("<b>Mosaic Magnifique " + VERSION_STR + "</b>");
+                msgBox.setInformativeText("Built on " + QStringLiteral(__DATE__) + " " +
+                                          QStringLiteral(__TIME__));
+                msgBox.setIconPixmap(QPixmap(":/MosaicMagnifique.png"));
+                msgBox.setStandardButtons(QMessageBox::Close);
+                msgBox.exec();
+            });
 
     //Cell Shape Editor
     cellShapeChanged = false;
@@ -351,7 +375,7 @@ void MainWindow::loadImageSize()
 }
 
 //Updates detail level
-void MainWindow::photomosaicDetailChanged(int /*i*/)
+void MainWindow::photomosaicDetailChanged([[maybe_unused]] int i)
 {
     clampDetail();
 
@@ -386,7 +410,7 @@ void MainWindow::cellSizeChanged(int t_value)
 }
 
 //Updates cell grid size steps
-void MainWindow::minimumCellSizeChanged(int /*t_value*/)
+void MainWindow::minimumCellSizeChanged([[maybe_unused]] int t_value)
 {
     clampDetail();
 

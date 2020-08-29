@@ -48,12 +48,20 @@ public slots:
     //Allows user to save the Photomosaic as an image file
     void savePhotomosaic();
 
+    //Opens colour selector for setting background colour
+    void openColourSelector();
+
 private:
+    //Creates Photomosaic and displays
+    void updatePhotomosaic();
+
     Ui::PhotomosaicViewer *ui;
     QGraphicsScene *scene;
 
     std::shared_ptr<PhotomosaicGeneratorBase> m_photomosaicGenerator;
     cv::Mat m_photomosaic;
+
+    QColor m_backgroundColor;
 };
 
 #endif // IMAGEVIEWER_H

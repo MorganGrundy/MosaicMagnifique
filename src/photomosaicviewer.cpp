@@ -22,6 +22,7 @@
 
 #include <QFileDialog>
 #include <QLabel>
+#include <QColorDialog>
 #include <opencv2/highgui.hpp>
 
 #include "imageutility.h"
@@ -31,7 +32,7 @@ PhotomosaicViewer::PhotomosaicViewer(
     QWidget *t_parent, std::shared_ptr<PhotomosaicGeneratorBase> t_photomosaicGenerator,
     const double t_duration)
     : QMainWindow{t_parent}, ui{new Ui::PhotomosaicViewer},
-    m_photomosaicGenerator{t_photomosaicGenerator}
+    m_photomosaicGenerator{t_photomosaicGenerator}, m_backgroundColor{Qt::black}
 {
     ui->setupUi(this);
 
@@ -39,6 +40,12 @@ PhotomosaicViewer::PhotomosaicViewer(
     connect(ui->saveButton, &QPushButton::released, this, &PhotomosaicViewer::savePhotomosaic);
     connect(ui->fitButton, &QPushButton::released,
             ui->graphicsView, &CustomGraphicsView::fitToView);
+
+    //Setup background colour button
+    connect(ui->pushBackgroundColour, &QPushButton::released,
+            this, &PhotomosaicViewer::openColourSelector);
+    //Change button colour
+    ui->pushBackgroundColour->setStyleSheet("background-color: rgb(0, 0, 0)");
 
     if (t_duration > 0)
     {
@@ -48,15 +55,12 @@ PhotomosaicViewer::PhotomosaicViewer(
         ui->statusbar->addPermanentWidget(label);
     }
 
-    m_photomosaic = m_photomosaicGenerator->buildPhotomosaic();
-
-    //Adds image to view
-    const QPixmap pixmap = ImageUtility::matToQPixmap(m_photomosaic);
+    //Create scene
     scene = new QGraphicsScene();
     scene->setItemIndexMethod(QGraphicsScene::NoIndex);
-    scene->addPixmap(pixmap);
     ui->graphicsView->setScene(scene);
-    ui->graphicsView->setSceneRect(pixmap.rect());
+    //Show Photomosaic
+    updatePhotomosaic();
 }
 
 PhotomosaicViewer::PhotomosaicViewer(QWidget *t_parent)
@@ -79,4 +83,42 @@ void PhotomosaicViewer::savePhotomosaic()
                                                     "*.pxm *.pnm *.sr *.ras *.tiff *.tif "
                                                     "*.hdr *.pic)");
     cv::imwrite(filename.toStdString(), m_photomosaic);
+}
+
+//Opens colour selector for setting background colour
+void PhotomosaicViewer::openColourSelector()
+{
+    const QColor newColour = QColorDialog::getColor(
+        m_backgroundColor, this, "Select a background colour:");
+
+    //Check for valid and different colour
+    if (newColour.isValid() && newColour != m_backgroundColor)
+    {
+        m_backgroundColor = newColour;
+
+        //Change button colour
+        QString newStyle = QString("background-color: rgba(%1, %2, %3, %4)");
+        newStyle = newStyle.arg(QString::number(m_backgroundColor.red()),
+                                QString::number(m_backgroundColor.green()),
+                                QString::number(m_backgroundColor.blue()),
+                                QString::number(m_backgroundColor.alpha()));
+        ui->pushBackgroundColour->setStyleSheet(newStyle);
+
+        updatePhotomosaic();
+    }
+}
+
+//Creates Photomosaic and displays
+void PhotomosaicViewer::updatePhotomosaic()
+{
+    //Build Photomosaic with new background colour
+    cv::Scalar opencvColour(m_backgroundColor.blue(), m_backgroundColor.green(),
+                            m_backgroundColor.red());
+    m_photomosaic = m_photomosaicGenerator->buildPhotomosaic(opencvColour);
+
+    //Update viewer
+    scene->clear();
+    const QPixmap pixmap = ImageUtility::matToQPixmap(m_photomosaic);
+    scene->addPixmap(pixmap);
+    ui->graphicsView->setSceneRect(pixmap.rect());
 }

@@ -61,7 +61,7 @@ public:
     virtual bool generateBestFits();
 
     //Builds photomosaic from mosaic state
-    cv::Mat buildPhotomosaic() const;
+    cv::Mat buildPhotomosaic(const cv::Scalar &t_backgroundColour = cv::Scalar(0, 0, 0)) const;
 
 protected:
     cv::Mat m_img;

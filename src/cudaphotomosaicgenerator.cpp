@@ -32,21 +32,21 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData);
 //Returns true if successful
 bool CUDAPhotomosaicGenerator::generateBestFits()
 {
+    //Initialise progress bar
+    if (!m_bestFits.empty())
+    {
+        setMaximum(m_bestFits.at(0).at(0).size() * m_bestFits.at(0).size()
+                   * std::pow(4, m_bestFits.size() - 1) * (m_bestFits.size()));
+        setValue(0);
+        setLabelText("Moving data to CUDA device...");
+    }
+
     //Converts colour space of main image and library images
     //Resizes library based on detail level
     auto [mainImage, resizedLib] = resizeAndCvtColor();
 
     for (size_t step = 0; step < m_bestFits.size(); ++step)
     {
-        //Initialise progress bar
-        if (step == 0)
-        {
-            setMaximum(m_bestFits.at(0).at(0).size() * m_bestFits.at(0).size()
-                       * std::pow(4, m_bestFits.size() - 1) * (m_bestFits.size()));
-            setValue(0);
-            setLabelText("Moving data to CUDA device...");
-            show();
-        }
         const int progressStep = std::pow(4, (m_bestFits.size() - 1) - step);
 
         //Reference to cell shapes

@@ -101,9 +101,9 @@ bool PhotomosaicGeneratorBase::generateBestFits()
 }
 
 //Builds photomosaic from mosaic state
-cv::Mat PhotomosaicGeneratorBase::buildPhotomosaic() const
+cv::Mat PhotomosaicGeneratorBase::buildPhotomosaic(const cv::Scalar &t_backgroundColour) const
 {
-    cv::Mat mosaic = cv::Mat::zeros(m_img.rows, m_img.cols, m_img.type());
+    cv::Mat mosaic = cv::Mat(m_img.rows, m_img.cols, m_img.type(), t_backgroundColour);
     cv::Mat mosaicStep;
 
     cv::Mat mosaicMask = cv::Mat::zeros(m_img.rows, m_img.cols, CV_8UC1);
@@ -121,7 +121,7 @@ cv::Mat PhotomosaicGeneratorBase::buildPhotomosaic() const
 
         const CellShape &normalCellShape = m_cells.getCell(step);
 
-        mosaicStep = cv::Mat::zeros(m_img.rows, m_img.cols, m_img.type());
+        mosaicStep = cv::Mat(m_img.rows, m_img.cols, m_img.type(), t_backgroundColour);
         mosaicMaskStep = cv::Mat::zeros(m_img.rows, m_img.cols, CV_8UC1);
 
         //For all cells

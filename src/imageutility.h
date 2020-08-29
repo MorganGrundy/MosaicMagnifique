@@ -73,6 +73,9 @@ namespace ImageUtility
 
     //Replace dst with edge detected version of src
     void edgeDetect(const cv::Mat &t_src, cv::Mat &t_dst);
+
+    //Adds an alpha channel to the given images
+    void addAlphaChannel(std::vector<cv::Mat> &t_images);
 };
 
 //Outputs a OpenCV mat to a QDataStream

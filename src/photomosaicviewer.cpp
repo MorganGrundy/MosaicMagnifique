@@ -89,7 +89,8 @@ void PhotomosaicViewer::savePhotomosaic()
 void PhotomosaicViewer::openColourSelector()
 {
     const QColor newColour = QColorDialog::getColor(
-        m_backgroundColor, this, "Select a background colour:");
+        m_backgroundColor, this, "Select a background colour:",
+        QColorDialog::ColorDialogOption::ShowAlphaChannel);
 
     //Check for valid and different colour
     if (newColour.isValid() && newColour != m_backgroundColor)
@@ -113,12 +114,12 @@ void PhotomosaicViewer::updatePhotomosaic()
 {
     //Build Photomosaic with new background colour
     cv::Scalar opencvColour(m_backgroundColor.blue(), m_backgroundColor.green(),
-                            m_backgroundColor.red());
+                            m_backgroundColor.red(), m_backgroundColor.alpha());
     m_photomosaic = m_photomosaicGenerator->buildPhotomosaic(opencvColour);
 
     //Update viewer
     scene->clear();
-    const QPixmap pixmap = ImageUtility::matToQPixmap(m_photomosaic);
+    const QPixmap pixmap = ImageUtility::matToQPixmap(m_photomosaic, QImage::Format_RGBA8888);
     scene->addPixmap(pixmap);
     ui->graphicsView->setSceneRect(pixmap.rect());
 }

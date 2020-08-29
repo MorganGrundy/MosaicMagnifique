@@ -179,8 +179,7 @@ QPixmap ImageUtility::matToQPixmap(const cv::Mat &t_mat,
                                    const QImage::Format t_format)
 {
     return QPixmap::fromImage(QImage(t_mat.data, t_mat.cols, t_mat.rows,
-                                     static_cast<int>(t_mat.step),
-                                     t_format).rgbSwapped());
+                                     static_cast<int>(t_mat.step), t_format).rgbSwapped());
 }
 
 //Takes a grayscale image as src
@@ -219,6 +218,22 @@ void ImageUtility::edgeDetect(const cv::Mat &t_src, cv::Mat &t_dst)
     float kernelData[9] = {-1, -1, -1, -1, 8, -1, -1, -1, -1};
     const cv::Mat kernel(3, 3, CV_32FC1, kernelData);
     cv::filter2D(t_src, t_dst, -1, kernel, cv::Point(-1, -1), 0, cv::BORDER_CONSTANT);
+}
+
+//Adds an alpha channel to the given images
+void ImageUtility::addAlphaChannel(std::vector<cv::Mat> &t_images)
+{
+    for (auto &image: t_images)
+    {
+        //Split image channels
+        std::vector<cv::Mat> channels(3);
+        cv::split(image, channels);
+        //Add alpha channel
+        channels.push_back(
+            cv::Mat(image.size(), channels.front().type(), cv::Scalar(255)));
+        //Merge image channels
+        cv::merge(channels, image);
+    }
 }
 
 //Outputs a OpenCV mat to a QDataStream

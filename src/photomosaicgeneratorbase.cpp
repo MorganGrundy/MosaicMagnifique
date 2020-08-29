@@ -103,7 +103,7 @@ bool PhotomosaicGeneratorBase::generateBestFits()
 //Builds photomosaic from mosaic state
 cv::Mat PhotomosaicGeneratorBase::buildPhotomosaic(const cv::Scalar &t_backgroundColour) const
 {
-    cv::Mat mosaic = cv::Mat(m_img.rows, m_img.cols, m_img.type(), t_backgroundColour);
+    cv::Mat mosaic = cv::Mat(m_img.rows, m_img.cols, CV_8UC4, t_backgroundColour);
     cv::Mat mosaicStep;
 
     cv::Mat mosaicMask = cv::Mat::zeros(m_img.rows, m_img.cols, CV_8UC1);
@@ -111,6 +111,7 @@ cv::Mat PhotomosaicGeneratorBase::buildPhotomosaic(const cv::Scalar &t_backgroun
 
     //Stores library images, halved at each size step
     std::vector<cv::Mat> libImg(m_lib);
+    ImageUtility::addAlphaChannel(libImg);
 
     //For all size steps in results
     for (size_t step = 0; step < m_bestFits.size(); ++step)
@@ -121,7 +122,7 @@ cv::Mat PhotomosaicGeneratorBase::buildPhotomosaic(const cv::Scalar &t_backgroun
 
         const CellShape &normalCellShape = m_cells.getCell(step);
 
-        mosaicStep = cv::Mat(m_img.rows, m_img.cols, m_img.type(), t_backgroundColour);
+        mosaicStep = cv::Mat(m_img.rows, m_img.cols, CV_8UC4, t_backgroundColour);
         mosaicMaskStep = cv::Mat::zeros(m_img.rows, m_img.cols, CV_8UC1);
 
         //For all cells

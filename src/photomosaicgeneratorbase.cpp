@@ -35,6 +35,7 @@ PhotomosaicGeneratorBase::PhotomosaicGeneratorBase(QWidget *t_parent)
       m_repeatRange{0}, m_repeatAddition{0}
 {
     setWindowModality(Qt::WindowModal);
+    setMinimumDuration(0);
 }
 
 PhotomosaicGeneratorBase::~PhotomosaicGeneratorBase() {}

@@ -35,10 +35,10 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     //Initialise progress bar
     if (!m_bestFits.empty())
     {
-        setMaximum(m_bestFits.at(0).at(0).size() * m_bestFits.at(0).size()
+        setMaximum(2 * m_bestFits.at(0).at(0).size() * m_bestFits.at(0).size()
                    * std::pow(4, m_bestFits.size() - 1) * (m_bestFits.size()));
         setValue(0);
-        setLabelText("Moving data to CUDA device...");
+        setLabelText("Finding best fits (CUDA)...");
     }
 
     //Converts colour space of main image and library images
@@ -163,6 +163,8 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                 }
 
                 cellState = resultFlat[index];
+
+                setValue(value() + progressStep);
             }
         }
 

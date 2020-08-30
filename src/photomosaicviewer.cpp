@@ -23,7 +23,7 @@
 #include <QFileDialog>
 #include <QLabel>
 #include <QColorDialog>
-#include <opencv2/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 #include "imageutility.h"
 #include "customgraphicsview.h"

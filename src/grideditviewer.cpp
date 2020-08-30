@@ -19,8 +19,6 @@
 
 #include "grideditviewer.h"
 
-#include <QDebug>
-
 GridEditViewer::GridEditViewer(QWidget *parent)
     : GridViewer(parent), m_sizeStep{0}, m_quadtree{}, m_tool{Tool::Single}
 {

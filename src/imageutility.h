@@ -26,8 +26,8 @@
 
 namespace ImageUtility
 {
-    const int MIL_VERSION = 2;
-    const unsigned int MIL_MAGIC = 0xADBE2480;
+    [[maybe_unused]] const int MIL_VERSION = 2;
+    [[maybe_unused]] const unsigned int MIL_MAGIC = 0xADBE2480;
 
     //Represents the different resize types
     //INCLUSIVE: Resize such that new size is a subsection of target size

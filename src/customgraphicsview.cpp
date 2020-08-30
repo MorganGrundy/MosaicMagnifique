@@ -18,7 +18,6 @@
 */
 
 #include "customgraphicsview.h"
-#include <QDebug>
 
 CustomGraphicsView::CustomGraphicsView(QWidget *t_parent)
     : QGraphicsView{t_parent}, MIN_ZOOM{0.8}, MAX_ZOOM{10}

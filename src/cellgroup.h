@@ -20,9 +20,9 @@
 #ifndef CELLGROUP_H
 #define CELLGROUP_H
 
-#include "cellshape.h"
+#include <opencv2/core/mat.hpp>
 
-#include <opencv2/core.hpp>
+#include "cellshape.h"
 
 class CellGroup
 {

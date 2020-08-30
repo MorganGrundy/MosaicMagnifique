@@ -20,7 +20,6 @@
 #ifndef CUDA_REDUCTION
 #define CUDA_REDUCTION
 
-#include <cuda.h>
 #include <cuda_runtime_api.h>
 
 #include "cudaphotomosaicdata.h"

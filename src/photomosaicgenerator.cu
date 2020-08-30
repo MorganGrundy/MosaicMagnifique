@@ -17,9 +17,6 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <cuda.h>
-#include <cuda_runtime_api.h>
-#include <device_launch_parameters.h>
 #include <math_constants.h>
 
 #include "cudaphotomosaicdata.h"

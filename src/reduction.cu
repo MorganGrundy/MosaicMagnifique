@@ -19,10 +19,6 @@
 
 #include "reduction.cuh"
 
-#include <cuda.h>
-#include <cuda_runtime_api.h>
-#include <device_launch_parameters.h>
-
 #include "cudaphotomosaicdata.h"
 
 //Performs sum reduction in a single warp

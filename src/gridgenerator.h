@@ -21,7 +21,6 @@
 #define GRIDGENERATOR_H
 
 #include <opencv2/core/mat.hpp>
-#include <QImage>
 
 #include "cellshape.h"
 #include "gridutility.h"

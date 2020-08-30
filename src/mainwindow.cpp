@@ -22,18 +22,9 @@
 
 #include <QDesktopServices>
 #include <QFileDialog>
-#include <memory>
-#include <QStringList>
 #include <QPixmap>
-#include <QImage>
-#include <QImageReader>
-#include <QDebug>
 #include <QMessageBox>
-#include <QPainter>
-#include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
 #include <chrono>
 
 #include "imageutility.h"

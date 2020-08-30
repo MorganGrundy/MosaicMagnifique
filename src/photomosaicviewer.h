@@ -22,7 +22,6 @@
 
 #include <QMainWindow>
 #include <opencv2/core/mat.hpp>
-#include <QProgressBar>
 #include <QGraphicsScene>
 
 #include "cellgroup.h"

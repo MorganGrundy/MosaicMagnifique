@@ -22,13 +22,8 @@
 
 #include "imageutility.h"
 
-#include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
-#include <iostream>
-#include <cstdio>
-#include <string>
-#include <cmath>
 
 #ifdef OPENCV_W_CUDA
 #include <opencv2/cudawarping.hpp>

@@ -20,9 +20,6 @@
 #include "colourvisualisation.h"
 #include "ui_colourvisualisation.h"
 
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
-
 #include "imagehistogramcompare.h"
 
 ColourVisualisation::ColourVisualisation(QWidget *parent) :

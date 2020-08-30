@@ -20,7 +20,7 @@
 #ifndef CELLGRID_H
 #define CELLGRID_H
 
-#include <opencv2/core.hpp>
+#include <opencv2/core/mat.hpp>
 #include <optional>
 
 #include "cellshape.h"
@@ -31,7 +31,7 @@ namespace GridUtility
     using StepBestFit = std::vector<std::vector<CellBestFit>>;
     using MosaicBestFit = std::vector<StepBestFit>;
 
-    const int PAD_GRID = 2;
+    [[maybe_unused]] const int PAD_GRID = 2;
 
     //Calculates the number of given cells needed to fill an image of given size
     cv::Point calculateGridSize(const CellShape &t_cellShape,
@@ -59,7 +59,7 @@ namespace GridUtility
                              const int t_pad);
 
     //Maximum possible entropy value
-    const double MAX_ENTROPY = 8.0;
+    [[maybe_unused]] const double MAX_ENTROPY = 8.0;
     //Returns the entropy of the given image in the given mask
     double calculateEntropy(const cv::Mat &t_mask, const cv::Mat &t_image);
 };

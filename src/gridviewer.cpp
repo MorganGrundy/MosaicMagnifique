@@ -19,12 +19,7 @@
 
 #include "gridviewer.h"
 
-#include <QPainter>
-#include <QDebug>
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-#include <QWheelEvent>
 
 #include "gridutility.h"
 #include "imageutility.h"

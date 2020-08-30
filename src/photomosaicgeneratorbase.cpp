@@ -19,13 +19,6 @@
 
 #include "photomosaicgeneratorbase.h"
 
-#include <cmath>
-#include <vector>
-#include <climits>
-#include <algorithm>
-#include <opencv2/core/mat.hpp>
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <QDebug>
 
@@ -36,14 +29,6 @@
 
 #include "gridutility.h"
 #include "gridbounds.h"
-
-#ifdef CUDA
-#include <cuda.h>
-#include <cuda_runtime_api.h>
-#include <math_constants.h>
-
-#include "cudaphotomosaicdata.h"
-#endif
 
 PhotomosaicGeneratorBase::PhotomosaicGeneratorBase(QWidget *t_parent)
     : QProgressDialog{t_parent}, m_img{}, m_lib{}, m_mode{Mode::RGB_EUCLIDEAN},

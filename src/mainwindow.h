@@ -21,7 +21,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <memory>
 #include <QProgressBar>
 #include <opencv2/core/mat.hpp>
 

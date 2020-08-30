@@ -20,20 +20,17 @@
 #ifndef GRIDVIEWER_H
 #define GRIDVIEWER_H
 
-#include <QWidget>
 #include <opencv2/core/mat.hpp>
 #include <QGridLayout>
-#include <QLabel>
-#include <QDoubleSpinBox>
 #include <QCheckBox>
 #include <QSpacerItem>
 #include <QGraphicsPixmapItem>
 
+#include "customgraphicsview.h"
 #include "cellshape.h"
 #include "gridbounds.h"
 #include "gridutility.h"
 #include "cellgroup.h"
-#include "customgraphicsview.h"
 
 class GridViewer : public CustomGraphicsView
 {

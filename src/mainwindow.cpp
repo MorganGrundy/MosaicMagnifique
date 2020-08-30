@@ -86,7 +86,10 @@ MainWindow::MainWindow(QWidget *t_parent)
             {
                 QMessageBox msgBox;
                 msgBox.setWindowTitle("About Mosaic Magnifique");
-                msgBox.setText("<b>Mosaic Magnifique " + VERSION_STR + "</b>");
+
+                msgBox.setText("<b>Mosaic Magnifique " +
+                               QString("%1.%2.%3").arg(VERSION_MAJOR).
+                               arg(VERSION_MINOR).arg(VERSION_BUILD) + "</b>");
                 msgBox.setInformativeText("Built on " + QStringLiteral(__DATE__) + " " +
                                           QStringLiteral(__TIME__));
                 msgBox.setIconPixmap(QPixmap(":/MosaicMagnifique.png"));

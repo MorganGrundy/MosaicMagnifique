@@ -23,6 +23,15 @@ QMAKE_CXXFLAGS += -std=c++17
 
 DEFINES += _USE_MATH_DEFINES
 
+#Application version
+VERSION_MAJOR = 3
+VERSION_MINOR = 1
+VERSION_BUILD = 1
+
+DEFINES += "VERSION_MAJOR=$$VERSION_MAJOR" \
+	"VERSION_MINOR=$$VERSION_MINOR" \
+	"VERSION_BUILD=$$VERSION_BUILD"
+
 TARGET = MosaicMagnifique
 
 # The following define makes your compiler emit warnings if you use

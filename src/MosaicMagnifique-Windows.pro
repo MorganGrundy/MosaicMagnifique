@@ -29,6 +29,19 @@ TARGET = MosaicMagnifique
 
 win32:RC_ICONS += MosaicMagnifique.ico
 
+#Application version
+VERSION_MAJOR = 3
+VERSION_MINOR = 1
+VERSION_BUILD = 1
+
+DEFINES += "VERSION_MAJOR=$$VERSION_MAJOR" \
+	"VERSION_MINOR=$$VERSION_MINOR" \
+	"VERSION_BUILD=$$VERSION_BUILD"
+
+#Target version
+VERSION = $${VERSION_MAJOR}.$${VERSION_MINOR}.$${VERSION_BUILD}
+
+
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the

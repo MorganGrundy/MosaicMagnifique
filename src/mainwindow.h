@@ -35,9 +35,6 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    //Current version number
-    const QString VERSION_STR = "3.1.1";
-
     MainWindow(QWidget *t_parent = nullptr);
     ~MainWindow();
 

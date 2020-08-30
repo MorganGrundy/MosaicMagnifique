@@ -39,16 +39,14 @@ namespace ImageUtility
     cv::Mat resizeImage(const cv::Mat &t_img, const int t_targetHeight, const int t_targetWidth,
                         const ResizeType t_type);
 
-    //Returns copy of images resized to target size with given resize type
+    //Populates dst with copy of images resized to target size with given resize type from src
     //If OpenCV CUDA is available then will resize on gpu
-    std::vector<cv::Mat> batchResizeMat(const std::vector<cv::Mat> &images,
-                                        const int t_targetHeight, const int t_targetWidth,
-                                        const ResizeType t_type,
-                                        QProgressBar *progressBar = nullptr);
+    void batchResizeMat(const std::vector<cv::Mat> &t_src, std::vector<cv::Mat> &t_dst,
+                        const int t_targetHeight, const int t_targetWidth, const ResizeType t_type,
+                        QProgressBar *progressBar = nullptr);
 
-    //Returns copy of images resized to (first image size * ratio)
-    std::vector<cv::Mat> batchResizeMat(const std::vector<cv::Mat> &t_images,
-                                        const double t_ratio = 0.5);
+    //Resizes images to (first image size * ratio)
+    bool batchResizeMat(std::vector<cv::Mat> &t_images, const double t_ratio = 0.5);
 
     //Enum class that represents the two different methods of squaring an image
     enum class SquareMethod {PAD, CROP};

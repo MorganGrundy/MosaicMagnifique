@@ -121,8 +121,8 @@ void ImageLibraryEditor::addImages()
     }
 
     //Resize images to current library size
-    resizedImages = ImageUtility::batchResizeMat(originalImages, m_imageSize, m_imageSize,
-                                                 ImageUtility::ResizeType::EXACT, m_progressBar);
+    ImageUtility::batchResizeMat(originalImages, resizedImages, m_imageSize, m_imageSize,
+                                 ImageUtility::ResizeType::EXACT, m_progressBar);
 
     //Add images to list widget
     auto nameIt = names.cbegin();
@@ -172,14 +172,13 @@ void ImageLibraryEditor::updateCellSize()
     m_imageSize = ui->spinLibCellSize->value();
 
     //Get original images
-    std::vector<cv::Mat> originalImages;
+    std::vector<cv::Mat> images;
     for (const auto &image: m_images)
-        originalImages.push_back(image.resizedImage);
+        images.push_back(image.resizedImage);
 
     //Resize images
-    const std::vector<cv::Mat> images =
-        ImageUtility::batchResizeMat(originalImages, m_imageSize, m_imageSize,
-                                     ImageUtility::ResizeType::EXACT, m_progressBar);
+    ImageUtility::batchResizeMat(images, images, m_imageSize, m_imageSize,
+                                 ImageUtility::ResizeType::EXACT, m_progressBar);
 
     //Update image library with new resized images
     auto it = images.cbegin();

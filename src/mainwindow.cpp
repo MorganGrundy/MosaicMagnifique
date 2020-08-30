@@ -489,9 +489,9 @@ void MainWindow::generatePhotomosaic()
     //Resize image library
     std::vector<cv::Mat> library = ui->imageLibraryEditor->getImageLibrary();
     if (library.front().cols != ui->spinCellSize->value())
-        library = ImageUtility::batchResizeMat(library, ui->spinCellSize->value(),
-                                               ui->spinCellSize->value(),
-                                               ImageUtility::ResizeType::EXACT, progressBar);
+        ImageUtility::batchResizeMat(library, library,
+                                     ui->spinCellSize->value(), ui->spinCellSize->value(),
+                                     ImageUtility::ResizeType::EXACT, progressBar);
 
     //Generate Photomosaic
     std::shared_ptr<PhotomosaicGeneratorBase> generator;

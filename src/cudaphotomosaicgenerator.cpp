@@ -173,7 +173,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         if ((step + 1) < m_bestFits.size())
         {
             //Halve cell size
-            resizedLib = ImageUtility::batchResizeMat(resizedLib);
+            ImageUtility::batchResizeMat(resizedLib);
         }
     }
 

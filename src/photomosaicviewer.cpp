@@ -21,6 +21,7 @@
 #include "ui_photomosaicviewer.h"
 
 #include <QFileDialog>
+#include <QErrorMessage>
 #include <QLabel>
 #include <QColorDialog>
 #include <opencv2/imgcodecs.hpp>
@@ -82,7 +83,14 @@ void PhotomosaicViewer::savePhotomosaic()
                                                     "*.jpe *.jp2 *.png *.pbm *.pgm *.ppm "
                                                     "*.pxm *.pnm *.sr *.ras *.tiff *.tif "
                                                     "*.hdr *.pic)");
-    cv::imwrite(filename.toStdString(), m_photomosaic);
+    if (!filename.isNull())
+    {
+        if (!cv::imwrite(filename.toStdString(), m_photomosaic))
+        {
+            QErrorMessage errorMsg(this);
+            errorMsg.showMessage("Failed to save Photomosaic to: " + filename);
+        }
+    }
 }
 
 //Opens colour selector for setting background colour

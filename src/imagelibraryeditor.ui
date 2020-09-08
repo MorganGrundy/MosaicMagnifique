@@ -28,6 +28,12 @@ border-color: rgb(0, 0, 0);
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QPushButton" name="buttonSave">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
+       </property>
        <property name="toolTip">
         <string/>
        </property>
@@ -47,6 +53,12 @@ border-color: rgb(0, 0, 0);
      </item>
      <item>
       <widget class="QPushButton" name="buttonLoad">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
+       </property>
        <property name="statusTip">
         <string>Load an Image Library from .mil</string>
        </property>
@@ -71,13 +83,61 @@ border-color: rgb(0, 0, 0);
        </property>
       </spacer>
      </item>
-     <item>
-      <widget class="QPushButton" name="buttonAdd">
+     <item alignment="Qt::AlignHCenter|Qt::AlignVCenter">
+      <widget class="QComboBox" name="comboCropMode">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="statusTip">
+        <string>Controls how new images are cropped</string>
+       </property>
+       <property name="whatsThis">
+        <string>&lt;html&gt;&lt;head/&gt;
+&lt;body&gt;
+&lt;p&gt;When new Library Images are added they are cropped to be square. This controls how the image is cropped.&lt;/p&gt;
+Modes:
+&lt;ul&gt;
+&lt;li&gt;Center; Crops around the center of the image.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <item>
+        <property name="text">
+         <string>Center</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Other...</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonAdd">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
        </property>
        <property name="statusTip">
         <string>Adds images to Image Library</string>
@@ -92,6 +152,12 @@ border-color: rgb(0, 0, 0);
      </item>
      <item>
       <widget class="QPushButton" name="buttonDelete">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
+       </property>
        <property name="statusTip">
         <string>Deletes selected images from library</string>
        </property>
@@ -116,7 +182,7 @@ border-color: rgb(0, 0, 0);
        </property>
       </spacer>
      </item>
-     <item>
+     <item alignment="Qt::AlignVCenter">
       <widget class="QLabel" name="label">
        <property name="statusTip">
         <string>Width and height of each image in pixels</string>
@@ -131,7 +197,7 @@ border-color: rgb(0, 0, 0);
        <property name="minimumSize">
         <size>
          <width>0</width>
-         <height>0</height>
+         <height>24</height>
         </size>
        </property>
        <property name="statusTip">
@@ -172,6 +238,12 @@ border: 1px solid dimgray;
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
        </property>
        <property name="statusTip">
         <string>Applies cell size to Library Images</string>

@@ -49,6 +49,8 @@ public:
     const std::vector<cv::Mat> getImageLibrary() const;
 
 public slots:
+    //Changes the cropping mode used for library images
+    void changeCropMode(const QString &t_mode);
     //Loads images
     void addImages();
     //Deletes selected images
@@ -66,6 +68,9 @@ signals:
     void imageLibraryChanged(size_t t_newSize);
 
 private:
+    //Represents different image cropping modes
+    enum class CropMode {Center};
+
     //Stores library image in original size, resized, and it's relevant QListWidgetItem
     struct LibraryImage
     {
@@ -86,6 +91,8 @@ private:
 
     Ui::ImageLibraryEditor *ui;
     QProgressBar *m_progressBar;
+
+    CropMode m_cropMode;
 
     int m_imageSize;
 

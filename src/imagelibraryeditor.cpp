@@ -30,7 +30,7 @@
 
 ImageLibraryEditor::ImageLibraryEditor(QWidget *parent) :
     QWidget(parent),
-    ui{new Ui::ImageLibraryEditor}, m_progressBar{nullptr}
+    ui{new Ui::ImageLibraryEditor}, m_progressBar{nullptr}, m_cropMode{CropMode::Center}
 {
     ui->setupUi(this);
 
@@ -41,6 +41,8 @@ ImageLibraryEditor::ImageLibraryEditor(QWidget *parent) :
     ui->spinLibCellSize->setValue(m_imageSize);
 
     //Connects image library tab buttons to appropriate methods
+    connect(ui->comboCropMode, &QComboBox::currentTextChanged,
+            this, &ImageLibraryEditor::changeCropMode);
     connect(ui->buttonAdd, &QPushButton::released, this, &ImageLibraryEditor::addImages);
     connect(ui->buttonDelete, &QPushButton::released, this, &ImageLibraryEditor::deleteImages);
     connect(ui->buttonLibCellSize, &QPushButton::released,
@@ -75,6 +77,15 @@ const std::vector<cv::Mat> ImageLibraryEditor::getImageLibrary() const
         imageLibrary.push_back(image.resizedImage);
 
     return imageLibrary;
+}
+
+//Changes the cropping mode used for library images
+void ImageLibraryEditor::changeCropMode(const QString &t_mode)
+{
+    if (t_mode == "Center")
+        m_cropMode = CropMode::Center;
+    else
+        qDebug() << "ERROR: ImageLibraryEditor; Crop mode" << t_mode << "was not recognised";
 }
 
 //Loads images

@@ -387,9 +387,11 @@ bool ImageLibraryEditor::squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out)
     //Find shortest side, use as size of cropped image
     const int cropSize = std::min(t_in.rows,  t_in.cols);
 
-    //Stores current best crop of image, and it's feature count
+    //Stores current best crop of image, it's feature count
     cv::Rect bestCrop;
     size_t bestCropFeatureCount = 0;
+    //Distance between crop center and keypoint average
+    double bestCropDistFromCenter = 0;
     //Find crop with highest feature count
     for (int cropOffset = 0; cropOffset + cropSize < std::max(t_in.rows, t_in.cols); ++cropOffset)
     {
@@ -397,18 +399,31 @@ bool ImageLibraryEditor::squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out)
                                                     : cv::Point(cropOffset, 0),
                             cv::Size(cropSize, cropSize));
 
+        //Calculate average position of all keypoints in crop
+        cv::Point2f keypointAverage(0, 0);
         //Count features in crop
         size_t cropFeatureCount = 0;
         for (auto keyPoint : keyPoints)
         {
             if (crop.contains(keyPoint.pt))
+            {
+                keypointAverage += keyPoint.pt;
                 ++cropFeatureCount;
+            }
         }
+        keypointAverage = cv::Point2f(keypointAverage.x / cropFeatureCount,
+                                      keypointAverage.y / cropFeatureCount);
+        //Calculate distance between keypoint average and crop center
+        const double distFromCenter = std::sqrt(
+            std::pow(keypointAverage.x - (crop.x + crop.width / 2), 2) +
+            std::pow(keypointAverage.y - (crop.y + crop.height / 2), 2));
 
-        //If more features than current best replace
-        if (cropFeatureCount > bestCropFeatureCount)
+        //New best crop if more features, or equal features but average closer to center
+        if (cropFeatureCount > bestCropFeatureCount ||
+            (cropFeatureCount == bestCropFeatureCount && distFromCenter < bestCropDistFromCenter))
         {
             bestCropFeatureCount = cropFeatureCount;
+            bestCropDistFromCenter = distFromCenter;
             bestCrop = crop;
         }
     }

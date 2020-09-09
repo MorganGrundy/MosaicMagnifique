@@ -111,13 +111,15 @@ CONFIG( debug, debug|release ) {
 	LIBS += -L$$(OPENCV_DIR)/lib \
 	-lopencv_core440d \
 	-lopencv_imgcodecs440d \
-	-lopencv_imgproc440d
+	-lopencv_imgproc440d \
+	-lopencv_features2d440d
 } else {
 	# release
 	LIBS += -L$$(OPENCV_DIR)/lib \
 	-lopencv_core440 \
 	-lopencv_imgcodecs440 \
-	-lopencv_imgproc440
+	-lopencv_imgproc440 \
+	-lopencv_features2d440
 }
 
 CUDA {

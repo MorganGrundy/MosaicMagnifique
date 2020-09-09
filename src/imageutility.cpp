@@ -159,7 +159,7 @@ void ImageUtility::imageToSquare(cv::Mat& t_img, const SquareMethod t_method)
     }
     else if (t_method == SquareMethod::PAD)
     {
-        int newSize = (t_img.cols > t_img.rows) ? t_img.cols : t_img.rows;
+        const int newSize = std::max(t_img.cols, t_img.rows);
         cv::Mat result(newSize, newSize, t_img.type());
         cv::copyMakeBorder(t_img, result, 0, newSize - t_img.rows, 0, newSize - t_img.cols,
                            cv::BORDER_CONSTANT, cv::Scalar(0));

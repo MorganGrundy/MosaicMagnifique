@@ -24,6 +24,7 @@
 #include <QListWidgetItem>
 #include <QProgressBar>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/features2d.hpp>
 
 #include "imageutility.h"
 
@@ -69,7 +70,11 @@ signals:
 
 private:
     //Represents different image cropping modes
-    enum class CropMode {Center};
+    enum class CropMode {Center, Features};
+
+    //Crop image to square, such that maximum number of features in crop
+    //Returns false if no features found
+    bool squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out);
 
     //Stores library image in original size, resized, and it's relevant QListWidgetItem
     struct LibraryImage
@@ -92,10 +97,16 @@ private:
     Ui::ImageLibraryEditor *ui;
     QProgressBar *m_progressBar;
 
+    //Current crop mode for new images
     CropMode m_cropMode;
 
+    //Pointer to feature detector
+    std::shared_ptr<cv::FastFeatureDetector> m_featureDetector;
+
+    //Size of library images
     int m_imageSize;
 
+    //Stores library images
     std::vector<LibraryImage> m_images;
 };
 

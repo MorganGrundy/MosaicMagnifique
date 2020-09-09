@@ -49,6 +49,9 @@ ImageLibraryEditor::ImageLibraryEditor(QWidget *parent) :
             this, &ImageLibraryEditor::updateCellSize);
     connect(ui->buttonSave, &QPushButton::released, this, &ImageLibraryEditor::saveLibrary);
     connect(ui->buttonLoad, &QPushButton::released, this, &ImageLibraryEditor::loadLibrary);
+
+    //Create feature detector
+    m_featureDetector = cv::FastFeatureDetector::create();
 }
 
 ImageLibraryEditor::~ImageLibraryEditor()
@@ -84,8 +87,10 @@ void ImageLibraryEditor::changeCropMode(const QString &t_mode)
 {
     if (t_mode == "Center")
         m_cropMode = CropMode::Center;
+    else if (t_mode == "Features")
+        m_cropMode = CropMode::Features;
     else
-        qDebug() << "ERROR: ImageLibraryEditor; Crop mode" << t_mode << "was not recognised";
+        qDebug() << Q_FUNC_INFO << "Crop mode" << t_mode << "was not recognised";
 }
 
 //Loads images
@@ -116,12 +121,19 @@ void ImageLibraryEditor::addImages()
         cv::Mat image = cv::imread(file.toStdString());
         if (image.empty())
         {
-            qDebug() << "Could not open or find the image";
+            qDebug() << Q_FUNC_INFO << "Could not open or find the image.";
             continue;
         }
 
         //Square image
-        ImageUtility::imageToSquare(image, ImageUtility::SquareMethod::CROP);
+        bool imageWasSquared = false;
+        if (m_cropMode == CropMode::Features)
+            imageWasSquared = squareToFeatures(image, image);
+
+        //Center crop also used as fallback if other modes fail
+        if (!imageWasSquared)
+            ImageUtility::imageToSquare(image, ImageUtility::SquareMethod::CROP);
+
         originalImages.push_back(image);
 
         //Extracts filename and extension from full path
@@ -343,4 +355,65 @@ void ImageLibraryEditor::loadLibrary()
             emit imageLibraryChanged(m_images.size());
         }
     }
+}
+
+//Crop image to square, such that maximum number of features in crop
+//Returns false if no features found
+bool ImageLibraryEditor::squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out)
+{
+    //Check for empty image
+    if (t_in.empty())
+    {
+        qDebug() << Q_FUNC_INFO << "input image was empty.";
+        return false;
+    }
+
+    //Check if image already square
+    if (t_in.rows == t_in.cols)
+    {
+        t_out = t_in;
+        return true;
+    }
+
+    //Detect features
+    std::vector<cv::KeyPoint> keyPoints;
+    m_featureDetector->detect(t_in, keyPoints);
+    if (keyPoints.empty())
+    {
+        qDebug() << Q_FUNC_INFO << "detected no features in input image.";
+        return false;
+    }
+
+    //Find shortest side, use as size of cropped image
+    const int cropSize = std::min(t_in.rows,  t_in.cols);
+
+    //Stores current best crop of image, and it's feature count
+    cv::Rect bestCrop;
+    size_t bestCropFeatureCount = 0;
+    //Find crop with highest feature count
+    for (int cropOffset = 0; cropOffset + cropSize < std::max(t_in.rows, t_in.cols); ++cropOffset)
+    {
+        const cv::Rect crop((t_in.rows > t_in.cols) ? cv::Point(0, cropOffset)
+                                                    : cv::Point(cropOffset, 0),
+                            cv::Size(cropSize, cropSize));
+
+        //Count features in crop
+        size_t cropFeatureCount = 0;
+        for (auto keyPoint : keyPoints)
+        {
+            if (crop.contains(keyPoint.pt))
+                ++cropFeatureCount;
+        }
+
+        //If more features than current best replace
+        if (cropFeatureCount > bestCropFeatureCount)
+        {
+            bestCropFeatureCount = cropFeatureCount;
+            bestCrop = crop;
+        }
+    }
+
+    //Copy best crop of image to output
+    t_out = t_in(bestCrop);
+    return true;
 }

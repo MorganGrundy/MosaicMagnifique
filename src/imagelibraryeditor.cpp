@@ -24,6 +24,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 
 #include "imageutility.h"
 #include "cellshape.h"
@@ -91,6 +92,41 @@ void ImageLibraryEditor::changeCropMode(const QString &t_mode)
         m_cropMode = CropMode::Features;
     else if (t_mode == "Entropy")
         m_cropMode = CropMode::Entropy;
+    else if (t_mode == "Cascade Classifier")
+    {
+        QDir defaultDir = QDir::current();
+        defaultDir.cdUp();
+        defaultDir.cd("CascadeClassifier");
+        //Prompt user for cascade classifier file
+        QString filename = QFileDialog::getOpenFileName(this, tr("Select cascade classifier file"),
+                                                        defaultDir.path() +
+                                                            "/haarcascade_frontalface_default.xml",
+                                                        "Cascade Classifier (*.xml)");
+
+        //Load cascade classifier file
+        if (!filename.isNull())
+        {
+            if (!m_cascadeClassifier.load(filename.toStdString()))
+            {
+                //Failed to load, reset crop mode
+                ui->comboCropMode->setCurrentIndex(0);
+                QMessageBox msgBox;
+                msgBox.setText(tr("The cascade classifier \"") + filename +
+                               tr("\" failed to load"));
+                msgBox.exec();
+                return;
+            }
+        }
+        else
+        {
+            //User exited prompt, reset crop mode
+            ui->comboCropMode->setCurrentIndex(0);
+            return;
+        }
+
+        //Cascade classifier successfully loaded
+        m_cropMode = CropMode::CascadeClassifier;
+    }
     else
         qDebug() << Q_FUNC_INFO << "Crop mode" << t_mode << "was not recognised";
 }
@@ -133,6 +169,8 @@ void ImageLibraryEditor::addImages()
             imageWasSquared = squareToFeatures(image, image);
         else if (m_cropMode == CropMode::Entropy)
             imageWasSquared = squareToEntropy(image, image);
+        else if (m_cropMode == CropMode::CascadeClassifier)
+            imageWasSquared = squareToCascadeClassifier(image, image);
 
         //Center crop also used as fallback if other modes fail
         if (!imageWasSquared)
@@ -481,6 +519,100 @@ bool ImageLibraryEditor::squareToEntropy(const cv::Mat &t_in, cv::Mat &t_out)
         }
     }
 
+    t_out = t_in(bestCrop);
+    return true;
+}
+
+//Crop image to square, such that maximum number of objects in crop
+bool ImageLibraryEditor::squareToCascadeClassifier(const cv::Mat &t_in, cv::Mat &t_out)
+{
+    //Check for empty image
+    if (t_in.empty())
+    {
+        qDebug() << Q_FUNC_INFO << "input image was empty.";
+        return false;
+    }
+
+    //Check if image already square
+    if (t_in.rows == t_in.cols)
+    {
+        t_out = t_in;
+        return true;
+    }
+
+    //Check that cascade classifier is loaded
+    if (m_cascadeClassifier.empty())
+    {
+        qDebug() << Q_FUNC_INFO << "Cascade classifier is empty.";
+        return false;
+    }
+
+    //Find shortest side, use as size of cropped image
+    const int cropSize = std::min(t_in.rows,  t_in.cols);
+
+    //Convert image to grayscale
+    cv::Mat gray;
+    cv::cvtColor(t_in, gray, cv::COLOR_BGR2GRAY);
+    cv::equalizeHist(gray, gray);
+
+    //Detect objects
+    std::vector<cv::Rect> objects;
+    m_cascadeClassifier.detectMultiScale(gray, objects);
+    if (objects.empty())
+    {
+        qDebug() << Q_FUNC_INFO << "detected no objects in input image.";
+        return false;
+    }
+
+    //Stores current best crop of image, and it's badness value
+    cv::Rect bestCrop;
+    double bestCropBadnessValue = std::numeric_limits<double>::max();
+    //Find crop with lowest badness value
+    for (int cropOffset = 0; cropOffset + cropSize < std::max(t_in.rows, t_in.cols);
+         cropOffset += 8)
+    {
+        const cv::Rect crop((t_in.rows > t_in.cols) ? cv::Point(0, cropOffset)
+                                                    : cv::Point(cropOffset, 0),
+                            cv::Size(cropSize, cropSize));
+
+        //Calculate how well objects fit in crop
+        double cropBadnessValue = (objects.empty()) ? std::numeric_limits<double>::max() : 0;
+        for (auto object : objects)
+        {
+            //Calculate rect of object visible in crop
+            const cv::Rect objectVisible = crop & object;
+
+            //Calculate distance between object and crop center
+            const cv::Point objectCenter(object.x + object.width / 2, object.y + object.height / 2);
+            const cv::Point distFromCenter(crop.x + crop.width / 2 - objectCenter.x,
+                                           crop.y + crop.height / 2 - objectCenter.y);
+
+            //Calculate how well object fits in crop, scales with distance from center
+            double objectBadnessValue = std::sqrt(std::pow(distFromCenter.x, 2) +
+                                                  std::pow(distFromCenter.y, 2));
+
+            //Increase badness value if object not fully visible in crop
+            if (objectVisible.area() < object.area())
+            {
+                //Increase badness value even more if object not visible at all
+                if (objectVisible.area() > 0)
+                    objectBadnessValue *= 5.0 * (object.area() / objectVisible.area());
+                else
+                    objectBadnessValue *= 10.0 * object.area();
+            }
+
+            cropBadnessValue += objectBadnessValue;
+        }
+
+        //If badness value less than current best then new best crop
+        if (cropBadnessValue < bestCropBadnessValue)
+        {
+            bestCropBadnessValue = cropBadnessValue;
+            bestCrop = crop;
+        }
+    }
+
+    //Copy best crop of image to output
     t_out = t_in(bestCrop);
     return true;
 }

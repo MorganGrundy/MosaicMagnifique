@@ -25,6 +25,7 @@
 #include <QProgressBar>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/features2d.hpp>
+#include <opencv2/objdetect.hpp>
 
 #include "imageutility.h"
 
@@ -70,7 +71,7 @@ signals:
 
 private:
     //Represents different image cropping modes
-    enum class CropMode {Center, Features, Entropy};
+    enum class CropMode {Center, Features, Entropy, CascadeClassifier};
 
     //Crop image to square, such that maximum number of features in crop
     //Returns false if no features found
@@ -78,6 +79,9 @@ private:
 
     //Crop image to square, such that maximum entropy in crop
     bool squareToEntropy(const cv::Mat &t_in, cv::Mat &t_out);
+
+    //Crop image to square, such that maximum number of objects in crop
+    bool squareToCascadeClassifier(const cv::Mat &t_in, cv::Mat &t_out);
 
     //Stores library image in original size, resized, and it's relevant QListWidgetItem
     struct LibraryImage
@@ -105,6 +109,9 @@ private:
 
     //Pointer to feature detector
     std::shared_ptr<cv::FastFeatureDetector> m_featureDetector;
+
+    //Cascade classifier for detecting faces, or other objects
+    cv::CascadeClassifier m_cascadeClassifier;
 
     //Size of library images
     int m_imageSize;

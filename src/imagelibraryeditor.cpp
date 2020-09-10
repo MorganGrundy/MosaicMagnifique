@@ -397,7 +397,8 @@ bool ImageLibraryEditor::squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out)
     //Distance between crop center and keypoint average
     double bestCropDistFromCenter = 0;
     //Find crop with highest feature count
-    for (int cropOffset = 0; cropOffset + cropSize < std::max(t_in.rows, t_in.cols); ++cropOffset)
+    for (int cropOffset = 0; cropOffset + cropSize < std::max(t_in.rows, t_in.cols);
+         cropOffset += 4)
     {
         const cv::Rect crop((t_in.rows > t_in.cols) ? cv::Point(0, cropOffset)
                                                     : cv::Point(cropOffset, 0),

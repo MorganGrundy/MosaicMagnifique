@@ -173,7 +173,7 @@ GridGenerator::findCellState(const CellGroup &t_cells, const cv::Mat &t_mainImag
                                          ImageUtility::ResizeType::EXCLUSIVE);
 
         //If cell entropy exceeds threshold return true
-        if (GridUtility::calculateEntropy(mask, cell) >= GridUtility::MAX_ENTROPY * 0.7)
+        if (ImageUtility::calculateEntropy(cell, mask) >= ImageUtility::MAX_ENTROPY * 0.7)
             return {std::nullopt, true};
     }
 

@@ -24,6 +24,7 @@
 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include <QDebug>
 
 #ifdef OPENCV_W_CUDA
 #include <opencv2/cudawarping.hpp>
@@ -227,6 +228,62 @@ void ImageUtility::addAlphaChannel(std::vector<cv::Mat> &t_images)
         //Merge image channels
         cv::merge(channels, image);
     }
+}
+
+//Calculates entropy of an image, can take a mask image
+double ImageUtility::calculateEntropy(const cv::Mat &t_in, const cv::Mat &t_mask)
+{
+    if (t_in.empty())
+        return 0;
+
+    if (!t_mask.empty())
+    {
+        if (t_mask.rows != t_in.rows || t_mask.cols != t_in.cols)
+        {
+            qDebug() << Q_FUNC_INFO << "Mask size differs from image";
+            return 0;
+        }
+        else if (t_mask.channels() != 1)
+        {
+            qDebug() << Q_FUNC_INFO << "Mask should be single channel, was" << t_mask.channels();
+            return 0;
+        }
+    }
+
+    //Convert image to grayscale
+    cv::Mat grayImage;
+    cv::cvtColor(t_in, grayImage, cv::COLOR_BGR2GRAY);
+
+    //Calculate histogram in cell shape
+    size_t pixelCount = 0;
+    std::vector<size_t> histogram(256, 0);
+
+    const uchar *p_im, *p_mask;
+    for (int row = 0; row < grayImage.rows; ++row)
+    {
+        p_im = grayImage.ptr<uchar>(row);
+        if (!t_mask.empty())
+            p_mask = t_mask.ptr<uchar>(row);
+        for (int col = 0; col < grayImage.cols; ++col)
+        {
+            if (t_mask.empty() || p_mask[col] != 0)
+            {
+                ++histogram.at(p_im[col]);
+                ++pixelCount;
+            }
+        }
+    }
+
+    //Calculate entropy
+    double entropy = 0;
+    for (auto value: histogram)
+    {
+        const double probability = value / static_cast<double>(pixelCount);
+        if (probability > 0)
+            entropy -= probability * std::log2(probability);
+    }
+
+    return entropy;
 }
 
 //Outputs a OpenCV mat to a QDataStream

@@ -72,6 +72,11 @@ namespace ImageUtility
 
     //Adds an alpha channel to the given images
     void addAlphaChannel(std::vector<cv::Mat> &t_images);
+
+    //Maximum possible entropy value
+    [[maybe_unused]] const double MAX_ENTROPY = 8.0;
+    //Calculates entropy of an image, can take a mask image
+    double calculateEntropy(const cv::Mat &t_in, const cv::Mat &t_mask = cv::Mat());
 };
 
 //Outputs a OpenCV mat to a QDataStream

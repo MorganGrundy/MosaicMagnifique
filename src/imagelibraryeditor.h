@@ -70,11 +70,14 @@ signals:
 
 private:
     //Represents different image cropping modes
-    enum class CropMode {Center, Features};
+    enum class CropMode {Center, Features, Entropy};
 
     //Crop image to square, such that maximum number of features in crop
     //Returns false if no features found
     bool squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out);
+
+    //Crop image to square, such that maximum entropy in crop
+    bool squareToEntropy(const cv::Mat &t_in, cv::Mat &t_out);
 
     //Stores library image in original size, resized, and it's relevant QListWidgetItem
     struct LibraryImage

@@ -101,7 +101,7 @@ border-color: rgb(0, 0, 0);
         <string>Controls how new images are cropped</string>
        </property>
        <property name="whatsThis">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When new Library Images are added they are cropped to be square. This controls how the image is cropped.&lt;/p&gt;&lt;p&gt;Modes: &lt;/p&gt;&lt;ul style=&quot;margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; -qt-list-indent: 1;&quot;&gt;&lt;li style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Center; Crops around the center of the image.&lt;/li&gt;&lt;li style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Features; Detects features in image and crops such that maximum number of features visible.&lt;/li&gt;&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When new Library Images are added they are cropped to be square. This controls how the image is cropped.&lt;/p&gt;&lt;p&gt;Modes: &lt;/p&gt;&lt;ul style=&quot;margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; -qt-list-indent: 1;&quot;&gt;&lt;li style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Center; Crops around the center of the image.&lt;/li&gt;&lt;li style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Features; Detects corners in image and crops such that maximum number of corners visible.&lt;/li&gt;&lt;li style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Entropy; Crops image such that entropy is maximised (entropy is higher when more colours are used).&lt;/li&gt;&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="styleSheet">
         <string notr="true"/>
@@ -114,6 +114,11 @@ border-color: rgb(0, 0, 0);
        <item>
         <property name="text">
          <string>Features</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Entropy</string>
         </property>
        </item>
       </widget>

@@ -57,11 +57,6 @@ namespace GridUtility
     //Returns the flip state of the given cell at given grid position
     FlipState getFlipStateAt(const CellShape &t_cellShape, const int t_x, const int t_y,
                              const int t_pad);
-
-    //Maximum possible entropy value
-    [[maybe_unused]] const double MAX_ENTROPY = 8.0;
-    //Returns the entropy of the given image in the given mask
-    double calculateEntropy(const cv::Mat &t_mask, const cv::Mat &t_image);
 };
 
 #endif // CELLGRID_H

@@ -89,6 +89,8 @@ void ImageLibraryEditor::changeCropMode(const QString &t_mode)
         m_cropMode = CropMode::Center;
     else if (t_mode == "Features")
         m_cropMode = CropMode::Features;
+    else if (t_mode == "Entropy")
+        m_cropMode = CropMode::Entropy;
     else
         qDebug() << Q_FUNC_INFO << "Crop mode" << t_mode << "was not recognised";
 }
@@ -129,6 +131,8 @@ void ImageLibraryEditor::addImages()
         bool imageWasSquared = false;
         if (m_cropMode == CropMode::Features)
             imageWasSquared = squareToFeatures(image, image);
+        else if (m_cropMode == CropMode::Entropy)
+            imageWasSquared = squareToEntropy(image, image);
 
         //Center crop also used as fallback if other modes fail
         if (!imageWasSquared)
@@ -387,7 +391,7 @@ bool ImageLibraryEditor::squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out)
     //Find shortest side, use as size of cropped image
     const int cropSize = std::min(t_in.rows,  t_in.cols);
 
-    //Stores current best crop of image, it's feature count
+    //Stores current best crop of image and it's feature count
     cv::Rect bestCrop;
     size_t bestCropFeatureCount = 0;
     //Distance between crop center and keypoint average
@@ -418,7 +422,7 @@ bool ImageLibraryEditor::squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out)
             std::pow(keypointAverage.x - (crop.x + crop.width / 2), 2) +
             std::pow(keypointAverage.y - (crop.y + crop.height / 2), 2));
 
-        //New best crop if more features, or equal features but average closer to center
+        //New best crop if more features, or equal features but average closer to crop center
         if (cropFeatureCount > bestCropFeatureCount ||
             (cropFeatureCount == bestCropFeatureCount && distFromCenter < bestCropDistFromCenter))
         {
@@ -429,6 +433,53 @@ bool ImageLibraryEditor::squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out)
     }
 
     //Copy best crop of image to output
+    t_out = t_in(bestCrop);
+    return true;
+}
+
+//Crop image to square, such that maximum entropy in crop
+bool ImageLibraryEditor::squareToEntropy(const cv::Mat &t_in, cv::Mat &t_out)
+{
+    //Check for empty image
+    if (t_in.empty())
+    {
+        qDebug() << Q_FUNC_INFO << "input image was empty.";
+        return false;
+    }
+
+    //Check if image already square
+    if (t_in.rows == t_in.cols)
+    {
+        t_out = t_in;
+        return true;
+    }
+
+    //Find shortest side, use as size of cropped image
+    const int cropSize = std::min(t_in.rows,  t_in.cols);
+    //Checking every possible crop takes a long time, so only check some
+    const int cropStepSize = cropSize / 16;
+
+    //Stores current best crop of image and it's entropy value
+    cv::Rect bestCrop;
+    double bestCropEntropy = 0;
+    //Find crop with highest entropy
+    for (int cropOffset = 0; cropOffset + cropSize < std::max(t_in.rows, t_in.cols);
+         cropOffset += cropStepSize)
+    {
+        const cv::Rect crop((t_in.rows > t_in.cols) ? cv::Point(0, cropOffset)
+                                                    : cv::Point(cropOffset, 0),
+                            cv::Size(cropSize, cropSize));
+
+        double cropEntropy = ImageUtility::calculateEntropy(t_in(crop));
+
+        //New best crop if higher entropy
+        if (cropEntropy > bestCropEntropy)
+        {
+            bestCropEntropy = cropEntropy;
+            bestCrop = crop;
+        }
+    }
+
     t_out = t_in(bestCrop);
     return true;
 }

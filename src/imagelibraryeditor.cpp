@@ -28,6 +28,7 @@
 
 #include "imageutility.h"
 #include "cellshape.h"
+#include "imagesquarer.h"
 
 ImageLibraryEditor::ImageLibraryEditor(QWidget *parent) :
     QWidget(parent),
@@ -53,6 +54,10 @@ ImageLibraryEditor::ImageLibraryEditor(QWidget *parent) :
 
     //Create feature detector
     m_featureDetector = cv::FastFeatureDetector::create();
+
+    //Create manual image squarer
+    m_imageSquarer = new ImageSquarer(this);
+    m_imageSquarer->setWindowModality(Qt::WindowModality::ApplicationModal);
 }
 
 ImageLibraryEditor::~ImageLibraryEditor()
@@ -86,7 +91,9 @@ const std::vector<cv::Mat> ImageLibraryEditor::getImageLibrary() const
 //Changes the cropping mode used for library images
 void ImageLibraryEditor::changeCropMode(const QString &t_mode)
 {
-    if (t_mode == "Center")
+    if (t_mode == "Manual")
+        m_cropMode = CropMode::Manual;
+    else if (t_mode == "Center")
         m_cropMode = CropMode::Center;
     else if (t_mode == "Features")
         m_cropMode = CropMode::Features;
@@ -165,7 +172,41 @@ void ImageLibraryEditor::addImages()
 
         //Square image
         bool imageWasSquared = false;
-        if (m_cropMode == CropMode::Features)
+        if (m_cropMode == CropMode::Manual)
+        {
+            m_imageSquarer->show(image);
+
+            //Wait till image squarer returns crop or cancel
+            QEventLoop loop;
+            QMetaObject::Connection connCrop, connCancel;
+            connCrop = connect(m_imageSquarer, &ImageSquarer::imageCrop,
+                               [&image, &loop](const cv::Rect &t_crop)
+                    {
+                        image = image(t_crop);
+                        loop.quit();
+                    });
+            bool cropWasCancelled = false;
+            connect(m_imageSquarer, &ImageSquarer::cancelCrop, [&loop, &cropWasCancelled]()
+                    {
+                        cropWasCancelled = true;
+                        loop.quit();
+                    });
+            loop.exec();
+
+            //Remove connections after loop exits
+            disconnect(connCrop);
+            disconnect(connCancel);
+
+            if (cropWasCancelled)
+            {
+                m_imageSquarer->hide();
+                m_progressBar->setVisible(false);
+                return;
+            }
+
+            imageWasSquared = true;
+        }
+        else if (m_cropMode == CropMode::Features)
             imageWasSquared = squareToFeatures(image, image);
         else if (m_cropMode == CropMode::Entropy)
             imageWasSquared = squareToEntropy(image, image);
@@ -176,14 +217,18 @@ void ImageLibraryEditor::addImages()
         if (!imageWasSquared)
             ImageUtility::imageToSquare(image, ImageUtility::SquareMethod::CROP);
 
-        originalImages.push_back(image);
+        if (!image.empty())
+        {
+            originalImages.push_back(image);
 
-        //Extracts filename and extension from full path
-        names.push_back(file.right(file.size() - file.lastIndexOf('/') - 1));
+            //Extracts filename and extension from full path
+            names.push_back(file.right(file.size() - file.lastIndexOf('/') - 1));
+        }
 
         if (m_progressBar != nullptr)
             m_progressBar->setValue(m_progressBar->value() + 1);
     }
+    m_imageSquarer->hide();
 
     //Resize images to current library size
     ImageUtility::batchResizeMat(originalImages, resizedImages, m_imageSize, m_imageSize,

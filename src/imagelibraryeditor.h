@@ -28,6 +28,7 @@
 #include <opencv2/objdetect.hpp>
 
 #include "imageutility.h"
+#include "imagesquarer.h"
 
 namespace Ui {
 class ImageLibraryEditor;
@@ -71,7 +72,7 @@ signals:
 
 private:
     //Represents different image cropping modes
-    enum class CropMode {Center, Features, Entropy, CascadeClassifier};
+    enum class CropMode {Manual, Center, Features, Entropy, CascadeClassifier};
 
     //Crop image to square, such that maximum number of features in crop
     //Returns false if no features found
@@ -103,6 +104,8 @@ private:
 
     Ui::ImageLibraryEditor *ui;
     QProgressBar *m_progressBar;
+    ImageSquarer *m_imageSquarer;
+
 
     //Current crop mode for new images
     CropMode m_cropMode;

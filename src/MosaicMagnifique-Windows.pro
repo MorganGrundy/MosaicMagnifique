@@ -54,6 +54,7 @@ SOURCES += \
 	cellshapeeditor.cpp \
 	colourvisualisation.cpp \
 	cpuphotomosaicgenerator.cpp \
+	cropgraphicsobject.cpp \
 	customgraphicsview.cpp \
 	gridbounds.cpp \
 	grideditor.cpp \
@@ -64,6 +65,7 @@ SOURCES += \
 	halvingspinbox.cpp \
 	imagehistogramcompare.cpp \
 	imagelibraryeditor.cpp \
+	imagesquarer.cpp \
 	imageutility.cpp \
 	main.cpp \
 	mainwindow.cpp \
@@ -77,6 +79,7 @@ HEADERS += \
 	cellshapeeditor.h \
 	colourvisualisation.h \
 	cpuphotomosaicgenerator.h \
+	cropgraphicsobject.h \
 	customgraphicsview.h \
 	gridbounds.h \
 	grideditor.h \
@@ -87,6 +90,7 @@ HEADERS += \
 	halvingspinbox.h \
 	imagehistogramcompare.h \
 	imagelibraryeditor.h \
+	imagesquarer.h \
 	imageutility.h \
 	mainwindow.h \
 	photomosaicgeneratorbase.h \
@@ -98,6 +102,7 @@ FORMS += \
 	colourvisualisation.ui \
 	grideditor.ui \
 	imagelibraryeditor.ui \
+	imagesquarer.ui \
 	mainwindow.ui \
 	photomosaicviewer.ui
 

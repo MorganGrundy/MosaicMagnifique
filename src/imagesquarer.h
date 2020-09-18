@@ -33,7 +33,7 @@ public:
     bool squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out);
 
     //Crop image to square, such that maximum entropy in crop
-    bool squareToEntropy(const cv::Mat &t_in, cv::Mat &t_out);
+    static bool squareToEntropy(const cv::Mat &t_in, cv::Mat &t_out);
 
     //Crop image to square, such that maximum number of objects in crop
     bool squareToCascadeClassifier(const cv::Mat &t_in, cv::Mat &t_out);

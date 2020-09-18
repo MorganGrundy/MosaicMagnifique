@@ -171,33 +171,10 @@ void ImageLibraryEditor::addImages()
         bool imageWasSquared = false;
         if (m_cropMode == CropMode::Manual)
         {
-            m_imageSquarer->show(image);
-
-            //Wait till image squarer returns crop or cancel
-            QEventLoop loop;
-            QMetaObject::Connection connCrop, connCancel;
-            connCrop = connect(m_imageSquarer, &ImageSquarer::imageCrop,
-                               [&image, &loop](const cv::Rect &t_crop)
-                    {
-                        image = image(t_crop);
-                        loop.quit();
-                    });
-            bool cropWasCancelled = false;
-            connect(m_imageSquarer, &ImageSquarer::cancelCrop, [&loop, &cropWasCancelled]()
-                    {
-                        cropWasCancelled = true;
-                        loop.quit();
-                    });
-            loop.exec();
-
-            //Remove connections after loop exits
-            disconnect(connCrop);
-            disconnect(connCancel);
-
-            //Cancel adding images
-            if (cropWasCancelled)
+            //Allow user to manually crop image
+            if (!m_imageSquarer->squareManual(image, image))
             {
-                m_imageSquarer->hide();
+                //Image squarer window was closed, cancel adding images
                 m_progressBar->setVisible(false);
                 return;
             }

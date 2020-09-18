@@ -21,8 +21,9 @@ public:
     explicit ImageSquarer(QWidget *parent = nullptr);
     ~ImageSquarer();
 
-    //Show given image for cropping
-    void show(const cv::Mat &t_image);
+    //Allows user to crop input image
+    //Return false if window was closed
+    bool squareManual(const cv::Mat &t_in, cv::Mat &t_out);
 
     //Clears scene
     void clear();
@@ -45,17 +46,15 @@ public slots:
     void cropCurrentImage();
     //Skip the current image
     void skipCurrentImage();
-    //Cancel cropping of images
-    void cancelCurrentImage();
 
 signals:
     //Sends image crop
     void imageCrop(const cv::Rect &t_crop);
-    //Sent when user cancels crop
-    void cancelCrop();
+    //Sent when user closes window
+    void windowClosed();
 
 protected:
-    //Triggers cancel crop
+    //Triggers close signal
     void closeEvent(QCloseEvent *event) override;
 
 private:

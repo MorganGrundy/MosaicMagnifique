@@ -52,6 +52,7 @@ SOURCES += \
 	cellgroup.cpp \
 	cellshape.cpp \
 	cellshapeeditor.cpp \
+	colourdifference.cpp \
 	colourvisualisation.cpp \
 	cpuphotomosaicgenerator.cpp \
 	cropgraphicsobject.cpp \
@@ -77,6 +78,7 @@ HEADERS += \
 	cellgroup.h \
 	cellshape.h \
 	cellshapeeditor.h \
+	colourdifference.h \
 	colourvisualisation.h \
 	cpuphotomosaicgenerator.h \
 	cropgraphicsobject.h \

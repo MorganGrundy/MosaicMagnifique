@@ -21,6 +21,8 @@
 
 #include <QDebug>
 
+#include "colourdifference.h"
+
 CPUPhotomosaicGenerator::CPUPhotomosaicGenerator(QWidget *t_parent)
     : PhotomosaicGeneratorBase{t_parent} {}
 
@@ -110,23 +112,57 @@ CPUPhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape,
     //Calculate repeat value of each library image in repeat range
     const std::map<size_t, int> repeats = calculateRepeats(t_grid, x + t_pad, y + t_pad);
 
-    //Find cell best fit
-    int index = -1;
-    if (m_mode == Mode::RGB_EUCLIDEAN || m_mode == Mode::CIE76)
-        index = findBestFitEuclidean(cell, cellMask, t_lib, repeats, cellBounds);
-    else if (m_mode == Mode::CIEDE2000)
-        index = findBestFitCIEDE2000(cell, cellMask, t_lib, repeats, cellBounds);
-    else
-        qDebug() << Q_FUNC_INFO << "Photomosaic mode is unknown";
+    //Find library image most similar to cell
+    int bestFit = -1;
+    long double bestVariant = std::numeric_limits<long double>::max();
+    for (size_t i = 0; i < t_lib.size(); ++i)
+    {
+        //Calculate difference between cell and library image
+        //Increase difference based on repeating library images in range
+        const auto it = repeats.find(i);
+        double variant = (it != repeats.end()) ? it->second : 0;
+
+        //Sum difference of corresponding pixels in cell and library image
+        const cv::Vec3b *p_main, *p_im;
+        const uchar *p_mask;
+        for (int row = cellBounds.y; row < cellBounds.br().y && variant < bestVariant; ++row)
+        {
+            p_main = cell.ptr<cv::Vec3b>(row);
+            p_im = t_lib.at(i).ptr<cv::Vec3b>(row);
+            p_mask = cellMask.ptr<uchar>(row);
+            for (int col = cellBounds.x; col < cellBounds.br().x && variant < bestVariant; ++col)
+            {
+                //Check pixel active in mask
+                if (p_mask[col] != 0)
+                {
+                    if (m_mode == Mode::RGB_EUCLIDEAN)
+                        variant += ColourDifference::calculateRGBEuclidean(p_main[col], p_im[col]);
+                    else if (m_mode == Mode::CIE76)
+                        variant += ColourDifference::calculateCIE76(p_main[col], p_im[col]);
+                    else if (m_mode == Mode::CIEDE2000)
+                        variant += ColourDifference::calculateCIEDE2000(p_main[col], p_im[col]);
+                    else
+                        qDebug() << Q_FUNC_INFO << "Unsupported mode";
+                }
+            }
+        }
+
+        //If image difference is less than current lowest then replace
+        if (variant < bestVariant)
+        {
+            bestVariant = variant;
+            bestFit = static_cast<int>(i);
+        }
+    }
 
     //Invalid index, should never happen
-    if (index < 0 || index >= static_cast<int>(t_lib.size()))
+    if (bestFit < 0 || bestFit >= static_cast<int>(t_lib.size()))
     {
-        qDebug() << "Failed to find a best fit";
+        qDebug() << Q_FUNC_INFO << "Failed to find a best fit";
         return std::nullopt;
     }
 
-    return index;
+    return bestFit;
 }
 
 //Calculates the repeat value of each library image in repeat range around x,y
@@ -173,206 +209,4 @@ std::map<size_t, int> CPUPhotomosaicGenerator::calculateRepeats(
         }
     }
     return repeats;
-}
-
-//Compares pixels in the cell against the library images
-//Returns the index of the library image with the smallest difference
-//Used for mode RGB_EUCLIDEAN and CIE76
-//(CIE76 is just a euclidean formulae in a different colour space)
-int CPUPhotomosaicGenerator::findBestFitEuclidean(const cv::Mat &cell, const cv::Mat &mask,
-                                                  const std::vector<cv::Mat> &library,
-                                                  const std::map<size_t, int> &repeats,
-                                                  const cv::Rect &t_bounds) const
-{
-    int bestFit = -1;
-    long double bestVariant = std::numeric_limits<long double>::max();
-
-    for (size_t i = 0; i < library.size(); ++i)
-    {
-        const auto it = repeats.find(i);
-        long double variant = (it != repeats.end()) ? it->second : 0;
-
-        //For cell and library image compare the corresponding pixels
-        //Sum all pixel differences for total image difference
-        const cv::Vec3b *p_main, *p_im;
-        const uchar *p_mask;
-        for (int row = t_bounds.y; row < t_bounds.br().y && variant < bestVariant; ++row)
-        {
-            p_main = cell.ptr<cv::Vec3b>(row);
-            p_im = library.at(i).ptr<cv::Vec3b>(row);
-            p_mask = mask.ptr<uchar>(row);
-            for (int col = t_bounds.x; col < t_bounds.br().x && variant < bestVariant; ++col)
-            {
-                if (p_mask[col] != 0)
-                    variant += static_cast<long double>(
-                        sqrt(pow(p_main[col][0] - p_im[col][0], 2) +
-                             pow(p_main[col][1] - p_im[col][1], 2) +
-                             pow(p_main[col][2] - p_im[col][2], 2)));
-            }
-        }
-
-        //If image difference is less than current lowest then replace
-        if (variant < bestVariant)
-        {
-            bestVariant = variant;
-            bestFit = static_cast<int>(i);
-        }
-    }
-    return bestFit;
-}
-
-//Compares pixels in the cell against the library images
-//Returns the index of the library image with the smallest difference
-//Used for mode CIEDE2000
-int CPUPhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell, const cv::Mat &mask,
-                                                  const std::vector<cv::Mat> &library,
-                                                  const std::map<size_t, int> &repeats,
-                                                  const cv::Rect &t_bounds) const
-{
-    int bestFit = -1;
-    long double bestVariant = std::numeric_limits<long double>::max();
-
-    for (size_t i = 0; i < library.size(); ++i)
-    {
-        const auto it = repeats.find(i);
-        long double variant = (it != repeats.end()) ? it->second : 0;
-
-        //For cell and library image compare the corresponding pixels
-        //Sum all pixel differences for total image difference
-        const cv::Vec3b *p_main, *p_im;
-        const uchar *p_mask;
-        for (int row = t_bounds.y; row < t_bounds.br().y && variant < bestVariant; ++row)
-        {
-            p_main = cell.ptr<cv::Vec3b>(row);
-            p_im = library.at(i).ptr<cv::Vec3b>(row);
-            p_mask = mask.ptr<uchar>(row);
-            for (int col = t_bounds.x; col < t_bounds.br().x && variant < bestVariant; ++col)
-            {
-                if (p_mask[col] == 0)
-                    continue;
-
-                const double k_L = 1.0, k_C = 1.0, k_H = 1.0;
-                const double deg360InRad = degToRad(360.0);
-                const double deg180InRad = degToRad(180.0);
-                const double pow25To7 = 6103515625.0; //pow(25, 7)
-
-                const double C1 = sqrt((p_main[col][1] * p_main[col][1]) +
-                                       (p_main[col][2] * p_main[col][2]));
-                const double C2 = sqrt((p_im[col][1] * p_im[col][1]) +
-                                       (p_im[col][2] * p_im[col][2]));
-                const double barC = (C1 + C2) / 2.0;
-
-                const double G = 0.5 * (1 - sqrt(pow(barC, 7) / (pow(barC, 7) + pow25To7)));
-
-                const double a1Prime = (1.0 + G) * p_main[col][1];
-                const double a2Prime = (1.0 + G) * p_im[col][1];
-
-                const double CPrime1 = sqrt((a1Prime * a1Prime) +
-                                            (p_main[col][2] * p_main[col][2]));
-                const double CPrime2 = sqrt((a2Prime * a2Prime) +(p_im[col][2] * p_im[col][2]));
-
-                double hPrime1;
-                if (p_main[col][2] == 0 && a1Prime == 0.0)
-                    hPrime1 = 0.0;
-                else
-                {
-                    hPrime1 = atan2(p_main[col][2], a1Prime);
-                    //This must be converted to a hue angle in degrees between 0 and 360 by
-                    //addition of 2 pi to negative hue angles.
-                    if (hPrime1 < 0)
-                        hPrime1 += deg360InRad;
-                }
-
-                double hPrime2;
-                if (p_im[col][2] == 0 && a2Prime == 0.0)
-                    hPrime2 = 0.0;
-                else
-                {
-                    hPrime2 = atan2(p_im[col][2], a2Prime);
-                    //This must be converted to a hue angle in degrees between 0 and 360 by
-                    //addition of 2pi to negative hue angles.
-                    if (hPrime2 < 0)
-                        hPrime2 += deg360InRad;
-                }
-
-                const double deltaLPrime = p_im[col][0] - p_main[col][0];
-                const double deltaCPrime = CPrime2 - CPrime1;
-
-                double deltahPrime;
-                const double CPrimeProduct = CPrime1 * CPrime2;
-                if (CPrimeProduct == 0.0)
-                    deltahPrime = 0;
-                else
-                {
-                    //Avoid the fabs() call
-                    deltahPrime = hPrime2 - hPrime1;
-                    if (deltahPrime < -deg180InRad)
-                        deltahPrime += deg360InRad;
-                    else if (deltahPrime > deg180InRad)
-                        deltahPrime -= deg360InRad;
-                }
-
-                const double deltaHPrime = 2.0 * sqrt(CPrimeProduct) * sin(deltahPrime / 2.0);
-
-                const double barLPrime = (p_main[col][0] + p_im[col][0]) / 2.0;
-                const double barCPrime = (CPrime1 + CPrime2) / 2.0;
-
-                double barhPrime;
-                const double hPrimeSum = hPrime1 + hPrime2;
-                if (CPrime1 * CPrime2 == 0.0)
-                    barhPrime = hPrimeSum;
-                else
-                {
-                    if (fabs(hPrime1 - hPrime2) <= deg180InRad)
-                        barhPrime = hPrimeSum / 2.0;
-                    else
-                    {
-                        if (hPrimeSum < deg360InRad)
-                            barhPrime = (hPrimeSum + deg360InRad) / 2.0;
-                        else
-                            barhPrime = (hPrimeSum - deg360InRad) / 2.0;
-                    }
-                }
-
-                const double T = 1.0 - (0.17 * cos(barhPrime - degToRad(30.0))) +
-                                 (0.24 * cos(2.0 * barhPrime)) +
-                                 (0.32 * cos((3.0 * barhPrime) + degToRad(6.0))) -
-                                 (0.20 * cos((4.0 * barhPrime) - degToRad(63.0)));
-
-                const double deltaTheta = degToRad(30.0) *
-                                          exp(-pow((barhPrime - degToRad(275.0)) / degToRad(25.0), 2.0));
-
-                const double R_C = 2.0 * sqrt(pow(barCPrime, 7.0) /
-                                              (pow(barCPrime, 7.0) + pow25To7));
-
-                const double S_L = 1 + ((0.015 * pow(barLPrime - 50.0, 2.0)) /
-                                        sqrt(20 + pow(barLPrime - 50.0, 2.0)));
-                const double S_C = 1 + (0.045 * barCPrime);
-                const double S_H = 1 + (0.015 * barCPrime * T);
-
-                const double R_T = (-sin(2.0 * deltaTheta)) * R_C;
-
-
-                variant += static_cast<long double>(sqrt(pow(deltaLPrime / (k_L * S_L), 2.0) +
-                                                         pow(deltaCPrime / (k_C * S_C), 2.0) +
-                                                         pow(deltaHPrime / (k_H * S_H), 2.0) +
-                                                         (R_T * (deltaCPrime / (k_C * S_C)) *
-                                                          (deltaHPrime / (k_H * S_H)))));
-            }
-        }
-
-        //If image difference is less than current lowest then replace
-        if (variant < bestVariant)
-        {
-            bestVariant = variant;
-            bestFit = static_cast<int>(i);
-        }
-    }
-    return bestFit;
-}
-
-//Converts degrees to radians
-double CPUPhotomosaicGenerator::degToRad(const double deg) const
-{
-    return (deg * M_PI) / 180;
 }

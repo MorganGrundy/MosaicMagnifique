@@ -44,24 +44,6 @@ private:
     //Only needs to look at first half of cells as the latter half are not yet used
     std::map<size_t, int> calculateRepeats(const GridUtility::StepBestFit &grid,
                                            const int x, const int y) const;
-
-    //Compares pixels in the cell against the library images
-    //Returns the index of the library image with the smallest difference
-    //Used for mode RGB_EUCLIDEAN and CIE76
-    //(CIE76 is just a euclidean formulae in a different colour space)
-    int findBestFitEuclidean(const cv::Mat &cell, const cv::Mat &mask,
-                             const std::vector<cv::Mat> &library,
-                             const std::map<size_t, int> &repeats, const cv::Rect &t_bounds) const;
-
-    //Compares pixels in the cell against the library images
-    //Returns the index of the library image with the smallest difference
-    //Used for mode CIEDE2000
-    int findBestFitCIEDE2000(const cv::Mat &cell, const cv::Mat &mask,
-                             const std::vector<cv::Mat> &library,
-                             const std::map<size_t, int> &repeats, const cv::Rect &t_bounds) const;
-
-    //Converts degrees to radians
-    double degToRad(const double deg) const;
 };
 
 #endif // CPUPHOTOMOSAICGENERATOR_H

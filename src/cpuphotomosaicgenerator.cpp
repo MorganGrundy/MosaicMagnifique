@@ -112,10 +112,12 @@ CPUPhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape,
 
     //Find cell best fit
     int index = -1;
-    if (m_mode == Mode::CIEDE2000)
+    if (m_mode == Mode::RGB_EUCLIDEAN || m_mode == Mode::CIE76)
+        index = findBestFitEuclidean(cell, cellMask, t_lib, repeats, cellBounds);
+    else if (m_mode == Mode::CIEDE2000)
         index = findBestFitCIEDE2000(cell, cellMask, t_lib, repeats, cellBounds);
     else
-        index = findBestFitEuclidean(cell, cellMask, t_lib, repeats, cellBounds);
+        qDebug() << Q_FUNC_INFO << "Photomosaic mode is unknown";
 
     //Invalid index, should never happen
     if (index < 0 || index >= static_cast<int>(t_lib.size()))
@@ -192,22 +194,20 @@ int CPUPhotomosaicGenerator::findBestFitEuclidean(const cv::Mat &cell, const cv:
 
         //For cell and library image compare the corresponding pixels
         //Sum all pixel differences for total image difference
-        const uchar *p_main, *p_im, *p_mask;
-        for (int row = t_bounds.y;
-             row < t_bounds.br().y && row < cell.rows && variant < bestVariant; ++row)
+        const cv::Vec3b *p_main, *p_im;
+        const uchar *p_mask;
+        for (int row = t_bounds.y; row < t_bounds.br().y && variant < bestVariant; ++row)
         {
-            p_main = cell.ptr<uchar>(row);
-            p_im = library.at(i).ptr<uchar>(row);
+            p_main = cell.ptr<cv::Vec3b>(row);
+            p_im = library.at(i).ptr<cv::Vec3b>(row);
             p_mask = mask.ptr<uchar>(row);
-            for (int col = t_bounds.x * cell.channels();
-                 col < t_bounds.br().x * cell.channels() && variant < bestVariant;
-                 col += cell.channels())
+            for (int col = t_bounds.x; col < t_bounds.br().x && variant < bestVariant; ++col)
             {
-                if (p_mask[col / cell.channels()] != 0)
+                if (p_mask[col] != 0)
                     variant += static_cast<long double>(
-                        sqrt(pow(p_main[col] - p_im[col], 2) +
-                             pow(p_main[col + 1] - p_im[col + 1], 2) +
-                             pow(p_main[col + 2] - p_im[col + 2], 2)));
+                        sqrt(pow(p_main[col][0] - p_im[col][0], 2) +
+                             pow(p_main[col][1] - p_im[col][1], 2) +
+                             pow(p_main[col][2] - p_im[col][2], 2)));
             }
         }
 
@@ -239,18 +239,16 @@ int CPUPhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell, const cv:
 
         //For cell and library image compare the corresponding pixels
         //Sum all pixel differences for total image difference
-        const uchar *p_main, *p_im, *p_mask;
-        for (int row = t_bounds.y;
-             row < t_bounds.br().y && row < cell.rows && variant < bestVariant; ++row)
+        const cv::Vec3b *p_main, *p_im;
+        const uchar *p_mask;
+        for (int row = t_bounds.y; row < t_bounds.br().y && variant < bestVariant; ++row)
         {
-            p_main = cell.ptr<uchar>(row);
-            p_im = library.at(i).ptr<uchar>(row);
+            p_main = cell.ptr<cv::Vec3b>(row);
+            p_im = library.at(i).ptr<cv::Vec3b>(row);
             p_mask = mask.ptr<uchar>(row);
-            for (int col = t_bounds.x * cell.channels();
-                 col < t_bounds.br().x * cell.channels() && variant < bestVariant;
-                 col += cell.channels())
+            for (int col = t_bounds.x; col < t_bounds.br().x && variant < bestVariant; ++col)
             {
-                if (p_mask[col / cell.channels()] == 0)
+                if (p_mask[col] == 0)
                     continue;
 
                 const double k_L = 1.0, k_C = 1.0, k_H = 1.0;
@@ -258,27 +256,27 @@ int CPUPhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell, const cv:
                 const double deg180InRad = degToRad(180.0);
                 const double pow25To7 = 6103515625.0; //pow(25, 7)
 
-                const double C1 = sqrt((p_main[col + 1] * p_main[col + 1]) +
-                                       (p_main[col + 2] * p_main[col + 2]));
-                const double C2 = sqrt((p_im[col + 1] * p_im[col + 1]) +
-                                       (p_im[col + 2] * p_im[col + 2]));
+                const double C1 = sqrt((p_main[col][1] * p_main[col][1]) +
+                                       (p_main[col][2] * p_main[col][2]));
+                const double C2 = sqrt((p_im[col][1] * p_im[col][1]) +
+                                       (p_im[col][2] * p_im[col][2]));
                 const double barC = (C1 + C2) / 2.0;
 
                 const double G = 0.5 * (1 - sqrt(pow(barC, 7) / (pow(barC, 7) + pow25To7)));
 
-                const double a1Prime = (1.0 + G) * p_main[col + 1];
-                const double a2Prime = (1.0 + G) * p_im[col + 1];
+                const double a1Prime = (1.0 + G) * p_main[col][1];
+                const double a2Prime = (1.0 + G) * p_im[col][1];
 
                 const double CPrime1 = sqrt((a1Prime * a1Prime) +
-                                            (p_main[col + 2] * p_main[col + 2]));
-                const double CPrime2 = sqrt((a2Prime * a2Prime) +(p_im[col + 2] * p_im[col + 2]));
+                                            (p_main[col][2] * p_main[col][2]));
+                const double CPrime2 = sqrt((a2Prime * a2Prime) +(p_im[col][2] * p_im[col][2]));
 
                 double hPrime1;
-                if (p_main[col + 2] == 0 && a1Prime == 0.0)
+                if (p_main[col][2] == 0 && a1Prime == 0.0)
                     hPrime1 = 0.0;
                 else
                 {
-                    hPrime1 = atan2(p_main[col + 2], a1Prime);
+                    hPrime1 = atan2(p_main[col][2], a1Prime);
                     //This must be converted to a hue angle in degrees between 0 and 360 by
                     //addition of 2 pi to negative hue angles.
                     if (hPrime1 < 0)
@@ -286,18 +284,18 @@ int CPUPhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell, const cv:
                 }
 
                 double hPrime2;
-                if (p_im[col + 2] == 0 && a2Prime == 0.0)
+                if (p_im[col][2] == 0 && a2Prime == 0.0)
                     hPrime2 = 0.0;
                 else
                 {
-                    hPrime2 = atan2(p_im[col + 2], a2Prime);
+                    hPrime2 = atan2(p_im[col][2], a2Prime);
                     //This must be converted to a hue angle in degrees between 0 and 360 by
                     //addition of 2pi to negative hue angles.
                     if (hPrime2 < 0)
                         hPrime2 += deg360InRad;
                 }
 
-                const double deltaLPrime = p_im[col] - p_main[col];
+                const double deltaLPrime = p_im[col][0] - p_main[col][0];
                 const double deltaCPrime = CPrime2 - CPrime1;
 
                 double deltahPrime;
@@ -316,7 +314,7 @@ int CPUPhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell, const cv:
 
                 const double deltaHPrime = 2.0 * sqrt(CPrimeProduct) * sin(deltahPrime / 2.0);
 
-                const double barLPrime = (p_main[col] + p_im[col]) / 2.0;
+                const double barLPrime = (p_main[col][0] + p_im[col][0]) / 2.0;
                 const double barCPrime = (CPrime1 + CPrime2) / 2.0;
 
                 double barhPrime;
@@ -360,7 +358,6 @@ int CPUPhotomosaicGenerator::findBestFitCIEDE2000(const cv::Mat &cell, const cv:
                                                          pow(deltaHPrime / (k_H * S_H), 2.0) +
                                                          (R_T * (deltaCPrime / (k_C * S_C)) *
                                                           (deltaHPrime / (k_H * S_H)))));
-
             }
         }
 

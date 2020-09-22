@@ -185,22 +185,21 @@ void ImageUtility::matMakeTransparent(const cv::Mat &t_src, cv::Mat &t_dst, cons
     cv::cvtColor(t_src, tmp, cv::COLOR_GRAY2RGBA);
 
     //Make black pixels transparent
-    int channels = tmp.channels();
     int nRows = tmp.rows;
-    int nCols = tmp.cols * channels;
+    int nCols = tmp.cols;
     if (tmp.isContinuous())
     {
         nCols *= nRows;
         nRows = 1;
     }
-    uchar *p;
+    cv::Vec4b *p;
     for (int i = 0; i < nRows; ++i)
     {
-        p = tmp.ptr<uchar>(i);
-        for (int j = 0; j < nCols; j += channels)
+        p = tmp.ptr<cv::Vec4b>(i);
+        for (int j = 0; j < nCols; ++j)
         {
-            if (p[j] == t_targetValue)
-                p[j+3] = 0;
+            if (p[j][0] == t_targetValue)
+                p[j][3] = 0;
         }
     }
     t_dst = tmp;

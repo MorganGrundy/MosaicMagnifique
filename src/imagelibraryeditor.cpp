@@ -202,6 +202,9 @@ void ImageLibraryEditor::addImages()
 
         if (m_progressBar != nullptr)
             m_progressBar->setValue(m_progressBar->value() + 1);
+
+        //Helps prevent 'not responding'
+        QCoreApplication::processEvents();
     }
     m_imageSquarer->hide();
 
@@ -358,7 +361,7 @@ void ImageLibraryEditor::loadLibrary()
             //Read the version
             qint32 version;
             in >> version;
-            if (version == ImageUtility::MIL_VERSION)
+            if (version <= ImageUtility::MIL_VERSION && version >= 2)
                 in.setVersion(QDataStream::Qt_5_0);
             else
             {
@@ -379,13 +382,21 @@ void ImageLibraryEditor::loadLibrary()
             in >> m_imageSize;
             ui->spinLibCellSize->setValue(m_imageSize);
             //Read library size
-            int numberOfImage;
-            in >> numberOfImage;
+            size_t numberOfImage;
+            //mil file version 2 used an int for library size instead of size_t, so need to cast
+            if (version == 2)
+            {
+                int intNumberOfImage;
+                in >> intNumberOfImage;
+                numberOfImage = static_cast<size_t>(intNumberOfImage);
+            }
+            else
+                in >> numberOfImage;
 
             //Initialise progress bar
             if (m_progressBar != nullptr)
             {
-                m_progressBar->setRange(0, numberOfImage);
+                m_progressBar->setRange(0, static_cast<int>(numberOfImage));
                 m_progressBar->setValue(0);
                 m_progressBar->setVisible(true);
             }
@@ -416,5 +427,7 @@ void ImageLibraryEditor::loadLibrary()
             //Emit new image library size
             emit imageLibraryChanged(m_images.size());
         }
+        else
+            qDebug() << Q_FUNC_INFO << "Could not read file:" << filename;
     }
 }

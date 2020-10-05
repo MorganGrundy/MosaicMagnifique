@@ -35,6 +35,7 @@ CUDAPhotomosaicData::CUDAPhotomosaicData(const size_t t_imageSize, const size_t 
       noLibraryImages{t_noLibraryImages},
       euclidean{t_euclidean},
       repeatRange{t_repeatRange}, repeatAddition{t_repeatAddition},
+      libraryBatchSize{50},
       dataIsAllocated{false}
 {
     cudaDeviceProp deviceProp;

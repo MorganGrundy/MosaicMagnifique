@@ -282,18 +282,23 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
             const int y = static_cast<int>(pos.second);
 
             //Calculate differences
-            numBlocks = (photomosaicData.pixelCount * 50 + photomosaicData.getBlockSize() - 1)
-                        / photomosaicData.getBlockSize();
+            numBlocks = (photomosaicData.pixelCount * photomosaicData.libraryBatchSize
+                         + photomosaicData.getBlockSize() - 1) / photomosaicData.getBlockSize();
 
             //Loop over all images in library, 50 at a time
-            for (size_t libIndex = 0; libIndex < photomosaicData.noLibraryImages; libIndex += 50)
+            for (size_t libIndex = 0; libIndex < photomosaicData.noLibraryImages;
+                 libIndex += photomosaicData.libraryBatchSize)
             {
-                size_t libCount = (photomosaicData.noLibraryImages - libIndex < 50)
-                                      ? photomosaicData.noLibraryImages - libIndex : 50;
+                //If remaining libraries less than library batch size then only use remaining
+                const size_t libCount =
+                    (photomosaicData.noLibraryImages - libIndex < photomosaicData.libraryBatchSize)
+                    ? photomosaicData.noLibraryImages - libIndex : photomosaicData.libraryBatchSize;
+
                 if (photomosaicData.euclidean)
-                    euclideanDifferenceKernel<<<static_cast<unsigned int>(numBlocks),
-                                                static_cast<unsigned int>(photomosaicData.getBlockSize()),
-                                                0, streams[curStream]>>>(
+                    euclideanDifferenceKernel
+                        <<<static_cast<unsigned int>(numBlocks),
+                           static_cast<unsigned int>(photomosaicData.getBlockSize()),
+                           0, streams[curStream]>>>(
                         photomosaicData.getCellImage(i),
                         photomosaicData.getLibraryImage(libIndex), libCount,
                         photomosaicData.getMaskImage(x, y),
@@ -301,9 +306,10 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
                         photomosaicData.getTargetArea(i),
                         photomosaicData.getVariants(i, libIndex));
                 else
-                    CIEDE2000DifferenceKernel<<<static_cast<unsigned int>(numBlocks),
-                                                static_cast<unsigned int>(photomosaicData.getBlockSize()),
-                                                0, streams[curStream]>>>(
+                    CIEDE2000DifferenceKernel
+                        <<<static_cast<unsigned int>(numBlocks),
+                           static_cast<unsigned int>(photomosaicData.getBlockSize()),
+                           0, streams[curStream]>>>(
                         photomosaicData.getCellImage(i),
                         photomosaicData.getLibraryImage(libIndex), libCount,
                         photomosaicData.getMaskImage(x, y),

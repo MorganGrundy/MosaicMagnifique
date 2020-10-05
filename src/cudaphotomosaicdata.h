@@ -145,6 +145,8 @@ public:
     const size_t repeatRange; //Range to look for repeats
     const size_t repeatAddition; //Value to add to variants based on number of repeats in range
 
+    const size_t libraryBatchSize; //Number of library images in each library batch
+
 private:
     bool dataIsAllocated; //Stores if any data has been allocated on GPU
     int currentBatchIndex; //Stores index of current batch of data loaded on device

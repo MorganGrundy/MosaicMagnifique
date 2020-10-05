@@ -140,7 +140,7 @@ bool ImageSquarer::squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out)
         cv::Point2f keypointAverage(0, 0);
         //Count features in crop
         size_t cropFeatureCount = 0;
-        for (auto keyPoint : keyPoints)
+        for (const auto &keyPoint : keyPoints)
         {
             if (crop.contains(keyPoint.pt))
             {
@@ -271,7 +271,7 @@ bool ImageSquarer::squareToCascadeClassifier(const cv::Mat &t_in, cv::Mat &t_out
 
         //Calculate how well objects fit in crop
         double cropBadnessValue = (objects.empty()) ? std::numeric_limits<double>::max() : 0;
-        for (auto object : objects)
+        for (const auto &object : objects)
         {
             //Calculate rect of object visible in crop
             const cv::Rect objectVisible = crop & object;

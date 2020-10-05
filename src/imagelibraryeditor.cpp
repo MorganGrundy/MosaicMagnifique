@@ -175,7 +175,8 @@ void ImageLibraryEditor::addImages()
             if (!m_imageSquarer->squareManual(image, image))
             {
                 //Image squarer window was closed, cancel adding images
-                m_progressBar->setVisible(false);
+                if (m_progressBar != nullptr)
+                    m_progressBar->setVisible(false);
                 return;
             }
 

@@ -88,8 +88,8 @@ public:
 
     //Copies library images to GPU
     void setLibraryImages(const std::vector<cv::Mat> &t_libraryImages);
-    //Returns pointer to library images on GPU
-    uchar *getLibraryImages();
+    //Returns pointer to library image on GPU
+    uchar *getLibraryImage(const size_t i);
 
     //Copies mask image to GPU
     void setMaskImage(const cv::Mat &t_maskImage,
@@ -112,6 +112,8 @@ public:
 
     //Returns pointer to variants on GPU
     double *getVariants(const size_t i);
+    //Returns pointer to variants on GPU
+    double *getVariants(const size_t t_cellIndex, const size_t t_libIndex);
 
     //Sets best fit to number of library images
     void resetBestFit();

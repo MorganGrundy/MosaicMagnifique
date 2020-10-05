@@ -310,10 +310,10 @@ void CUDAPhotomosaicData::setLibraryImages(const std::vector<cv::Mat> &t_library
     }
 }
 
-//Returns pointer to library images on GPU
-uchar *CUDAPhotomosaicData::getLibraryImages()
+//Returns pointer to library image on GPU
+uchar *CUDAPhotomosaicData::getLibraryImage(const size_t i)
 {
-    return libraryImages;
+    return libraryImages + i * fullSize;
 }
 
 //Copies mask image to GPU
@@ -383,6 +383,12 @@ size_t *CUDAPhotomosaicData::getRepeats()
 double *CUDAPhotomosaicData::getVariants(const size_t i)
 {
     return variants + i * pixelCount * noLibraryImages;
+}
+
+//Returns pointer to variants on GPU
+double *CUDAPhotomosaicData::getVariants(const size_t t_cellIndex, const size_t t_libIndex)
+{
+    return variants + t_cellIndex * pixelCount * noLibraryImages + t_libIndex * pixelCount;
 }
 
 //Sets best fit to number of library images

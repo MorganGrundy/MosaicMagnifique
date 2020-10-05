@@ -282,33 +282,40 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
             const int y = static_cast<int>(pos.second);
 
             //Calculate differences
-            numBlocks = (photomosaicData.pixelCount * photomosaicData.noLibraryImages
-                         + photomosaicData.getBlockSize() - 1) / photomosaicData.getBlockSize();
-            if (photomosaicData.euclidean)
-                euclideanDifferenceKernel<<<static_cast<unsigned int>(numBlocks),
-                        static_cast<unsigned int>(photomosaicData.getBlockSize()),
-                        0, streams[curStream]>>>(
-                                photomosaicData.getCellImage(i),
-                                photomosaicData.getLibraryImages(), photomosaicData.noLibraryImages,
-                                photomosaicData.getMaskImage(x, y),
-                                photomosaicData.imageSize, photomosaicData.imageChannels,
-                                photomosaicData.getTargetArea(i),
-                                photomosaicData.getVariants(i));
-            else
-                CIEDE2000DifferenceKernel<<<static_cast<unsigned int>(numBlocks),
-                        static_cast<unsigned int>(photomosaicData.getBlockSize()),
-                        0, streams[curStream]>>>(
-                                photomosaicData.getCellImage(i),
-                                photomosaicData.getLibraryImages(), photomosaicData.noLibraryImages,
-                                photomosaicData.getMaskImage(x, y),
-                                photomosaicData.imageSize, photomosaicData.imageChannels,
-                                photomosaicData.getTargetArea(i),
-                                photomosaicData.getVariants(i));
+            numBlocks = (photomosaicData.pixelCount * 50 + photomosaicData.getBlockSize() - 1)
+                        / photomosaicData.getBlockSize();
 
-            //Move to next stream
-            ++curStream;
-            if (curStream == noOfStreams)
-                curStream = 0;
+            //Loop over all images in library, 50 at a time
+            for (size_t libIndex = 0; libIndex < photomosaicData.noLibraryImages; libIndex += 50)
+            {
+                size_t libCount = (photomosaicData.noLibraryImages - libIndex < 50)
+                                      ? photomosaicData.noLibraryImages - libIndex : 50;
+                if (photomosaicData.euclidean)
+                    euclideanDifferenceKernel<<<static_cast<unsigned int>(numBlocks),
+                                                static_cast<unsigned int>(photomosaicData.getBlockSize()),
+                                                0, streams[curStream]>>>(
+                        photomosaicData.getCellImage(i),
+                        photomosaicData.getLibraryImage(libIndex), libCount,
+                        photomosaicData.getMaskImage(x, y),
+                        photomosaicData.imageSize, photomosaicData.imageChannels,
+                        photomosaicData.getTargetArea(i),
+                        photomosaicData.getVariants(i, libIndex));
+                else
+                    CIEDE2000DifferenceKernel<<<static_cast<unsigned int>(numBlocks),
+                                                static_cast<unsigned int>(photomosaicData.getBlockSize()),
+                                                0, streams[curStream]>>>(
+                        photomosaicData.getCellImage(i),
+                        photomosaicData.getLibraryImage(libIndex), libCount,
+                        photomosaicData.getMaskImage(x, y),
+                        photomosaicData.imageSize, photomosaicData.imageChannels,
+                        photomosaicData.getTargetArea(i),
+                        photomosaicData.getVariants(i, libIndex));
+
+                //Move to next stream
+                ++curStream;
+                if (curStream == noOfStreams)
+                    curStream = 0;
+            }
         }
         //Perform sum reduction on all image variants
         reduceAddData(photomosaicData, streams, noOfStreams);

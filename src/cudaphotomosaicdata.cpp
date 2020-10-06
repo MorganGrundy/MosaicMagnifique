@@ -25,6 +25,7 @@ CUDAPhotomosaicData::CUDAPhotomosaicData(const size_t t_imageSize, const size_t 
                                          const size_t t_noXCellImages, const size_t t_noYCellImages,
                                          const size_t t_noValidCells,
                                          const size_t t_noLibraryImages,
+                                         const size_t t_libraryBatchSize,
                                          const bool t_euclidean,
                                          const size_t t_repeatRange, const size_t t_repeatAddition)
     : imageSize{t_imageSize}, imageChannels{t_imageChannels},
@@ -35,7 +36,7 @@ CUDAPhotomosaicData::CUDAPhotomosaicData(const size_t t_imageSize, const size_t 
       noLibraryImages{t_noLibraryImages},
       euclidean{t_euclidean},
       repeatRange{t_repeatRange}, repeatAddition{t_repeatAddition},
-      libraryBatchSize{50},
+      libraryBatchSize{t_libraryBatchSize},
       dataIsAllocated{false}
 {
     cudaDeviceProp deviceProp;

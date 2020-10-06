@@ -24,6 +24,7 @@
 #include <QFileDialog>
 #include <QPixmap>
 #include <QMessageBox>
+#include <QInputDialog>
 #include <opencv2/imgcodecs.hpp>
 #include <chrono>
 
@@ -44,7 +45,7 @@
 #endif
 
 MainWindow::MainWindow(QWidget *t_parent)
-    : QMainWindow{t_parent}, ui{new Ui::MainWindow}
+    : QMainWindow{t_parent}, libraryBatchSize{50}, ui{new Ui::MainWindow}
 {
     ui->setupUi(this);
 
@@ -138,6 +139,26 @@ MainWindow::MainWindow(QWidget *t_parent)
     connect(ui->buttonGenerate, &QPushButton::released, this, &MainWindow::generatePhotomosaic);
 
 #ifdef CUDA
+    CUDAinit();
+#else
+    ui->checkCUDA->hide();
+    ui->comboCUDA->hide();
+#endif
+
+    //Sets default cell size
+    ui->spinCellSize->setValue(CellShape::DEFAULT_CELL_SIZE);
+
+    //tabWidget starts on Generator Settings tab
+    ui->tabWidget->setCurrentIndex(2);
+
+    //Sets default detail level
+    ui->spinDetail->setValue(100);
+}
+
+#ifdef CUDA
+//Initialise CUDA and relevant UI
+void MainWindow::CUDAinit()
+{
     int deviceCount, device;
     int gpuDeviceCount = 0;
     cudaDeviceProp properties;
@@ -167,26 +188,36 @@ MainWindow::MainWindow(QWidget *t_parent)
     {
         connect(ui->comboCUDA, qOverload<int>(&QComboBox::currentIndexChanged),
                 this, &MainWindow::CUDADeviceChanged);
+
+        //Initialise primary CUDA device
         CUDADeviceChanged(0);
 
-        //Initialise CUDA
-        int *deviceInit;
-        gpuErrchk(cudaMalloc(&deviceInit, 0 * sizeof(int)));
+        //Create menu action for setting library batch size
+        QAction *actionCUDALibraryBatchSize = new QAction("CUDA library batch size",
+                                                          ui->menuAdvanced);
+        actionCUDALibraryBatchSize->setStatusTip(
+            "Set library batch size for CUDA difference kernel");
+        actionCUDALibraryBatchSize->setWhatsThis(
+            "<html><head/><body><p>"
+            "Library batch size controls how many library images are compared per difference kernel"
+            " call. CUDA generation time increases as library batch size decreases.</p><p>"
+            "If the app crashes during CUDA generation then the difference kernel might be taking"
+            " too long and triggering the watchdog timer, try lowering library batch size.</p><p>"
+            "If you are not using a primary GPU then you shouldn't need to worry about the watchdog"
+            " timer.</p></body></html>");
+        ui->menuAdvanced->addAction(actionCUDALibraryBatchSize);
+
+        //CUDA library batch size action opens input dialog for setting library batch size
+        connect(actionCUDALibraryBatchSize, &QAction::triggered,
+                [&]([[maybe_unused]] const bool triggered)
+                {
+                    libraryBatchSize = QInputDialog::getInt(this, "Set library batch size for CUDA",
+                                                            "Library batch size:",
+                                                            libraryBatchSize, 1);
+                });
     }
-#else
-    ui->checkCUDA->hide();
-    ui->comboCUDA->hide();
-#endif
-
-    //Sets default cell size
-    ui->spinCellSize->setValue(CellShape::DEFAULT_CELL_SIZE);
-
-    //tabWidget starts on Generator Settings tab
-    ui->tabWidget->setCurrentIndex(2);
-
-    //Sets default detail level
-    ui->spinDetail->setValue(100);
 }
+#endif
 
 MainWindow::~MainWindow()
 {
@@ -465,6 +496,10 @@ void MainWindow::editCellGrid()
 void MainWindow::CUDADeviceChanged(int t_index)
 {
     gpuErrchk(cudaSetDevice(t_index));
+
+    //Initialise CUDA device
+    int *deviceInit;
+    gpuErrchk(cudaMalloc(&deviceInit, 0));
 }
 #endif
 
@@ -502,7 +537,11 @@ void MainWindow::generatePhotomosaic()
     //Choose which generator to use
 #ifdef CUDA
     if (ui->checkCUDA->isChecked())
-        generator = std::make_shared<CUDAPhotomosaicGenerator>(this);
+    {
+        auto CUDAgenerator = std::make_shared<CUDAPhotomosaicGenerator>(this);
+        CUDAgenerator->setLibraryBatchSize(static_cast<size_t>(libraryBatchSize));
+        generator = CUDAgenerator;
+    }
     else
 #endif
         generator = std::make_shared<CPUPhotomosaicGenerator>(this);

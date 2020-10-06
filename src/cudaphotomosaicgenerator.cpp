@@ -68,7 +68,8 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
 
         //Allocate memory on GPU and copy data from CPU to GPU
         CUDAPhotomosaicData photomosaicData(detailCellSize, resizedLib.front().channels(),
-                                            gridWidth, gridHeight, validCells, resizedLib.size(),
+                                            gridWidth, gridHeight, validCells,
+                                            resizedLib.size(), m_libraryBatchSize,
                                             m_mode != PhotomosaicGeneratorBase::Mode::CIEDE2000,
                                             m_repeatRange, m_repeatAddition);
         if (!photomosaicData.mallocData())
@@ -181,4 +182,10 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
 
     close();
     return true;
+}
+
+//Set library batch size
+void CUDAPhotomosaicGenerator::setLibraryBatchSize(const size_t t_libraryBatchSize)
+{
+    m_libraryBatchSize = t_libraryBatchSize;
 }

@@ -1208,6 +1208,12 @@ border: 1px solid dimgray;
     <addaction name="separator"/>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuAdvanced">
+    <property name="title">
+     <string>Advanced</string>
+    </property>
+   </widget>
+   <addaction name="menuAdvanced"/>
    <addaction name="menuAbout"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>

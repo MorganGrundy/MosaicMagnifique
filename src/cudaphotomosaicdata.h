@@ -41,7 +41,7 @@ public:
     CUDAPhotomosaicData(const size_t t_imageSize, const size_t t_imageChannels,
                         const size_t t_noXCellImages, const size_t t_noYCellImages,
                         const size_t t_noValidCells,
-                        const size_t t_noLibraryImages,
+                        const size_t t_noLibraryImages, const size_t t_libraryBatchSize,
                         const bool t_euclidean,
                         const size_t t_repeatRange, const size_t t_repeatAddition);
     ~CUDAPhotomosaicData();

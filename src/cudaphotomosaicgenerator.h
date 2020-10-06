@@ -31,6 +31,12 @@ public:
     //Generate best fits for Photomosaic cells
     //Returns true if successful
     bool generateBestFits() override;
+
+    //Set library batch size
+    void setLibraryBatchSize(const size_t t_libraryBatchSize);
+
+private:
+    size_t m_libraryBatchSize;
 };
 
 #endif // CUDAPHOTOMOSAICGENERATORBASE_H

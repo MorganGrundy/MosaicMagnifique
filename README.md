@@ -16,19 +16,19 @@ You may need to run the included vc_redist executable first.
 
 ## Optional dependencies
 If you have a [CUDA-capable GPU](https://developer.nvidia.com/cuda-gpus), then you can use the following to generate Photomosaics faster.  
-Currently only Windows .pro file has CUDA linking setup.
+Currently only Windows supports CUDA.
 
 | Name | Version | Modules |
 | - | - | - |
 | [CUDA](https://developer.nvidia.com/cuda-zone) | >= 10.1 | |
 | [OpenCV Contrib](https://github.com/opencv/opencv_contrib) | >= 4.1.1 | cudaarithm, cudawarping, cudaimgproc |
 
-CUDA usage controlled by "CONFIG += CUDA" in .pro file.  
-OpenCV Contrib usage controlled by "CONFIG += OPENCV_W_CUDA" in .pro file.  
+CUDA usage controlled by "CONFIG += CUDA" in common.pri file.  
+OpenCV Contrib usage controlled by "CONFIG += OPENCV_W_CUDA" in common.pri file.  
 *Note: OpenCV Contrib requires CUDA.*
 
 ## Linux
-Linux .pro file requires [pkg-config](https://www.freedesktop.org/wiki/Software/pkg-config/) for linking OpenCV.
+Linux requires [pkg-config](https://www.freedesktop.org/wiki/Software/pkg-config/) for linking OpenCV.
 
 ### Ubuntu
 The provided [install-ubuntu.mk](https://github.com/MorganGrundy/MosaicMagnifique/blob/master/install-ubuntu.mk) makefile can be used to easily install dependencies and build Mosaic Magnifique. Tested on Ubuntu 20.04 + 18.04.  
@@ -54,7 +54,7 @@ And for minimal build give cmake module list: -DBUILD_LIST=core,highgui,imgcodec
 Download source from: https://github.com/MorganGrundy/MosaicMagnifique/releases  
 Create sub-directory "build"  
 From build run:  
-`qmake ../src/MosaicMagnifique-Linux.pro`  
+`qmake ../src/src.pro`  
 `make`
 
 ## Windows
@@ -92,6 +92,6 @@ And add the relevant contrib modules to module list: -DBUILDLIST=core,highgui,im
 Download source from: https://github.com/MorganGrundy/MosaicMagnifique/releases  
 Create sub-directory "build"  
 From build run:  
-`qmake ../src/MosaicMagnifique-Windows.pro -spec win32-msvc`  
+`qmake ../src/src.pro -spec win32-msvc`  
 `jom qmake_all`  
 `jom`

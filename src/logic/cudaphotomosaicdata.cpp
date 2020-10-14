@@ -222,9 +222,16 @@ int CUDAPhotomosaicData::copyNextBatchToDevice()
     return currentBatchIndex;
 }
 
+#include <iostream>
+size_t continuousIm = 0;
+size_t incontinuousIm = 0;
+
 //Copies best fits from device to host and returns pointer
 size_t *CUDAPhotomosaicData::getResults()
 {
+    std::cout << "Continuous images " << continuousIm << " vs " << incontinuousIm << '\n' << std::flush;
+    continuousIm = 0;
+    incontinuousIm = 0;
     gpuErrchk(cudaMemcpy(HOST_bestFit, bestFit, noCellImages * sizeof(size_t),
                          cudaMemcpyDeviceToHost));
     return HOST_bestFit;
@@ -293,6 +300,10 @@ bool *CUDAPhotomosaicData::getCellStateGPU(const size_t i)
 //Copies cell image to host memory at index i
 void CUDAPhotomosaicData::setCellImage(const cv::Mat &t_cellImage, const size_t i)
 {
+    if (t_cellImage.isContinuous())
+        ++continuousIm;
+    else
+        ++incontinuousIm;
     memcpy(HOST_cellImages + i * fullSize, t_cellImage.data, fullSize * sizeof(uchar));
 }
 
@@ -307,6 +318,10 @@ void CUDAPhotomosaicData::setLibraryImages(const std::vector<cv::Mat> &t_library
 {
     for (size_t i = 0; i < noLibraryImages; ++i)
     {
+        if (t_libraryImages.at(i).isContinuous())
+            ++continuousIm;
+        else
+            ++incontinuousIm;
         gpuErrchk(cudaMemcpy(libraryImages + i * fullSize, t_libraryImages.at(i).data,
                              fullSize * sizeof(uchar), cudaMemcpyHostToDevice));
     }
@@ -322,6 +337,10 @@ uchar *CUDAPhotomosaicData::getLibraryImage(const size_t i)
 void CUDAPhotomosaicData::setMaskImage(const cv::Mat &t_maskImage, const bool t_flippedHorizontal,
                                        const bool t_flippedVertical)
 {
+    if (t_maskImage.isContinuous())
+        ++continuousIm;
+    else
+        ++incontinuousIm;
     const size_t offset = pixelCount * (t_flippedHorizontal + t_flippedVertical * 2);
     gpuErrchk(cudaMemcpy(maskImages + offset, t_maskImage.data, pixelCount * sizeof(uchar),
                          cudaMemcpyHostToDevice));

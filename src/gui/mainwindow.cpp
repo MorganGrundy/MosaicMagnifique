@@ -45,7 +45,11 @@
 #endif
 
 MainWindow::MainWindow(QWidget *t_parent)
-    : QMainWindow{t_parent}, libraryBatchSize{50}, ui{new Ui::MainWindow}
+    : QMainWindow{t_parent},
+#ifdef CUDA
+    libraryBatchSize{50},
+#endif
+    ui{new Ui::MainWindow}
 {
     ui->setupUi(this);
 

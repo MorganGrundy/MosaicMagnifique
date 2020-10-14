@@ -31,7 +31,7 @@
 #include "gridbounds.h"
 
 PhotomosaicGeneratorBase::PhotomosaicGeneratorBase(QWidget *t_parent)
-    : QProgressDialog{t_parent}, m_img{}, m_lib{}, m_mode{Mode::RGB_EUCLIDEAN},
+    : QProgressDialog(t_parent), m_img{}, m_lib{}, m_mode{Mode::RGB_EUCLIDEAN},
       m_repeatRange{0}, m_repeatAddition{0}
 {
     setWindowModality(Qt::WindowModal);

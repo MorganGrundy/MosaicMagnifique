@@ -20,8 +20,8 @@
 #ifndef PHOTOMOSAICGENERATORBASE_H
 #define PHOTOMOSAICGENERATORBASE_H
 
-#include <QProgressDialog>
 #include <opencv2/core/mat.hpp>
+#include <QProgressDialog>
 
 #include "cellshape.h"
 #include "imageutility.h"
@@ -31,7 +31,6 @@
 
 class PhotomosaicGeneratorBase : protected QProgressDialog
 {
-    Q_OBJECT
 public:
     enum class Mode {RGB_EUCLIDEAN, CIE76, CIEDE2000};
 

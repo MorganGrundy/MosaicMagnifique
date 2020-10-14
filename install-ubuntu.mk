@@ -35,7 +35,7 @@ opencv:
 build:
 	# build Mosaic Magnifique
 	mkdir build
-	cd build && qmake ../src/MosaicMagnifique-Linux.pro && make
+	cd build && qmake ../src/src.pro && make
 
 clean:
 ifneq (,$(wildcard ./opencv-4.3.0.zip))

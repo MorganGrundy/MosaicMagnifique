@@ -121,7 +121,7 @@ IF NOT EXIST %OPENCV_DIR% (
 cd /d "%main_dir%"
 mkdir build
 cd /d build
-qmake ../src/MosaicMagnifique-Windows.pro -spec win32-msvc
+qmake ../src/src.pro -spec win32-msvc
 jom qmake_all
 jom
 

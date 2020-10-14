@@ -215,7 +215,7 @@ void calculateRepeats(bool *states, size_t *bestFit, size_t *repeats,
 {
     for (int y = -upRange; y < 0; ++y)
     {
-        for (int x = -leftRange; x <= rightRange; ++x)
+        for (int x = -leftRange; x < rightRange; ++x)
         {
             if (states[y * noXCell + x])
                 repeats[bestFit[y * noXCell + x]] += repeatAddition;
@@ -324,7 +324,11 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
             }
         }
         //Perform sum reduction on all image variants
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
         reduceAddData(photomosaicData, streams, noOfStreams);
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize()); // Error - unknown
 
         //Loop over all data in batch
         for (size_t i = 0; i < batchSize
@@ -351,6 +355,8 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
                                        static_cast<int>(photomosaicData.noXCellImages),
                                        leftRange, rightRange, upRange,
                                        photomosaicData.repeatAddition);
+            gpuErrchk(cudaPeekAtLastError());
+            gpuErrchk(cudaDeviceSynchronize()); //Error - illegal memory access
 
             //Adds repeat values to differences
             numBlocks = (photomosaicData.noLibraryImages

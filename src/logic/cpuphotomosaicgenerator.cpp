@@ -23,22 +23,13 @@
 
 #include "colourdifference.h"
 
-CPUPhotomosaicGenerator::CPUPhotomosaicGenerator(QWidget *t_parent)
-    : PhotomosaicGeneratorBase{t_parent} {}
+CPUPhotomosaicGenerator::CPUPhotomosaicGenerator()
+{}
 
 //Generate best fits for Photomosaic cells
 //Returns true if successful
 bool CPUPhotomosaicGenerator::generateBestFits()
 {
-    //Initialise progress bar
-    if (!m_bestFits.empty())
-    {
-        setMaximum(m_bestFits.at(0).at(0).size() * m_bestFits.at(0).size()
-                   * std::pow(4, m_bestFits.size() - 1) * (m_bestFits.size()));
-        setValue(0);
-        setLabelText("Finding best fits...");
-    }
-
     //Converts colour space of main image and library images
     //Resizes library based on detail level
     auto [mainImage, resizedLib] = resizeAndCvtColor();
@@ -61,7 +52,7 @@ bool CPUPhotomosaicGenerator::generateBestFits()
                          - GridUtility::PAD_GRID; ++x)
             {
                 //If user hits cancel in QProgressDialog then return empty best fit
-                if (wasCanceled())
+                if (m_wasCanceled)
                     return false;
 
                 //If cell is valid
@@ -77,7 +68,8 @@ bool CPUPhotomosaicGenerator::generateBestFits()
                 }
 
                 //Increment progress bar
-                setValue(value() + progressStep);
+                m_progress += progressStep;
+                emit progress(m_progress);
             }
         }
 
@@ -89,7 +81,6 @@ bool CPUPhotomosaicGenerator::generateBestFits()
         }
     }
 
-    close();
     return true;
 }
 

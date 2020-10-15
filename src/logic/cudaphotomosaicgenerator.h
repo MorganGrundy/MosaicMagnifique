@@ -26,7 +26,7 @@
 class CUDAPhotomosaicGenerator : public PhotomosaicGeneratorBase
 {
 public:
-    CUDAPhotomosaicGenerator(QWidget *t_parent = nullptr);
+    CUDAPhotomosaicGenerator();
 
     //Generate best fits for Photomosaic cells
     //Returns true if successful

@@ -26,7 +26,7 @@
 class CPUPhotomosaicGenerator : public PhotomosaicGeneratorBase
 {
 public:
-    CPUPhotomosaicGenerator(QWidget *t_parent = nullptr);
+    CPUPhotomosaicGenerator();
 
     //Generate best fits for Photomosaic cells
     //Returns true if successful

@@ -30,13 +30,10 @@
 #include "gridutility.h"
 #include "gridbounds.h"
 
-PhotomosaicGeneratorBase::PhotomosaicGeneratorBase(QWidget *t_parent)
-    : QProgressDialog(t_parent), m_img{}, m_lib{}, m_mode{Mode::RGB_EUCLIDEAN},
+PhotomosaicGeneratorBase::PhotomosaicGeneratorBase()
+    : m_progress{0}, m_wasCanceled{false}, m_img{}, m_lib{}, m_mode{Mode::RGB_EUCLIDEAN},
       m_repeatRange{0}, m_repeatAddition{0}
-{
-    setWindowModality(Qt::WindowModal);
-    setMinimumDuration(0);
-}
+{}
 
 PhotomosaicGeneratorBase::~PhotomosaicGeneratorBase() {}
 
@@ -184,6 +181,19 @@ cv::Mat PhotomosaicGeneratorBase::buildPhotomosaic(const cv::Scalar &t_backgroun
     }
 
     return mosaic;
+}
+
+//Returns maximum progress
+size_t PhotomosaicGeneratorBase::getMaxProgress()
+{
+    return std::pow(4, m_bestFits.size() - 1) * (m_bestFits.size()) *
+           m_bestFits.at(0).at(0).size() * m_bestFits.at(0).size();
+}
+
+//Cancel generation
+void PhotomosaicGeneratorBase::cancel()
+{
+    m_wasCanceled = true;
 }
 
 //Converts colour space of main image and library images

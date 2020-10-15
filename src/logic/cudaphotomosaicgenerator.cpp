@@ -23,8 +23,8 @@
 
 #include "cudaphotomosaicdata.h"
 
-CUDAPhotomosaicGenerator::CUDAPhotomosaicGenerator(QWidget *t_parent)
-    : PhotomosaicGeneratorBase{t_parent} {}
+CUDAPhotomosaicGenerator::CUDAPhotomosaicGenerator()
+{}
 
 size_t differenceGPU(CUDAPhotomosaicData &photomosaicData);
 
@@ -32,15 +32,6 @@ size_t differenceGPU(CUDAPhotomosaicData &photomosaicData);
 //Returns true if successful
 bool CUDAPhotomosaicGenerator::generateBestFits()
 {
-    //Initialise progress bar
-    if (!m_bestFits.empty())
-    {
-        setMaximum(2 * m_bestFits.at(0).at(0).size() * m_bestFits.at(0).size()
-                   * std::pow(4, m_bestFits.size() - 1) * (m_bestFits.size()));
-        setValue(0);
-        setLabelText("Finding best fits (CUDA)...");
-    }
-
     //Converts colour space of main image and library images
     //Resizes library based on detail level
     auto [mainImage, resizedLib] = resizeAndCvtColor();
@@ -100,7 +91,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
             for (int x = -GridUtility::PAD_GRID; x < gridWidth - GridUtility::PAD_GRID; ++x)
             {
                 //If user hits cancel in QProgressDialog then return empty best fit
-                if (wasCanceled())
+                if (m_wasCanceled)
                     return false;
 
                 const GridUtility::CellBestFit &cellState = m_bestFits.at(step).
@@ -133,8 +124,6 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
 
                     ++dataIndex;
                 }
-
-                setValue(value() + progressStep);
             }
         }
 
@@ -165,7 +154,9 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
 
                 cellState = resultFlat[index];
 
-                setValue(value() + progressStep);
+                //Increment progress bar
+                m_progress += progressStep;
+                emit progress(m_progress);
             }
         }
 
@@ -180,7 +171,6 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         }
     }
 
-    close();
     return true;
 }
 

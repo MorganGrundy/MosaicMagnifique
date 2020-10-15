@@ -25,6 +25,7 @@
 #include <QPixmap>
 #include <QMessageBox>
 #include <QInputDialog>
+#include <QProgressDialog>
 #include <opencv2/imgcodecs.hpp>
 #include <chrono>
 
@@ -542,13 +543,13 @@ void MainWindow::generatePhotomosaic()
 #ifdef CUDA
     if (ui->checkCUDA->isChecked())
     {
-        auto CUDAgenerator = std::make_shared<CUDAPhotomosaicGenerator>(this);
+        auto CUDAgenerator = std::make_shared<CUDAPhotomosaicGenerator>();
         CUDAgenerator->setLibraryBatchSize(static_cast<size_t>(libraryBatchSize));
         generator = CUDAgenerator;
     }
     else
 #endif
-        generator = std::make_shared<CPUPhotomosaicGenerator>(this);
+        generator = std::make_shared<CPUPhotomosaicGenerator>();
 
     //Set generator settings
     generator->setMainImage(ui->widgetGridPreview->getBackground());
@@ -565,6 +566,17 @@ void MainWindow::generatePhotomosaic()
     generator->setCellGroup(ui->widgetGridPreview->getCellGroup());
     generator->setGridState(ui->widgetGridPreview->getGridState());
     generator->setRepeat(ui->spinRepeatRange->value(), ui->spinRepeatAddition->value());
+
+    //Create progress dialog
+    QProgressDialog progressDialog(this);
+    progressDialog.setWindowModality(Qt::WindowModal);
+    progressDialog.setMinimumDuration(0);
+    progressDialog.setLabelText("Finding best fits...");
+
+    connect(&progressDialog, &QProgressDialog::canceled,
+            generator.get(), &PhotomosaicGeneratorBase::cancel);
+    connect(generator.get(), &PhotomosaicGeneratorBase::progress,
+            &progressDialog, &QProgressDialog::setValue);
 
     //Generate Photomosaic and measure time
     const auto startTime = std::chrono::high_resolution_clock::now();

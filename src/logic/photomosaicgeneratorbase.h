@@ -21,7 +21,6 @@
 #define PHOTOMOSAICGENERATORBASE_H
 
 #include <opencv2/core/mat.hpp>
-#include <QProgressDialog>
 
 #include "cellshape.h"
 #include "imageutility.h"
@@ -29,12 +28,13 @@
 #include "gridutility.h"
 #include "cellgroup.h"
 
-class PhotomosaicGeneratorBase : protected QProgressDialog
+class PhotomosaicGeneratorBase : public QObject
 {
+    Q_OBJECT
 public:
     enum class Mode {RGB_EUCLIDEAN, CIE76, CIEDE2000};
 
-    PhotomosaicGeneratorBase(QWidget *t_parent = nullptr);
+    PhotomosaicGeneratorBase();
     ~PhotomosaicGeneratorBase();
 
     //Sets main image
@@ -62,7 +62,21 @@ public:
     //Builds photomosaic from mosaic state
     cv::Mat buildPhotomosaic(const cv::Scalar &t_backgroundColour = cv::Scalar(0, 0, 0)) const;
 
+    //Returns maximum progress
+    size_t getMaxProgress();
+
+public slots:
+    //Cancel generation
+    void cancel();
+
+signals:
+    //Emitted when progress changes
+    void progress(const size_t t_progressStep);
+
 protected:
+    size_t m_progress;
+    bool m_wasCanceled;
+
     cv::Mat m_img;
     std::vector<cv::Mat> m_lib;
 

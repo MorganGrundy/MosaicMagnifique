@@ -572,11 +572,15 @@ void MainWindow::generatePhotomosaic()
     progressDialog.setWindowModality(Qt::WindowModal);
     progressDialog.setMinimumDuration(0);
     progressDialog.setLabelText("Finding best fits...");
+    progressDialog.setMaximum(generator->getMaxProgress());
 
     connect(&progressDialog, &QProgressDialog::canceled,
             generator.get(), &PhotomosaicGeneratorBase::cancel);
     connect(generator.get(), &PhotomosaicGeneratorBase::progress,
             &progressDialog, &QProgressDialog::setValue);
+
+    progressDialog.show();
+    QCoreApplication::processEvents();
 
     //Generate Photomosaic and measure time
     const auto startTime = std::chrono::high_resolution_clock::now();

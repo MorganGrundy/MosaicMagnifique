@@ -184,7 +184,7 @@ cv::Mat PhotomosaicGeneratorBase::buildPhotomosaic(const cv::Scalar &t_backgroun
 }
 
 //Returns maximum progress
-size_t PhotomosaicGeneratorBase::getMaxProgress()
+int PhotomosaicGeneratorBase::getMaxProgress()
 {
     return std::pow(4, m_bestFits.size() - 1) * (m_bestFits.size()) *
            m_bestFits.at(0).at(0).size() * m_bestFits.at(0).size();

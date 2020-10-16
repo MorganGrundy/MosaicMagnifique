@@ -63,7 +63,7 @@ public:
     cv::Mat buildPhotomosaic(const cv::Scalar &t_backgroundColour = cv::Scalar(0, 0, 0)) const;
 
     //Returns maximum progress
-    size_t getMaxProgress();
+    int getMaxProgress();
 
 public slots:
     //Cancel generation
@@ -71,10 +71,10 @@ public slots:
 
 signals:
     //Emitted when progress changes
-    void progress(const size_t t_progressStep);
+    void progress(const int t_progressStep);
 
 protected:
-    size_t m_progress;
+    int m_progress;
     bool m_wasCanceled;
 
     cv::Mat m_img;

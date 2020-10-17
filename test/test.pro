@@ -1,13 +1,15 @@
 include(gtest_dependency.pri)
 
 TEMPLATE = app
-CONFIG += console c++11
+CONFIG += console c++17
 CONFIG -= app_bundle
 CONFIG += thread
-CONFIG -= qt
+
+include(../common.pri)
+include(../src/logic/logic.pri)
 
 HEADERS += \
-        tst_logictest1.h
+	tst_colourdifference.h
 
 SOURCES += \
         main.cpp

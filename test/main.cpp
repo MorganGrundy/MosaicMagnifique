@@ -1,4 +1,4 @@
-#include "tst_logictest1.h"
+#include "tst_colourdifference.h"
 
 #include <gtest/gtest.h>
 

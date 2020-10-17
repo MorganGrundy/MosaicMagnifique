@@ -20,7 +20,7 @@ isEmpty(GOOGLETEST_DIR) {
 requires(exists($$GTEST_SRCDIR):exists($$GMOCK_SRCDIR))
 
 DEFINES += \
-    GTEST_LANG_CXX11
+	GTEST_LANG_CXX17
 
 !isEmpty(GTEST_SRCDIR) {
     INCLUDEPATH *= \

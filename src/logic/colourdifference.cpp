@@ -8,6 +8,14 @@ double ColourDifference::calculateRGBEuclidean(const cv::Vec3b &t_first, const c
                 pow(t_first[2] - t_second[2], 2));
 }
 
+//Calculates difference between two CIELAB value using CIE76
+double ColourDifference::calculateCIE76(const cv::Vec3d &t_first, const cv::Vec3d &t_second)
+{
+    return sqrt(pow(t_first[0] - t_second[0], 2) +
+                pow(t_first[1] - t_second[1], 2) +
+                pow(t_first[2] - t_second[2], 2));
+}
+
 //Converts degrees to radians
 constexpr double ColourDifference::degToRad(const double deg)
 {
@@ -15,7 +23,7 @@ constexpr double ColourDifference::degToRad(const double deg)
 }
 
 //Calculates difference between two CIELAB value using CIEDE2000
-double ColourDifference::calculateCIEDE2000(const cv::Vec3b &t_first, const cv::Vec3b &t_second)
+double ColourDifference::calculateCIEDE2000(const cv::Vec3d &t_first, const cv::Vec3d &t_second)
 {
     const double k_L = 1.0, k_C = 1.0, k_H = 1.0;
     const double deg360InRad = degToRad(360.0);
@@ -119,9 +127,8 @@ double ColourDifference::calculateCIEDE2000(const cv::Vec3b &t_first, const cv::
     const double R_T = (-sin(2.0 * deltaTheta)) * R_C;
 
 
-    return static_cast<long double>(sqrt(pow(deltaLPrime / (k_L * S_L), 2.0) +
-                                             pow(deltaCPrime / (k_C * S_C), 2.0) +
-                                             pow(deltaHPrime / (k_H * S_H), 2.0) +
-                                             (R_T * (deltaCPrime / (k_C * S_C)) *
-                                              (deltaHPrime / (k_H * S_H)))));
+    return sqrt(pow(deltaLPrime / (k_L * S_L), 2.0) +
+                pow(deltaCPrime / (k_C * S_C), 2.0) +
+                pow(deltaHPrime / (k_H * S_H), 2.0) +
+                (R_T * (deltaCPrime / (k_C * S_C)) * (deltaHPrime / (k_H * S_H))));
 }

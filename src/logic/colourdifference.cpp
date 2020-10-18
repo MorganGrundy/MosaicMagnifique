@@ -1,15 +1,7 @@
 #include "colourdifference.h"
 
 //Calculates difference between two RGB (any order) value using RGB Euclidean
-double ColourDifference::calculateRGBEuclidean(const cv::Vec3b &t_first, const cv::Vec3b &t_second)
-{
-    return sqrt(pow(t_first[0] - t_second[0], 2) +
-                pow(t_first[1] - t_second[1], 2) +
-                pow(t_first[2] - t_second[2], 2));
-}
-
-//Calculates difference between two CIELAB value using CIE76
-double ColourDifference::calculateCIE76(const cv::Vec3d &t_first, const cv::Vec3d &t_second)
+double ColourDifference::calculateRGBEuclidean(const cv::Vec3d &t_first, const cv::Vec3d &t_second)
 {
     return sqrt(pow(t_first[0] - t_second[0], 2) +
                 pow(t_first[1] - t_second[1], 2) +

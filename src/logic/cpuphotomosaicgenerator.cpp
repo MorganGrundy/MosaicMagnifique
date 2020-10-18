@@ -114,12 +114,12 @@ CPUPhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape,
         double variant = (it != repeats.end()) ? it->second : 0;
 
         //Sum difference of corresponding pixels in cell and library image
-        const cv::Vec3b *p_main, *p_im;
+        const cv::Vec3f *p_main, *p_im;
         const uchar *p_mask;
         for (int row = cellBounds.y; row < cellBounds.br().y && variant < bestVariant; ++row)
         {
-            p_main = cell.ptr<cv::Vec3b>(row);
-            p_im = t_lib.at(i).ptr<cv::Vec3b>(row);
+            p_main = cell.ptr<cv::Vec3f>(row);
+            p_im = t_lib.at(i).ptr<cv::Vec3f>(row);
             p_mask = cellMask.ptr<uchar>(row);
             for (int col = cellBounds.x; col < cellBounds.br().x && variant < bestVariant; ++col)
             {

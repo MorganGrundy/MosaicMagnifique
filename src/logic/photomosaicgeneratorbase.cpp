@@ -216,20 +216,30 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGeneratorBase::resizeAndCvtC
     //Main image
     if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
     {
-        cv::cuda::GpuMat main;
+        cv::cuda::GpuMat main, mainConverted;
         main.upload(m_img, stream);
-        cv::cuda::cvtColor(main, main, cv::COLOR_BGR2Lab, 0, stream);
+
+        //Convert 8U [0..255] to 32F [0..1]
+        //CUDA in-place convertTo doesn't work
+        main.convertTo(mainConverted, CV_32F, 1 / 255.0, stream);
+        //Convert BGR to Lab
+        cv::cuda::cvtColor(mainConverted, main, cv::COLOR_BGR2Lab, 0, stream);
+
         main.download(resultMain, stream);
     }
     else
-        resultMain = m_img;
+        //Convert 8U [0..255] to 32F [0..255]
+        m_img.convertTo(resultMain, CV_32F);
 
     //Library image
     std::vector<cv::cuda::GpuMat> src(m_lib.size());
+    //CUDA in-place convertTo doesn't work
+    cv::cuda::GpuMat tmpConvertTo;
     for (size_t i = 0; i < m_lib.size(); ++i)
     {
-        //Resize image
         src.at(i).upload(m_lib.at(i), stream);
+
+        //Resize image
         if (m_cells.getDetail() != 1)
             cv::cuda::resize(src.at(i), src.at(i),
                              cv::Size(std::round(m_cells.getCellSize(0, true)),
@@ -237,16 +247,31 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGeneratorBase::resizeAndCvtC
                              0, 0, flags, stream);
 
         if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
-            cv::cuda::cvtColor(src.at(i), src.at(i), cv::COLOR_BGR2Lab, 0, stream);
-        src.at(i).download(result.at(i), stream);
+        {
+            //Convert 8U [0..255] to 32F [0..1]
+            src.at(i).convertTo(tmpConvertTo, CV_32F, 1 / 255.0, stream);
+            //Convert BGR to Lab
+            cv::cuda::cvtColor(tmpConvertTo, tmpConvertTo, cv::COLOR_BGR2Lab, 0, stream);
+        }
+        else
+            //Convert 8U [0..255] to 32F [0..255]
+            src.at(i).convertTo(tmpConvertTo, CV_32F, stream);
+
+        tmpConvertTo.download(result.at(i), stream);
     }
     stream.waitForCompletion();
 #else
     //Main image
     if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
-        cv::cvtColor(m_img, resultMain, cv::COLOR_BGR2Lab);
+    {
+        //Convert 8U [0..255] to 32F [0..1]
+        m_img.convertTo(resultMain, CV_32F, 1 / 255.0);
+        //Convert BGR to Lab
+        cv::cvtColor(resultMain, resultMain, cv::COLOR_BGR2Lab);
+    }
     else
-        resultMain = m_img;
+        //Convert 8U [0..255] to 32F [0..255]
+        m_img.convertTo(resultMain, CV_32F);
 
     //Library image
     for (size_t i = 0; i < m_lib.size(); ++i)
@@ -259,7 +284,15 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGeneratorBase::resizeAndCvtC
             result.at(i) = m_lib.at(i).clone();
 
         if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
+        {
+            //Convert 8U [0..255] to 32F [0..1]
+            result.at(i).convertTo(result.at(i), CV_32F, 1 / 255.0);
+            //Convert BGR to Lab
             cv::cvtColor(result.at(i), result.at(i), cv::COLOR_BGR2Lab);
+        }
+        else
+            //Convert 8U [0..255] to 32F [0..255]
+            result.at(i).convertTo(result.at(i), CV_32F);
     }
 
 

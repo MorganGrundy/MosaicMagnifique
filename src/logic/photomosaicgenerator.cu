@@ -24,7 +24,7 @@
 
 //Calculates the euclidean difference between main image and library images
 __global__
-void euclideanDifferenceKernel(uchar *im_1, uchar *im_2, size_t noLibIm, uchar *mask_im,
+void euclideanDifferenceKernel(float *im_1, float *im_2, size_t noLibIm, uchar *mask_im,
                                size_t size, size_t channels, size_t *target_area, double *variants)
 {
     const size_t index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
@@ -66,7 +66,7 @@ constexpr double degToRadKernel(const double deg)
 
 //Kernel that calculates the CIEDE2000 difference between main image and library images
 __global__
-void CIEDE2000DifferenceKernel(uchar *im_1, uchar *im_2, size_t noLibIm, uchar *mask_im,
+void CIEDE2000DifferenceKernel(float *im_1, float *im_2, size_t noLibIm, uchar *mask_im,
                                size_t size, size_t channels, size_t *target_area, double *variants)
 {
     const size_t index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;

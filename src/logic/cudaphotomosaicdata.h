@@ -84,12 +84,12 @@ public:
     //Copies cell image to host memory at index i
     void setCellImage(const cv::Mat &t_cellImage, const size_t i);
     //Returns pointer to cell image on GPU
-    uchar *getCellImage(const size_t i);
+    float *getCellImage(const size_t i);
 
     //Copies library images to GPU
     void setLibraryImages(const std::vector<cv::Mat> &t_libraryImages);
     //Returns pointer to library image on GPU
-    uchar *getLibraryImage(const size_t i);
+    float *getLibraryImage(const size_t i);
 
     //Copies mask image to GPU
     void setMaskImage(const cv::Mat &t_maskImage,
@@ -160,9 +160,9 @@ private:
     bool *HOST_cellStates; //Stores on host all cell states
     bool *cellStates; //Stores all cell states
 
-    uchar *HOST_cellImages; //Stores on host all cells from main image
-    uchar *cellImage; //Stores cells from the main image
-    uchar *libraryImages; //Stores all library images
+    float *HOST_cellImages; //Stores on host all cells from main image
+    float *cellImage; //Stores cells from the main image
+    float *libraryImages; //Stores all library images
     //Controls if and how cells should flip on alternate rows/columns
     bool m_colFlipHorizontal, m_colFlipVertical, m_rowFlipHorizontal, m_rowFlipVertical;
     uchar *maskImages; //Stores mask images

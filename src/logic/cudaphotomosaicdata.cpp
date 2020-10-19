@@ -73,12 +73,13 @@ bool CUDAPhotomosaicData::mallocData()
 
     const size_t cellStateSize = noCellImages;
 
-    const size_t staticMemory = (libraryImagesSize + maskImagesSize) * sizeof(uchar)
+    const size_t staticMemory = (maskImagesSize) * sizeof(uchar)
+                                + (libraryImagesSize) * sizeof(float)
                                 + (maxVariantSize) * sizeof(double)
                                 + (bestFitSize + repeatsSize) * sizeof(size_t)
                                 + (cellStateSize) * sizeof(bool);
 
-    const size_t batchScalingMemory = (cellImageSize) * sizeof(uchar)
+    const size_t batchScalingMemory = (cellImageSize) * sizeof(float)
             + (variantsSize + reductionMemorySize + lowestVariantSize) * sizeof(double)
             + (targetAreaSize) * sizeof(size_t);
 
@@ -104,8 +105,8 @@ bool CUDAPhotomosaicData::mallocData()
         fprintf(stderr, "Failed to allocate host memory for cell states\n");
         return false;
     }
-    if (!(HOST_cellImages = static_cast<uchar *>(malloc(cellImageSize * noValidCells
-                                                        * sizeof(uchar)))))
+    if (!(HOST_cellImages = static_cast<float *>(malloc(cellImageSize * noValidCells
+                                                        * sizeof(float)))))
     {
         fprintf(stderr, "Failed to allocate host memory for cell images\n");
         free(HOST_cellStates);
@@ -130,11 +131,14 @@ bool CUDAPhotomosaicData::mallocData()
 
     void *mem;
     //Batch allocate memory for cell images, library images, and mask image
+    gpuErrchk(cudaMalloc(&mem, maskImagesSize * sizeof(uchar)));
+    maskImages = static_cast<uchar *>(mem);
+
+    //Batch allocate memory for cell images, library images, and mask image
     gpuErrchk(cudaMalloc(&mem, (cellImageSize * batchSize + libraryImagesSize + maskImagesSize)
-                         * sizeof(uchar)));
-    cellImage = static_cast<uchar *>(mem);
+                         * sizeof(float)));
+    cellImage = static_cast<float *>(mem);
     libraryImages = cellImage + cellImageSize * batchSize;
-    maskImages = libraryImages + libraryImagesSize;
 
     //Batch allocate memory for variants, reduce memory, max variant and lowest variants
     gpuErrchk(cudaMalloc(&mem, (maxVariantSize
@@ -176,7 +180,10 @@ void CUDAPhotomosaicData::freeData()
         free(HOST_targetAreas);
         free(HOST_bestFit);
 
-        //Free uchar memory (cell image, library images, and mask image)
+        //Free uchar memory (mask image)
+        gpuErrchk(cudaFree(maskImages));
+
+        //Free float memory (cell image, library images)
         gpuErrchk(cudaFree(cellImage));
 
         //Free double memory (variants, reduction memory, lowest variant)
@@ -213,7 +220,7 @@ int CUDAPhotomosaicData::copyNextBatchToDevice()
     const size_t startOffset = batchSize * currentBatchIndex;
     const size_t offset = std::min(noValidCells - startOffset, batchSize);
     gpuErrchk(cudaMemcpy(cellImage, HOST_cellImages + startOffset * fullSize,
-                         offset * fullSize * sizeof(uchar), cudaMemcpyHostToDevice));
+                         offset * fullSize * sizeof(float), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(targetArea, HOST_targetAreas + startOffset * 4,
                          offset * 4 * sizeof(size_t), cudaMemcpyHostToDevice));
 
@@ -304,11 +311,11 @@ void CUDAPhotomosaicData::setCellImage(const cv::Mat &t_cellImage, const size_t 
         ++continuousIm;
     else
         ++incontinuousIm;
-    memcpy(HOST_cellImages + i * fullSize, t_cellImage.data, fullSize * sizeof(uchar));
+    memcpy(HOST_cellImages + i * fullSize, t_cellImage.data, fullSize * sizeof(float));
 }
 
 //Returns pointer to cell image i on GPU
-uchar *CUDAPhotomosaicData::getCellImage(const size_t i)
+float *CUDAPhotomosaicData::getCellImage(const size_t i)
 {
     return cellImage + i * fullSize;
 }
@@ -323,12 +330,12 @@ void CUDAPhotomosaicData::setLibraryImages(const std::vector<cv::Mat> &t_library
         else
             ++incontinuousIm;
         gpuErrchk(cudaMemcpy(libraryImages + i * fullSize, t_libraryImages.at(i).data,
-                             fullSize * sizeof(uchar), cudaMemcpyHostToDevice));
+                             fullSize * sizeof(float), cudaMemcpyHostToDevice));
     }
 }
 
 //Returns pointer to library image on GPU
-uchar *CUDAPhotomosaicData::getLibraryImage(const size_t i)
+float *CUDAPhotomosaicData::getLibraryImage(const size_t i)
 {
     return libraryImages + i * fullSize;
 }

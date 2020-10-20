@@ -57,6 +57,15 @@ void euclideanDifferenceKernel(float *im_1, float *im_2, size_t noLibIm, uchar *
     }
 }
 
+//Wrapper for euclidean difference kernel
+void euclideanDifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm, uchar *mask_im,
+                                      size_t size, size_t channels, size_t *target_area,
+                                      double *variants)
+{
+    euclideanDifferenceKernel<<<1, 1>>>(im_1, im_2, noLibIm, mask_im, size, channels, target_area,
+                              variants);
+}
+
 //Converts degrees to radians
 __device__
 constexpr double degToRadKernel(const double deg)
@@ -203,6 +212,15 @@ void CIEDE2000DifferenceKernel(float *im_1, float *im_2, size_t noLibIm, uchar *
                                                     (deltaHPrime / (k_H * S_H))));
         }
     }
+}
+
+//Wrapper for euclidean difference kernel
+void CIEDE2000DifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm, uchar *mask_im,
+                                      size_t size, size_t channels, size_t *target_area,
+                                      double *variants)
+{
+    CIEDE2000DifferenceKernel<<<1, 1>>>(im_1, im_2, noLibIm, mask_im, size, channels, target_area,
+                                        variants);
 }
 
 //Calculates repeats in range

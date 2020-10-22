@@ -1,4 +1,5 @@
 #include "tst_colourdifference.h"
+#include "tst_cudakernel.h"
 
 #include <gtest/gtest.h>
 

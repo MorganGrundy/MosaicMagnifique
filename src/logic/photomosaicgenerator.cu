@@ -233,7 +233,7 @@ void calculateRepeats(bool *states, size_t *bestFit, size_t *repeats,
 {
     for (int y = -upRange; y < 0; ++y)
     {
-        for (int x = -leftRange; x < rightRange; ++x)
+        for (int x = -leftRange; x <= rightRange; ++x)
         {
             if (states[y * noXCell + x])
                 repeats[bestFit[y * noXCell + x]] += repeatAddition;
@@ -244,6 +244,17 @@ void calculateRepeats(bool *states, size_t *bestFit, size_t *repeats,
         if (states[x])
             repeats[bestFit[x]] += repeatAddition;
     }
+}
+
+//Wrapper for calculate repeats kernel
+void calculateRepeatsKernelWrapper(bool *states, size_t *bestFit, size_t *repeats,
+                            const int noXCell,
+                            const int leftRange, const int rightRange,
+                            const int upRange,
+                            const size_t repeatAddition)
+{
+    calculateRepeats<<<1, 1>>>(states, bestFit, repeats, noXCell, leftRange, rightRange, upRange,
+                               repeatAddition);
 }
 
 //Adds repeat values to variants

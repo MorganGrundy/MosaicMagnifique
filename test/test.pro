@@ -9,7 +9,8 @@ include(../common.pri)
 include(../src/logic/logic.pri)
 
 HEADERS += \
-	tst_colourdifference.h
+	tst_colourdifference.h \
+	tst_cudakernel.h
 
 SOURCES += \
         main.cpp

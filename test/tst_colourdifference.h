@@ -419,7 +419,7 @@ TEST(ColourDifference, RANDOM_CIE76vsCUDA_CIE76)
                                                                    colourDiffPair.second);
 
         //Check result
-        ASSERT_FLOAT_EQ(HOST_result, cpu_result);
+        ASSERT_DOUBLE_EQ(HOST_result, cpu_result);
     }
 
     //Free mask

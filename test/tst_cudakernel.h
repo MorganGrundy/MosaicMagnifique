@@ -22,7 +22,7 @@ TEST(CUDAKernel, CalculateRepeats)
     const int size = 5;
     const size_t noLibraryImages = 10;
 
-    const size_t repeatRange = 2;
+    const int repeatRange = 2;
     const size_t repeatAddition = 500;
 
     //Create cell states, all active
@@ -52,11 +52,14 @@ TEST(CUDAKernel, CalculateRepeats)
     gpuErrchk(cudaMemcpy(repeats, HOST_repeats, noLibraryImages * sizeof(size_t),
                          cudaMemcpyHostToDevice));
 
-    size_t cellY = 2, cellX = 2;
+    int cellY = 2, cellX = 2;
     //Calculate repeats at cell position (2, 2) with CUDA kernel
     size_t cellPosition = cellY * size + cellX;
+    const int leftRange = std::min(repeatRange, cellX);
+    const int rightRange = std::min(repeatRange, size - cellX - 1);
+    const int upRange = std::min(repeatRange, cellY);
     calculateRepeatsKernelWrapper(cellStates + cellPosition, bestFit + cellPosition,
-                                  repeats, size, repeatRange, repeatRange, repeatRange,
+                                  repeats, size, leftRange, rightRange, upRange,
                                   repeatAddition);
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
@@ -65,9 +68,11 @@ TEST(CUDAKernel, CalculateRepeats)
 
     //Calculate repeats at cell position (2, 2) without CUDA
     std::vector<size_t> expectedRepeats(noLibraryImages, 0);
-    for (size_t y = cellY - repeatRange; y <= cellY + repeatRange; ++y)
+    for (int y = std::max(0, cellY - repeatRange);
+         y <= std::min(size - 1, cellY + repeatRange); ++y)
     {
-        for (size_t x = cellX - repeatRange; x <= cellX + repeatRange; ++x)
+        for (int x = std::max(0, cellX - repeatRange);
+             x <= std::min(size - 1, cellX + repeatRange); ++x)
         {
             size_t cellIndex = y * size + x;
             if (cellIndex < cellPosition)
@@ -75,7 +80,7 @@ TEST(CUDAKernel, CalculateRepeats)
             else
                 break;
         }
-        if (y * size >= cellPosition)
+        if (static_cast<size_t>(y * size) >= cellPosition)
             break;
     }
 

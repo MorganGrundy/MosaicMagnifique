@@ -97,7 +97,7 @@ protected:
     //Returns the cell image at given position and it's local bounds
     std::pair<cv::Mat, cv::Rect> getCellAt(
         const CellShape &t_cellShape, const CellShape &t_detailCellShape,
-        const int x, const int y, const bool t_pad,
+        const int x, const int y, const int t_pad,
         const cv::Mat &t_image) const;
 };
 

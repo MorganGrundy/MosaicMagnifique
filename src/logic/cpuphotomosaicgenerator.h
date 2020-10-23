@@ -36,7 +36,7 @@ private:
     //Returns best fit index for cell if it is the grid
     std::optional<size_t> findCellBestFit(const CellShape &t_cellShape,
                                           const CellShape &t_detailCellShape,
-                                          const int x, const int y, const bool t_pad,
+                                          const int x, const int y, const int t_pad,
                                           const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
                                           const GridUtility::StepBestFit &t_grid) const;
 

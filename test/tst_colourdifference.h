@@ -31,7 +31,7 @@ TEST(ColourDifference, RGBEuclidean)
         {{2, 100, 197}, {220, 34, 0}, 301.14614392}
     };
 
-    for (auto colourDiffPair: colourDiffPairs)
+    for (const auto &colourDiffPair: colourDiffPairs)
     {
         const double result = ColourDifference::calculateRGBEuclidean(colourDiffPair.first,
                                                                       colourDiffPair.second);
@@ -52,7 +52,7 @@ TEST(ColourDifference, CIE76)
         {{0, -128, -128}, {0, -128, 127}, 255}
     };
 
-    for (auto colourDiffPair: colourDiffPairs)
+    for (const auto &colourDiffPair: colourDiffPairs)
     {
         const double result = ColourDifference::calculateCIE76(colourDiffPair.first,
                                                                colourDiffPair.second);
@@ -104,7 +104,7 @@ TEST(ColourDifference, CIEDE2000)
         {{2.0776, 0.0795, -1.135}, {0.9033, -0.0636, -0.5514}, 0.9082}
     };
 
-    for (auto colourDiffPair: colourDiffPairs)
+    for (const auto &colourDiffPair: colourDiffPairs)
     {
         const double result = ColourDifference::calculateCIEDE2000(colourDiffPair.first,
                                                                    colourDiffPair.second);
@@ -168,7 +168,7 @@ TEST(ColourDifference, CUDA_RGBEuclidean)
     double *result;
     gpuErrchk(cudaMalloc((void **)&result, sizeof(double)));
 
-    for (auto colourDiffPair: colourDiffPairs)
+    for (const auto &colourDiffPair: colourDiffPairs)
     {
         //Copy pair to GPU
         gpuErrchk(cudaMemcpy(first, colourDiffPair.first.val, 3 * sizeof(float),
@@ -233,7 +233,7 @@ TEST(ColourDifference, CUDA_CIE76)
     double *result;
     gpuErrchk(cudaMalloc((void **)&result, sizeof(double)));
 
-    for (auto colourDiffPair: colourDiffPairs)
+    for (const auto &colourDiffPair: colourDiffPairs)
     {
         //Copy pair to GPU
         gpuErrchk(cudaMemcpy(first, colourDiffPair.first.val, 3 * sizeof(float),
@@ -329,7 +329,7 @@ TEST(ColourDifference, CUDA_CIEDE2000)
     double *result;
     gpuErrchk(cudaMalloc((void **)&result, sizeof(double)));
 
-    for (auto colourDiffPair: colourDiffPairs)
+    for (const auto &colourDiffPair: colourDiffPairs)
     {
         //Copy pair to GPU
         gpuErrchk(cudaMemcpy(first, colourDiffPair.first.val, 3 * sizeof(float),

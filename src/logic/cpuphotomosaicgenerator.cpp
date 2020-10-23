@@ -60,8 +60,8 @@ bool CPUPhotomosaicGenerator::generateBestFits()
                     at(x + GridUtility::PAD_GRID).has_value())
                 {
                     //Find cell best fit
-                    m_bestFits.at(step).at(static_cast<size_t>(y + GridUtility::PAD_GRID)).
-                        at(static_cast<size_t>(x + GridUtility::PAD_GRID)) =
+                    m_bestFits.at(step).at(y + GridUtility::PAD_GRID).
+                        at(x + GridUtility::PAD_GRID) =
                             findCellBestFit(normalCellShape, detailCellShape, x, y,
                                             GridUtility::PAD_GRID, mainImage, resizedLib,
                                             m_bestFits.at(step));
@@ -88,7 +88,7 @@ bool CPUPhotomosaicGenerator::generateBestFits()
 std::optional<size_t>
 CPUPhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape,
                                          const CellShape &t_detailCellShape,
-                                         const int x, const int y, const bool t_pad,
+                                         const int x, const int y, const int t_pad,
                                          const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
                                          const GridUtility::StepBestFit &t_grid) const
 {
@@ -105,7 +105,7 @@ CPUPhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape,
 
     //Find library image most similar to cell
     int bestFit = -1;
-    long double bestVariant = std::numeric_limits<long double>::max();
+    double bestVariant = std::numeric_limits<double>::max();
     for (size_t i = 0; i < t_lib.size(); ++i)
     {
         //Calculate difference between cell and library image
@@ -172,8 +172,7 @@ std::map<size_t, int> CPUPhotomosaicGenerator::calculateRepeats(
     {
         for (int repeatX = repeatStartX; repeatX <= repeatEndX; ++repeatX)
         {
-            const std::optional<size_t> cell = grid.at(static_cast<size_t>(repeatY)).
-                                               at(static_cast<size_t>(repeatX));
+            const std::optional<size_t> cell = grid.at(repeatY).at(repeatX);
             if (cell.has_value())
             {
                 const auto it = repeats.find(cell.value());
@@ -188,8 +187,7 @@ std::map<size_t, int> CPUPhotomosaicGenerator::calculateRepeats(
     //Looks at cells directly to the left of current cell
     for (int repeatX = repeatStartX; repeatX < x; ++repeatX)
     {
-        const std::optional<size_t> cell = grid.at(static_cast<size_t>(y)).
-                                           at(static_cast<size_t>(repeatX));
+        const std::optional<size_t> cell = grid.at(y).at(repeatX);
         if (cell.has_value())
         {
             const auto it = repeats.find(cell.value());

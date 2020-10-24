@@ -1,5 +1,6 @@
 #include "tst_colourdifference.h"
 #include "tst_cudakernel.h"
+#include "tst_generator.h"
 
 #include <gtest/gtest.h>
 

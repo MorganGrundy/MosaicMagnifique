@@ -83,6 +83,12 @@ bool PhotomosaicGeneratorBase::generateBestFits()
     return false;
 }
 
+//Returns best fits
+GridUtility::MosaicBestFit PhotomosaicGeneratorBase::getBestFits()
+{
+    return m_bestFits;
+}
+
 //Builds photomosaic from mosaic state
 cv::Mat PhotomosaicGeneratorBase::buildPhotomosaic(const cv::Scalar &t_backgroundColour) const
 {

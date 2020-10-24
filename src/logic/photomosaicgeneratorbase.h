@@ -59,6 +59,9 @@ public:
     //Returns true if successful
     virtual bool generateBestFits();
 
+    //Returns best fits
+    GridUtility::MosaicBestFit getBestFits();
+
     //Builds photomosaic from mosaic state
     cv::Mat buildPhotomosaic(const cv::Scalar &t_backgroundColour = cv::Scalar(0, 0, 0)) const;
 

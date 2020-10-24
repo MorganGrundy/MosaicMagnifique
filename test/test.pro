@@ -10,7 +10,8 @@ include(../src/logic/logic.pri)
 
 HEADERS += \
 	tst_colourdifference.h \
-	tst_cudakernel.h
+	tst_cudakernel.h \
+	tst_generator.h
 
 SOURCES += \
         main.cpp

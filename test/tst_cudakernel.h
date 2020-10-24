@@ -17,7 +17,7 @@ void calculateRepeatsKernelWrapper(bool *states, size_t *bestFit, size_t *repeat
 
 TEST(CUDAKernel, CalculateRepeats)
 {
-    srand(time(NULL));
+    srand(static_cast<unsigned int>(time(NULL)));
 
     const int size = 5;
     const size_t noLibraryImages = 10;

@@ -369,7 +369,7 @@ float randFloat(float min, float max)
 TEST(ColourDifference, RANDOM_CIE76vsCUDA_CIE76)
 {
     const size_t iterations = 1 << 14;
-    srand(time(NULL));
+    srand(static_cast<unsigned int>(time(NULL)));
 
     //Create mask on GPU
     uchar HOST_mask = 1;

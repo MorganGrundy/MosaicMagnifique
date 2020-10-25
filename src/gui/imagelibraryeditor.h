@@ -27,6 +27,7 @@
 
 #include "imageutility.h"
 #include "imagesquarer.h"
+#include "imagelibrary.h"
 
 namespace Ui {
 class ImageLibraryEditor;
@@ -72,24 +73,6 @@ private:
     //Represents different image cropping modes
     enum class CropMode {Manual, Center, Features, Entropy, CascadeClassifier};
 
-    //Stores library image in original size, resized, and it's relevant QListWidgetItem
-    struct LibraryImage
-    {
-        //Constructor
-        LibraryImage(const cv::Mat &t_originalImage, const cv::Mat &t_resizedImage,
-                     const QString &t_name)
-            : originalImage{t_originalImage}, resizedImage{t_resizedImage}
-        {
-            listWidget = std::make_unique<QListWidgetItem>(
-                QIcon(ImageUtility::matToQPixmap(resizedImage)), t_name);
-        }
-
-        cv::Mat originalImage;
-        cv::Mat resizedImage;
-        //Qt ui will just use c-style pointer so no benefit from shared_ptr
-        std::unique_ptr<QListWidgetItem> listWidget;
-    };
-
     Ui::ImageLibraryEditor *ui;
     QProgressBar *m_progressBar;
     ImageSquarer *m_imageSquarer;
@@ -97,11 +80,9 @@ private:
     //Current crop mode for new images
     CropMode m_cropMode;
 
-    //Size of library images
-    int m_imageSize;
-
     //Stores library images
-    std::vector<LibraryImage> m_images;
+    std::vector<std::shared_ptr<QListWidgetItem>> m_imageWidgets;
+    ImageLibrary m_images;
 };
 
 #endif // IMAGELIBRARYEDITOR_H

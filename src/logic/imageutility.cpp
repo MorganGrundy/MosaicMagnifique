@@ -289,7 +289,8 @@ double ImageUtility::calculateEntropy(const cv::Mat &t_in, const cv::Mat &t_mask
 //Can be used to save a OpenCV mat to a file
 QDataStream &operator<<(QDataStream &t_out, const cv::Mat &t_mat)
 {
-    t_out << t_mat.type() << t_mat.rows << t_mat.cols;
+    t_out << static_cast<quint32>(t_mat.type()) << static_cast<quint32>(t_mat.rows)
+          << static_cast<quint32>(t_mat.cols);
 
     const int dataSize = t_mat.cols * t_mat.rows * static_cast<int>(t_mat.elemSize());
     QByteArray data = QByteArray::fromRawData(reinterpret_cast<const char *>(t_mat.ptr()),
@@ -303,7 +304,7 @@ QDataStream &operator<<(QDataStream &t_out, const cv::Mat &t_mat)
 //Can be used to load a OpenCV mat from a file
 QDataStream &operator>>(QDataStream &t_in, cv::Mat &t_mat)
 {
-    int type, rows, cols;
+    quint32 type, rows, cols;
     QByteArray data;
     t_in >> type >> rows >> cols;
     t_in >> data;

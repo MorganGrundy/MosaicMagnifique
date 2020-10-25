@@ -7,6 +7,7 @@ HEADERS += \
 	$$PWD/gridgenerator.h \
 	$$PWD/gridutility.h \
 	$$PWD/imagehistogramcompare.h \
+	$$PWD/imagelibrary.h \
 	$$PWD/imageutility.h \
 	$$PWD/photomosaicgeneratorbase.h \
 	$$PWD/quadtree.h
@@ -20,6 +21,7 @@ SOURCES += \
 	$$PWD/gridgenerator.cpp \
 	$$PWD/gridutility.cpp \
 	$$PWD/imagehistogramcompare.cpp \
+	$$PWD/imagelibrary.cpp \
 	$$PWD/imageutility.cpp \
 	$$PWD/photomosaicgeneratorbase.cpp \
 	$$PWD/quadtree.cpp

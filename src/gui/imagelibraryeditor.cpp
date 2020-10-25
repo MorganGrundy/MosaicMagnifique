@@ -32,15 +32,15 @@
 
 ImageLibraryEditor::ImageLibraryEditor(QWidget *parent) :
     QWidget(parent),
-    ui{new Ui::ImageLibraryEditor}, m_progressBar{nullptr}, m_cropMode{CropMode::Center}
+    ui{new Ui::ImageLibraryEditor}, m_progressBar{nullptr}, m_cropMode{CropMode::Center},
+    m_images{CellShape::DEFAULT_CELL_SIZE}
 {
     ui->setupUi(this);
 
     //Setup image library list
     ui->listPhoto->setResizeMode(QListWidget::ResizeMode::Adjust);
     ui->listPhoto->setIconSize(ui->listPhoto->gridSize() - QSize(14, 14));
-    m_imageSize = CellShape::DEFAULT_CELL_SIZE;
-    ui->spinLibCellSize->setValue(m_imageSize);
+    ui->spinLibCellSize->setValue(CellShape::DEFAULT_CELL_SIZE);
 
     //Connects image library tab buttons to appropriate methods
     connect(ui->comboCropMode, &QComboBox::currentTextChanged,
@@ -71,18 +71,13 @@ void ImageLibraryEditor::setProgressBar(QProgressBar *t_progressBar)
 //Returns size of image library
 size_t ImageLibraryEditor::getImageLibrarySize() const
 {
-    return m_images.size();
+    return m_images.getImages().size();
 }
 
 //Returns image library
 const std::vector<cv::Mat> ImageLibraryEditor::getImageLibrary() const
 {
-    std::vector<cv::Mat> imageLibrary;
-
-    for (const auto &image: m_images)
-        imageLibrary.push_back(image.resizedImage);
-
-    return imageLibrary;
+    return m_images.getImages();
 }
 
 //Changes the cropping mode used for library images
@@ -153,9 +148,6 @@ void ImageLibraryEditor::addImages()
         m_progressBar->setVisible(true);
     }
 
-    std::vector<cv::Mat> originalImages;
-    std::vector<cv::Mat> resizedImages;
-    std::vector<QString> names;
     //For all files selected by user load and add to library
     for (const auto &file: files)
     {
@@ -167,8 +159,6 @@ void ImageLibraryEditor::addImages()
             continue;
         }
 
-        //Square image
-        bool imageWasSquared = false;
         if (m_cropMode == CropMode::Manual)
         {
             //Allow user to manually crop image
@@ -179,55 +169,38 @@ void ImageLibraryEditor::addImages()
                     m_progressBar->setVisible(false);
                 return;
             }
-
-            imageWasSquared = true;
         }
         else if (m_cropMode == CropMode::Features)
-            imageWasSquared = m_imageSquarer->squareToFeatures(image, image);
+            m_imageSquarer->squareToFeatures(image, image);
         else if (m_cropMode == CropMode::Entropy)
-            imageWasSquared = m_imageSquarer->squareToEntropy(image, image);
+            m_imageSquarer->squareToEntropy(image, image);
         else if (m_cropMode == CropMode::CascadeClassifier)
-            imageWasSquared = m_imageSquarer->squareToCascadeClassifier(image, image);
+            m_imageSquarer->squareToCascadeClassifier(image, image);
 
-        //Center crop also used as fallback if other modes fail
-        if (!imageWasSquared)
-            ImageUtility::imageToSquare(image, ImageUtility::SquareMethod::CROP);
 
-        if (!image.empty())
-        {
-            originalImages.push_back(image);
+        //Extracts filename and extension from full path
+        QString imageName = file.right(file.size() - file.lastIndexOf('/') - 1);
 
-            //Extracts filename and extension from full path
-            names.push_back(file.right(file.size() - file.lastIndexOf('/') - 1));
-        }
+        //Add image to library
+        m_images.addImage(image, imageName);
+
+        //Add image to list widget
+        m_imageWidgets.push_back(std::make_shared<QListWidgetItem>(
+            QIcon(ImageUtility::matToQPixmap(m_images.getImages().back())), imageName));
+        ui->listPhoto->addItem(m_imageWidgets.back().get());
 
         if (m_progressBar != nullptr)
             m_progressBar->setValue(m_progressBar->value() + 1);
 
-        //Helps prevent 'not responding'
         QCoreApplication::processEvents();
     }
     m_imageSquarer->hide();
 
-    //Resize images to current library size
-    ImageUtility::batchResizeMat(originalImages, resizedImages, m_imageSize, m_imageSize,
-                                 ImageUtility::ResizeType::EXACT, m_progressBar);
-
-    //Add images to list widget
-    auto nameIt = names.cbegin();
-    auto imageIt = resizedImages.cbegin();
-    for (const auto &image: originalImages)
-    {
-        //Add image to library
-        m_images.push_back(LibraryImage(image, *imageIt, *nameIt));
-        ui->listPhoto->addItem(m_images.back().listWidget.get());
-
-        ++nameIt;
-        ++imageIt;
-    }
+    if (m_progressBar != nullptr)
+        m_progressBar->setVisible(false);
 
     //Emit new image library size
-    emit imageLibraryChanged(m_images.size());
+    emit imageLibraryChanged(m_images.getImages().size());
 }
 
 //Deletes selected images
@@ -235,48 +208,54 @@ void ImageLibraryEditor::deleteImages()
 {
     auto selectedItems = ui->listPhoto->selectedItems();
 
-    //Delete images
-    for (auto item: selectedItems)
+    //Get image indices
+    std::vector<size_t> imageIndices;
+    for (const auto item: selectedItems)
     {
-        m_images.erase(std::remove_if(m_images.begin(), m_images.end(),
-                                      [&item](const LibraryImage &t_libraryImage)
-                                      {
-                                          return t_libraryImage.listWidget.get() == item;
-                                      }), m_images.end());
+        auto it = std::find_if(m_imageWidgets.cbegin(), m_imageWidgets.cend(),
+                               [item](const std::shared_ptr<QListWidgetItem> t_item)
+                               {
+                                   return t_item.get() == item;
+                               });
+        if (it != m_imageWidgets.cend())
+        {
+            //Calculate item index
+            imageIndices.push_back(std::distance(m_imageWidgets.cbegin(), it));
+        }
+    }
+
+    //Sort indices in descending order
+    std::sort(imageIndices.begin(), imageIndices.end(), std::greater<size_t>());
+
+    //Remove from image library and widgets
+    for (const auto index: imageIndices)
+    {
+        m_imageWidgets.erase(m_imageWidgets.begin() + index);
+        m_images.removeAtIndex(index);
     }
 
     ui->listPhoto->update();
 
     //Emit new image library size
-    emit imageLibraryChanged(m_images.size());
+    emit imageLibraryChanged(m_images.getImages().size());
 }
 
 //Resizes image library
 void ImageLibraryEditor::updateCellSize()
 {
     //Size unchanged
-    if (m_imageSize == ui->spinLibCellSize->value())
+    if (m_images.getImageSize() == static_cast<size_t>(ui->spinLibCellSize->value()))
         return;
 
-    m_imageSize = ui->spinLibCellSize->value();
-
-    //Get original images
-    std::vector<cv::Mat> images;
-    for (const auto &image: m_images)
-        images.push_back(image.resizedImage);
-
-    //Resize images
-    ImageUtility::batchResizeMat(images, images, m_imageSize, m_imageSize,
-                                 ImageUtility::ResizeType::EXACT, m_progressBar);
+    //Resize image library
+    m_images.setImageSize(ui->spinLibCellSize->value());
 
     //Update image library with new resized images
-    auto it = images.cbegin();
-    for (auto &image: m_images)
+    for (auto [widgetIt, imageIt] = std::pair{m_imageWidgets.begin(),
+                                              m_images.getImages().begin()};
+         widgetIt != m_imageWidgets.end(); ++widgetIt, ++imageIt)
     {
-        image.resizedImage = *it;
-        image.listWidget->setIcon(QIcon(ImageUtility::matToQPixmap(*it)));
-
-        ++it;
+        widgetIt->get()->setIcon(QIcon(ImageUtility::matToQPixmap(*imageIt)));
     }
 
     ui->listPhoto->update();
@@ -289,46 +268,11 @@ void ImageLibraryEditor::saveLibrary()
     QString filename = QFileDialog::getSaveFileName(this, tr("Save image library"), "",
                                                     tr("Mosaic Image Library") + " (*.mil)");
 
-    if (!filename.isNull())
+    if (!m_images.saveToFile(filename))
     {
-        QFile file(filename);
-        file.open(QIODevice::WriteOnly);
-        if (file.isWritable())
-        {
-            QDataStream out(&file);
-            //Write header with "magic number" and version
-            out << static_cast<quint32>(ImageUtility::MIL_MAGIC);
-            out << static_cast<qint32>(ImageUtility::MIL_VERSION);
-
-            out.setVersion(QDataStream::Qt_5_0);
-
-            //Write image size and library size
-            out << m_imageSize;
-            out << m_images.size();
-
-            //Initialise progress bar
-            if (m_progressBar != nullptr)
-            {
-                m_progressBar->setRange(0, static_cast<int>(m_images.size()));
-                m_progressBar->setValue(0);
-                m_progressBar->setVisible(true);
-            }
-
-            //Write images and names
-            for (const auto &image: m_images)
-            {
-                out << image.resizedImage;
-                out << image.listWidget->text();
-
-                if (m_progressBar != nullptr)
-                    m_progressBar->setValue(m_progressBar->value() + 1);
-            }
-
-            if (m_progressBar != nullptr)
-                m_progressBar->setVisible(false);
-
-            file.close();
-        }
+        QMessageBox msgBox;
+        msgBox.setText(tr("Failed to save: ") + filename);
+        msgBox.exec();
     }
 }
 
@@ -339,96 +283,29 @@ void ImageLibraryEditor::loadLibrary()
     QString filename = QFileDialog::getOpenFileName(this, tr("Select image library to load"), "",
                                                     tr("Mosaic Image Library") + " (*.mil)");
 
-    if (!filename.isNull())
+    if (m_images.loadFromFile(filename))
     {
-        //Check for valid file
-        QFile file(filename);
-        file.open(QIODevice::ReadOnly);
-        if (file.isReadable())
+        m_imageWidgets.clear();
+
+        ui->spinLibCellSize->setValue(static_cast<int>(m_images.getImageSize()));
+
+        //Add images to list widget
+        for (auto [imageIt, nameIt] = std::pair{m_images.getImages().cbegin(),
+                                                m_images.getNames().cbegin()};
+             imageIt != m_images.getImages().cend(); ++imageIt, ++nameIt)
         {
-            QDataStream in(&file);
-
-            //Read and check magic number
-            quint32 magic;
-            in >> magic;
-            if (magic != ImageUtility::MIL_MAGIC)
-            {
-                QMessageBox msgBox;
-                msgBox.setText(filename + tr(" is not a valid .mil file"));
-                msgBox.exec();
-                return;
-            }
-
-            //Read the version
-            qint32 version;
-            in >> version;
-            if (version <= ImageUtility::MIL_VERSION && version >= 2)
-                in.setVersion(QDataStream::Qt_5_0);
-            else
-            {
-                QMessageBox msgBox;
-                if (version < ImageUtility::MIL_VERSION)
-                    msgBox.setText(filename + tr(" uses an outdated file version"));
-                else
-                    msgBox.setText(filename + tr(" uses a newer file version"));
-                msgBox.exec();
-                return;
-            }
-
-            //Clear current image library
-            m_images.clear();
-            ui->listPhoto->clear();
-
-            //Read image size
-            in >> m_imageSize;
-            ui->spinLibCellSize->setValue(m_imageSize);
-            //Read library size
-            size_t numberOfImage;
-            //mil file version 2 used an int for library size instead of size_t, so need to cast
-            if (version == 2)
-            {
-                int intNumberOfImage;
-                in >> intNumberOfImage;
-                numberOfImage = static_cast<size_t>(intNumberOfImage);
-            }
-            else
-                in >> numberOfImage;
-
-            //Initialise progress bar
-            if (m_progressBar != nullptr)
-            {
-                m_progressBar->setRange(0, static_cast<int>(numberOfImage));
-                m_progressBar->setValue(0);
-                m_progressBar->setVisible(true);
-            }
-
-            //Read images and names
-            while (numberOfImage > 0)
-            {
-                --numberOfImage;
-                cv::Mat image;
-                in >> image;
-
-                QString name;
-                in >> name;
-
-                //Add to list widget
-                m_images.push_back(LibraryImage(image, image, name));
-                ui->listPhoto->addItem(m_images.back().listWidget.get());
-
-                if (m_progressBar != nullptr)
-                    m_progressBar->setValue(m_progressBar->value() + 1);
-            }
-
-            if (m_progressBar != nullptr)
-                m_progressBar->setVisible(false);
-
-            file.close();
-
-            //Emit new image library size
-            emit imageLibraryChanged(m_images.size());
+            m_imageWidgets.push_back(std::make_shared<QListWidgetItem>(
+                QIcon(ImageUtility::matToQPixmap(*imageIt)), *nameIt));
+            ui->listPhoto->addItem(m_imageWidgets.back().get());
         }
-        else
-            qDebug() << Q_FUNC_INFO << "Could not read file:" << filename;
+
+        //Emit new image library size
+        emit imageLibraryChanged(m_images.getImages().size());
+    }
+    else
+    {
+        QMessageBox msgBox;
+        msgBox.setText(tr("Failed to load: ") + filename);
+        msgBox.exec();
     }
 }

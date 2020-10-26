@@ -268,11 +268,17 @@ void ImageLibraryEditor::saveLibrary()
     QString filename = QFileDialog::getSaveFileName(this, tr("Save image library"), "",
                                                     tr("Mosaic Image Library") + " (*.mil)");
 
-    if (!m_images.saveToFile(filename))
+    try
+    {
+        m_images.saveToFile(filename);
+    }
+    catch (const std::invalid_argument &e)
     {
         QMessageBox msgBox;
-        msgBox.setText(tr("Failed to save: ") + filename);
+        msgBox.setText(tr(e.what()));
         msgBox.exec();
+
+        return;
     }
 }
 
@@ -283,29 +289,33 @@ void ImageLibraryEditor::loadLibrary()
     QString filename = QFileDialog::getOpenFileName(this, tr("Select image library to load"), "",
                                                     tr("Mosaic Image Library") + " (*.mil)");
 
-    if (m_images.loadFromFile(filename))
+    try
     {
-        m_imageWidgets.clear();
-
-        ui->spinLibCellSize->setValue(static_cast<int>(m_images.getImageSize()));
-
-        //Add images to list widget
-        for (auto [imageIt, nameIt] = std::pair{m_images.getImages().cbegin(),
-                                                m_images.getNames().cbegin()};
-             imageIt != m_images.getImages().cend(); ++imageIt, ++nameIt)
-        {
-            m_imageWidgets.push_back(std::make_shared<QListWidgetItem>(
-                QIcon(ImageUtility::matToQPixmap(*imageIt)), *nameIt));
-            ui->listPhoto->addItem(m_imageWidgets.back().get());
-        }
-
-        //Emit new image library size
-        emit imageLibraryChanged(m_images.getImages().size());
+        m_images.loadFromFile(filename);
     }
-    else
+    catch (const std::invalid_argument &e)
     {
         QMessageBox msgBox;
-        msgBox.setText(tr("Failed to load: ") + filename);
+        msgBox.setText(tr(e.what()));
         msgBox.exec();
+
+        return;
     }
+
+    m_imageWidgets.clear();
+
+    ui->spinLibCellSize->setValue(static_cast<int>(m_images.getImageSize()));
+
+    //Add images to list widget
+    for (auto [imageIt, nameIt] = std::pair{m_images.getImages().cbegin(),
+                                            m_images.getNames().cbegin()};
+         imageIt != m_images.getImages().cend(); ++imageIt, ++nameIt)
+    {
+        m_imageWidgets.push_back(std::make_shared<QListWidgetItem>(
+            QIcon(ImageUtility::matToQPixmap(*imageIt)), *nameIt));
+        ui->listPhoto->addItem(m_imageWidgets.back().get());
+    }
+
+    //Emit new image library size
+    emit imageLibraryChanged(m_images.getImages().size());
 }

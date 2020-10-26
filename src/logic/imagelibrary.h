@@ -31,12 +31,10 @@ public:
     void removeAtIndex(const size_t t_index);
 
     //Saves the image library to the given file
-    //Returns true if saved, else false
-    bool saveToFile(const QString t_filename);
+    void saveToFile(const QString t_filename);
 
     //Loads image library from given file
-    //Returns true if loaded, else false
-    bool loadFromFile(const QString t_filename);
+    void loadFromFile(const QString t_filename);
 
 private:
     //Size of images in library

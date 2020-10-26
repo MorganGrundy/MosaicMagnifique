@@ -2,6 +2,7 @@
 
 #include <QDebug>
 #include <QFile>
+#include <stdexcept>
 
 ImageLibrary::ImageLibrary(const size_t t_imageSize)
     : m_imageSize{t_imageSize}
@@ -68,14 +69,17 @@ void ImageLibrary::removeAtIndex(const size_t t_index)
 }
 
 //Saves the image library to the given file
-//Returns true if saved, else false
-bool ImageLibrary::saveToFile(const QString t_filename)
+void ImageLibrary::saveToFile(const QString t_filename)
 {
-    if (!t_filename.isNull())
+    if (t_filename.isNull())
+        throw std::invalid_argument("Filename is null: " + t_filename.toStdString());
+    else
     {
         QFile file(t_filename);
         file.open(QIODevice::WriteOnly);
-        if (file.isWritable())
+        if (!file.isWritable())
+            throw std::invalid_argument("File is not writable: " + t_filename.toStdString());
+        else
         {
             QDataStream out(&file);
             //Write header with "magic number" and version
@@ -97,23 +101,22 @@ bool ImageLibrary::saveToFile(const QString t_filename)
             }
 
             file.close();
-
-            return true;
         }
     }
-    return false;
 }
 
 //Loads image library from given file
-//Returns true if loaded, else false
-bool ImageLibrary::loadFromFile(const QString t_filename)
+void ImageLibrary::loadFromFile(const QString t_filename)
 {
-    if (!t_filename.isNull())
+    if (t_filename.isNull())
+        throw std::invalid_argument("Filename is null: " + t_filename.toStdString());
     {
         //Check for valid file
         QFile file(t_filename);
         file.open(QIODevice::ReadOnly);
-        if (file.isReadable())
+        if (!file.isReadable())
+            throw std::invalid_argument("File is not readable: " + t_filename.toStdString());
+        else
         {
             QDataStream in(&file);
 
@@ -121,10 +124,8 @@ bool ImageLibrary::loadFromFile(const QString t_filename)
             quint32 magic;
             in >> magic;
             if (magic != MIL_MAGIC)
-            {
-                qDebug() << Q_FUNC_INFO << t_filename << "is not a valid .mil file.";
-                return false;
-            }
+                throw std::invalid_argument("File is not a valid .mil: "
+                                            + t_filename.toStdString());
 
             //Read the version
             quint32 version;
@@ -134,11 +135,11 @@ bool ImageLibrary::loadFromFile(const QString t_filename)
             else
             {
                 if (version < MIL_VERSION)
-                    qDebug() << Q_FUNC_INFO << t_filename << "uses an outdated file version.";
+                    throw std::invalid_argument(".mil uses an outdated file version: "
+                                                + t_filename.toStdString());
                 else
-                    qDebug() << Q_FUNC_INFO << t_filename << "uses a newer file version.";
-
-                return false;
+                    throw std::invalid_argument(".mil uses a newer file version: "
+                                                + t_filename.toStdString());
             }
 
             //Clear current image library
@@ -173,12 +174,6 @@ bool ImageLibrary::loadFromFile(const QString t_filename)
             }
 
             file.close();
-
-            return true;
         }
-        else
-            qDebug() << Q_FUNC_INFO << "Could not read file:" << t_filename;
     }
-
-    return false;
 }

@@ -21,6 +21,8 @@
 #define SHARED_H
 
 #include <opencv2/core.hpp>
+#include <opencv2/features2d.hpp>
+#include <opencv2/objdetect.hpp>
 #include <QPixmap>
 #include <QProgressBar>
 
@@ -45,16 +47,6 @@ namespace ImageUtility
     //Resizes images to (first image size * ratio)
     bool batchResizeMat(std::vector<cv::Mat> &t_images, const double t_ratio = 0.5);
 
-    //Enum class that represents the two different methods of squaring an image
-    enum class SquareMethod {PAD, CROP};
-
-    //Ensures image rows == cols
-    //method = PAD:
-    //Pads the image's smaller dimension with black pixels
-    //method = CROP:
-    //Crops the image's larger dimension with focus at image centre
-    void imageToSquare(cv::Mat& t_img, const SquareMethod t_method);
-
     //Converts an OpenCV Mat to a QPixmap and returns
     QPixmap matToQPixmap(const cv::Mat &t_mat,
                          const QImage::Format t_format = QImage::Format_RGB888);
@@ -74,6 +66,28 @@ namespace ImageUtility
     [[maybe_unused]] const double MAX_ENTROPY = 8.0;
     //Calculates entropy of an image, can take a mask image
     double calculateEntropy(const cv::Mat &t_in, const cv::Mat &t_mask = cv::Mat());
+
+    //Enum class that represents the two different methods of squaring an image
+    enum class SquareMethod {PAD, CROP};
+
+    //Ensures image rows == cols
+    //method = PAD:
+    //Pads the image's smaller dimension with black pixels
+    //method = CROP:
+    //Crops the image's larger dimension with focus at image centre
+    void imageToSquare(cv::Mat& t_img, const SquareMethod t_method);
+
+    //Crop image to square, such that maximum number of features in crop
+    void squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out,
+                          const std::shared_ptr<cv::FastFeatureDetector> &t_featureDetector =
+                              cv::FastFeatureDetector::create());
+
+    //Crop image to square, such that maximum entropy in crop
+    void squareToEntropy(const cv::Mat &t_in, cv::Mat &t_out);
+
+    //Crop image to square, such that maximum number of objects in crop
+    void squareToCascadeClassifier(const cv::Mat &t_in, cv::Mat &t_out,
+                                   cv::CascadeClassifier &t_cascadeClassifier);
 };
 
 //Outputs a OpenCV mat to a QDataStream

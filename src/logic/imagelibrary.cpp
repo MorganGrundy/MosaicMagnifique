@@ -32,7 +32,7 @@ void ImageLibrary::addImage(const cv::Mat &t_im, const QString &t_name)
 {
     //Empty image, do not add
     if (t_im.empty())
-        qDebug() << Q_FUNC_INFO << "Image was empty";
+        throw std::invalid_argument("ImageLibrary::addImage() t_im was empty.");
 
     //Square image
     cv::Mat squaredIm = t_im;

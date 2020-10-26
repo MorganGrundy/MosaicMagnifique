@@ -23,23 +23,10 @@ public:
 
     //Allows user to crop input image
     //Return false if window was closed
-    bool squareManual(const cv::Mat &t_in, cv::Mat &t_out);
+    bool square(const cv::Mat &t_in, cv::Mat &t_out);
 
     //Clears scene
     void clear();
-
-    //Crop image to square, such that maximum number of features in crop
-    //Returns false if no features found
-    bool squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out);
-
-    //Crop image to square, such that maximum entropy in crop
-    static bool squareToEntropy(const cv::Mat &t_in, cv::Mat &t_out);
-
-    //Crop image to square, such that maximum number of objects in crop
-    bool squareToCascadeClassifier(const cv::Mat &t_in, cv::Mat &t_out);
-
-    //Loads cascade classifier from file
-    bool loadCascade(const std::string &t_file);
 
 public slots:
     //Apply the entered crop to the current image
@@ -61,12 +48,6 @@ private:
     Ui::ImageSquarer *ui;
     std::shared_ptr<QGraphicsScene> scene;
     std::shared_ptr<CropGraphicsObject> cropObject;
-
-    //Pointer to feature detector
-    std::shared_ptr<cv::FastFeatureDetector> m_featureDetector;
-
-    //Cascade classifier for detecting faces, or other objects
-    cv::CascadeClassifier m_cascadeClassifier;
 };
 
 #endif // IMAGESQUARER_H

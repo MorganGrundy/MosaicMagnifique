@@ -55,6 +55,8 @@ ImageLibraryEditor::ImageLibraryEditor(QWidget *parent) :
     //Create manual image squarer
     m_imageSquarer = new ImageSquarer(this);
     m_imageSquarer->setWindowModality(Qt::WindowModality::ApplicationModal);
+
+    m_featureDetector = cv::FastFeatureDetector::create();
 }
 
 ImageLibraryEditor::~ImageLibraryEditor()
@@ -105,7 +107,7 @@ void ImageLibraryEditor::changeCropMode(const QString &t_mode)
         //Load cascade classifier file
         if (!filename.isNull())
         {
-            if (!m_imageSquarer->loadCascade(filename.toStdString()))
+            if (!m_cascadeClassifier.load(filename.toStdString()))
             {
                 //Failed to load, reset crop mode
                 ui->comboCropMode->setCurrentIndex(0);
@@ -159,42 +161,58 @@ void ImageLibraryEditor::addImages()
             continue;
         }
 
-        if (m_cropMode == CropMode::Manual)
+        try
         {
-            //Allow user to manually crop image
-            if (!m_imageSquarer->squareManual(image, image))
+            if (m_cropMode == CropMode::Manual)
             {
-                //Image squarer window was closed, cancel adding images
-                if (m_progressBar != nullptr)
-                    m_progressBar->setVisible(false);
-                return;
+                //Allow user to manually crop image
+                if (!m_imageSquarer->square(image, image))
+                {
+                    //Image squarer window was closed, cancel adding images
+                    if (m_progressBar != nullptr)
+                        m_progressBar->setVisible(false);
+                    return;
+                }
             }
+            else if (m_cropMode == CropMode::Features)
+                ImageUtility::squareToFeatures(image, image, m_featureDetector);
+            else if (m_cropMode == CropMode::Entropy)
+                ImageUtility::squareToEntropy(image, image);
+            else if (m_cropMode == CropMode::CascadeClassifier)
+                ImageUtility::squareToCascadeClassifier(image, image, m_cascadeClassifier);
         }
-        else if (m_cropMode == CropMode::Features)
-            m_imageSquarer->squareToFeatures(image, image);
-        else if (m_cropMode == CropMode::Entropy)
-            m_imageSquarer->squareToEntropy(image, image);
-        else if (m_cropMode == CropMode::CascadeClassifier)
-            m_imageSquarer->squareToCascadeClassifier(image, image);
+        catch (const std::invalid_argument &e)
+        {
+            qDebug() << Q_FUNC_INFO << e.what();
+        }
 
 
         //Extracts filename and extension from full path
         QString imageName = file.right(file.size() - file.lastIndexOf('/') - 1);
 
-        //Add image to library
-        m_images.addImage(image, imageName);
+        try
+        {
+            //Add image to library
+            m_images.addImage(image, imageName);
 
-        //Add image to list widget
-        m_imageWidgets.push_back(std::make_shared<QListWidgetItem>(
-            QIcon(ImageUtility::matToQPixmap(m_images.getImages().back())), imageName));
-        ui->listPhoto->addItem(m_imageWidgets.back().get());
+            //Add image to list widget
+            m_imageWidgets.push_back(std::make_shared<QListWidgetItem>(
+                QIcon(ImageUtility::matToQPixmap(m_images.getImages().back())), imageName));
+            ui->listPhoto->addItem(m_imageWidgets.back().get());
+        }
+        catch (const std::invalid_argument &e)
+        {
+            qDebug() << Q_FUNC_INFO << e.what();
+        }
 
         if (m_progressBar != nullptr)
             m_progressBar->setValue(m_progressBar->value() + 1);
 
         QCoreApplication::processEvents();
     }
-    m_imageSquarer->hide();
+
+    if (m_cropMode == CropMode::Manual)
+        m_imageSquarer->hide();
 
     if (m_progressBar != nullptr)
         m_progressBar->setVisible(false);

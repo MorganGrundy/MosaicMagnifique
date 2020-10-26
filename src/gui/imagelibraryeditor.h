@@ -79,6 +79,8 @@ private:
 
     //Current crop mode for new images
     CropMode m_cropMode;
+    std::shared_ptr<cv::FastFeatureDetector> m_featureDetector;
+    cv::CascadeClassifier m_cascadeClassifier;
 
     //Stores library images
     std::vector<std::shared_ptr<QListWidgetItem>> m_imageWidgets;

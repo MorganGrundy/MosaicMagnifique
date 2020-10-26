@@ -134,40 +134,6 @@ bool ImageUtility::batchResizeMat(std::vector<cv::Mat> &t_images, const double t
     return true;
 }
 
-//Ensures image rows == cols
-//method = PAD:
-//Pads the image's smaller dimension with black pixels
-//method = CROP:
-//Crops the image's larger dimension with focus at image centre
-void ImageUtility::imageToSquare(cv::Mat& t_img, const SquareMethod t_method)
-{
-    //Already square
-    if (t_img.cols == t_img.rows)
-        return;
-
-    if (t_method == SquareMethod::CROP)
-    {
-        if (t_img.cols < t_img.rows)
-        {
-            int diff = (t_img.rows - t_img.cols)/2;
-            t_img = t_img(cv::Range(diff, t_img.cols + diff), cv::Range(0, t_img.cols));
-        }
-        else if (t_img.cols > t_img.rows)
-        {
-            int diff = (t_img.cols - t_img.rows)/2;
-            t_img = t_img(cv::Range(0, t_img.rows), cv::Range(diff, t_img.rows + diff));
-        }
-    }
-    else if (t_method == SquareMethod::PAD)
-    {
-        const int newSize = std::max(t_img.cols, t_img.rows);
-        cv::Mat result(newSize, newSize, t_img.type());
-        cv::copyMakeBorder(t_img, result, 0, newSize - t_img.rows, 0, newSize - t_img.cols,
-                           cv::BORDER_CONSTANT, cv::Scalar(0));
-        t_img = result;
-    }
-}
-
 //Converts an OpenCV Mat to a QPixmap and returns
 QPixmap ImageUtility::matToQPixmap(const cv::Mat &t_mat,
                                    const QImage::Format t_format)
@@ -283,6 +249,246 @@ double ImageUtility::calculateEntropy(const cv::Mat &t_in, const cv::Mat &t_mask
     }
 
     return entropy;
+}
+
+//Ensures image rows == cols
+//method = PAD:
+//Pads the image's smaller dimension with black pixels
+//method = CROP:
+//Crops the image's larger dimension with focus at image centre
+void ImageUtility::imageToSquare(cv::Mat& t_img, const SquareMethod t_method)
+{
+    //Already square
+    if (t_img.cols == t_img.rows)
+        return;
+
+    if (t_method == SquareMethod::CROP)
+    {
+        if (t_img.cols < t_img.rows)
+        {
+            int diff = (t_img.rows - t_img.cols)/2;
+            t_img = t_img(cv::Range(diff, t_img.cols + diff), cv::Range(0, t_img.cols));
+        }
+        else if (t_img.cols > t_img.rows)
+        {
+            int diff = (t_img.cols - t_img.rows)/2;
+            t_img = t_img(cv::Range(0, t_img.rows), cv::Range(diff, t_img.rows + diff));
+        }
+    }
+    else if (t_method == SquareMethod::PAD)
+    {
+        const int newSize = std::max(t_img.cols, t_img.rows);
+        cv::Mat result(newSize, newSize, t_img.type());
+        cv::copyMakeBorder(t_img, result, 0, newSize - t_img.rows, 0, newSize - t_img.cols,
+                           cv::BORDER_CONSTANT, cv::Scalar(0));
+        t_img = result;
+    }
+}
+
+//Crop image to square, such that maximum number of features in crop
+void ImageUtility::squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out,
+                                    const std::shared_ptr<cv::FastFeatureDetector> &t_featureDetector)
+{
+    //Check for empty image
+    if (t_in.empty())
+        throw std::invalid_argument("ImageUtility::squareToFeatures() t_in was empty.");
+
+    //Check if image already square
+    if (t_in.rows == t_in.cols)
+    {
+        t_out = t_in;
+        return;
+    }
+
+    //Check for empty feature detector
+    if (t_featureDetector == nullptr)
+        throw std::invalid_argument("ImageUtility::squareToFeatures() "
+                                    "t_featureDetector was empty.");
+
+    //Detect features
+    std::vector<cv::KeyPoint> keyPoints;
+    t_featureDetector->detect(t_in, keyPoints);
+    if (keyPoints.empty())
+        throw std::invalid_argument("ImageUtility::squareToFeatures() "
+                                    "no features detected in t_in.");
+
+    //Find shortest side, use as size of cropped image
+    const int cropSize = std::min(t_in.rows,  t_in.cols);
+
+    //Stores current best crop of image and it's feature count
+    cv::Rect bestCrop;
+    size_t bestCropFeatureCount = 0;
+    //Distance between crop center and keypoint average
+    double bestCropDistFromCenter = 0;
+    //Find crop with highest feature count
+    for (int cropOffset = 0; cropOffset + cropSize < std::max(t_in.rows, t_in.cols);
+         cropOffset += 4)
+    {
+        const cv::Rect crop((t_in.rows > t_in.cols) ? cv::Point(0, cropOffset)
+                                                    : cv::Point(cropOffset, 0),
+                            cv::Size(cropSize, cropSize));
+
+        //Calculate average position of all keypoints in crop
+        cv::Point2f keypointAverage(0, 0);
+        //Count features in crop
+        size_t cropFeatureCount = 0;
+        for (const auto &keyPoint : keyPoints)
+        {
+            if (crop.contains(keyPoint.pt))
+            {
+                keypointAverage += keyPoint.pt;
+                ++cropFeatureCount;
+            }
+        }
+        keypointAverage = cv::Point2f(keypointAverage.x / cropFeatureCount,
+                                      keypointAverage.y / cropFeatureCount);
+        //Calculate distance between keypoint average and crop center
+        const double distFromCenter = std::sqrt(
+            std::pow(keypointAverage.x - (crop.x + crop.width / 2), 2) +
+            std::pow(keypointAverage.y - (crop.y + crop.height / 2), 2));
+
+        //New best crop if more features, or equal features but average closer to crop center
+        if (cropFeatureCount > bestCropFeatureCount ||
+            (cropFeatureCount == bestCropFeatureCount && distFromCenter < bestCropDistFromCenter))
+        {
+            bestCropFeatureCount = cropFeatureCount;
+            bestCropDistFromCenter = distFromCenter;
+            bestCrop = crop;
+        }
+    }
+
+    //Copy best crop of image to output
+    t_out = t_in(bestCrop);
+}
+
+//Crop image to square, such that maximum entropy in crop
+void ImageUtility::squareToEntropy(const cv::Mat &t_in, cv::Mat &t_out)
+{
+    //Check for empty image
+    if (t_in.empty())
+        throw std::invalid_argument("ImageUtility::squareToEntropy() t_in was empty.");
+
+    //Check if image already square
+    if (t_in.rows == t_in.cols)
+    {
+        t_out = t_in;
+        return;
+    }
+
+    //Find shortest side, use as size of cropped image
+    const int cropSize = std::min(t_in.rows,  t_in.cols);
+    //Checking every possible crop takes a long time, so only check some
+    const int cropStepSize = cropSize / 16;
+
+    //Stores current best crop of image and it's entropy value
+    cv::Rect bestCrop;
+    double bestCropEntropy = 0;
+    //Find crop with highest entropy
+    for (int cropOffset = 0; cropOffset + cropSize < std::max(t_in.rows, t_in.cols);
+         cropOffset += cropStepSize)
+    {
+        const cv::Rect crop((t_in.rows > t_in.cols) ? cv::Point(0, cropOffset)
+                                                    : cv::Point(cropOffset, 0),
+                            cv::Size(cropSize, cropSize));
+
+        double cropEntropy = ImageUtility::calculateEntropy(t_in(crop));
+
+        //New best crop if higher entropy
+        if (cropEntropy > bestCropEntropy)
+        {
+            bestCropEntropy = cropEntropy;
+            bestCrop = crop;
+        }
+    }
+
+    t_out = t_in(bestCrop);
+}
+
+//Crop image to square, such that maximum number of objects in crop
+void ImageUtility::squareToCascadeClassifier(const cv::Mat &t_in, cv::Mat &t_out,
+                                             cv::CascadeClassifier &t_cascadeClassifier)
+{
+    //Check for empty image
+    if (t_in.empty())
+        throw std::invalid_argument("ImageUtility::squareToCascadeClassifier() t_in was empty.");
+
+    //Check if image already square
+    if (t_in.rows == t_in.cols)
+    {
+        t_out = t_in;
+        return;
+    }
+
+    //Check that cascade classifier is loaded
+    if (t_cascadeClassifier.empty())
+        throw std::invalid_argument("ImageUtility::squareToCascadeClassifier() "
+                                    "t_cascadeClassifier was empty.");
+
+    //Find shortest side, use as size of cropped image
+    const int cropSize = std::min(t_in.rows,  t_in.cols);
+
+    //Convert image to grayscale
+    cv::Mat gray;
+    cv::cvtColor(t_in, gray, cv::COLOR_BGR2GRAY);
+    cv::equalizeHist(gray, gray);
+
+    //Detect objects
+    std::vector<cv::Rect> objects;
+    t_cascadeClassifier.detectMultiScale(gray, objects);
+    if (objects.empty())
+        throw std::invalid_argument("ImageUtility::squareToCascadeClassifier() "
+                                    "no objects detected in t_in.");
+
+    //Stores current best crop of image, and it's badness value
+    cv::Rect bestCrop;
+    double bestCropBadnessValue = std::numeric_limits<double>::max();
+    //Find crop with lowest badness value
+    for (int cropOffset = 0; cropOffset + cropSize < std::max(t_in.rows, t_in.cols);
+         cropOffset += 8)
+    {
+        const cv::Rect crop((t_in.rows > t_in.cols) ? cv::Point(0, cropOffset)
+                                                    : cv::Point(cropOffset, 0),
+                            cv::Size(cropSize, cropSize));
+
+        //Calculate how well objects fit in crop
+        double cropBadnessValue = (objects.empty()) ? std::numeric_limits<double>::max() : 0;
+        for (const auto &object : objects)
+        {
+            //Calculate rect of object visible in crop
+            const cv::Rect objectVisible = crop & object;
+
+            //Calculate distance between object and crop center
+            const cv::Point objectCenter(object.x + object.width / 2, object.y + object.height / 2);
+            const cv::Point distFromCenter(crop.x + crop.width / 2 - objectCenter.x,
+                                           crop.y + crop.height / 2 - objectCenter.y);
+
+            //Calculate how well object fits in crop, scales with distance from center
+            double objectBadnessValue = std::sqrt(std::pow(distFromCenter.x, 2) +
+                                                  std::pow(distFromCenter.y, 2));
+
+            //Increase badness value if object not fully visible in crop
+            if (objectVisible.area() < object.area())
+            {
+                //Increase badness value even more if object not visible at all
+                if (objectVisible.area() > 0)
+                    objectBadnessValue *= 5.0 * (object.area() / objectVisible.area());
+                else
+                    objectBadnessValue *= 10.0 * object.area();
+            }
+
+            cropBadnessValue += objectBadnessValue;
+        }
+
+        //If badness value less than current best then new best crop
+        if (cropBadnessValue < bestCropBadnessValue)
+        {
+            bestCropBadnessValue = cropBadnessValue;
+            bestCrop = crop;
+        }
+    }
+
+    //Copy best crop of image to output
+    t_out = t_in(bestCrop);
 }
 
 //Outputs a OpenCV mat to a QDataStream

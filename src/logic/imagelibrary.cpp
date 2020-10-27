@@ -77,7 +77,7 @@ void ImageLibrary::clear()
 }
 
 //Saves the image library to the given file
-void ImageLibrary::saveToFile(const QString t_filename)
+void ImageLibrary::saveToFile(const QString t_filename) const
 {
     if (t_filename.isNull())
         throw std::invalid_argument("No filename");
@@ -151,11 +151,9 @@ void ImageLibrary::loadFromFile(const QString t_filename)
             }
 
             //Read image size
-            {
-                quint32 imageSize;
-                in >> imageSize;
-                m_imageSize = static_cast<size_t>(imageSize);
-            }
+            quint32 imageSize;
+            in >> imageSize;
+            m_imageSize = static_cast<size_t>(imageSize);
 
             //Read library size
             quint32 numberOfImage;

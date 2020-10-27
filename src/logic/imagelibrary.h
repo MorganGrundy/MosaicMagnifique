@@ -33,7 +33,7 @@ public:
     void clear();
 
     //Saves the image library to the given file
-    void saveToFile(const QString t_filename);
+    void saveToFile(const QString t_filename) const;
 
     //Loads image library from given file
     void loadFromFile(const QString t_filename);

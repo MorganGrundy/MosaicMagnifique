@@ -27,8 +27,8 @@ class CellShape
 {
 public:
     //Current version number
-    static const int MCS_VERSION = 6;
-    static const unsigned int MCS_MAGIC = 0x87AECFB1;
+    static const quint32 MCS_VERSION = 7;
+    static const quint32 MCS_MAGIC = 0x87AECFB1;
 
     //Default cell size
     static const size_t DEFAULT_CELL_SIZE = 128;
@@ -40,9 +40,8 @@ public:
     //Constructor for default cell shape
     CellShape(const size_t t_size);
 
-    //Operators
-    friend QDataStream &operator<<(QDataStream &t_out, const CellShape &t_cellShape);
-    friend QDataStream &operator>>(QDataStream &t_in, std::pair<CellShape &, const int> t_cellShape);
+    void setName(const QString &t_name);
+    QString getName() const;
 
     void setCellMask(const cv::Mat &t_cellMask);
     const cv::Mat &getCellMask(const bool t_flippedHorizontal, const bool t_flippedVertical) const;
@@ -81,6 +80,12 @@ public:
 
     bool empty() const;
 
+    //Saves the cell shape to the given file
+    void saveToFile(const QString t_filename) const;
+
+    //Loads cell shape from given file
+    void loadFromFile(const QString t_filename);
+
 private:
     cv::Mat m_cellMask;
     cv::Mat m_cellMaskFlippedH, m_cellMaskFlippedV, m_cellMaskFlippedHV;
@@ -94,6 +99,9 @@ private:
     //Controls if and how cells should flip on alternate rows/columns
     bool m_alternateColFlipHorizontal, m_alternateColFlipVertical,
         m_alternateRowFlipHorizontal, m_alternateRowFlipVertical;
+
+    //Name of cell shape
+    QString m_name;
 };
 
 #endif // CELLSHAPE_H

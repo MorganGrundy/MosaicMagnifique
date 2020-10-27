@@ -39,7 +39,11 @@ CellShapeEditor::CellShapeEditor(QWidget *parent) :
     connect(ui->buttonLoadCell, &QPushButton::released, this, &CellShapeEditor::loadCellShape);
 
     //Cell name changed
-    connect(ui->lineCellName, &QLineEdit::textChanged, this, &CellShapeEditor::cellNameChanged);
+    connect(ui->lineCellName, &QLineEdit::editingFinished, this, [=]()
+            {
+                emit cellNameChanged(ui->lineCellName->text());
+                ui->cellShapeViewer->getCellGroup().getCell(0).setName(ui->lineCellName->text());
+            });
 
     //Cell mask button
     connect(ui->buttonCellMask, &QPushButton::released, this, &CellShapeEditor::loadCellMask);
@@ -102,29 +106,21 @@ void CellShapeEditor::saveCellShape()
     }
 
     //Get file directory to save cell shape at from user
-    QString filename = QFileDialog::getExistingDirectory(this, tr("Save custom cell shape"));
+    QString defaultDir = QDir::currentPath() + "/" +ui->lineCellName->text() + ".mcs";
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save cell shape"), defaultDir,
+                                                    tr("Mosaic Cell Shape") + " (*.mcs)");
 
-    if (!filename.isNull())
+    try
     {
-        //Add file name and extension to directory, mcs = Mosaic Cell Shape
-        filename += '/' + ui->lineCellName->text() + ".mcs";
-        qDebug() << "Saving cell shape at: " << filename;
-        QFile file(filename);
-        file.open(QIODevice::WriteOnly);
-        if (file.isWritable())
-        {
-            QDataStream out(&file);
-            //Write header with "magic number" and version
-            out << static_cast<quint32>(CellShape::MCS_MAGIC);
-            out << static_cast<qint32>(CellShape::MCS_VERSION);
+        ui->cellShapeViewer->getCellGroup().getCell(0).saveToFile(filename);
+    }
+    catch (const std::invalid_argument &e)
+    {
+        QMessageBox msgBox;
+        msgBox.setText(tr(e.what()));
+        msgBox.exec();
 
-            out.setVersion(QDataStream::Qt_5_0);
-
-            //Write cell shape
-            out << cellShape;
-
-            file.close();
-        }
+        return;
     }
 }
 
@@ -135,61 +131,28 @@ void CellShapeEditor::loadCellShape()
     QString filename = QFileDialog::getOpenFileName(this, tr("Select custom cell shape to load"),
                                                     "", tr("Mosaic Cell Shape") + " (*.mcs)");
 
-    if (!filename.isNull())
+    try
     {
-        //Check for valid file
-        QFile file(filename);
-        file.open(QIODevice::ReadOnly);
-        if (file.isReadable())
-        {
-            QDataStream in(&file);
+        CellShape tmpCellShape;
+        tmpCellShape.loadFromFile(filename);
 
-            //Read and check magic number
-            quint32 magic;
-            in >> magic;
-            if (magic != CellShape::MCS_MAGIC)
-            {
-                QMessageBox msgBox;
-                msgBox.setText(filename + tr(" is not a valid .mcs file"));
-                msgBox.exec();
-                return;
-            }
+        //Give cell shape to grid preview
+        ui->cellShapeViewer->getCellGroup().setCellShape(tmpCellShape);
+        ui->cellShapeViewer->updateGrid();
 
-            //Read the version
-            qint32 version;
-            in >> version;
-            if (version <= CellShape::MCS_VERSION && version >= 4)
-                in.setVersion(QDataStream::Qt_5_0);
-            else
-            {
-                QMessageBox msgBox;
-                if (version < CellShape::MCS_VERSION)
-                    msgBox.setText(filename + tr(" uses an outdated file version"));
-                else
-                    msgBox.setText(filename + tr(" uses a newer file version"));
-                msgBox.exec();
-                return;
-            }
+        //Update cell settings in ui
+        ui->lineCellName->setText(tmpCellShape.getName());
+        loadSettingsFromCellShape(tmpCellShape);
+        emit cellShapeChanged(tmpCellShape);
+        emit cellNameChanged(ui->lineCellName->text());
+    }
+    catch (const std::invalid_argument &e)
+    {
+        QMessageBox msgBox;
+        msgBox.setText(tr(e.what()));
+        msgBox.exec();
 
-            //Extract cell name from filename
-            QString cellName = filename.right(filename.size() - filename.lastIndexOf('/') - 1);
-            cellName.chop(4);
-            ui->lineCellName->setText(cellName);
-
-            //Read cell shape and update settings
-            CellShape cellShape;
-            std::pair<CellShape &, const int> cellAndVersion(cellShape, version);
-            in >> cellAndVersion;
-            loadSettingsFromCellShape(cellShape);
-
-            file.close();
-
-            //Give cell shape to grid preview
-            ui->cellShapeViewer->getCellGroup().setCellShape(cellShape);
-            ui->cellShapeViewer->updateGrid();
-            emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
-            emit cellNameChanged(ui->lineCellName->text());
-        }
+        return;
     }
 }
 

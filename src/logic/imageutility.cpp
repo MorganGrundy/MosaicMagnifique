@@ -291,7 +291,7 @@ void ImageUtility::squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out,
 {
     //Check for empty image
     if (t_in.empty())
-        throw std::invalid_argument("ImageUtility::squareToFeatures() t_in was empty.");
+        throw std::invalid_argument("t_in was empty.");
 
     //Check if image already square
     if (t_in.rows == t_in.cols)
@@ -302,15 +302,13 @@ void ImageUtility::squareToFeatures(const cv::Mat &t_in, cv::Mat &t_out,
 
     //Check for empty feature detector
     if (t_featureDetector == nullptr)
-        throw std::invalid_argument("ImageUtility::squareToFeatures() "
-                                    "t_featureDetector was empty.");
+        throw std::invalid_argument("t_featureDetector was empty.");
 
     //Detect features
     std::vector<cv::KeyPoint> keyPoints;
     t_featureDetector->detect(t_in, keyPoints);
     if (keyPoints.empty())
-        throw std::invalid_argument("ImageUtility::squareToFeatures() "
-                                    "no features detected in t_in.");
+        throw std::invalid_argument("No features detected in t_in.");
 
     //Find shortest side, use as size of cropped image
     const int cropSize = std::min(t_in.rows,  t_in.cols);
@@ -366,7 +364,7 @@ void ImageUtility::squareToEntropy(const cv::Mat &t_in, cv::Mat &t_out)
 {
     //Check for empty image
     if (t_in.empty())
-        throw std::invalid_argument("ImageUtility::squareToEntropy() t_in was empty.");
+        throw std::invalid_argument("t_in was empty.");
 
     //Check if image already square
     if (t_in.rows == t_in.cols)
@@ -410,7 +408,7 @@ void ImageUtility::squareToCascadeClassifier(const cv::Mat &t_in, cv::Mat &t_out
 {
     //Check for empty image
     if (t_in.empty())
-        throw std::invalid_argument("ImageUtility::squareToCascadeClassifier() t_in was empty.");
+        throw std::invalid_argument("t_in was empty.");
 
     //Check if image already square
     if (t_in.rows == t_in.cols)
@@ -421,8 +419,7 @@ void ImageUtility::squareToCascadeClassifier(const cv::Mat &t_in, cv::Mat &t_out
 
     //Check that cascade classifier is loaded
     if (t_cascadeClassifier.empty())
-        throw std::invalid_argument("ImageUtility::squareToCascadeClassifier() "
-                                    "t_cascadeClassifier was empty.");
+        throw std::invalid_argument("t_cascadeClassifier was empty.");
 
     //Find shortest side, use as size of cropped image
     const int cropSize = std::min(t_in.rows,  t_in.cols);
@@ -436,8 +433,7 @@ void ImageUtility::squareToCascadeClassifier(const cv::Mat &t_in, cv::Mat &t_out
     std::vector<cv::Rect> objects;
     t_cascadeClassifier.detectMultiScale(gray, objects);
     if (objects.empty())
-        throw std::invalid_argument("ImageUtility::squareToCascadeClassifier() "
-                                    "no objects detected in t_in.");
+        throw std::invalid_argument("No objects detected in t_in.");
 
     //Stores current best crop of image, and it's badness value
     cv::Rect bestCrop;

@@ -32,7 +32,7 @@ void ImageLibrary::addImage(const cv::Mat &t_im, const QString &t_name)
 {
     //Empty image, do not add
     if (t_im.empty())
-        throw std::invalid_argument("ImageLibrary::addImage() t_im was empty.");
+        throw std::invalid_argument("t_im was empty.");
 
     //Square image
     cv::Mat squaredIm = t_im;
@@ -68,11 +68,19 @@ void ImageLibrary::removeAtIndex(const size_t t_index)
     m_resizedImages.erase(m_resizedImages.begin() + t_index);
 }
 
+//Clear image library
+void ImageLibrary::clear()
+{
+    m_names.clear();
+    m_originalImages.clear();
+    m_resizedImages.clear();
+}
+
 //Saves the image library to the given file
 void ImageLibrary::saveToFile(const QString t_filename)
 {
     if (t_filename.isNull())
-        throw std::invalid_argument("Filename is null: " + t_filename.toStdString());
+        throw std::invalid_argument("No filename");
     else
     {
         QFile file(t_filename);
@@ -109,7 +117,7 @@ void ImageLibrary::saveToFile(const QString t_filename)
 void ImageLibrary::loadFromFile(const QString t_filename)
 {
     if (t_filename.isNull())
-        throw std::invalid_argument("Filename is null: " + t_filename.toStdString());
+        throw std::invalid_argument("No filename");
     {
         //Check for valid file
         QFile file(t_filename);
@@ -141,11 +149,6 @@ void ImageLibrary::loadFromFile(const QString t_filename)
                     throw std::invalid_argument(".mil uses a newer file version: "
                                                 + t_filename.toStdString());
             }
-
-            //Clear current image library
-            m_names.clear();
-            m_originalImages.clear();
-            m_resizedImages.clear();
 
             //Read image size
             {

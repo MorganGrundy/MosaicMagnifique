@@ -43,14 +43,17 @@ ImageLibraryEditor::ImageLibraryEditor(QWidget *parent) :
     ui->spinLibCellSize->setValue(CellShape::DEFAULT_CELL_SIZE);
 
     //Connects image library tab buttons to appropriate methods
+    connect(ui->buttonSave, &QPushButton::released, this, &ImageLibraryEditor::saveLibrary);
+    connect(ui->buttonLoad, &QPushButton::released, this, &ImageLibraryEditor::loadLibrary);
+
     connect(ui->comboCropMode, &QComboBox::currentTextChanged,
             this, &ImageLibraryEditor::changeCropMode);
     connect(ui->buttonAdd, &QPushButton::released, this, &ImageLibraryEditor::addImages);
     connect(ui->buttonDelete, &QPushButton::released, this, &ImageLibraryEditor::deleteImages);
+    connect(ui->buttonClear, &QPushButton::released, this, &ImageLibraryEditor::clearLibrary);
+
     connect(ui->buttonLibCellSize, &QPushButton::released,
             this, &ImageLibraryEditor::updateCellSize);
-    connect(ui->buttonSave, &QPushButton::released, this, &ImageLibraryEditor::saveLibrary);
-    connect(ui->buttonLoad, &QPushButton::released, this, &ImageLibraryEditor::loadLibrary);
 
     //Create manual image squarer
     m_imageSquarer = new ImageSquarer(this);
@@ -258,6 +261,18 @@ void ImageLibraryEditor::deleteImages()
     emit imageLibraryChanged(m_images.getImages().size());
 }
 
+//Clears the image library
+void ImageLibraryEditor::clearLibrary()
+{
+    m_images.clear();
+    m_imageWidgets.clear();
+
+    ui->listPhoto->update();
+
+    //Emit new image library size
+    emit imageLibraryChanged(m_images.getImages().size());
+}
+
 //Resizes image library
 void ImageLibraryEditor::updateCellSize()
 {
@@ -307,6 +322,7 @@ void ImageLibraryEditor::loadLibrary()
     QString filename = QFileDialog::getOpenFileName(this, tr("Select image library to load"), "",
                                                     tr("Mosaic Image Library") + " (*.mil)");
 
+    const size_t libSizeBefore = m_images.getImages().size();
     try
     {
         m_images.loadFromFile(filename);
@@ -320,13 +336,11 @@ void ImageLibraryEditor::loadLibrary()
         return;
     }
 
-    m_imageWidgets.clear();
-
     ui->spinLibCellSize->setValue(static_cast<int>(m_images.getImageSize()));
 
     //Add images to list widget
-    for (auto [imageIt, nameIt] = std::pair{m_images.getImages().cbegin(),
-                                            m_images.getNames().cbegin()};
+    for (auto [imageIt, nameIt] = std::pair{m_images.getImages().cbegin() + libSizeBefore,
+                                            m_images.getNames().cbegin() + libSizeBefore};
          imageIt != m_images.getImages().cend(); ++imageIt, ++nameIt)
     {
         m_imageWidgets.push_back(std::make_shared<QListWidgetItem>(

@@ -57,6 +57,8 @@ public slots:
     void addImages();
     //Deletes selected images
     void deleteImages();
+    //Clears the image library
+    void clearLibrary();
 
     //Resizes image library
     void updateCellSize();

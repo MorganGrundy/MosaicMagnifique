@@ -29,6 +29,8 @@ public:
 
     //Removes the image at given index
     void removeAtIndex(const size_t t_index);
+    //Clear image library
+    void clear();
 
     //Saves the image library to the given file
     void saveToFile(const QString t_filename);

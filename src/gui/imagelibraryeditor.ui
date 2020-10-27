@@ -181,6 +181,13 @@ border-color: rgb(0, 0, 0);
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="buttonClear">
+       <property name="text">
+        <string>Clear</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>

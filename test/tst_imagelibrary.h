@@ -10,7 +10,7 @@
 #include "testutility.h"
 
 //Creates an image library, saves it to a file
-//Loads all test libraries (with different .mil versions, and then compares it
+//Loads all test libraries (with different .mil versions), and then compares it
 TEST(ImageLibrary, Static_SaveAndLoad)
 {
     //Create image library

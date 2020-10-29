@@ -40,6 +40,9 @@ public:
     //Constructor for default cell shape
     CellShape(const size_t t_size);
 
+    //Return if CellShape is equal to other
+    bool operator==(const CellShape &t_other) const;
+
     void setName(const QString &t_name);
     QString getName() const;
 

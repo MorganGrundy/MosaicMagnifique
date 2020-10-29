@@ -10,6 +10,7 @@ include(../src/logic/logic.pri)
 
 HEADERS += \
 	testutility.h \
+	tst_cellshape.h \
 	tst_colourdifference.h \
 	tst_cudakernel.h \
 	tst_generator.h \

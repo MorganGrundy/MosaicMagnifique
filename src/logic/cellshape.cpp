@@ -66,6 +66,39 @@ CellShape::CellShape(const size_t t_size)
                         CV_8UC1, cv::Scalar(255))}
 {}
 
+//Return if CellShape is equal to other
+bool CellShape::operator==(const CellShape &t_other) const
+{
+    //Compare mask image
+    if (m_cellMask.size != t_other.m_cellMask.size)
+        return false;
+    if (cv::sum(m_cellMask != t_other.m_cellMask)[0] != 0)
+        return false;
+
+    //Compare spacing
+    if ((m_rowSpacing != t_other.m_rowSpacing) || (m_colSpacing != t_other.m_colSpacing))
+        return false;
+
+    //Compare alternate spacing
+    if ((m_alternateRowSpacing != t_other.m_alternateRowSpacing)
+        || (m_alternateColSpacing != t_other.m_alternateColSpacing))
+        return false;
+
+    //Compare alternate offset
+    if ((m_alternateRowOffset != t_other.m_alternateRowOffset)
+        || (m_alternateColOffset != t_other.m_alternateColOffset))
+        return false;
+
+    //Compare alternate flip states
+    if ((m_alternateColFlipHorizontal != t_other.m_alternateColFlipHorizontal)
+        || (m_alternateColFlipVertical != t_other.m_alternateColFlipVertical)
+        || (m_alternateRowFlipHorizontal != t_other.m_alternateRowFlipHorizontal)
+        || (m_alternateRowFlipVertical != t_other.m_alternateRowFlipVertical))
+        return false;
+
+    return true;
+}
+
 //Sets the name of the cell shape
 void CellShape::setName(const QString &t_name)
 {

@@ -8,6 +8,31 @@ ImageLibrary::ImageLibrary(const size_t t_imageSize)
     : m_imageSize{t_imageSize}
 {}
 
+//Return if ImageLibrary is equal to other
+bool ImageLibrary::operator==(const ImageLibrary &t_other) const
+{
+    //Compare image size
+    if (m_imageSize != t_other.m_imageSize)
+        return false;
+
+    //Compare number of images in library
+    if (getImages().size() != t_other.getImages().size())
+        return false;
+
+    //Compare library images
+    for (auto [im, otherIm] = std::pair{getImages().cbegin(), t_other.getImages().cbegin()};
+         im != getImages().cend(); ++im, ++otherIm)
+    {
+        if (im->size != otherIm->size)
+            return false;
+
+        if (cv::sum(*im != *otherIm)[0] != 0)
+            return false;
+    }
+
+    return true;
+}
+
 //Set image size
 void ImageLibrary::setImageSize(const size_t t_size)
 {

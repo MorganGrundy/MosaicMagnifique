@@ -9,10 +9,13 @@
 class ImageLibrary
 {
 public:
-    const quint32 MIL_VERSION = 4;
-    const quint32 MIL_MAGIC = 0xADBE2480;
+    static const quint32 MIL_VERSION = 4;
+    static const quint32 MIL_MAGIC = 0xADBE2480;
 
     ImageLibrary(const size_t t_imageSize);
+
+    //Return if ImageLibrary is equal to other
+    bool operator==(const ImageLibrary &t_other) const;
 
     //Set image size
     void setImageSize(const size_t t_size);

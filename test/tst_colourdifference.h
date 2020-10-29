@@ -7,6 +7,7 @@
 
 #include "colourdifference.h"
 #include "cudaphotomosaicdata.h"
+#include "testutility.h"
 
 using namespace testing;
 
@@ -359,12 +360,6 @@ TEST(ColourDifference, CUDA_CIEDE2000)
     gpuErrchk(cudaFree(result));
 }
 
-//Generates a random float in [min, max]
-float randFloat(float min, float max)
-{
-    return (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * (max - min) + min;
-}
-
 //Creates random colour pairs and compares results from CIE76 and CUDA CIE76 difference
 TEST(ColourDifference, RANDOM_CIE76vsCUDA_CIE76)
 {
@@ -398,8 +393,10 @@ TEST(ColourDifference, RANDOM_CIE76vsCUDA_CIE76)
     {
         //Create random colour diff pair
         ColourDiffPairFloat colourDiffPair = {
-            {randFloat(0, 100), randFloat(-128, 127), randFloat(-128, 127)},
-            {randFloat(0, 100), randFloat(-128, 127), randFloat(-128, 127)}, 0};
+            {TestUtility::randFloat(0, 100), TestUtility::randFloat(-128, 127),
+             TestUtility::randFloat(-128, 127)},
+            {TestUtility::randFloat(0, 100), TestUtility::randFloat(-128, 127),
+             TestUtility::randFloat(-128, 127)}, 0};
 
         //Copy pair to GPU
         gpuErrchk(cudaMemcpy(first, colourDiffPair.first.val, 3 * sizeof(float),

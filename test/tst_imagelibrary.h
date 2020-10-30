@@ -14,11 +14,11 @@
 TEST(ImageLibrary, Static_SaveAndLoad)
 {
     //Create image library
-    const size_t imageSize = 32;
+    const size_t imageSize = 64;
     const size_t noLibImages = 10;
     ImageLibrary lib(imageSize);
     for (size_t i = 0; i < noLibImages; ++i)
-        lib.addImage(cv::Mat(imageSize, imageSize, CV_32FC3, cv::Scalar(50, 50, 50)));
+        lib.addImage(cv::Mat(imageSize, imageSize, CV_8UC3, cv::Scalar(50)));
 
     //Check if test for current image library version exists
     QDir libFolder(QDir::currentPath() + "/testcases/imagelibrary");
@@ -30,9 +30,7 @@ TEST(ImageLibrary, Static_SaveAndLoad)
         //Save test lib for current version
         if (!libFolder.exists())
             libFolder.mkpath(".");
-        QString libFile = libFolder.path() + "/lib-v"
-                          + QString::number(static_cast<uint>(ImageLibrary::MIL_VERSION)) + ".mil";
-        lib.saveToFile(libFile);
+        lib.saveToFile(currentVersionLib.filePath());
     }
 
     //Get all test libs
@@ -57,27 +55,33 @@ TEST(ImageLibrary, Static_SaveAndLoad)
 //Creates a random image library, saves it to a file, loads it, and then compares it
 TEST(ImageLibrary, Random_SaveAndLoad)
 {
-    //Create library
-    const size_t imageSize = 32;
+    srand(static_cast<unsigned int>(time(NULL)));
+
+    const size_t imageSize = 64;
     const size_t noLibImages = 10;
-    ImageLibrary lib(imageSize);
-    for (size_t i = 0; i < noLibImages; ++i)
-        lib.addImage(TestUtility::createRandomImage(imageSize, imageSize,
-                                                    TestUtility::ColourSpace::BGR));
 
-    //Save library to file
-    QDir libFolder(QDir::currentPath() + "/testcases/imagelibrary");
-    if (!libFolder.exists())
-        libFolder.mkpath(".");
-    QString libFile = libFolder.path() + "/randLib.mil";
-    lib.saveToFile(libFile);
+    //Test multiple random libraries
+    for (size_t i = 0; i < 20; ++i)
+    {
+        //Create library
+        ImageLibrary lib(imageSize);
+        for (size_t i = 0; i < noLibImages; ++i)
+            lib.addImage(TestUtility::createRandomImage(imageSize, imageSize));
 
-    //Load library from file
-    ImageLibrary loadedLib(imageSize);
-    loadedLib.loadFromFile(libFile);
+        //Save library to file
+        QDir libFolder(QDir::currentPath() + "/testcases/imagelibrary");
+        if (!libFolder.exists())
+            libFolder.mkpath(".");
+        QString libFile = libFolder.path() + "/randLib.mil";
+        lib.saveToFile(libFile);
 
-    //Compare library
-    ASSERT_EQ(lib, loadedLib);
+        //Load library from file
+        ImageLibrary loadedLib(imageSize);
+        loadedLib.loadFromFile(libFile);
+
+        //Compare library
+        ASSERT_EQ(lib, loadedLib);
+    }
 }
 
 #endif // TST_IMAGELIBRARY_H

@@ -8,10 +8,8 @@ namespace TestUtility
 //Generates a random float in [min, max]
 float randFloat(float min, float max);
 
-enum class ColourSpace {BGR, CIELAB};
-
-//Generates a random image of given size and colour space
-cv::Mat createRandomImage(const int width, const int height, const ColourSpace colourSpace);
+//Generates a random image of given size
+cv::Mat createRandomImage(const int width, const int height, const bool singleChannel = false);
 };
 
 #endif // TESTUTILITY_H

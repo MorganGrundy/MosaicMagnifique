@@ -130,7 +130,7 @@ void CellShape::setCellMask(const cv::Mat &t_cellMask)
         cv::flip(m_cellMask, m_cellMaskFlippedHV, -1);
     }
     else
-        qDebug() << "CellShape::setCellMask(const cv::Mat &) unsupported mask type";
+        throw std::invalid_argument(Q_FUNC_INFO " Unsupported mask type");
 }
 
 //Returns the cell mask

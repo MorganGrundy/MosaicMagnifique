@@ -164,8 +164,8 @@ TEST(Generator, BestFits_Saved)
                 cellShape.loadFromFile(testcaseDir.path() + "/" + test + "/cell.mcs");
                 CellGroup cellGroup;
                 cellGroup.setCellShape(cellShape);
-                cellGroup.setDetail(detail * 100);
                 cellGroup.setSizeSteps(static_cast<size_t>(sizeSteps));
+                cellGroup.setDetail(detail * 100);
 
                 //Create generators
                 CPUPhotomosaicGenerator generator;
@@ -211,7 +211,7 @@ TEST(Generator, BestFits_Saved)
     }
 }
 
-TEST(DISABLE_Generator, BestFits_NoRepeats)
+TEST(Generator, BestFits_NoRepeats)
 {
     srand(static_cast<unsigned int>(time(NULL)));
 
@@ -224,8 +224,7 @@ TEST(DISABLE_Generator, BestFits_NoRepeats)
     generatorCUDA.setMode(mode);
 
     const size_t mosaicWidth = 128, mosaicHeight = 128;
-    const cv::Mat mainImage = TestUtility::createRandomImage(mosaicWidth, mosaicHeight,
-                                                             TestUtility::ColourSpace::CIELAB);
+    const cv::Mat mainImage = TestUtility::createRandomImage(mosaicWidth, mosaicHeight);
     generator.setMainImage(mainImage);
     generatorCUDA.setMainImage(mainImage);
 
@@ -242,12 +241,12 @@ TEST(DISABLE_Generator, BestFits_NoRepeats)
     const size_t libSize = 100;
     ImageLibrary lib(libSize);
     for (size_t i = 0; i < libSize; ++i)
-        lib.addImage(createRandomImage(cellSize, cellSize, TestUtility::ColourSpace::CIELAB));
+        lib.addImage(TestUtility::createRandomImage(cellSize, cellSize));
     generator.setLibrary(lib.getImages());
     generatorCUDA.setLibrary(lib.getImages());
 
     const GridUtility::MosaicBestFit gridState =
-        GridGenerator::getGridState(cellGroup, mainImage, mosaicHeight, mosaicWidth);
+        GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
     generator.setGridState(gridState);
     generatorCUDA.setGridState(gridState);
 
@@ -268,7 +267,7 @@ TEST(DISABLE_Generator, BestFits_NoRepeats)
     ASSERT_EQ(bestFitDiff, 0) << "Difference = " << bestFitDiff;
 }
 
-TEST(DISABLE_Generator, BestFits_Repeats)
+TEST(Generator, BestFits_Repeats)
 {
     srand(static_cast<unsigned int>(time(NULL)));
 
@@ -281,8 +280,7 @@ TEST(DISABLE_Generator, BestFits_Repeats)
     generatorCUDA.setMode(mode);
 
     const size_t mosaicWidth = 128, mosaicHeight = 128;
-    const cv::Mat mainImage = TestUtility::createRandomImage(mosaicWidth, mosaicHeight,
-                                                             TestUtility::ColourSpace::CIELAB);
+    const cv::Mat mainImage = TestUtility::createRandomImage(mosaicWidth, mosaicHeight);
     generator.setMainImage(mainImage);
     generatorCUDA.setMainImage(mainImage);
 
@@ -299,7 +297,7 @@ TEST(DISABLE_Generator, BestFits_Repeats)
     const size_t libSize = 100;
     ImageLibrary lib(libSize);
     for (size_t i = 0; i < libSize; ++i)
-        lib.addImage(createRandomImage(cellSize, cellSize, TestUtility::ColourSpace::CIELAB));
+        lib.addImage(TestUtility::createRandomImage(cellSize, cellSize));
     generator.setLibrary(lib.getImages());
     generatorCUDA.setLibrary(lib.getImages());
 

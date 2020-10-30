@@ -15,9 +15,9 @@ cv::Mat TestUtility::createRandomImage(const int width, const int height, const 
     for (int row = 0; row < height; ++row)
     {
         p_im = randIm.ptr<uchar>(row);
-        for (int col = 0; col < width * randIm.channels(); col += randIm.channels())
+        for (int col = 0; col < width * randIm.channels(); ++col)
         {
-            p_im[col] = (rand() * 100) / RAND_MAX;
+            p_im[col] = (rand() * 255) / RAND_MAX;
         }
     }
 

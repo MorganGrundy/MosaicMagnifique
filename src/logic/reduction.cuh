@@ -17,8 +17,8 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CUDA_REDUCTION
-#define CUDA_REDUCTION
+#ifndef CUDA_REDUCTION_H
+#define CUDA_REDUCTION_H
 
 #include <cuda_runtime_api.h>
 
@@ -36,4 +36,4 @@ void reduceAdd(double *g_idata, double *g_odata, const size_t N, const size_t no
 
 void reduceAddData(CUDAPhotomosaicData &photomosaicData, cudaStream_t stream[8],
                    const size_t noOfStreams);
-#endif
+#endif // CUDA_REDUCTION_H

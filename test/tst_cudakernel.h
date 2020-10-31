@@ -5,15 +5,10 @@
 #include <gmock/gmock-matchers.h>
 
 #include "cudaphotomosaicdata.h"
+#include "testutility.h"
+#include "photomosaicgenerator.cuh"
 
 using namespace testing;
-
-//Wrapper for calculate repeats kernel
-void calculateRepeatsKernelWrapper(bool *states, size_t *bestFit, size_t *repeats,
-                                   const int noXCell,
-                                   const int leftRange, const int rightRange,
-                                   const int upRange,
-                                   const size_t repeatAddition);
 
 TEST(CUDAKernel, CalculateRepeats)
 {
@@ -26,30 +21,28 @@ TEST(CUDAKernel, CalculateRepeats)
     const size_t repeatAddition = 500;
 
     //Create cell states, all active
-    bool HOST_states[size * size];
+    bool states[size * size];
     for (size_t i = 0; i < size * size; ++i)
-        HOST_states[i] = true;
-    bool *cellStates;
-    gpuErrchk(cudaMalloc((void **)&cellStates, size * size * sizeof(bool)));
-    gpuErrchk(cudaMemcpy(cellStates, HOST_states, size * size * sizeof(bool),
-                         cudaMemcpyHostToDevice));
+        states[i] = true;
+    bool *d_cellStates;
+    gpuErrchk(cudaMalloc((void **)&d_cellStates, size * size * sizeof(bool)));
+    gpuErrchk(cudaMemcpy(d_cellStates, states, size * size * sizeof(bool), cudaMemcpyHostToDevice));
 
     //Create best fits
-    size_t HOST_bestFit[size * size];
+    size_t bestFit[size * size];
     for (size_t i = 0; i < size * size; ++i)
-        HOST_bestFit[i] = rand() % noLibraryImages;
-    size_t *bestFit;
-    gpuErrchk(cudaMalloc((void **)&bestFit, size * size * sizeof(size_t)));
-    gpuErrchk(cudaMemcpy(bestFit, HOST_bestFit, size * size * sizeof(size_t),
-                         cudaMemcpyHostToDevice));
+        bestFit[i] = rand() % noLibraryImages;
+    size_t *d_bestFit;
+    gpuErrchk(cudaMalloc((void **)&d_bestFit, size * size * sizeof(size_t)));
+    gpuErrchk(cudaMemcpy(d_bestFit, bestFit, size * size * sizeof(size_t), cudaMemcpyHostToDevice));
 
     //Create repeats, all 0
-    size_t HOST_repeats[noLibraryImages];
+    size_t CUDArepeats[noLibraryImages];
     for (size_t i = 0; i < noLibraryImages; ++i)
-        HOST_repeats[i] = 0;
-    size_t *repeats;
-    gpuErrchk(cudaMalloc((void **)&repeats, noLibraryImages * sizeof(size_t)));
-    gpuErrchk(cudaMemcpy(repeats, HOST_repeats, noLibraryImages * sizeof(size_t),
+        CUDArepeats[i] = 0;
+    size_t *d_repeats;
+    gpuErrchk(cudaMalloc((void **)&d_repeats, noLibraryImages * sizeof(size_t)));
+    gpuErrchk(cudaMemcpy(d_repeats, CUDArepeats, noLibraryImages * sizeof(size_t),
                          cudaMemcpyHostToDevice));
 
     int cellY = 2, cellX = 2;
@@ -58,12 +51,12 @@ TEST(CUDAKernel, CalculateRepeats)
     const int leftRange = std::min(repeatRange, cellX);
     const int rightRange = std::min(repeatRange, size - cellX - 1);
     const int upRange = std::min(repeatRange, cellY);
-    calculateRepeatsKernelWrapper(cellStates + cellPosition, bestFit + cellPosition,
-                                  repeats, size, leftRange, rightRange, upRange,
+    calculateRepeatsKernelWrapper(d_cellStates + cellPosition, d_bestFit + cellPosition,
+                                  d_repeats, size, leftRange, rightRange, upRange,
                                   repeatAddition);
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
-    gpuErrchk(cudaMemcpy(HOST_repeats, repeats, noLibraryImages * sizeof(size_t),
+    gpuErrchk(cudaMemcpy(CUDArepeats, d_repeats, noLibraryImages * sizeof(size_t),
                          cudaMemcpyDeviceToHost));
 
     //Calculate repeats at cell position (2, 2) without CUDA
@@ -76,7 +69,7 @@ TEST(CUDAKernel, CalculateRepeats)
         {
             size_t cellIndex = y * size + x;
             if (cellIndex < cellPosition)
-                expectedRepeats.at(HOST_bestFit[cellIndex]) += repeatAddition;
+                expectedRepeats.at(bestFit[cellIndex]) += repeatAddition;
             else
                 break;
         }
@@ -86,7 +79,108 @@ TEST(CUDAKernel, CalculateRepeats)
 
     //Compare results
     for (size_t i = 0; i < noLibraryImages; ++i)
-        ASSERT_TRUE(HOST_repeats[i] == expectedRepeats.at(i));
+        ASSERT_TRUE(CUDArepeats[i] == expectedRepeats.at(i));
+}
+
+TEST(CUDAKernel, AddRepeats)
+{
+    srand(static_cast<unsigned int>(time(NULL)));
+
+    const size_t noLibraryImages = 1 << 14;
+
+    //Create variants
+    double variants[noLibraryImages];
+    for (size_t i = 0; i < noLibraryImages; ++i)
+        variants[i] = TestUtility::randFloat(0, 100);
+    double *d_variants;
+    gpuErrchk(cudaMalloc((void **)&d_variants, noLibraryImages * sizeof(double)));
+    gpuErrchk(cudaMemcpy(d_variants, variants, noLibraryImages * sizeof(double),
+                         cudaMemcpyHostToDevice));
+
+    //Create repeats
+    size_t repeats[noLibraryImages];
+    for (size_t i = 0; i < noLibraryImages; ++i)
+        repeats[i] = static_cast<size_t>(TestUtility::randFloat(0, 100));
+    size_t *d_repeats;
+    gpuErrchk(cudaMalloc((void **)&d_repeats, noLibraryImages * sizeof(size_t)));
+    gpuErrchk(cudaMemcpy(d_repeats, repeats, noLibraryImages * sizeof(size_t),
+                         cudaMemcpyHostToDevice));
+
+    //Run add repeats kernel
+    cudaDeviceProp deviceProp;
+    gpuErrchk(cudaGetDeviceProperties(&deviceProp, 0));
+    const size_t blockSize = deviceProp.maxThreadsPerBlock;
+    addRepeatsKernelWrapper(d_variants, d_repeats, noLibraryImages, blockSize);
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
+
+    //Create results
+    double CUDAResults[noLibraryImages];
+    gpuErrchk(cudaMemcpy(CUDAResults, d_variants, noLibraryImages * sizeof(double),
+                         cudaMemcpyDeviceToHost));
+
+    //Calculate add repeats on host
+    for (size_t i = 0; i < noLibraryImages; ++i)
+        variants[i] += repeats[i];
+
+    //Compare results
+    for (size_t i = 0; i < noLibraryImages; ++i)
+        ASSERT_EQ(variants[i], CUDAResults[i]);
+}
+
+TEST(CUDAKernel, FindLowest)
+{
+    srand(static_cast<unsigned int>(time(NULL)));
+
+    const size_t noLibraryImages = 1 << 14;
+
+    //Create lowest variant
+    double lowestVariant = std::numeric_limits<double>::max();
+    double *d_lowestVariant;
+    gpuErrchk(cudaMalloc((void **)&d_lowestVariant, sizeof(double)));
+    gpuErrchk(cudaMemcpy(d_lowestVariant, &lowestVariant, sizeof(double), cudaMemcpyHostToDevice));
+
+    //Create best fit
+    size_t bestFit = 0;
+    size_t *d_bestFit;
+    gpuErrchk(cudaMalloc((void **)&d_bestFit, sizeof(size_t)));
+    gpuErrchk(cudaMemcpy(d_bestFit, &bestFit, sizeof(size_t), cudaMemcpyHostToDevice));
+
+    //Create variants
+    double variants[noLibraryImages];
+    for (size_t i = 0; i < noLibraryImages; ++i)
+        variants[i] = TestUtility::randFloat(0, 1000);
+    double *d_variants;
+    gpuErrchk(cudaMalloc((void **)&d_variants, noLibraryImages * sizeof(double)));
+    gpuErrchk(cudaMemcpy(d_variants, variants, noLibraryImages * sizeof(double),
+                         cudaMemcpyHostToDevice));
+
+    //Run find lowest kernel
+    findLowestKernelWrapper(d_lowestVariant, d_bestFit, d_variants, noLibraryImages);
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
+
+    //Create results
+    size_t CUDABestFit = 0;
+    double CUDALowestVariant = 0;
+    gpuErrchk(cudaMemcpy(&CUDABestFit, d_bestFit, sizeof(size_t), cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(&CUDALowestVariant, d_lowestVariant, sizeof(double),
+                         cudaMemcpyDeviceToHost));
+
+    //Calculate find lowest on host
+    for (size_t i = 0; i < noLibraryImages; ++i)
+    {
+        if (variants[i] < lowestVariant)
+        {
+            lowestVariant = variants[i];
+            bestFit = i;
+        }
+    }
+
+    //Compare results
+    std::cout << "Best fit: " << bestFit << ", Variant: " << lowestVariant << "\n";
+    ASSERT_EQ(lowestVariant, CUDALowestVariant);
+    ASSERT_EQ(bestFit, CUDABestFit);
 }
 
 #endif // TST_CUDAKERNEL_H

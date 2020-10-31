@@ -32,6 +32,7 @@ CUDA {
 		$$PWD/reduction.cu
 
 	CUDA_HEADERS += \
+		$$PWD/photomosaicgenerator.cuh \
 		$$PWD/reduction.cuh
 
 	SOURCES += \
@@ -40,10 +41,12 @@ CUDA {
 
 	HEADERS += \
 		$$PWD/cudaphotomosaicdata.h \
-		$$PWD/cudaphotomosaicgenerator.h
+		$$PWD/cudaphotomosaicgenerator.h \
+		$$PWD/photomosaicgenerator.cuh
 
 	DISTFILES += \
-		$$PWD/reduction.cuh
+		$$PWD/reduction.cuh \
+		$$PWD/photomosaicgenerator.cuh
 }
 
 INCLUDEPATH += $$PWD

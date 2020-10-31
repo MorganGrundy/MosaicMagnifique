@@ -267,6 +267,13 @@ void addRepeatsKernel(double *variants, size_t *repeats, size_t noLibIm)
         variants[i] += repeats[i];
 }
 
+//Wrapper for add repeats kernel
+void addRepeatsKernelWrapper(double *variants, size_t *repeats, size_t noLibIm, size_t blockSize)
+{
+    const size_t numBlocks = (noLibIm + blockSize - 1) / blockSize;
+    addRepeatsKernel<<<numBlocks, blockSize>>>(variants, repeats, noLibIm);
+}
+
 //Finds lowest value in variants
 __global__
 void findLowestKernel(double *lowestVariant, size_t *bestFit, double *variants, size_t noLibIm)
@@ -279,6 +286,12 @@ void findLowestKernel(double *lowestVariant, size_t *bestFit, double *variants, 
             *bestFit = i;
         }
     }
+}
+
+//Wrapper for find lowest kernel
+void findLowestKernelWrapper(double *lowestVariant, size_t *bestFit, double *variants, size_t noLibIm)
+{
+    findLowestKernel<<<1, 1>>>(lowestVariant, bestFit, variants, noLibIm);
 }
 
 size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)

@@ -3,10 +3,14 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock-matchers.h>
+#include <algorithm>
+#include <vector>
+#include <execution>
 
 #include "cudaphotomosaicdata.h"
 #include "testutility.h"
 #include "photomosaicgenerator.cuh"
+#include "reduction.cuh"
 
 using namespace testing;
 
@@ -58,6 +62,10 @@ TEST(CUDAKernel, CalculateRepeats)
     gpuErrchk(cudaDeviceSynchronize());
     gpuErrchk(cudaMemcpy(CUDArepeats, d_repeats, noLibraryImages * sizeof(size_t),
                          cudaMemcpyDeviceToHost));
+
+    gpuErrchk(cudaFree(d_cellStates));
+    gpuErrchk(cudaFree(d_bestFit));
+    gpuErrchk(cudaFree(d_repeats));
 
     //Calculate repeats at cell position (2, 2) without CUDA
     std::vector<size_t> expectedRepeats(noLibraryImages, 0);
@@ -119,6 +127,9 @@ TEST(CUDAKernel, AddRepeats)
     gpuErrchk(cudaMemcpy(CUDAResults, d_variants, noLibraryImages * sizeof(double),
                          cudaMemcpyDeviceToHost));
 
+    gpuErrchk(cudaFree(d_variants));
+    gpuErrchk(cudaFree(d_repeats));
+
     //Calculate add repeats on host
     for (size_t i = 0; i < noLibraryImages; ++i)
         variants[i] += repeats[i];
@@ -167,6 +178,10 @@ TEST(CUDAKernel, FindLowest)
     gpuErrchk(cudaMemcpy(&CUDALowestVariant, d_lowestVariant, sizeof(double),
                          cudaMemcpyDeviceToHost));
 
+    gpuErrchk(cudaFree(d_lowestVariant));
+    gpuErrchk(cudaFree(d_bestFit));
+    gpuErrchk(cudaFree(d_variants));
+
     //Calculate find lowest on host
     for (size_t i = 0; i < noLibraryImages; ++i)
     {
@@ -178,9 +193,53 @@ TEST(CUDAKernel, FindLowest)
     }
 
     //Compare results
-    std::cout << "Best fit: " << bestFit << ", Variant: " << lowestVariant << "\n";
     ASSERT_EQ(lowestVariant, CUDALowestVariant);
     ASSERT_EQ(bestFit, CUDABestFit);
+}
+
+TEST(CUDAKernel, AddReduction)
+{
+    srand(static_cast<unsigned int>(time(NULL)));
+
+    const size_t imageSize = 128;
+
+    //Create variants
+    std::vector<double> variants;
+    for (size_t i = 0; i < imageSize * imageSize; ++i)
+        variants.push_back(TestUtility::randFloat(0, 1000));
+    double *d_variants;
+    gpuErrchk(cudaMalloc((void **)&d_variants, imageSize * imageSize * sizeof(double)));
+    gpuErrchk(cudaMemcpy(d_variants, variants.data(), imageSize * imageSize * sizeof(double),
+                         cudaMemcpyHostToDevice));
+
+    //Get CUDA block size
+    cudaDeviceProp deviceProp;
+    gpuErrchk(cudaGetDeviceProperties(&deviceProp, 0));
+    const size_t blockSize = deviceProp.maxThreadsPerBlock;
+
+    //Create reduction memory
+    size_t reductionMemSize = ((imageSize * imageSize + blockSize - 1) / blockSize + 1) / 2;
+    double *d_reductionMem;
+    gpuErrchk(cudaMalloc((void **)&d_reductionMem, reductionMemSize * sizeof(double)));
+    gpuErrchk(cudaMemset(d_reductionMem, 0, reductionMemSize * sizeof(double)));
+
+    //Run reduction kernel
+    reduceAddKernelWrapper(blockSize, imageSize, d_variants, d_reductionMem);
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
+
+    //Create results
+    double CUDAResult = 0;
+    gpuErrchk(cudaMemcpy(&CUDAResult, d_variants, sizeof(double), cudaMemcpyDeviceToHost));
+
+    gpuErrchk(cudaFree(d_variants));
+    gpuErrchk(cudaFree(d_reductionMem));
+
+    //Calculate sum on host
+    const double result = std::reduce(std::execution::par, variants.cbegin(), variants.cend());
+
+    //Compare results
+    EXPECT_EQ(result, CUDAResult);
 }
 
 #endif // TST_CUDAKERNEL_H

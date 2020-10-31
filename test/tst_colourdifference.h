@@ -191,6 +191,7 @@ TEST(ColourDifference, CUDA_RGBEuclidean)
     gpuErrchk(cudaFree(target_area));
     //Free pair
     gpuErrchk(cudaFree(first));
+    gpuErrchk(cudaFree(second));
     //Free result
     gpuErrchk(cudaFree(result));
 }
@@ -260,6 +261,7 @@ TEST(ColourDifference, CUDA_CIE76)
     gpuErrchk(cudaFree(target_area));
     //Free pair
     gpuErrchk(cudaFree(first));
+    gpuErrchk(cudaFree(second));
     //Free result
     gpuErrchk(cudaFree(result));
 }
@@ -360,6 +362,7 @@ TEST(ColourDifference, CUDA_CIEDE2000)
     gpuErrchk(cudaFree(target_area));
     //Free pair
     gpuErrchk(cudaFree(first));
+    gpuErrchk(cudaFree(second));
     //Free result
     gpuErrchk(cudaFree(result));
 }
@@ -433,6 +436,7 @@ TEST(ColourDifference, RANDOM_CIE76vsCUDA_CIE76)
     gpuErrchk(cudaFree(target_area));
     //Free pair
     gpuErrchk(cudaFree(first));
+    gpuErrchk(cudaFree(second));
     //Free result
     gpuErrchk(cudaFree(result));
 }

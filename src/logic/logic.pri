@@ -31,10 +31,6 @@ CUDA {
 		$$PWD/photomosaicgenerator.cu \
 		$$PWD/reduction.cu
 
-	CUDA_HEADERS += \
-		$$PWD/photomosaicgenerator.cuh \
-		$$PWD/reduction.cuh
-
 	SOURCES += \
 		$$PWD/cudaphotomosaicdata.cpp \
 		$$PWD/cudaphotomosaicgenerator.cpp

@@ -63,8 +63,9 @@ void euclideanDifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm, 
                                       double *variants, size_t blockSize)
 {
     const size_t numBlocks = (size * size * noLibIm + blockSize - 1) / blockSize;
-    euclideanDifferenceKernel<<<numBlocks, blockSize>>>(im_1, im_2, noLibIm, mask_im, size,
-                                                        channels, target_area, variants);
+    euclideanDifferenceKernel<<<static_cast<unsigned int>(numBlocks),
+                                static_cast<unsigned int>(blockSize)>>>(
+        im_1, im_2, noLibIm, mask_im, size, channels, target_area, variants);
 }
 
 //Converts degrees to radians
@@ -221,8 +222,9 @@ void CIEDE2000DifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm, 
                                       double *variants, size_t blockSize)
 {
     const size_t numBlocks = (size * size * noLibIm + blockSize - 1) / blockSize;
-    CIEDE2000DifferenceKernel<<<numBlocks, blockSize>>>(im_1, im_2, noLibIm, mask_im, size,
-                                                        channels, target_area, variants);
+    CIEDE2000DifferenceKernel<<<static_cast<unsigned int>(numBlocks),
+                                static_cast<unsigned int>(blockSize)>>>(
+        im_1, im_2, noLibIm, mask_im, size, channels, target_area, variants);
 }
 
 //Calculates repeats in range
@@ -273,7 +275,8 @@ void addRepeatsKernel(double *variants, size_t *repeats, size_t noLibIm)
 void addRepeatsKernelWrapper(double *variants, size_t *repeats, size_t noLibIm, size_t blockSize)
 {
     const size_t numBlocks = (noLibIm + blockSize - 1) / blockSize;
-    addRepeatsKernel<<<numBlocks, blockSize>>>(variants, repeats, noLibIm);
+    addRepeatsKernel<<<static_cast<unsigned int>(numBlocks),
+                       static_cast<unsigned int>(blockSize)>>>(variants, repeats, noLibIm);
 }
 
 //Finds lowest value in variants

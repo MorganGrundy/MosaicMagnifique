@@ -4,12 +4,12 @@
 //Wrapper for euclidean difference kernel
 void euclideanDifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm, uchar *mask_im,
 									  size_t size, size_t channels, size_t *target_area,
-									  double *variants);
+									  double *variants, size_t blockSize);
 
 //Wrapper for euclidean difference kernel
 void CIEDE2000DifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm, uchar *mask_im,
 									  size_t size, size_t channels, size_t *target_area,
-									  double *variants);
+									  double *variants, size_t blockSize);
 
 //Wrapper for calculate repeats kernel
 void calculateRepeatsKernelWrapper(bool *states, size_t *bestFit, size_t *repeats,

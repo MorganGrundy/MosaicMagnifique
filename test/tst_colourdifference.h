@@ -170,7 +170,11 @@ TEST(ColourDifference, CUDA_RGBEuclidean)
                              cudaMemcpyHostToDevice));
 
         //Calculate differences
-        euclideanDifferenceKernelWrapper(first, second, 1, mask, 1, 3, target_area, result);
+        cudaDeviceProp deviceProp;
+        gpuErrchk(cudaGetDeviceProperties(&deviceProp, 0));
+        const size_t blockSize = deviceProp.maxThreadsPerBlock;
+        euclideanDifferenceKernelWrapper(first, second, 1, mask, 1, 3, target_area, result,
+                                         blockSize);
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
 
@@ -235,7 +239,11 @@ TEST(ColourDifference, CUDA_CIE76)
                              cudaMemcpyHostToDevice));
 
         //Calculate differences
-        euclideanDifferenceKernelWrapper(first, second, 1, mask, 1, 3, target_area, result);
+        cudaDeviceProp deviceProp;
+        gpuErrchk(cudaGetDeviceProperties(&deviceProp, 0));
+        const size_t blockSize = deviceProp.maxThreadsPerBlock;
+        euclideanDifferenceKernelWrapper(first, second, 1, mask, 1, 3, target_area, result,
+                                         blockSize);
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
 
@@ -331,7 +339,11 @@ TEST(ColourDifference, CUDA_CIEDE2000)
                              cudaMemcpyHostToDevice));
 
         //Calculate differences
-        CIEDE2000DifferenceKernelWrapper(first, second, 1, mask, 1, 3, target_area, result);
+        cudaDeviceProp deviceProp;
+        gpuErrchk(cudaGetDeviceProperties(&deviceProp, 0));
+        const size_t blockSize = deviceProp.maxThreadsPerBlock;
+        CIEDE2000DifferenceKernelWrapper(first, second, 1, mask, 1, 3, target_area, result,
+                                         blockSize);
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
 
@@ -397,7 +409,11 @@ TEST(ColourDifference, RANDOM_CIE76vsCUDA_CIE76)
                              cudaMemcpyHostToDevice));
 
         //Calculate differences
-        euclideanDifferenceKernelWrapper(first, second, 1, mask, 1, 3, target_area, result);
+        cudaDeviceProp deviceProp;
+        gpuErrchk(cudaGetDeviceProperties(&deviceProp, 0));
+        const size_t blockSize = deviceProp.maxThreadsPerBlock;
+        euclideanDifferenceKernelWrapper(first, second, 1, mask, 1, 3, target_area, result,
+                                         blockSize);
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
 

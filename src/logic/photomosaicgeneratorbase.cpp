@@ -207,10 +207,6 @@ void PhotomosaicGeneratorBase::cancel()
 //Returns results
 std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGeneratorBase::resizeAndCvtColor()
 {
-    //No resize or cvt color needed
-    if (m_cells.getDetail() == 1 && m_mode == Mode::RGB_EUCLIDEAN)
-        return {m_img, m_lib};
-
     cv::Mat resultMain;
     std::vector<cv::Mat> result(m_lib.size(), cv::Mat());
 

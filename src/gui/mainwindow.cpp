@@ -37,7 +37,7 @@
 
 #ifdef CUDA
 #include <cuda_runtime.h>
-#include "cudaphotomosaicdata.h"
+#include "cudautility.h"
 #include "cudaphotomosaicgenerator.h"
 #endif
 

@@ -6,7 +6,7 @@
 #include <opencv2/core.hpp>
 
 #include "colourdifference.h"
-#include "cudaphotomosaicdata.h"
+#include "cudautility.h"
 #include "testutility.h"
 #include "photomosaicgenerator.cuh"
 

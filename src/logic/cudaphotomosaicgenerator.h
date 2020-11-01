@@ -37,6 +37,10 @@ public:
 
 private:
     size_t m_libraryBatchSize;
+
+    //Copies mat to device pointer
+    template <typename T>
+    void copyMatToDevice(const cv::Mat &t_mat, T *t_device) const;
 };
 
 #endif // CUDAPHOTOMOSAICGENERATORBASE_H

@@ -19,12 +19,10 @@
 
 #include <math_constants.h>
 
-#include "cudaphotomosaicdata.h"
-#include "reduction.cuh"
-
 //Calculates the euclidean difference between main image and library images
 __global__
-void euclideanDifferenceKernel(float *im_1, float *im_2, size_t noLibIm, uchar *mask_im,
+void euclideanDifferenceKernel(float *im_1, float *im_2, size_t noLibIm,
+                               unsigned char *mask_im,
                                size_t size, size_t channels, size_t *target_area, double *variants)
 {
     const size_t index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
@@ -58,7 +56,8 @@ void euclideanDifferenceKernel(float *im_1, float *im_2, size_t noLibIm, uchar *
 }
 
 //Wrapper for euclidean difference kernel
-void euclideanDifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm, uchar *mask_im,
+void euclideanDifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm,
+                                      unsigned char *mask_im,
                                       size_t size, size_t channels, size_t *target_area,
                                       double *variants, size_t blockSize)
 {
@@ -77,7 +76,8 @@ constexpr double degToRadKernel(const double deg)
 
 //Kernel that calculates the CIEDE2000 difference between main image and library images
 __global__
-void CIEDE2000DifferenceKernel(float *im_1, float *im_2, size_t noLibIm, uchar *mask_im,
+void CIEDE2000DifferenceKernel(float *im_1, float *im_2, size_t noLibIm,
+                               unsigned char *mask_im,
                                size_t size, size_t channels, size_t *target_area, double *variants)
 {
     const size_t index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
@@ -217,7 +217,8 @@ void CIEDE2000DifferenceKernel(float *im_1, float *im_2, size_t noLibIm, uchar *
 }
 
 //Wrapper for euclidean difference kernel
-void CIEDE2000DifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm, uchar *mask_im,
+void CIEDE2000DifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm,
+                                      unsigned char *mask_im,
                                       size_t size, size_t channels, size_t *target_area,
                                       double *variants, size_t blockSize)
 {
@@ -229,36 +230,32 @@ void CIEDE2000DifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm, 
 
 //Calculates repeats in range
 __global__
-void calculateRepeats(bool *states, size_t *bestFit, size_t *repeats,
-                      const int noXCell,
-                      const int leftRange, const int rightRange,
-                      const int upRange,
-                      const size_t repeatAddition)
+void calculateRepeats(size_t *bestFit, size_t *repeats, const int noXCell,
+                     const int leftRange, const int rightRange, const int upRange,
+                     const size_t repeatAddition, const size_t bestFitMax)
 {
     for (int y = -upRange; y < 0; ++y)
     {
         for (int x = -leftRange; x <= rightRange; ++x)
         {
-            if (states[y * noXCell + x])
+            if (bestFit[y * noXCell + x] < bestFitMax)
                 repeats[bestFit[y * noXCell + x]] += repeatAddition;
         }
     }
     for (int x = -leftRange; x < 0; ++x)
     {
-        if (states[x])
+        if (bestFit[x] < bestFitMax)
             repeats[bestFit[x]] += repeatAddition;
     }
 }
 
 //Wrapper for calculate repeats kernel
-void calculateRepeatsKernelWrapper(bool *states, size_t *bestFit, size_t *repeats,
-                            const int noXCell,
-                            const int leftRange, const int rightRange,
-                            const int upRange,
-                            const size_t repeatAddition)
+void calculateRepeatsKernelWrapper(size_t *bestFit, size_t *repeats, const int noXCell,
+                     const int leftRange, const int rightRange, const int upRange,
+                     const size_t repeatAddition, const size_t bestFitMax)
 {
-    calculateRepeats<<<1, 1>>>(states, bestFit, repeats, noXCell, leftRange, rightRange, upRange,
-                               repeatAddition);
+    calculateRepeats<<<1, 1>>>(bestFit, repeats, noXCell, leftRange, rightRange, upRange,
+                               repeatAddition, bestFitMax);
 }
 
 //Adds repeat values to variants
@@ -297,136 +294,4 @@ void findLowestKernel(double *lowestVariant, size_t *bestFit, double *variants, 
 void findLowestKernelWrapper(double *lowestVariant, size_t *bestFit, double *variants, size_t noLibIm)
 {
     findLowestKernel<<<1, 1>>>(lowestVariant, bestFit, variants, noLibIm);
-}
-
-size_t differenceGPU(CUDAPhotomosaicData &photomosaicData)
-{
-    size_t numBlocks;
-    const int batchSize = static_cast<int>(photomosaicData.getBatchSize());
-    int batchIndex;
-
-    //Create streams
-    const static size_t maxStreams = 8;
-    const size_t noOfStreams = std::min(maxStreams, photomosaicData.getBatchSize());
-    size_t curStream = 0;
-    cudaStream_t streams[maxStreams];
-    for (size_t i = 0; i < noOfStreams; ++i)
-        gpuErrchk(cudaStreamCreate(&streams[i]));
-
-    //Loop over all batches
-    while ((batchIndex = photomosaicData.copyNextBatchToDevice()) != -1)
-    {
-        //Loop over all data in batch
-        for (size_t i = 0; i < batchSize
-             && batchIndex * batchSize + i < photomosaicData.noValidCells; ++i)
-        {
-            //Skip if cell invalid
-            if (!photomosaicData.getCellState(i))
-                continue;
-
-            std::pair<size_t, size_t> pos = photomosaicData.getCellPosition(i);
-            const int x = static_cast<int>(pos.first);
-            const int y = static_cast<int>(pos.second);
-
-            //Calculate differences
-            numBlocks = (photomosaicData.pixelCount * photomosaicData.libraryBatchSize
-                         + photomosaicData.getBlockSize() - 1) / photomosaicData.getBlockSize();
-
-            //Loop over all images in library, 50 at a time
-            for (size_t libIndex = 0; libIndex < photomosaicData.noLibraryImages;
-                 libIndex += photomosaicData.libraryBatchSize)
-            {
-                //If remaining libraries less than library batch size then only use remaining
-                const size_t libCount =
-                    (photomosaicData.noLibraryImages - libIndex < photomosaicData.libraryBatchSize)
-                    ? photomosaicData.noLibraryImages - libIndex : photomosaicData.libraryBatchSize;
-
-                if (photomosaicData.euclidean)
-                    euclideanDifferenceKernel
-                        <<<static_cast<unsigned int>(numBlocks),
-                           static_cast<unsigned int>(photomosaicData.getBlockSize()),
-                           0, streams[curStream]>>>(
-                        photomosaicData.getCellImage(i),
-                        photomosaicData.getLibraryImage(libIndex), libCount,
-                        photomosaicData.getMaskImage(x, y),
-                        photomosaicData.imageSize, photomosaicData.imageChannels,
-                        photomosaicData.getTargetArea(i),
-                        photomosaicData.getVariants(i, libIndex));
-                else
-                    CIEDE2000DifferenceKernel
-                        <<<static_cast<unsigned int>(numBlocks),
-                           static_cast<unsigned int>(photomosaicData.getBlockSize()),
-                           0, streams[curStream]>>>(
-                        photomosaicData.getCellImage(i),
-                        photomosaicData.getLibraryImage(libIndex), libCount,
-                        photomosaicData.getMaskImage(x, y),
-                        photomosaicData.imageSize, photomosaicData.imageChannels,
-                        photomosaicData.getTargetArea(i),
-                        photomosaicData.getVariants(i, libIndex));
-
-                //Move to next stream
-                ++curStream;
-                if (curStream == noOfStreams)
-                    curStream = 0;
-            }
-        }
-        //Perform sum reduction on all image variants
-        gpuErrchk(cudaPeekAtLastError());
-        gpuErrchk(cudaDeviceSynchronize());
-        reduceAddData(photomosaicData, streams, noOfStreams);
-        gpuErrchk(cudaPeekAtLastError());
-        gpuErrchk(cudaDeviceSynchronize()); // Error - unknown
-
-        //Loop over all data in batch
-        for (size_t i = 0; i < batchSize
-             && batchIndex * batchSize + i < photomosaicData.noValidCells; ++i)
-        {
-            //Skip if cell invalid
-            if (!photomosaicData.getCellState(i))
-                continue;
-
-            //Calculate repeats
-            photomosaicData.clearRepeats();
-
-            std::pair<size_t, size_t> pos = photomosaicData.getCellPosition(i);
-            const int x = static_cast<int>(pos.first);
-            const int y = static_cast<int>(pos.second);
-
-            const int leftRange = std::min(static_cast<int>(photomosaicData.repeatRange), x);
-            const int rightRange = std::min(static_cast<int>(photomosaicData.repeatRange),
-                                            static_cast<int>(photomosaicData.noXCellImages)
-                                            - x - 1);
-            const int upRange = std::min(static_cast<int>(photomosaicData.repeatRange), y);
-            calculateRepeats<<<1, 1>>>(photomosaicData.getCellStateGPU(i),
-                                       photomosaicData.getBestFit(i), photomosaicData.getRepeats(),
-                                       static_cast<int>(photomosaicData.noXCellImages),
-                                       leftRange, rightRange, upRange,
-                                       photomosaicData.repeatAddition);
-            gpuErrchk(cudaPeekAtLastError());
-            gpuErrchk(cudaDeviceSynchronize()); //Error - illegal memory access
-
-            //Adds repeat values to differences
-            numBlocks = (photomosaicData.noLibraryImages
-                         + photomosaicData.getBlockSize() - 1) / photomosaicData.getBlockSize();
-            addRepeatsKernel<<<static_cast<unsigned int>(numBlocks),
-                    static_cast<unsigned int>(photomosaicData.getBlockSize())>>>(
-                            photomosaicData.getVariants(i),
-                            photomosaicData.getRepeats(),
-                            photomosaicData.noLibraryImages);
-
-            //Find lowest variant
-            findLowestKernel<<<1, 1>>>(photomosaicData.getLowestVariant(i),
-                                       photomosaicData.getBestFit(i),
-                                       photomosaicData.getVariants(i),
-                                       photomosaicData.noLibraryImages);
-        }
-    }
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
-
-    //Destroy streams
-    for (size_t i = 0; i < noOfStreams; ++i)
-        gpuErrchk(cudaStreamDestroy(streams[i]));
-
-    return 0;
 }

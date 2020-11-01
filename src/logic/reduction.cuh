@@ -20,11 +20,6 @@
 #ifndef CUDA_REDUCTION_H
 #define CUDA_REDUCTION_H
 
-#include "cudaphotomosaicdata.h"
-
-void reduceAddData(CUDAPhotomosaicData &photomosaicData, cudaStream_t stream[8],
-                   const size_t noOfStreams);
-
 //Wrapper for reduce add kernel
 void reduceAddKernelWrapper(size_t blockSize, size_t size, double *variants, double *reductionMem);
 

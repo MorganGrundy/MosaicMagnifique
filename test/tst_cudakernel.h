@@ -7,7 +7,7 @@
 #include <vector>
 #include <execution>
 
-#include "cudaphotomosaicdata.h"
+#include "cudautility.h"
 #include "testutility.h"
 #include "photomosaicgenerator.cuh"
 #include "reduction.cuh"
@@ -23,14 +23,6 @@ TEST(CUDAKernel, CalculateRepeats)
 
     const int repeatRange = 2;
     const size_t repeatAddition = 500;
-
-    //Create cell states, all active
-    bool states[size * size];
-    for (size_t i = 0; i < size * size; ++i)
-        states[i] = true;
-    bool *d_cellStates;
-    gpuErrchk(cudaMalloc((void **)&d_cellStates, size * size * sizeof(bool)));
-    gpuErrchk(cudaMemcpy(d_cellStates, states, size * size * sizeof(bool), cudaMemcpyHostToDevice));
 
     //Create best fits
     size_t bestFit[size * size];
@@ -55,15 +47,14 @@ TEST(CUDAKernel, CalculateRepeats)
     const int leftRange = std::min(repeatRange, cellX);
     const int rightRange = std::min(repeatRange, size - cellX - 1);
     const int upRange = std::min(repeatRange, cellY);
-    calculateRepeatsKernelWrapper(d_cellStates + cellPosition, d_bestFit + cellPosition,
+    calculateRepeatsKernelWrapper(d_bestFit + cellPosition,
                                   d_repeats, size, leftRange, rightRange, upRange,
-                                  repeatAddition);
+                                  repeatAddition, noLibraryImages);
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
     gpuErrchk(cudaMemcpy(CUDArepeats, d_repeats, noLibraryImages * sizeof(size_t),
                          cudaMemcpyDeviceToHost));
 
-    gpuErrchk(cudaFree(d_cellStates));
     gpuErrchk(cudaFree(d_bestFit));
     gpuErrchk(cudaFree(d_repeats));
 
@@ -224,7 +215,7 @@ TEST(CUDAKernel, AddReduction)
     gpuErrchk(cudaMemset(d_reductionMem, 0, reductionMemSize * sizeof(double)));
 
     //Run reduction kernel
-    reduceAddKernelWrapper(blockSize, imageSize, d_variants, d_reductionMem);
+    reduceAddKernelWrapper(blockSize, imageSize * imageSize, d_variants, d_reductionMem);
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 

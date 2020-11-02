@@ -52,6 +52,8 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     float *d_cellImage;
     //Device memory for target area
     size_t *d_targetArea;
+    gpuErrchk(cudaMalloc((void **)&d_targetArea, 4 * sizeof(size_t)));
+
     //Device memory for reduction memory
     double *d_reductionMem;
 
@@ -59,6 +61,8 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     size_t *d_bestFit;
     //Device memory for lowest variant
     double *d_lowestVariant;
+    gpuErrchk(cudaMalloc((void **)&d_lowestVariant, sizeof(double)));
+    const double maxVariant = std::numeric_limits<double>::max();
 
     //For all size steps, stop if no bounds for step
     for (size_t step = 0; step < m_bestFits.size(); ++step)
@@ -90,9 +94,6 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         //Create device memory for cell image
         gpuErrchk(cudaMalloc((void **)&d_cellImage, cellSize * 3 * sizeof(float)));
 
-        //Create device memory for target area
-        gpuErrchk(cudaMalloc((void **)&d_targetArea, 4 * sizeof(size_t)));
-
         //Create device memory for reduction
         const size_t reductionMemorySize = (((cellSize + 1) / 2 + blockSize - 1) / blockSize + 1) / 2;
         gpuErrchk(cudaMalloc((void **)&d_reductionMem,
@@ -105,10 +106,6 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         for (size_t cellIndex = 1; cellIndex < noOfCells; ++cellIndex)
             gpuErrchk(cudaMemcpy(d_bestFit + cellIndex, d_bestFit, sizeof(size_t),
                                  cudaMemcpyDeviceToDevice));
-
-        //Create device lowest variant
-        const double maxVariant = std::numeric_limits<double>::max();
-        gpuErrchk(cudaMalloc((void **)&d_lowestVariant, sizeof(double)));
 
         //Find best match for each cell in grid
         for (int y = -GridUtility::PAD_GRID;
@@ -215,6 +212,15 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
             }
         }
 
+        for (size_t i = 0; i < d_maskImages.size(); ++i)
+            gpuErrchk(cudaFree(d_maskImages.at(i)));
+
+        gpuErrchk(cudaFree(d_libraryImage));
+        gpuErrchk(cudaFree(d_variants));
+        gpuErrchk(cudaFree(d_cellImage));
+        gpuErrchk(cudaFree(d_reductionMem));
+        gpuErrchk(cudaFree(d_bestFit));
+
         //Resize for next step
         if ((step + 1) < m_bestFits.size())
         {
@@ -223,17 +229,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         }
     }
 
-    for (size_t i = 0; i < d_maskImages.size(); ++i)
-        gpuErrchk(cudaFree(d_maskImages.at(i)));
-
-    gpuErrchk(cudaFree(d_libraryImage));
-
-    gpuErrchk(cudaFree(d_variants));
-    gpuErrchk(cudaFree(d_cellImage));
     gpuErrchk(cudaFree(d_targetArea));
-    gpuErrchk(cudaFree(d_reductionMem));
-
-    gpuErrchk(cudaFree(d_bestFit));
     gpuErrchk(cudaFree(d_lowestVariant));
 
     return true;

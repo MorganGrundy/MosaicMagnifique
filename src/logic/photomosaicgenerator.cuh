@@ -14,12 +14,11 @@ void CIEDE2000DifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm,
 									  double *variants, size_t blockSize);
 
 //Wrapper for calculate repeats kernel
-void calculateRepeatsKernelWrapper(size_t *bestFit, size_t *repeats, const int noXCell,
-                                   const int leftRange, const int rightRange, const int upRange,
-                                   const size_t repeatAddition, const size_t bestFitMax);
-
-//Wrapper for add repeats kernel
-void addRepeatsKernelWrapper(double *variants, size_t *repeats, size_t noLibIm, size_t blockSize);
+void calculateRepeatsKernelWrapper(double *variants,
+                                   size_t *bestFit, const size_t bestFitMax,
+                                   const size_t gridWidth, const int x, const int y,
+                                   const int padGrid,
+                                   const size_t repeatRange, const size_t repeatAddition);
 
 //Wrapper for find lowest kernel
 void findLowestKernelWrapper(double *lowestVariant, size_t *bestFit, double *variants,

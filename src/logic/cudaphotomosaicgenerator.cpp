@@ -57,8 +57,6 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
 
     //Device memory for best fits
     size_t *d_bestFit;
-    //Device memory for repeats
-    size_t *d_repeats;
     //Device memory for lowest variant
     double *d_lowestVariant;
 
@@ -70,8 +68,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         //Reference to cell shapes
         const CellShape &normalCellShape = m_cells.getCell(step);
         const CellShape &detailCellShape = m_cells.getCell(step, true);
-        const size_t cellSize = detailCellShape.getCellMask(0, 0).rows
-                                * detailCellShape.getCellMask(0, 0).cols;
+        const size_t cellSize = std::pow(m_cells.getCellSize(step, true), 2);
 
         //Copy cell masks to device
         for (size_t i = 0; i < d_maskImages.size(); ++i)
@@ -108,9 +105,6 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         for (size_t cellIndex = 1; cellIndex < noOfCells; ++cellIndex)
             gpuErrchk(cudaMemcpy(d_bestFit + cellIndex, d_bestFit, sizeof(size_t),
                                  cudaMemcpyDeviceToDevice));
-
-        //Create device repeats
-        gpuErrchk(cudaMalloc((void **)&d_repeats, resizedLib.size() * sizeof(size_t)));
 
         //Create device lowest variant
         const double maxVariant = std::numeric_limits<double>::max();
@@ -160,10 +154,6 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                     gpuErrchk(cudaMemset(d_reductionMem, 0,
                                          resizedLib.size() * reductionMemorySize * sizeof(double)));
 
-                    //Clear repeats
-                    gpuErrchk(cudaMemset(d_repeats, 0,
-                                         resizedLib.size() * sizeof(size_t)));
-
                     //Reset lowest variant
                     gpuErrchk(cudaMemcpy(d_lowestVariant, &maxVariant, sizeof(double),
                                          cudaMemcpyHostToDevice));
@@ -191,27 +181,20 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                                              sizeof(double), cudaMemcpyDeviceToDevice));
                     }
 
-                    //Calculate repeats
-                    const int xMax = static_cast<int>(m_bestFits.at(step).at(0).size());
-                    const int shiftedX = x + GridUtility::PAD_GRID;
-                    const int shiftedY = y + GridUtility::PAD_GRID;
-                    const size_t cellPosition = shiftedY * xMax + shiftedX;
-
-                    const int leftRange = std::min(m_repeatRange, x);
-                    const int rightRange = std::min(m_repeatRange, xMax - x - 1);
-                    const int upRange = std::min(m_repeatRange, y);
-                    calculateRepeatsKernelWrapper(d_bestFit + cellPosition, d_repeats, cell.rows,
-                                                  leftRange, rightRange, upRange,
-                                                  m_repeatAddition, resizedLib.size());
-                    gpuErrchk(cudaPeekAtLastError());
-                    gpuErrchk(cudaDeviceSynchronize());
-
-                    //Add repeats to variants
-                    addRepeatsKernelWrapper(d_variants, d_repeats, resizedLib.size(), blockSize);
+                    //Calculate repeats and add to variants
+                    const size_t gridWidth = m_bestFits.at(step).at(0).size();
+                    calculateRepeatsKernelWrapper(d_variants,
+                                                  d_bestFit, resizedLib.size(),
+                                                  gridWidth, x, y,
+                                                  GridUtility::PAD_GRID,
+                                                  m_repeatRange, m_repeatAddition);
                     gpuErrchk(cudaPeekAtLastError());
                     gpuErrchk(cudaDeviceSynchronize());
 
                     //Find lowest variant
+                    const int paddedX = x + GridUtility::PAD_GRID;
+                    const int paddedY = y + GridUtility::PAD_GRID;
+                    const size_t cellPosition = paddedY * gridWidth + paddedX;
                     findLowestKernelWrapper(d_lowestVariant, d_bestFit + cellPosition, d_variants,
                                             resizedLib.size());
                     gpuErrchk(cudaPeekAtLastError());
@@ -251,7 +234,6 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     gpuErrchk(cudaFree(d_reductionMem));
 
     gpuErrchk(cudaFree(d_bestFit));
-    gpuErrchk(cudaFree(d_repeats));
     gpuErrchk(cudaFree(d_lowestVariant));
 
     return true;

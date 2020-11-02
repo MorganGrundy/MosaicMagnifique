@@ -18,6 +18,7 @@
 */
 
 #include <math_constants.h>
+#include <algorithm>
 
 //Calculates the euclidean difference between main image and library images
 __global__
@@ -228,52 +229,45 @@ void CIEDE2000DifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm,
         im_1, im_2, noLibIm, mask_im, size, channels, target_area, variants);
 }
 
-//Calculates repeats in range
+//Calculates repeats in range and adds to variants
 __global__
-void calculateRepeats(size_t *bestFit, size_t *repeats, const int noXCell,
+void calculateRepeats(double *variants,
+                     size_t *bestFit, const size_t bestFitMax, const size_t gridWidth,
                      const int leftRange, const int rightRange, const int upRange,
-                     const size_t repeatAddition, const size_t bestFitMax)
+                     const size_t repeatAddition)
 {
     for (int y = -upRange; y < 0; ++y)
     {
         for (int x = -leftRange; x <= rightRange; ++x)
         {
-            if (bestFit[y * noXCell + x] < bestFitMax)
-                repeats[bestFit[y * noXCell + x]] += repeatAddition;
+            if (bestFit[y * gridWidth + x] < bestFitMax)
+                variants[bestFit[y * gridWidth + x]] += repeatAddition;
         }
     }
     for (int x = -leftRange; x < 0; ++x)
     {
         if (bestFit[x] < bestFitMax)
-            repeats[bestFit[x]] += repeatAddition;
+            variants[bestFit[x]] += repeatAddition;
     }
 }
 
 //Wrapper for calculate repeats kernel
-void calculateRepeatsKernelWrapper(size_t *bestFit, size_t *repeats, const int noXCell,
-                     const int leftRange, const int rightRange, const int upRange,
-                     const size_t repeatAddition, const size_t bestFitMax)
+void calculateRepeatsKernelWrapper(double *variants,
+                                   size_t *bestFit, const size_t bestFitMax,
+                                   const size_t gridWidth, const int x, const int y,
+                                   const int padGrid,
+                                   const size_t repeatRange, const size_t repeatAddition)
 {
-    calculateRepeats<<<1, 1>>>(bestFit, repeats, noXCell, leftRange, rightRange, upRange,
-                               repeatAddition, bestFitMax);
-}
+    const size_t paddedX = x + padGrid;
+    const size_t paddedY = y + padGrid;
 
-//Adds repeat values to variants
-__global__
-void addRepeatsKernel(double *variants, size_t *repeats, size_t noLibIm)
-{
-    const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
-    const size_t stride = blockDim.x * gridDim.x;
-    for (size_t i = index; i < noLibIm; i += stride)
-        variants[i] += repeats[i];
-}
-
-//Wrapper for add repeats kernel
-void addRepeatsKernelWrapper(double *variants, size_t *repeats, size_t noLibIm, size_t blockSize)
-{
-    const size_t numBlocks = (noLibIm + blockSize - 1) / blockSize;
-    addRepeatsKernel<<<static_cast<unsigned int>(numBlocks),
-                       static_cast<unsigned int>(blockSize)>>>(variants, repeats, noLibIm);
+    const int leftRange = static_cast<int>(std::min(repeatRange, paddedX));
+    const int rightRange = static_cast<int>(std::min(repeatRange, gridWidth - paddedX - 1));
+    const int upRange = static_cast<int>(std::min(repeatRange, paddedY));
+    calculateRepeats<<<1, 1>>>(variants,
+                               bestFit + paddedY * gridWidth + paddedX, bestFitMax, gridWidth,
+                               leftRange, rightRange, upRange,
+                               repeatAddition);
 }
 
 //Finds lowest value in variants

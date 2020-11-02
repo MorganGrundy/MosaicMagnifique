@@ -17,6 +17,8 @@ using namespace testing;
 
 namespace TST_Generator
 {
+static const size_t ITERATIONS = 10;
+
 //Check if best fits are equal
 size_t bestFitsDiff(const GridUtility::MosaicBestFit &bestFit1,
                     const GridUtility::MosaicBestFit &bestFit2)
@@ -62,9 +64,180 @@ size_t bestFitsDiff(const GridUtility::MosaicBestFit &bestFit1,
 
 //Generates photomosaic best fits using identical settings multiple times
 //Expects all the best fits to be identical
-TEST(Generator, CIE76_Repeated)
+TEST(Generator, RGB_EUCLIDEAN_Detail_100)
 {
-    //Create photomosaic generators
+    //Create photomosaic generator
+    CPUPhotomosaicGenerator generator;
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
+    generator.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(100);
+    generator.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Select a random main image from list
+    cv::Mat mainImage = cv::imread((imageFolder.path() + "/" +
+                                    images.at((rand() * images.size()) / RAND_MAX)).toStdString());
+    generator.setMainImage(mainImage);
+
+    GridUtility::MosaicBestFit lastBestFit;
+    for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
+    {
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+
+        if (i > 0)
+        {
+            //Compare best fits
+            size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(), lastBestFit);
+            EXPECT_EQ(bestFitDiff, 0);
+        }
+        lastBestFit = generator.getBestFits();
+    }
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST(Generator, RGB_EUCLIDEAN_Detail_50)
+{
+    //Create photomosaic generator
+    CPUPhotomosaicGenerator generator;
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
+    generator.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(50);
+    generator.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Select a random main image from list
+    cv::Mat mainImage = cv::imread((imageFolder.path() + "/" +
+                                    images.at((rand() * images.size()) / RAND_MAX)).toStdString());
+    generator.setMainImage(mainImage);
+
+    GridUtility::MosaicBestFit lastBestFit;
+    for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
+    {
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+
+        if (i > 0)
+        {
+            //Compare best fits
+            size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(), lastBestFit);
+            EXPECT_EQ(bestFitDiff, 0);
+        }
+        lastBestFit = generator.getBestFits();
+    }
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST(Generator, CIE76_Detail_100)
+{
+    //Create photomosaic generator
+    CPUPhotomosaicGenerator generator;
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
+    generator.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(100);
+    generator.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Select a random main image from list
+    cv::Mat mainImage = cv::imread((imageFolder.path() + "/" +
+                                    images.at((rand() * images.size()) / RAND_MAX)).toStdString());
+    generator.setMainImage(mainImage);
+
+    GridUtility::MosaicBestFit lastBestFit;
+    for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
+    {
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+
+        if (i > 0)
+        {
+            //Compare best fits
+            size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(), lastBestFit);
+            EXPECT_EQ(bestFitDiff, 0);
+        }
+        lastBestFit = generator.getBestFits();
+    }
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST(Generator, CIE76_Detail_50)
+{
+    //Create photomosaic generator
     CPUPhotomosaicGenerator generator;
 
     //Set mode
@@ -97,7 +270,121 @@ TEST(Generator, CIE76_Repeated)
     generator.setMainImage(mainImage);
 
     GridUtility::MosaicBestFit lastBestFit;
-    for (size_t i = 0; i < 50; ++i)
+    for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
+    {
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+
+        if (i > 0)
+        {
+            //Compare best fits
+            size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(), lastBestFit);
+            EXPECT_EQ(bestFitDiff, 0);
+        }
+        lastBestFit = generator.getBestFits();
+    }
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST(Generator, CIEDE2000_Detail_100)
+{
+    //Create photomosaic generator
+    CPUPhotomosaicGenerator generator;
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
+    generator.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(100);
+    generator.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Select a random main image from list
+    cv::Mat mainImage = cv::imread((imageFolder.path() + "/" +
+                                    images.at((rand() * images.size()) / RAND_MAX)).toStdString());
+    generator.setMainImage(mainImage);
+
+    GridUtility::MosaicBestFit lastBestFit;
+    for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
+    {
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+
+        if (i > 0)
+        {
+            //Compare best fits
+            size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(), lastBestFit);
+            EXPECT_EQ(bestFitDiff, 0);
+        }
+        lastBestFit = generator.getBestFits();
+    }
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST(Generator, CIEDE2000_Detail_50)
+{
+    //Create photomosaic generator
+    CPUPhotomosaicGenerator generator;
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
+    generator.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(50);
+    generator.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Select a random main image from list
+    cv::Mat mainImage = cv::imread((imageFolder.path() + "/" +
+                                    images.at((rand() * images.size()) / RAND_MAX)).toStdString());
+    generator.setMainImage(mainImage);
+
+    GridUtility::MosaicBestFit lastBestFit;
+    for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
     {
         //Generate grid state
         const GridUtility::MosaicBestFit gridState =
@@ -119,7 +406,181 @@ TEST(Generator, CIE76_Repeated)
 
 //Generates (with CUDA) photomosaic best fits using identical settings multiple times
 //Expects all the best fits to be identical
-TEST(Generator, CUDA_CIE76_Repeated)
+TEST(Generator, CUDA_RGB_EUCLIDEAN_Detail_100)
+{
+    //Create photomosaic generators
+    CUDAPhotomosaicGenerator generator;
+    generator.setLibraryBatchSize(100);
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
+    generator.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(100);
+    generator.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Select a random main image from list
+    cv::Mat mainImage = cv::imread((imageFolder.path() + "/" +
+                                    images.at((rand() * images.size()) / RAND_MAX)).toStdString());
+    generator.setMainImage(mainImage);
+
+    GridUtility::MosaicBestFit lastBestFit;
+    for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
+    {
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+
+        if (i > 0)
+        {
+            //Compare best fits
+            size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(), lastBestFit);
+            EXPECT_EQ(bestFitDiff, 0);
+        }
+        lastBestFit = generator.getBestFits();
+    }
+}
+
+//Generates (with CUDA) photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST(Generator, CUDA_RGB_EUCLIDEAN_Detail_50)
+{
+    //Create photomosaic generators
+    CUDAPhotomosaicGenerator generator;
+    generator.setLibraryBatchSize(100);
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
+    generator.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(50);
+    generator.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Select a random main image from list
+    cv::Mat mainImage = cv::imread((imageFolder.path() + "/" +
+                                    images.at((rand() * images.size()) / RAND_MAX)).toStdString());
+    generator.setMainImage(mainImage);
+
+    GridUtility::MosaicBestFit lastBestFit;
+    for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
+    {
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+
+        if (i > 0)
+        {
+            //Compare best fits
+            size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(), lastBestFit);
+            EXPECT_EQ(bestFitDiff, 0);
+        }
+        lastBestFit = generator.getBestFits();
+    }
+}
+
+//Generates (with CUDA) photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST(Generator, CUDA_CIE76_Detail_100)
+{
+    //Create photomosaic generators
+    CUDAPhotomosaicGenerator generator;
+    generator.setLibraryBatchSize(100);
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
+    generator.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(100);
+    generator.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Select a random main image from list
+    cv::Mat mainImage = cv::imread((imageFolder.path() + "/" +
+                                    images.at((rand() * images.size()) / RAND_MAX)).toStdString());
+    generator.setMainImage(mainImage);
+
+    GridUtility::MosaicBestFit lastBestFit;
+    for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
+    {
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+
+        if (i > 0)
+        {
+            //Compare best fits
+            size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(), lastBestFit);
+            EXPECT_EQ(bestFitDiff, 0);
+        }
+        lastBestFit = generator.getBestFits();
+    }
+}
+
+//Generates (with CUDA) photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST(Generator, CUDA_CIE76_Detail_50)
 {
     //Create photomosaic generators
     CUDAPhotomosaicGenerator generator;
@@ -155,7 +616,123 @@ TEST(Generator, CUDA_CIE76_Repeated)
     generator.setMainImage(mainImage);
 
     GridUtility::MosaicBestFit lastBestFit;
-    for (size_t i = 0; i < 50; ++i)
+    for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
+    {
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+
+        if (i > 0)
+        {
+            //Compare best fits
+            size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(), lastBestFit);
+            EXPECT_EQ(bestFitDiff, 0);
+        }
+        lastBestFit = generator.getBestFits();
+    }
+}
+
+//Generates (with CUDA) photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST(Generator, CUDA_CIEDE2000_Detail_100)
+{
+    //Create photomosaic generators
+    CUDAPhotomosaicGenerator generator;
+    generator.setLibraryBatchSize(100);
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
+    generator.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(100);
+    generator.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Select a random main image from list
+    cv::Mat mainImage = cv::imread((imageFolder.path() + "/" +
+                                    images.at((rand() * images.size()) / RAND_MAX)).toStdString());
+    generator.setMainImage(mainImage);
+
+    GridUtility::MosaicBestFit lastBestFit;
+    for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
+    {
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+
+        if (i > 0)
+        {
+            //Compare best fits
+            size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(), lastBestFit);
+            EXPECT_EQ(bestFitDiff, 0);
+        }
+        lastBestFit = generator.getBestFits();
+    }
+}
+
+//Generates (with CUDA) photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST(Generator, CUDA_CIEDE2000_Detail_50)
+{
+    //Create photomosaic generators
+    CUDAPhotomosaicGenerator generator;
+    generator.setLibraryBatchSize(100);
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
+    generator.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(50);
+    generator.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Select a random main image from list
+    cv::Mat mainImage = cv::imread((imageFolder.path() + "/" +
+                                    images.at((rand() * images.size()) / RAND_MAX)).toStdString());
+    generator.setMainImage(mainImage);
+
+    GridUtility::MosaicBestFit lastBestFit;
+    for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
     {
         //Generate grid state
         const GridUtility::MosaicBestFit gridState =
@@ -178,7 +755,7 @@ TEST(Generator, CUDA_CIE76_Repeated)
 //Generates photomosaic best fits using identical settings with and without CUDA
 //Expects the best fits to be identical
 //Tests with multiple main images
-TEST(Generator, CIE76vsCUDA_CIE76)
+TEST(Generator, RGB_EUCLIDEAN_Detail_100_vs_CUDA)
 {
     //Create folder for saving photomosaics
     QDir resultFolder(QDir::currentPath() + "/testcases/generator");
@@ -188,7 +765,253 @@ TEST(Generator, CIE76vsCUDA_CIE76)
     //Create photomosaic generators
     CPUPhotomosaicGenerator generator;
     CUDAPhotomosaicGenerator generatorCUDA;
-    generatorCUDA.setLibraryBatchSize(100);
+    generatorCUDA.setLibraryBatchSize(1000);
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
+    generator.setMode(mode);
+    generatorCUDA.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(100);
+    generator.setCellGroup(cellGroup);
+    generatorCUDA.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+    generatorCUDA.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+    generatorCUDA.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Iterate over all images
+    for (auto it = images.cbegin();
+         it != images.cend() && it != images.cbegin() + TST_Generator::ITERATIONS; ++it)
+    {
+        //Load and set main image
+        cv::Mat mainImage = cv::imread((imageFolder.path() + "/" + *it).toStdString());
+        generator.setMainImage(mainImage);
+        generatorCUDA.setMainImage(mainImage);
+
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+        generatorCUDA.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+        ASSERT_TRUE(generatorCUDA.generateBestFits());
+
+        //Compare best fits
+        size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(),
+                                                         generatorCUDA.getBestFits());
+
+        EXPECT_EQ(bestFitDiff, 0) << it->toStdString();
+
+        //Best fits different, save results
+        if (bestFitDiff != 0)
+        {
+            //Build photomosaics
+            cv::Mat result = generator.buildPhotomosaic();
+            cv::Mat resultCUDA = generatorCUDA.buildPhotomosaic();
+
+            //Save photomosaics
+            cv::imwrite((resultFolder.path() + "/" + *it).toStdString(), result);
+            cv::imwrite((resultFolder.path() + "/CUDA-" + *it).toStdString(), resultCUDA);
+        }
+    }
+}
+
+//Generates photomosaic best fits using identical settings with and without CUDA
+//Expects the best fits to be identical
+//Tests with multiple main images
+TEST(Generator, RGB_EUCLIDEAN_Detail_50_vs_CUDA)
+{
+    //Create folder for saving photomosaics
+    QDir resultFolder(QDir::currentPath() + "/testcases/generator");
+    if (!resultFolder.exists())
+        resultFolder.mkpath(".");
+
+    //Create photomosaic generators
+    CPUPhotomosaicGenerator generator;
+    CUDAPhotomosaicGenerator generatorCUDA;
+    generatorCUDA.setLibraryBatchSize(1000);
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
+    generator.setMode(mode);
+    generatorCUDA.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(50);
+    generator.setCellGroup(cellGroup);
+    generatorCUDA.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+    generatorCUDA.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+    generatorCUDA.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Iterate over all images
+    for (auto it = images.cbegin();
+         it != images.cend() && it != images.cbegin() + TST_Generator::ITERATIONS; ++it)
+    {
+        //Load and set main image
+        cv::Mat mainImage = cv::imread((imageFolder.path() + "/" + *it).toStdString());
+        generator.setMainImage(mainImage);
+        generatorCUDA.setMainImage(mainImage);
+
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+        generatorCUDA.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+        ASSERT_TRUE(generatorCUDA.generateBestFits());
+
+        //Compare best fits
+        size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(),
+                                                         generatorCUDA.getBestFits());
+
+        EXPECT_EQ(bestFitDiff, 0) << it->toStdString();
+
+        //Best fits different, save results
+        if (bestFitDiff != 0)
+        {
+            //Build photomosaics
+            cv::Mat result = generator.buildPhotomosaic();
+            cv::Mat resultCUDA = generatorCUDA.buildPhotomosaic();
+
+            //Save photomosaics
+            cv::imwrite((resultFolder.path() + "/" + *it).toStdString(), result);
+            cv::imwrite((resultFolder.path() + "/CUDA-" + *it).toStdString(), resultCUDA);
+        }
+    }
+}
+
+//Generates photomosaic best fits using identical settings with and without CUDA
+//Expects the best fits to be identical
+//Tests with multiple main images
+TEST(Generator, CIE76_Detail_100_vs_CUDA)
+{
+    //Create folder for saving photomosaics
+    QDir resultFolder(QDir::currentPath() + "/testcases/generator");
+    if (!resultFolder.exists())
+        resultFolder.mkpath(".");
+
+    //Create photomosaic generators
+    CPUPhotomosaicGenerator generator;
+    CUDAPhotomosaicGenerator generatorCUDA;
+    generatorCUDA.setLibraryBatchSize(1000);
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
+    generator.setMode(mode);
+    generatorCUDA.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(100);
+    generator.setCellGroup(cellGroup);
+    generatorCUDA.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+    generatorCUDA.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+    generatorCUDA.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Iterate over all images
+    for (auto it = images.cbegin();
+         it != images.cend() && it != images.cbegin() + TST_Generator::ITERATIONS; ++it)
+    {
+        //Load and set main image
+        cv::Mat mainImage = cv::imread((imageFolder.path() + "/" + *it).toStdString());
+        generator.setMainImage(mainImage);
+        generatorCUDA.setMainImage(mainImage);
+
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+        generatorCUDA.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+        ASSERT_TRUE(generatorCUDA.generateBestFits());
+
+        //Compare best fits
+        size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(),
+                                                         generatorCUDA.getBestFits());
+
+        EXPECT_EQ(bestFitDiff, 0) << it->toStdString();
+
+        //Best fits different, save results
+        if (bestFitDiff != 0)
+        {
+            //Build photomosaics
+            cv::Mat result = generator.buildPhotomosaic();
+            cv::Mat resultCUDA = generatorCUDA.buildPhotomosaic();
+
+            //Save photomosaics
+            cv::imwrite((resultFolder.path() + "/" + *it).toStdString(), result);
+            cv::imwrite((resultFolder.path() + "/CUDA-" + *it).toStdString(), resultCUDA);
+        }
+    }
+}
+
+//Generates photomosaic best fits using identical settings with and without CUDA
+//Expects the best fits to be identical
+//Tests with multiple main images
+TEST(Generator, CIE76_Detail_50_vs_CUDA)
+{
+    //Create folder for saving photomosaics
+    QDir resultFolder(QDir::currentPath() + "/testcases/generator");
+    if (!resultFolder.exists())
+        resultFolder.mkpath(".");
+
+    //Create photomosaic generators
+    CPUPhotomosaicGenerator generator;
+    CUDAPhotomosaicGenerator generatorCUDA;
+    generatorCUDA.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
@@ -219,10 +1042,11 @@ TEST(Generator, CIE76vsCUDA_CIE76)
     QStringList images = imageFolder.entryList(QDir::Filter::Files);
 
     //Iterate over all images
-    for (const auto &image: images)
+    for (auto it = images.cbegin();
+         it != images.cend() && it != images.cbegin() + TST_Generator::ITERATIONS; ++it)
     {
         //Load and set main image
-        cv::Mat mainImage = cv::imread((imageFolder.path() + "/" + image).toStdString());
+        cv::Mat mainImage = cv::imread((imageFolder.path() + "/" + *it).toStdString());
         generator.setMainImage(mainImage);
         generatorCUDA.setMainImage(mainImage);
 
@@ -240,7 +1064,7 @@ TEST(Generator, CIE76vsCUDA_CIE76)
         size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(),
                                                          generatorCUDA.getBestFits());
 
-        EXPECT_EQ(bestFitDiff, 0) << image.toStdString();
+        EXPECT_EQ(bestFitDiff, 0) << it->toStdString();
 
         //Best fits different, save results
         if (bestFitDiff != 0)
@@ -250,8 +1074,172 @@ TEST(Generator, CIE76vsCUDA_CIE76)
             cv::Mat resultCUDA = generatorCUDA.buildPhotomosaic();
 
             //Save photomosaics
-            cv::imwrite((resultFolder.path() + "/" + image).toStdString(), result);
-            cv::imwrite((resultFolder.path() + "/CUDA-" + image).toStdString(), resultCUDA);
+            cv::imwrite((resultFolder.path() + "/" + *it).toStdString(), result);
+            cv::imwrite((resultFolder.path() + "/CUDA-" + *it).toStdString(), resultCUDA);
+        }
+    }
+}
+
+//Generates photomosaic best fits using identical settings with and without CUDA
+//Expects the best fits to be identical
+//Tests with multiple main images
+TEST(Generator, CIEDE2000_Detail_100_vs_CUDA)
+{
+    //Create folder for saving photomosaics
+    QDir resultFolder(QDir::currentPath() + "/testcases/generator");
+    if (!resultFolder.exists())
+        resultFolder.mkpath(".");
+
+    //Create photomosaic generators
+    CPUPhotomosaicGenerator generator;
+    CUDAPhotomosaicGenerator generatorCUDA;
+    generatorCUDA.setLibraryBatchSize(1000);
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
+    generator.setMode(mode);
+    generatorCUDA.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(100);
+    generator.setCellGroup(cellGroup);
+    generatorCUDA.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+    generatorCUDA.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+    generatorCUDA.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Iterate over all images
+    for (auto it = images.cbegin();
+         it != images.cend() && it != images.cbegin() + TST_Generator::ITERATIONS; ++it)
+    {
+        //Load and set main image
+        cv::Mat mainImage = cv::imread((imageFolder.path() + "/" + *it).toStdString());
+        generator.setMainImage(mainImage);
+        generatorCUDA.setMainImage(mainImage);
+
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+        generatorCUDA.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+        ASSERT_TRUE(generatorCUDA.generateBestFits());
+
+        //Compare best fits
+        size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(),
+                                                         generatorCUDA.getBestFits());
+
+        EXPECT_EQ(bestFitDiff, 0) << it->toStdString();
+
+        //Best fits different, save results
+        if (bestFitDiff != 0)
+        {
+            //Build photomosaics
+            cv::Mat result = generator.buildPhotomosaic();
+            cv::Mat resultCUDA = generatorCUDA.buildPhotomosaic();
+
+            //Save photomosaics
+            cv::imwrite((resultFolder.path() + "/" + *it).toStdString(), result);
+            cv::imwrite((resultFolder.path() + "/CUDA-" + *it).toStdString(), resultCUDA);
+        }
+    }
+}
+
+//Generates photomosaic best fits using identical settings with and without CUDA
+//Expects the best fits to be identical
+//Tests with multiple main images
+TEST(Generator, CIEDE2000_Detail_50_vs_CUDA)
+{
+    //Create folder for saving photomosaics
+    QDir resultFolder(QDir::currentPath() + "/testcases/generator");
+    if (!resultFolder.exists())
+        resultFolder.mkpath(".");
+
+    //Create photomosaic generators
+    CPUPhotomosaicGenerator generator;
+    CUDAPhotomosaicGenerator generatorCUDA;
+    generatorCUDA.setLibraryBatchSize(1000);
+
+    //Set mode
+    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
+    generator.setMode(mode);
+    generatorCUDA.setMode(mode);
+
+    //Set cell group
+    const size_t cellSize = 128;
+    CellGroup cellGroup;
+    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setSizeSteps(0);
+    cellGroup.setDetail(50);
+    generator.setCellGroup(cellGroup);
+    generatorCUDA.setCellGroup(cellGroup);
+
+    //Set repeat range and addition
+    generator.setRepeat(0, 0);
+    generatorCUDA.setRepeat(0, 0);
+
+    //Load and set image library
+    ImageLibrary lib(128);
+    lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
+    generator.setLibrary(lib.getImages());
+    generatorCUDA.setLibrary(lib.getImages());
+
+    //Folder containing multiple images
+    QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
+    QStringList images = imageFolder.entryList(QDir::Filter::Files);
+
+    //Iterate over all images
+    for (auto it = images.cbegin();
+         it != images.cend() && it != images.cbegin() + TST_Generator::ITERATIONS; ++it)
+    {
+        //Load and set main image
+        cv::Mat mainImage = cv::imread((imageFolder.path() + "/" + *it).toStdString());
+        generator.setMainImage(mainImage);
+        generatorCUDA.setMainImage(mainImage);
+
+        //Generate grid state
+        const GridUtility::MosaicBestFit gridState =
+            GridGenerator::getGridState(cellGroup, mainImage, mainImage.rows, mainImage.cols);
+        generator.setGridState(gridState);
+        generatorCUDA.setGridState(gridState);
+
+        //Generate best fits
+        ASSERT_TRUE(generator.generateBestFits());
+        ASSERT_TRUE(generatorCUDA.generateBestFits());
+
+        //Compare best fits
+        size_t bestFitDiff = TST_Generator::bestFitsDiff(generator.getBestFits(),
+                                                         generatorCUDA.getBestFits());
+
+        EXPECT_EQ(bestFitDiff, 0) << it->toStdString();
+
+        //Best fits different, save results
+        if (bestFitDiff != 0)
+        {
+            //Build photomosaics
+            cv::Mat result = generator.buildPhotomosaic();
+            cv::Mat resultCUDA = generatorCUDA.buildPhotomosaic();
+
+            //Save photomosaics
+            cv::imwrite((resultFolder.path() + "/" + *it).toStdString(), result);
+            cv::imwrite((resultFolder.path() + "/CUDA-" + *it).toStdString(), resultCUDA);
         }
     }
 }

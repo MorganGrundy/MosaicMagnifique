@@ -28,7 +28,7 @@ opencv:
 	unzip opencv-4.3.0.zip
 	# build opencv source
 	mkdir opencv-4.3.0/build
-	cd opencv-4.3.0/build && cmake -DBUILD_LIST=core,imgcodecs,imgproc,highgui -DOPENCV_GENERATE_PKGCONFIG=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. && make -j7 && sudo make install
+	cd opencv-4.3.0/build && cmake -DBUILD_LIST=calib3d,core,features2d,flann,highgui,imgcodecs,imgproc,objdetect -DOPENCV_GENERATE_PKGCONFIG=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. && make -j7 && sudo make install
 	# ensures opencv shared libraries link
 	sudo ldconfig
 

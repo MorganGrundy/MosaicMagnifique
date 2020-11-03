@@ -63,7 +63,7 @@ IF NOT EXIST "%opencv%\opencv-%opencvversion%" (
 cd /d "%opencv%\opencv-%opencvversion%"
 mkdir build
 cd build
-cmake -DBUILD_LIST=core,imgcodecs,imgproc,highgui -DCMAKE_BUILD_TYPE=Release ..
+cmake -DBUILD_LIST=calib3d,core,features2d,flann,highgui,imgcodecs,imgproc,objdetect -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --config release
 cmake --build . --target install --config release
 exit /b

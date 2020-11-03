@@ -12,7 +12,7 @@ You may need to run the included vc_redist executable first.
 | - | - | - |
 | [GCC](https://gcc.gnu.org/)/[MinGW](http://www.mingw.org/) <br> or <br> [MSVC](https://visualstudio.microsoft.com/visual-cpp-build-tools/) | >= 5.3.1 <br> <br> >= 2017 | |
 | [Qt](https://www.qt.io/) | >= 5.9.5 | core, gui, svg, widgets |
-| [OpenCV](https://opencv.org/) | >= 4.1.1 | core, highgui, imgcodecs, imgproc |
+| [OpenCV](https://opencv.org/) | >= 4.1.1 | calib3d, core, features2d, flann, highgui, imgcodecs, imgproc, objdetect |
 
 ## Optional dependencies
 If you have a [CUDA-capable GPU](https://developer.nvidia.com/cuda-gpus), then you can use the following to generate Photomosaics faster.  
@@ -21,7 +21,7 @@ Currently only Windows supports CUDA.
 | Name | Version | Modules |
 | - | - | - |
 | [CUDA](https://developer.nvidia.com/cuda-zone) | >= 10.1 | |
-| [OpenCV Contrib](https://github.com/opencv/opencv_contrib) | >= 4.1.1 | cudaarithm, cudawarping, cudaimgproc |
+| [OpenCV Contrib](https://github.com/opencv/opencv_contrib) | >= 4.1.1 | cudaarithm, cudafilters, cudaimgproc, cudawarping |
 
 CUDA usage controlled by "CONFIG += CUDA" in common.pri file.  
 OpenCV Contrib usage controlled by "CONFIG += OPENCV_W_CUDA" in common.pri file.  
@@ -48,7 +48,7 @@ Use installer or build from source: https://doc.qt.io/qt-5/gettingstarted.html
 #### OpenCV
 Build from source: https://docs.opencv.org/master/d7/d9f/tutorial_linux_install.html  
 In configuring step give cmake: -DOPENCV_GENERATE_PKGCONFIG=ON -DCMAKE_BUILD_TYPE=Release  
-And for minimal build give cmake module list: -DBUILD_LIST=core,highgui,imgcodecs,imgproc
+And for minimal build give cmake module list: -DBUILD_LIST=calib3d,core,features2d,flann,highgui,imgcodecs,imgproc,objdetect
 
 #### Mosaic Magnifique
 Download source from: https://github.com/MorganGrundy/MosaicMagnifique/releases  
@@ -83,10 +83,10 @@ Download CUDA installer from: https://developer.nvidia.com/cuda-downloads
 #### OpenCV
 Build from source: https://docs.opencv.org/master/d3/d52/tutorial_windows_install.html  
 In configuring step, give cmake: -DCMAKE_BUILD_TYPE=Release  
-And for minimal build give cmake module list: -DBUILD_LIST=core,highgui,imgcodecs,imgproc  
+And for minimal build give cmake module list: -DBUILD_LIST=calib3d,core,features2d,flann,highgui,imgcodecs,imgproc,objdetect 
   
 If you are using CUDA you can give cmake: -DWITH_CUDA:BOOL=ON -DOPENCV_EXTRA_MODULES_PATH="C:/Path to/OpenCV Contrib/modules"  
-And add the relevant contrib modules to module list: -DBUILDLIST=core,highgui,imgcodecs,imgproc,cudaarithm,cudawarping,cudaimgproc,cudafilters
+And add the relevant contrib modules to module list: -DBUILDLIST=calib3d,core,cudaarithm,cudafilters,cudaimgproc,cudawarping,features2d,flann,highgui,imgcodecs,imgproc,objdetect
 
 #### Mosaic Magnifique
 Download source from: https://github.com/MorganGrundy/MosaicMagnifique/releases  

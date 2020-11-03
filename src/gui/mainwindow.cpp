@@ -46,11 +46,7 @@
 #endif
 
 MainWindow::MainWindow(QWidget *t_parent)
-    : QMainWindow{t_parent},
-#ifdef CUDA
-    libraryBatchSize{50},
-#endif
-    ui{new Ui::MainWindow}
+    : QMainWindow{t_parent}, ui{new Ui::MainWindow}
 {
     ui->setupUi(this);
 
@@ -196,30 +192,6 @@ void MainWindow::CUDAinit()
 
         //Initialise primary CUDA device
         CUDADeviceChanged(0);
-
-        //Create menu action for setting library batch size
-        QAction *actionCUDALibraryBatchSize = new QAction("CUDA library batch size",
-                                                          ui->menuAdvanced);
-        actionCUDALibraryBatchSize->setStatusTip(
-            "Set library batch size for CUDA difference kernel");
-        actionCUDALibraryBatchSize->setWhatsThis(
-            "<html><head/><body><p>"
-            "Library batch size controls how many library images are compared per difference kernel"
-            " call. CUDA generation time increases as library batch size decreases.</p><p>"
-            "If the app crashes during CUDA generation then the difference kernel might be taking"
-            " too long and triggering the watchdog timer, try lowering library batch size.</p><p>"
-            "If you are not using a primary GPU then you shouldn't need to worry about the watchdog"
-            " timer.</p></body></html>");
-        ui->menuAdvanced->addAction(actionCUDALibraryBatchSize);
-
-        //CUDA library batch size action opens input dialog for setting library batch size
-        connect(actionCUDALibraryBatchSize, &QAction::triggered,
-                [&]([[maybe_unused]] const bool triggered)
-                {
-                    libraryBatchSize = QInputDialog::getInt(this, "Set library batch size for CUDA",
-                                                            "Library batch size:",
-                                                            libraryBatchSize, 1);
-                });
     }
 }
 #endif
@@ -543,9 +515,7 @@ void MainWindow::generatePhotomosaic()
 #ifdef CUDA
     if (ui->checkCUDA->isChecked())
     {
-        auto CUDAgenerator = std::make_shared<CUDAPhotomosaicGenerator>();
-        CUDAgenerator->setLibraryBatchSize(static_cast<size_t>(libraryBatchSize));
-        generator = CUDAgenerator;
+        generator = std::make_shared<CUDAPhotomosaicGenerator>();
     }
     else
 #endif

@@ -250,12 +250,6 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     return true;
 }
 
-//Set library batch size
-void CUDAPhotomosaicGenerator::setLibraryBatchSize(const size_t t_libraryBatchSize)
-{
-    m_libraryBatchSize = t_libraryBatchSize;
-}
-
 //Copies mat to device pointer
 template <typename T>
 void CUDAPhotomosaicGenerator::copyMatToDevice(const cv::Mat &t_mat, T *t_device) const

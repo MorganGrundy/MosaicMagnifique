@@ -32,12 +32,7 @@ public:
     //Returns true if successful
     bool generateBestFits() override;
 
-    //Set library batch size
-    void setLibraryBatchSize(const size_t t_libraryBatchSize);
-
 private:
-    size_t m_libraryBatchSize;
-
     //Copies mat to device pointer
     template <typename T>
     void copyMatToDevice(const cv::Mat &t_mat, T *t_device) const;

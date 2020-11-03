@@ -430,7 +430,6 @@ TEST(Generator, CUDA_RGB_EUCLIDEAN_Detail_100)
 {
     //Create photomosaic generators
     CUDAPhotomosaicGenerator generator;
-    generator.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
@@ -489,7 +488,6 @@ TEST(Generator, CUDA_RGB_EUCLIDEAN_Detail_50)
 {
     //Create photomosaic generators
     CUDAPhotomosaicGenerator generator;
-    generator.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
@@ -548,7 +546,6 @@ TEST(Generator, CUDA_CIE76_Detail_100)
 {
     //Create photomosaic generators
     CUDAPhotomosaicGenerator generator;
-    generator.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
@@ -607,7 +604,6 @@ TEST(Generator, CUDA_CIE76_Detail_50)
 {
     //Create photomosaic generators
     CUDAPhotomosaicGenerator generator;
-    generator.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
@@ -666,7 +662,6 @@ TEST(Generator, CUDA_CIEDE2000_Detail_100)
 {
     //Create photomosaic generators
     CUDAPhotomosaicGenerator generator;
-    generator.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
@@ -725,7 +720,6 @@ TEST(Generator, CUDA_CIEDE2000_Detail_50)
 {
     //Create photomosaic generators
     CUDAPhotomosaicGenerator generator;
-    generator.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
@@ -1150,7 +1144,6 @@ TEST(Generator, CUDA_RGB_EUCLIDEAN_Repeats)
 {
     //Create photomosaic generators
     CUDAPhotomosaicGenerator generator;
-    generator.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
@@ -1209,7 +1202,6 @@ TEST(Generator, CUDA_CIE76_Repeats)
 {
     //Create photomosaic generators
     CUDAPhotomosaicGenerator generator;
-    generator.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
@@ -1268,7 +1260,6 @@ TEST(Generator, CUDA_CIEDE2000_Repeats)
 {
     //Create photomosaic generators
     CUDAPhotomosaicGenerator generator;
-    generator.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
@@ -1332,7 +1323,6 @@ TEST(Generator, CUDA_RGB_EUCLIDEAN_Size_Steps)
 {
     //Create photomosaic generator
     CUDAPhotomosaicGenerator generator;
-    generator.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
@@ -1391,7 +1381,6 @@ TEST(Generator, CUDA_CIE76_Size_Steps)
 {
     //Create photomosaic generator
     CUDAPhotomosaicGenerator generator;
-    generator.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
@@ -1450,7 +1439,6 @@ TEST(Generator, CUDA_CIEDE2000_Size_Steps)
 {
     //Create photomosaic generator
     CUDAPhotomosaicGenerator generator;
-    generator.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
@@ -1521,7 +1509,6 @@ TEST(Generator, RGB_EUCLIDEAN_Detail_100_vs_CUDA)
     //Create photomosaic generators
     CPUPhotomosaicGenerator generator;
     CUDAPhotomosaicGenerator generatorCUDA;
-    generatorCUDA.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
@@ -1604,7 +1591,6 @@ TEST(Generator, RGB_EUCLIDEAN_Detail_50_vs_CUDA)
     //Create photomosaic generators
     CPUPhotomosaicGenerator generator;
     CUDAPhotomosaicGenerator generatorCUDA;
-    generatorCUDA.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
@@ -1687,7 +1673,6 @@ TEST(Generator, CIE76_Detail_100_vs_CUDA)
     //Create photomosaic generators
     CPUPhotomosaicGenerator generator;
     CUDAPhotomosaicGenerator generatorCUDA;
-    generatorCUDA.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
@@ -1770,7 +1755,6 @@ TEST(Generator, CIE76_Detail_50_vs_CUDA)
     //Create photomosaic generators
     CPUPhotomosaicGenerator generator;
     CUDAPhotomosaicGenerator generatorCUDA;
-    generatorCUDA.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
@@ -1853,7 +1837,6 @@ TEST(Generator, CIEDE2000_Detail_100_vs_CUDA)
     //Create photomosaic generators
     CPUPhotomosaicGenerator generator;
     CUDAPhotomosaicGenerator generatorCUDA;
-    generatorCUDA.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
@@ -1936,7 +1919,6 @@ TEST(Generator, CIEDE2000_Detail_50_vs_CUDA)
     //Create photomosaic generators
     CPUPhotomosaicGenerator generator;
     CUDAPhotomosaicGenerator generatorCUDA;
-    generatorCUDA.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
@@ -2024,7 +2006,6 @@ TEST(Generator, RGB_EUCLIDEAN_Repeats_vs_CUDA)
     //Create photomosaic generators
     CPUPhotomosaicGenerator generator;
     CUDAPhotomosaicGenerator generatorCUDA;
-    generatorCUDA.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
@@ -2107,7 +2088,6 @@ TEST(Generator, CIE76_Repeats_vs_CUDA)
     //Create photomosaic generators
     CPUPhotomosaicGenerator generator;
     CUDAPhotomosaicGenerator generatorCUDA;
-    generatorCUDA.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
@@ -2190,7 +2170,6 @@ TEST(Generator, CIEDE2000_Repeats_vs_CUDA)
     //Create photomosaic generators
     CPUPhotomosaicGenerator generator;
     CUDAPhotomosaicGenerator generatorCUDA;
-    generatorCUDA.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
@@ -2278,7 +2257,6 @@ TEST(Generator, RGB_EUCLIDEAN_Size_Steps_vs_CUDA)
     //Create photomosaic generators
     CPUPhotomosaicGenerator generator;
     CUDAPhotomosaicGenerator generatorCUDA;
-    generatorCUDA.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
@@ -2361,7 +2339,6 @@ TEST(Generator, CIE76_Size_Steps_vs_CUDA)
     //Create photomosaic generators
     CPUPhotomosaicGenerator generator;
     CUDAPhotomosaicGenerator generatorCUDA;
-    generatorCUDA.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
@@ -2444,7 +2421,6 @@ TEST(Generator, CIEDE2000_Size_Steps_vs_CUDA)
     //Create photomosaic generators
     CPUPhotomosaicGenerator generator;
     CUDAPhotomosaicGenerator generatorCUDA;
-    generatorCUDA.setLibraryBatchSize(1000);
 
     //Set mode
     PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;

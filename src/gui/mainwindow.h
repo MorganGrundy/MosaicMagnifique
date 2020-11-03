@@ -90,9 +90,6 @@ private:
 #ifdef CUDA
     //Initialise CUDA and relevant UI
     void CUDAinit();
-
-    //Library batch size
-    int libraryBatchSize;
 #endif
 
     //Clamps detail level so that cell size never reaches 0px

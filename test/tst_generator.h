@@ -3,13 +3,16 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock-matchers.h>
-#include <cuda_runtime.h>
 #include <QDir>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "cpuphotomosaicgenerator.h"
+#ifdef CUDA
+#include <cuda_runtime.h>
 #include "cudaphotomosaicgenerator.h"
+#endif
+
+#include "cpuphotomosaicgenerator.h"
 #include "testutility.h"
 #include "gridgenerator.h"
 #include "imagelibrary.h"
@@ -416,6 +419,7 @@ TEST(Generator, CIEDE2000_Detail_50)
 }
 
 
+#ifdef CUDA
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //***************************************** CUDA DETAIL ******************************************//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -773,6 +777,8 @@ TEST(Generator, CUDA_CIEDE2000_Detail_50)
         lastBestFit = generator.getBestFits();
     }
 }
+
+#endif
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1133,6 +1139,7 @@ TEST(Generator, CIEDE2000_Size_Steps)
 }
 
 
+#ifdef CUDA
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //***************************************** CUDA REPEATS *****************************************//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2506,5 +2513,7 @@ TEST(Generator, CIEDE2000_Size_Steps_vs_CUDA)
         }
     }
 }
+
+#endif
 
 #endif // TST_GENERATOR_H

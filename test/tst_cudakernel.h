@@ -1,6 +1,8 @@
 #ifndef TST_CUDAKERNEL_H
 #define TST_CUDAKERNEL_H
 
+#ifdef CUDA
+
 #include <gtest/gtest.h>
 #include <gmock/gmock-matchers.h>
 #include <algorithm>
@@ -184,5 +186,7 @@ TEST(CUDAKernel, AddReduction)
     //Compare results
     EXPECT_EQ(result, CUDAResult);
 }
+
+#endif
 
 #endif // TST_CUDAKERNEL_H

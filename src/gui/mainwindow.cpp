@@ -431,7 +431,7 @@ void MainWindow::cellSizeChanged(int t_value)
     }
     else
     {
-        ui->widgetGridPreview->getCellGroup().setCellShape(CellShape(CellShape::DEFAULT_CELL_SIZE));
+        ui->widgetGridPreview->getCellGroup().setCellShape(CellShape(t_value));
     }
 
     ui->widgetGridPreview->getCellGroup().setSizeSteps(ui->spinMinCellSize->getHalveSteps());

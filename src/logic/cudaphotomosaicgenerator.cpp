@@ -182,12 +182,14 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                                                          blockSize);
                     else
                         throw std::invalid_argument(Q_FUNC_INFO " Unsupported mode");
+                    gpuErrchk(cudaPeekAtLastError());
 
                     //Reduce variants
                     for (size_t libI = 0; libI < resizedLib.size(); ++libI)
                     {
                         reduceAddKernelWrapper(blockSize, cellSize,
                                                d_variants + libI * cellSize, d_reductionMem);
+                        gpuErrchk(cudaPeekAtLastError());
                         //Shift variant so that all variants are continuous
                         gpuErrchk(cudaMemcpy(d_variants + libI, d_variants + libI * cellSize,
                                              sizeof(double), cudaMemcpyDeviceToDevice));
@@ -201,7 +203,6 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                                                   GridUtility::PAD_GRID,
                                                   m_repeatRange, m_repeatAddition);
                     gpuErrchk(cudaPeekAtLastError());
-                    gpuErrchk(cudaDeviceSynchronize());
 
                     //Find lowest variant
                     const size_t cellPosition = (y + GridUtility::PAD_GRID) * gridWidth
@@ -209,7 +210,6 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                     findLowestKernelWrapper(d_lowestVariant, d_bestFit + cellPosition, d_variants,
                                             resizedLib.size());
                     gpuErrchk(cudaPeekAtLastError());
-                    gpuErrchk(cudaDeviceSynchronize());
 
                     //Copy best fit to host
                     size_t bestFit = 0;

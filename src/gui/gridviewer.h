@@ -39,9 +39,6 @@ public:
     explicit GridViewer(QWidget *parent = nullptr);
     ~GridViewer();
 
-    //Changes state of edge detection in grid preview
-    void setEdgeDetect(bool t_state);
-
     //Gets grid state of current options and creates grid
     void updateGrid();
 
@@ -83,16 +80,12 @@ protected:
     QGraphicsScene *scene;
 
 private:
-    QGridLayout *layout;
-    QCheckBox *checkEdgeDetect;
-    QSpacerItem *hSpacer, *vSpacer;
-
     QGraphicsPixmapItem *sceneBackground;
     QGraphicsPixmapItem *sceneGrid;
 
     QPixmap background;
 
-    QPixmap grid, edgeGrid;
+    QPixmap grid;
 };
 
 #endif // GRIDVIEWER_H

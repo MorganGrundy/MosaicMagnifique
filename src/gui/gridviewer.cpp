@@ -28,25 +28,6 @@
 GridViewer::GridViewer(QWidget *parent)
     : CustomGraphicsView(parent), m_cells{}, scene{nullptr}
 {
-    layout = new QGridLayout(this);
-
-    checkEdgeDetect = new QCheckBox("Edge Detect:", this);
-    checkEdgeDetect->setLayoutDirection(Qt::LayoutDirection::RightToLeft);
-    checkEdgeDetect->setStyleSheet("QWidget {"
-                                   "background-color: rgb(60, 60, 60);"
-                                   "color: rgb(255, 255, 255);"
-                                   "border-color: rgb(0, 0, 0);"
-                                   "}");
-    checkEdgeDetect->setCheckState(Qt::Checked);
-    connect(checkEdgeDetect, &QCheckBox::stateChanged, this, &GridViewer::edgeDetectChanged);
-    layout->addWidget(checkEdgeDetect, 0, 0);
-
-    hSpacer = new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum);
-    layout->addItem(hSpacer, 0, 1);
-
-    vSpacer = new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    layout->addItem(vSpacer, 1, 0);
-
     //Create new scene
     scene = new QGraphicsScene(this);
     scene->setItemIndexMethod(QGraphicsScene::NoIndex);
@@ -65,12 +46,6 @@ GridViewer::~GridViewer()
 {
     if (scene != nullptr)
         delete scene;
-}
-
-//Changes state of edge detection in grid preview
-void GridViewer::setEdgeDetect(bool t_state)
-{
-    checkEdgeDetect->setChecked(t_state);
 }
 
 //Gets grid state of current options and creates grid
@@ -105,21 +80,7 @@ void GridViewer::updateView(bool t_updateTransform)
     }
 
     //Set grid image
-    if (checkEdgeDetect->isChecked())
-    {
-        if (!edgeGrid.isNull())
-        {
-            sceneGrid->setPixmap(edgeGrid);
-
-            //Update scene rect
-            if (newSceneRect.width() == 0)
-            {
-                newSceneRect.setWidth(edgeGrid.width());
-                newSceneRect.setHeight(edgeGrid.height());
-            }
-        }
-    }
-    else if (!grid.isNull())
+    if (!grid.isNull())
     {
         sceneGrid->setPixmap(grid);
 
@@ -281,6 +242,5 @@ void GridViewer::createGrid(const int gridHeight, const int gridWidth)
     //Make black pixels transparent
     ImageUtility::matMakeTransparent(newGrid.at(0), newGrid.at(0), 0);
 
-    grid = ImageUtility::matToQPixmap(newGrid.at(0), QImage::Format_RGBA8888);
-    edgeGrid = ImageUtility::matToQPixmap(newEdgeGrid.at(0), QImage::Format_RGBA8888);
+    grid = ImageUtility::matToQPixmap(newEdgeGrid.at(0), QImage::Format_RGBA8888);
 }

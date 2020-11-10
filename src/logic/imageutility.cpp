@@ -174,9 +174,32 @@ void ImageUtility::matMakeTransparent(const cv::Mat &t_src, cv::Mat &t_dst, cons
 //Replace dst with edge detected version of src
 void ImageUtility::edgeDetect(const cv::Mat &t_src, cv::Mat &t_dst)
 {
-    float kernelData[9] = {-1, -1, -1, -1, 8, -1, -1, -1, -1};
-    const cv::Mat kernel(3, 3, CV_32FC1, kernelData);
-    cv::filter2D(t_src, t_dst, -1, kernel, cv::Point(-1, -1), 0, cv::BORDER_CONSTANT);
+    if (t_src.channels() != 1)
+        throw std::invalid_argument(Q_FUNC_INFO " only supports single channel images");
+
+    cv::Mat tmp(t_src.rows, t_src.cols, t_src.type());
+    //Calculate width of edge as percentage of image size
+    const size_t edgeWidth = std::ceil(0.03 * std::min(t_src.rows, t_src.cols)) - 1;
+
+    //Edge detect
+    float edgeKernelData[9] = {-1, -1, -1,
+                               -1, 8, -1,
+                               -1, -1, -1};
+    const cv::Mat edgeKernel(3, 3, CV_32FC1, edgeKernelData);
+    cv::filter2D(t_src, tmp, -1, edgeKernel, cv::Point(-1, -1), 0, cv::BORDER_CONSTANT);
+
+    //Dilate edge
+    if (edgeWidth > 0)
+    {
+        const cv::Mat dilateKernel =
+            cv::getStructuringElement(cv::MorphShapes::MORPH_RECT,
+                                      cv::Size(edgeWidth * 2 + 1, edgeWidth * 2 + 1));
+        cv::dilate(tmp, tmp, dilateKernel);
+    }
+
+    //Remove parts of edge outside active area
+    cv::bitwise_and(tmp, t_src, tmp);
+    t_dst = tmp.clone();
 }
 
 //Adds an alpha channel to the given images

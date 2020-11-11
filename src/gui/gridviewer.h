@@ -61,8 +61,8 @@ public:
     GridUtility::MosaicBestFit getGridState() const;
 
 public slots:
-    //Changes if grid preview shows edge detected or normal cells
-    void edgeDetectChanged(int t_state);
+    //Switches between a white and black grid
+    void gridColorToggle(int t_state);
 
 protected:
     //Updates display of grid
@@ -80,12 +80,16 @@ protected:
     QGraphicsScene *scene;
 
 private:
+    QGridLayout *layout;
+    QCheckBox *checkGridColor;
+    QSpacerItem *hSpacer, *vSpacer;
+
     QGraphicsPixmapItem *sceneBackground;
     QGraphicsPixmapItem *sceneGrid;
 
     QPixmap background;
 
-    QPixmap grid;
+    QPixmap whiteGrid, blackGrid;
 };
 
 #endif // GRIDVIEWER_H

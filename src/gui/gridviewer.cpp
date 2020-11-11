@@ -28,6 +28,25 @@
 GridViewer::GridViewer(QWidget *parent)
     : CustomGraphicsView(parent), m_cells{}, scene{nullptr}
 {
+    layout = new QGridLayout(this);
+
+    checkGridColor = new QCheckBox("Black grid:", this);
+    checkGridColor->setLayoutDirection(Qt::LayoutDirection::RightToLeft);
+    checkGridColor->setStyleSheet("QWidget {"
+                                   "background-color: rgb(60, 60, 60);"
+                                   "color: rgb(255, 255, 255);"
+                                   "border-color: rgb(0, 0, 0);"
+                                   "}");
+    checkGridColor->setCheckState(Qt::Unchecked);
+    connect(checkGridColor, &QCheckBox::stateChanged, this, &GridViewer::gridColorToggle);
+    layout->addWidget(checkGridColor, 0, 0);
+
+    hSpacer = new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    layout->addItem(hSpacer, 0, 1);
+
+    vSpacer = new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    layout->addItem(vSpacer, 1, 0);
+
     //Create new scene
     scene = new QGraphicsScene(this);
     scene->setItemIndexMethod(QGraphicsScene::NoIndex);
@@ -80,15 +99,29 @@ void GridViewer::updateView(bool t_updateTransform)
     }
 
     //Set grid image
-    if (!grid.isNull())
+    if (checkGridColor->isChecked())
     {
-        sceneGrid->setPixmap(grid);
+        if (!blackGrid.isNull())
+        {
+            sceneGrid->setPixmap(blackGrid);
+
+            //Update scene rect
+            if (newSceneRect.width() == 0)
+            {
+                newSceneRect.setWidth(blackGrid.width());
+                newSceneRect.setHeight(blackGrid.height());
+            }
+        }
+    }
+    else if (!whiteGrid.isNull())
+    {
+        sceneGrid->setPixmap(whiteGrid);
 
         //Update scene rect
         if (newSceneRect.width() == 0)
         {
-            newSceneRect.setWidth(grid.width());
-            newSceneRect.setHeight(grid.height());
+            newSceneRect.setWidth(whiteGrid.width());
+            newSceneRect.setHeight(whiteGrid.height());
         }
     }
 
@@ -150,8 +183,8 @@ GridUtility::MosaicBestFit GridViewer::getGridState() const
     return gridState;
 }
 
-//Changes if grid preview shows edge detected or normal cells
-void GridViewer::edgeDetectChanged([[maybe_unused]] int t_state)
+//Switches between a white and black grid
+void GridViewer::gridColorToggle([[maybe_unused]] int t_state)
 {
     updateView();
 }
@@ -167,14 +200,14 @@ void GridViewer::resizeEvent([[maybe_unused]] QResizeEvent *event)
 //Creates grid from grid state and cells
 void GridViewer::createGrid(const int gridHeight, const int gridWidth)
 {
-    std::vector<cv::Mat> newGrid, newEdgeGrid;
+    std::vector<cv::Mat> gridMaskParts, gridParts;
 
     //For all size steps in results
     for (size_t step = 0; step < gridState.size(); ++step)
     {
         //Create new grids
-        newGrid.push_back(cv::Mat(gridHeight, gridWidth, CV_8UC1, cv::Scalar(0)));
-        newEdgeGrid.push_back(cv::Mat(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0)));
+        gridMaskParts.push_back(cv::Mat(gridHeight, gridWidth, CV_8UC1, cv::Scalar(0)));
+        gridParts.push_back(cv::Mat(gridHeight, gridWidth, CV_8UC4, cv::Scalar(0, 0, 0, 0)));
 
         //For all cells
         for (int y = -GridUtility::PAD_GRID;
@@ -202,8 +235,8 @@ void GridViewer::createGrid(const int gridHeight, const int gridWidth)
 
                     const cv::Rect roi = cv::Rect(xStart, yStart, xEnd - xStart, yEnd - yStart);
 
-                    cv::Mat gridPart(newGrid.at(step), roi);
-                    cv::Mat edgeGridPart(newEdgeGrid.at(step), roi);
+                    cv::Mat gridPart(gridMaskParts.at(step), roi);
+                    cv::Mat edgeGridPart(gridParts.at(step), roi);
 
                     //Calculate if and how current cell is flipped
                     const auto flipState = GridUtility::getFlipStateAt(m_cells.getCell(step), x, y,
@@ -230,17 +263,40 @@ void GridViewer::createGrid(const int gridHeight, const int gridWidth)
     }
 
     //Combine grids
-    for (size_t i = newGrid.size() - 1; i > 0; --i)
+    for (size_t i = gridMaskParts.size() - 1; i > 0; --i)
     {
         cv::Mat mask;
-        cv::bitwise_not(newGrid.at(i - 1), mask);
+        cv::bitwise_not(gridMaskParts.at(i - 1), mask);
 
-        cv::bitwise_or(newGrid.at(i - 1), newGrid.at(i), newGrid.at(i - 1), mask);
-        cv::bitwise_or(newEdgeGrid.at(i - 1), newEdgeGrid.at(i), newEdgeGrid.at(i - 1), mask);
+        cv::bitwise_or(gridMaskParts.at(i - 1), gridMaskParts.at(i), gridMaskParts.at(i - 1), mask);
+        cv::bitwise_or(gridParts.at(i - 1), gridParts.at(i), gridParts.at(i - 1), mask);
     }
 
-    //Make black pixels transparent
-    ImageUtility::matMakeTransparent(newGrid.at(0), newGrid.at(0), 0);
+    //Copy grid and set to black
+    cv::Mat newBlackGrid = gridParts.at(0).clone();
+    int nRows = newBlackGrid.rows;
+    int nCols = newBlackGrid.cols;
+    if (newBlackGrid.isContinuous())
+    {
+        nCols *= nRows;
+        nRows = 1;
+    }
+    cv::Vec4b *p;
+    for (int i = 0; i < nRows; ++i)
+    {
+        p = newBlackGrid.ptr<cv::Vec4b>(i);
+        for (int j = 0; j < nCols; ++j)
+        {
+            if (p[j][3] != 0)
+            {
+                p[j][0] = 0;
+                p[j][1] = 0;
+                p[j][2] = 0;
+            }
+        }
+    }
 
-    grid = ImageUtility::matToQPixmap(newEdgeGrid.at(0), QImage::Format_RGBA8888);
+    //Convert mat grids to QPixmap
+    whiteGrid = ImageUtility::matToQPixmap(gridParts.at(0), QImage::Format_RGBA8888);
+    blackGrid = ImageUtility::matToQPixmap(newBlackGrid, QImage::Format_RGBA8888);
 }

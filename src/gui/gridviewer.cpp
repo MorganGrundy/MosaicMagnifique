@@ -30,16 +30,9 @@ GridViewer::GridViewer(QWidget *parent)
 {
     layout = new QGridLayout(this);
 
-    checkGridColor = new QCheckBox("Black grid:", this);
-    checkGridColor->setLayoutDirection(Qt::LayoutDirection::RightToLeft);
-    checkGridColor->setStyleSheet("QWidget {"
-                                   "background-color: rgb(60, 60, 60);"
-                                   "color: rgb(255, 255, 255);"
-                                   "border-color: rgb(0, 0, 0);"
-                                   "}");
-    checkGridColor->setCheckState(Qt::Unchecked);
-    connect(checkGridColor, &QCheckBox::stateChanged, this, &GridViewer::gridColorToggle);
-    layout->addWidget(checkGridColor, 0, 0);
+    switchGridColour = new Switch(this);
+    connect(switchGridColour, &QAbstractButton::toggled, this, &GridViewer::gridColourChanged);
+    layout->addWidget(switchGridColour, 0, 0);
 
     hSpacer = new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum);
     layout->addItem(hSpacer, 0, 1);
@@ -99,7 +92,7 @@ void GridViewer::updateView(bool t_updateTransform)
     }
 
     //Set grid image
-    if (checkGridColor->isChecked())
+    if (switchGridColour->getState() == Switch::SwitchState::RIGHT)
     {
         if (!blackGrid.isNull())
         {
@@ -184,7 +177,7 @@ GridUtility::MosaicBestFit GridViewer::getGridState() const
 }
 
 //Switches between a white and black grid
-void GridViewer::gridColorToggle([[maybe_unused]] int t_state)
+void GridViewer::gridColourChanged([[maybe_unused]] bool t_state)
 {
     updateView();
 }

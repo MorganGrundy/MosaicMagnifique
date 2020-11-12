@@ -33,7 +33,8 @@ HEADERS += \
 	$$PWD/imagelibraryeditor.h \
 	$$PWD/imagesquarer.h \
 	$$PWD/mainwindow.h \
-	$$PWD/photomosaicviewer.h
+	$$PWD/photomosaicviewer.h \
+	$$PWD/switch.h
 
 SOURCES += \
 	$$PWD/cellshapeeditor.cpp \
@@ -48,7 +49,8 @@ SOURCES += \
 	$$PWD/imagesquarer.cpp \
 	$$PWD/main.cpp \
 	$$PWD/mainwindow.cpp \
-	$$PWD/photomosaicviewer.cpp
+	$$PWD/photomosaicviewer.cpp \
+	$$PWD/switch.cpp
 
 RESOURCES += \
 	$$PWD/ui.qrc

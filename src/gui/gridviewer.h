@@ -27,6 +27,7 @@
 #include <QGraphicsPixmapItem>
 
 #include "customgraphicsview.h"
+#include "switch.h"
 #include "cellshape.h"
 #include "gridbounds.h"
 #include "gridutility.h"
@@ -62,7 +63,7 @@ public:
 
 public slots:
     //Switches between a white and black grid
-    void gridColorToggle(int t_state);
+    void gridColourChanged(bool t_state);
 
 protected:
     //Updates display of grid
@@ -81,7 +82,7 @@ protected:
 
 private:
     QGridLayout *layout;
-    QCheckBox *checkGridColor;
+    Switch *switchGridColour;
     QSpacerItem *hSpacer, *vSpacer;
 
     QGraphicsPixmapItem *sceneBackground;

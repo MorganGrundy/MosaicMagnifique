@@ -31,6 +31,10 @@ GridViewer::GridViewer(QWidget *parent)
     layout = new QGridLayout(this);
 
     switchGridColour = new Switch(this);
+    switchGridColour->setText("White", Switch::SwitchState::LEFT);
+    switchGridColour->setColour(Qt::white, Switch::SwitchState::LEFT);
+    switchGridColour->setText("Black", Switch::SwitchState::RIGHT);
+    switchGridColour->setColour(Qt::black, Switch::SwitchState::RIGHT);
     connect(switchGridColour, &QAbstractButton::toggled, this, &GridViewer::gridColourChanged);
     layout->addWidget(switchGridColour, 0, 0);
 

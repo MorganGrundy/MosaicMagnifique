@@ -329,28 +329,23 @@ std::pair<cv::Mat, cv::Rect> PhotomosaicGeneratorBase::getCellAt(
     cv::Mat cell(cellGlobalBound.height, cellGlobalBound.width, t_image.type(), cv::Scalar(0));
     t_image(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)).copyTo(cell(cellLocalBound));
 
-    const cv::Mat &cellMask = t_detailCellShape.getCellMask(flipState.horizontal,
-                                                            flipState.vertical);
-
     //Resize image cell to detail level
-    cell = ImageUtility::resizeImage(cell, cellMask.rows, cellMask.cols,
+    cell = ImageUtility::resizeImage(cell, t_detailCellShape.getSize(), t_detailCellShape.getSize(),
                                      ImageUtility::ResizeType::EXACT);
 
     //Resizes bounds of cell in local space to detail level
     cv::Rect detailCellLocalBound(
-        std::min(t_detailCellShape.getCellMask(0,0).rows - 1,
+        std::min(t_detailCellShape.getSize() - 1,
                  static_cast<int>(cellLocalBound.x * m_cells.getDetail())),
-        std::min(t_detailCellShape.getCellMask(0,0).cols - 1,
+        std::min(t_detailCellShape.getSize() - 1,
                  static_cast<int>(cellLocalBound.y * m_cells.getDetail())),
         std::max(1, static_cast<int>(cellLocalBound.width * m_cells.getDetail())),
         std::max(1, static_cast<int>(cellLocalBound.height * m_cells.getDetail())));
 
-    detailCellLocalBound.width =
-        std::min(t_detailCellShape.getCellMask(0,0).rows - detailCellLocalBound.x,
-                 detailCellLocalBound.width);
-    detailCellLocalBound.height =
-        std::min(t_detailCellShape.getCellMask(0,0).cols - detailCellLocalBound.y,
-                 detailCellLocalBound.height);
+    detailCellLocalBound.width = std::min(t_detailCellShape.getSize() - detailCellLocalBound.x,
+                                          detailCellLocalBound.width);
+    detailCellLocalBound.height = std::min(t_detailCellShape.getSize() - detailCellLocalBound.y,
+                                           detailCellLocalBound.height);
 
     return {cell, detailCellLocalBound};
 }

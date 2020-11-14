@@ -150,6 +150,12 @@ const cv::Mat &CellShape::getCellMask(const bool t_flippedHorizontal,
         return m_cellMask;
 }
 
+//Returns cell shape size
+int CellShape::getSize() const
+{
+    return m_cellMask.rows;
+}
+
 //Sets the row spacing for tiling cell
 void CellShape::setRowSpacing(const int t_rowSpacing)
 {

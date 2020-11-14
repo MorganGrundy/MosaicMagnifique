@@ -78,8 +78,8 @@ cv::Rect GridUtility::getRectAt(const CellShape &t_cellShape, const int t_x, con
                 + alternateCellsY * t_cellShape.getAlternateRowSpacing();
     result.y += (t_x % 2 != 0) ? t_cellShape.getAlternateColOffset() : 0;
 
-    result.width = t_cellShape.getCellMask(0,0).cols;
-    result.height = t_cellShape.getCellMask(0,0).rows;
+    result.width = t_cellShape.getSize();
+    result.height = t_cellShape.getSize();
     return result;
 }
 

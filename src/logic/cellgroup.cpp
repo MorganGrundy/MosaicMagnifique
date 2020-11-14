@@ -58,7 +58,7 @@ void CellGroup::setCellShape(const CellShape &t_cellShape)
 //Returns size of top level cell
 int CellGroup::getCellSize(const size_t t_sizeStep, const bool t_detail) const
 {
-    return getCell(t_sizeStep, t_detail).getCellMask(false, false).rows;
+    return getCell(t_sizeStep, t_detail).getSize();
 }
 
 //Sets the detail level
@@ -75,7 +75,7 @@ void CellGroup::setDetail(const int t_detail, const bool t_reset)
         //Create top level detail cell
         if (!cells.at(0).getCellMask(0, 0).empty())
         {
-            const int cellSize = cells.at(0).getCellMask(0, 0).rows;
+            const int cellSize = cells.at(0).getSize();
             detailCells.at(0) = cells.at(0).resized(cellSize * detail, cellSize * detail);
         }
 
@@ -99,7 +99,7 @@ void CellGroup::setSizeSteps(const size_t t_steps, const bool t_reset)
     edgeCells.resize(t_steps + 1, std::vector<cv::Mat>(4));
 
     //Create cell masks for each step size
-    int cellSize = cells.at(0).getCellMask(0, 0).rows;
+    int cellSize = cells.at(0).getSize();
     for (size_t step = 1; step <= t_steps; ++step)
     {
         cellSize /= 2;

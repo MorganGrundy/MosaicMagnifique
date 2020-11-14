@@ -193,7 +193,8 @@ void ImageUtility::edgeDetect(const cv::Mat &t_src, cv::Mat &t_dst)
     {
         const cv::Mat dilateKernel =
             cv::getStructuringElement(cv::MorphShapes::MORPH_RECT,
-                                      cv::Size(edgeWidth * 2 + 1, edgeWidth * 2 + 1));
+                                      cv::Size(static_cast<int>(edgeWidth * 2 + 1),
+                                               static_cast<int>(edgeWidth * 2 + 1)));
         cv::dilate(tmp, tmp, dilateKernel);
     }
 

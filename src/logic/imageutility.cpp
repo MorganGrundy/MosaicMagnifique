@@ -38,8 +38,11 @@ cv::Mat ImageUtility::resizeImage(const cv::Mat &t_img,
     //Calculates resize factor
     double resizeFactor = static_cast<double>(t_targetHeight) / t_img.rows;
     if ((t_type == ResizeType::EXCLUSIVE && t_targetWidth < resizeFactor * t_img.cols) ||
-            (t_type == ResizeType::INCLUSIVE && t_targetWidth > resizeFactor * t_img.cols))
+        (t_type == ResizeType::INCLUSIVE && t_targetWidth > resizeFactor * t_img.cols) ||
+        (t_type == ResizeType::EXACT && resizeFactor == 1.0))
+    {
         resizeFactor = static_cast<double>(t_targetWidth) / t_img.cols;
+    }
 
     if (resizeFactor == 1.0)
         return t_img;

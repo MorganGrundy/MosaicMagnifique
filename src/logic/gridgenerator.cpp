@@ -115,7 +115,8 @@ GridGenerator::findCellState(const CellGroup &t_cells, const cv::Mat &t_mainImag
                              const int x, const int y,
                              const GridBounds &t_bounds, const size_t t_step)
 {
-    const cv::Rect unboundedRect = GridUtility::getRectAt(t_cells.getCell(t_step), x, y);
+    //Gets bounds of cell in global space
+    const cv::Rect cellGlobalBound = GridUtility::getRectAt(t_cells.getCell(t_step), x, y);
 
     //Cell bounded positions
     int yStart, yEnd, xStart, xEnd;
@@ -124,10 +125,10 @@ GridGenerator::findCellState(const CellGroup &t_cells, const cv::Mat &t_mainImag
     bool inBounds = false;
     for (auto it = t_bounds.cbegin(); it != t_bounds.cend() && !inBounds; ++it)
     {
-        yStart = std::clamp(unboundedRect.y, it->y, it->br().y);
-        yEnd = std::clamp(unboundedRect.br().y, it->y, it->br().y);
-        xStart = std::clamp(unboundedRect.x, it->x, it->br().x);
-        xEnd = std::clamp(unboundedRect.br().x, it->x, it->br().x);
+        yStart = std::clamp(cellGlobalBound.y, it->y, it->br().y);
+        yEnd = std::clamp(cellGlobalBound.br().y, it->y, it->br().y);
+        xStart = std::clamp(cellGlobalBound.x, it->x, it->br().x);
+        xEnd = std::clamp(cellGlobalBound.br().x, it->x, it->br().x);
 
         //Cell in bounds
         if (yStart != yEnd && xStart != xEnd)
@@ -141,36 +142,47 @@ GridGenerator::findCellState(const CellGroup &t_cells, const cv::Mat &t_mainImag
     //If cell not at lowest size
     if (!t_mainImage.empty() && t_step < t_cells.getSizeSteps())
     {
-        //Cell bounded positions (in image)
-        yStart = std::clamp(unboundedRect.tl().y, 0, t_mainImage.rows);
-        yEnd = std::clamp(unboundedRect.br().y, 0, t_mainImage.rows);
-        xStart = std::clamp(unboundedRect.tl().x, 0, t_mainImage.cols);
-        xEnd = std::clamp(unboundedRect.br().x, 0, t_mainImage.cols);
+        //Bound cell in image area
+        yStart = std::clamp(cellGlobalBound.tl().y, 0, t_mainImage.rows);
+        yEnd = std::clamp(cellGlobalBound.br().y, 0, t_mainImage.rows);
+        xStart = std::clamp(cellGlobalBound.tl().x, 0, t_mainImage.cols);
+        xEnd = std::clamp(cellGlobalBound.br().x, 0, t_mainImage.cols);
 
-        const cv::Rect boundedRect(xStart - unboundedRect.x, yStart - unboundedRect.y,
-                                   xEnd - xStart, yEnd - yStart);
-
-        //Copies visible part of image to cell
-        cv::Mat cell(t_mainImage, cv::Range(yStart, yEnd), cv::Range(xStart, xEnd));
+        //Bounds of cell in local space
+        const cv::Rect cellLocalBound(xStart - cellGlobalBound.x, yStart - cellGlobalBound.y,
+                                      xEnd - xStart, yEnd - yStart);
 
         //Calculate if and how current cell is flipped
         const auto flipState = GridUtility::getFlipStateAt(t_cells.getCell(t_step), x, y,
                                                            GridUtility::PAD_GRID);
 
-        //Resizes bounded rect for detail cells
-        const cv::Rect boundedDetailRect(boundedRect.x * t_cells.getDetail(),
-                                         boundedRect.y * t_cells.getDetail(),
-                                         boundedRect.width * t_cells.getDetail(),
-                                         boundedRect.height * t_cells.getDetail());
+        //Copies visible part of image to cell
+        cv::Mat cell(t_mainImage, cv::Range(yStart, yEnd), cv::Range(xStart, xEnd));
+
+        //Resizes bounds of cell in local space to detail level
+        cv::Rect detailCellLocalBound(
+            std::min(t_cells.getCellSize(t_step, true) - 1,
+                     static_cast<int>(cellLocalBound.x * t_cells.getDetail())),
+            std::min(t_cells.getCellSize(t_step, true) - 1,
+                     static_cast<int>(cellLocalBound.y * t_cells.getDetail())),
+            std::max(1, static_cast<int>(cellLocalBound.width * t_cells.getDetail())),
+            std::max(1, static_cast<int>(cellLocalBound.height * t_cells.getDetail())));
+
+        detailCellLocalBound.width =
+            std::min(t_cells.getCellSize(t_step, true) - detailCellLocalBound.x,
+                     detailCellLocalBound.width);
+        detailCellLocalBound.height =
+            std::min(t_cells.getCellSize(t_step, true) - detailCellLocalBound.y,
+                     detailCellLocalBound.height);
 
         //Create bounded mask of detail cell
-        const cv::Mat mask(t_cells.getCell(t_step, true)
-                               .getCellMask(flipState.horizontal, flipState.vertical),
-                           boundedDetailRect);
+        const cv::Mat mask(t_cells.getCell(t_step, true).
+                           getCellMask(flipState.horizontal, flipState.vertical),
+                           detailCellLocalBound);
 
         //Resize image cell to size of mask
         cell = ImageUtility::resizeImage(cell, mask.rows, mask.cols,
-                                         ImageUtility::ResizeType::EXCLUSIVE);
+                                         ImageUtility::ResizeType::EXACT);
 
         //If cell entropy exceeds threshold return true
         if (ImageUtility::calculateEntropy(cell, mask) >= ImageUtility::MAX_ENTROPY * 0.7)

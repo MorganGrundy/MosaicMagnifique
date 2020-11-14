@@ -337,10 +337,20 @@ std::pair<cv::Mat, cv::Rect> PhotomosaicGeneratorBase::getCellAt(
                                      ImageUtility::ResizeType::EXACT);
 
     //Resizes bounds of cell in local space to detail level
-    const cv::Rect detailCellLocalBound(cellLocalBound.x * m_cells.getDetail(),
-                                        cellLocalBound.y * m_cells.getDetail(),
-                                        cellLocalBound.width * m_cells.getDetail(),
-                                        cellLocalBound.height * m_cells.getDetail());
+    cv::Rect detailCellLocalBound(
+        std::min(t_detailCellShape.getCellMask(0,0).rows - 1,
+                 static_cast<int>(cellLocalBound.x * m_cells.getDetail())),
+        std::min(t_detailCellShape.getCellMask(0,0).cols - 1,
+                 static_cast<int>(cellLocalBound.y * m_cells.getDetail())),
+        std::max(1, static_cast<int>(cellLocalBound.width * m_cells.getDetail())),
+        std::max(1, static_cast<int>(cellLocalBound.height * m_cells.getDetail())));
+
+    detailCellLocalBound.width =
+        std::min(t_detailCellShape.getCellMask(0,0).rows - detailCellLocalBound.x,
+                 detailCellLocalBound.width);
+    detailCellLocalBound.height =
+        std::min(t_detailCellShape.getCellMask(0,0).cols - detailCellLocalBound.y,
+                 detailCellLocalBound.height);
 
     return {cell, detailCellLocalBound};
 }

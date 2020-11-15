@@ -211,7 +211,7 @@ void ImageLibraryEditor::addImages()
         if (m_progressBar != nullptr)
             m_progressBar->setValue(m_progressBar->value() + 1);
 
-        QCoreApplication::processEvents();
+        QCoreApplication::processEvents(QEventLoop::ProcessEventsFlag::ExcludeUserInputEvents);
     }
 
     if (m_cropMode == CropMode::Manual)

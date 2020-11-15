@@ -550,7 +550,7 @@ void MainWindow::generatePhotomosaic()
             &progressDialog, &QProgressDialog::setValue);
 
     progressDialog.show();
-    QCoreApplication::processEvents();
+    QCoreApplication::processEvents(QEventLoop::ProcessEventsFlag::DialogExec);
 
     //Generate Photomosaic and measure time
     const auto startTime = std::chrono::high_resolution_clock::now();

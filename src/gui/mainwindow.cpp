@@ -212,7 +212,7 @@ void MainWindow::tabChanged(int t_index)
             cellShapeChanged = false;
 
             ui->widgetGridPreview->getCellGroup().setCellShape(
-                newCellShape.resized(ui->spinCellSize->value(), ui->spinCellSize->value()));
+                newCellShape.resized(ui->spinCellSize->value()));
 
             ui->widgetGridPreview->updateGrid();
         }
@@ -399,7 +399,7 @@ void MainWindow::cellSizeChanged(int t_value)
 
     if (ui->checkCellShape->isChecked())
     {
-        ui->widgetGridPreview->getCellGroup().setCellShape(newCellShape.resized(t_value, t_value));
+        ui->widgetGridPreview->getCellGroup().setCellShape(newCellShape.resized(t_value));
     }
     else
     {
@@ -427,7 +427,7 @@ void MainWindow::enableCellShape(bool t_state)
     if (t_state)
     {
         ui->widgetGridPreview->getCellGroup().setCellShape(
-            newCellShape.resized(ui->spinCellSize->value(), ui->spinCellSize->value()));
+            newCellShape.resized(ui->spinCellSize->value()));
     }
     else
     {

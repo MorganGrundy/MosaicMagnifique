@@ -277,32 +277,31 @@ bool CellShape::getAlternateRowFlipVertical() const
 }
 
 //Returns the cell shape resized to the given size
-CellShape CellShape::resized(const int t_cols, const int t_rows) const
+CellShape CellShape::resized(const int t_size) const
 {
     //If cell mask is empty or new size is equal to current size
     //then just return copy of cell shape
-    if (empty() || (t_cols == m_cellMask.cols && t_rows == m_cellMask.rows))
+    if (empty() || t_size == getSize())
     {
         return CellShape(*this);
     }
 
-    const cv::Mat resizedMask = ImageUtility::resizeImage(m_cellMask, t_rows, t_cols,
+    const cv::Mat resizedMask = ImageUtility::resizeImage(m_cellMask, t_size, t_size,
                                                           ImageUtility::ResizeType::EXACT);
 
     CellShape result(resizedMask);
     //Resize spacing and offset
-    double vRatio = static_cast<double>(resizedMask.rows) / m_cellMask.rows;
-    double hRatio = static_cast<double>(resizedMask.cols) / m_cellMask.cols;
+    double ratio = static_cast<double>(resizedMask.rows) / m_cellMask.rows;
     //Spacing must never be < 1
-    result.setRowSpacing(std::max(static_cast<int>(std::floor(m_rowSpacing * vRatio)), 1));
-    result.setColSpacing(std::max(static_cast<int>(std::floor(m_colSpacing * hRatio)), 1));
+    result.setRowSpacing(std::max(static_cast<int>(std::floor(m_rowSpacing * ratio)), 1));
+    result.setColSpacing(std::max(static_cast<int>(std::floor(m_colSpacing * ratio)), 1));
     result.setAlternateRowSpacing(std::max(
-        static_cast<int>(std::floor(m_alternateRowSpacing * vRatio)), 1));
+        static_cast<int>(std::floor(m_alternateRowSpacing * ratio)), 1));
     result.setAlternateColSpacing(std::max(
-        static_cast<int>(std::floor(m_alternateColSpacing * hRatio)), 1));
+        static_cast<int>(std::floor(m_alternateColSpacing * ratio)), 1));
 
-    result.setAlternateRowOffset(std::floor(m_alternateRowOffset * vRatio));
-    result.setAlternateColOffset(std::floor(m_alternateColOffset * hRatio));
+    result.setAlternateRowOffset(std::floor(m_alternateRowOffset * ratio));
+    result.setAlternateColOffset(std::floor(m_alternateColOffset * ratio));
     result.setAlternateColFlipHorizontal(m_alternateColFlipHorizontal);
     result.setAlternateColFlipVertical(m_alternateColFlipVertical);
     result.setAlternateRowFlipHorizontal(m_alternateRowFlipHorizontal);

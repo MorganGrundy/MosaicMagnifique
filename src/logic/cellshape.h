@@ -80,7 +80,7 @@ public:
     void setAlternateRowFlipVertical(const bool t_rowFlipVertical);
     bool getAlternateRowFlipVertical() const;
 
-    CellShape resized(const int t_cols, const int t_rows) const;
+    CellShape resized(const int t_size) const;
 
     bool empty() const;
 

@@ -76,7 +76,7 @@ void CellGroup::setDetail(const int t_detail, const bool t_reset)
         if (!cells.at(0).getCellMask(0, 0).empty())
         {
             const int cellSize = cells.at(0).getSize();
-            detailCells.at(0) = cells.at(0).resized(cellSize * detail, cellSize * detail);
+            detailCells.at(0) = cells.at(0).resized(cellSize * detail);
         }
 
         //Update size steps for all cells
@@ -108,10 +108,10 @@ void CellGroup::setSizeSteps(const size_t t_steps, const bool t_reset)
         if (t_reset || step > sizeSteps)
         {
             //Create normal cell mask
-            cells.at(step) = cells.at(step - 1).resized(cellSize, cellSize);
+            cells.at(step) = cells.at(step - 1).resized(cellSize);
 
             //Create detail cell mask
-            detailCells.at(step) = cells.at(step).resized(cellSize * detail, cellSize * detail);
+            detailCells.at(step) = cells.at(step).resized(cellSize * detail);
 
             //Create edge cell mask
             cv::Mat cellMask;

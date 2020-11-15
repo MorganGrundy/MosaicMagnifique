@@ -153,8 +153,7 @@ GridGenerator::findCellState(const CellGroup &t_cells, const cv::Mat &t_mainImag
                                       xEnd - xStart, yEnd - yStart);
 
         //Calculate if and how current cell is flipped
-        const auto flipState = GridUtility::getFlipStateAt(t_cells.getCell(t_step), x, y,
-                                                           GridUtility::PAD_GRID);
+        const auto flipState = GridUtility::getFlipStateAt(t_cells.getCell(t_step), x, y);
 
         //Copies visible part of image to cell
         cv::Mat cell(t_mainImage, cv::Range(yStart, yEnd), cv::Range(xStart, xEnd));

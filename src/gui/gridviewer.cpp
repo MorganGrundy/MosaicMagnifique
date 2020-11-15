@@ -236,8 +236,7 @@ void GridViewer::createGrid(const int gridHeight, const int gridWidth)
                     cv::Mat edgeGridPart(gridParts.at(step), roi);
 
                     //Calculate if and how current cell is flipped
-                    const auto flipState = GridUtility::getFlipStateAt(m_cells.getCell(step), x, y,
-                                                                       GridUtility::PAD_GRID);
+                    const auto flipState = GridUtility::getFlipStateAt(m_cells.getCell(step), x, y);
 
                     //Create bounded mask
                     const cv::Mat mask(

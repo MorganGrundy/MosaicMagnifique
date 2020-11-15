@@ -85,16 +85,16 @@ cv::Rect GridUtility::getRectAt(const CellShape &t_cellShape, const int t_x, con
 
 //Returns the flip state of the given cell at given grid position
 GridUtility::FlipState GridUtility::getFlipStateAt(const CellShape &t_cellShape,
-                                                   const int t_x, const int t_y, const int t_pad)
+                                                   const int t_x, const int t_y)
 {
     FlipState flipState;
-    if (t_cellShape.getAlternateColFlipHorizontal() && (t_x + t_pad) % 2 == 1)
+    if (t_cellShape.getAlternateColFlipHorizontal() && t_x % 2 != 0)
         flipState.horizontal = !flipState.horizontal;
-    if (t_cellShape.getAlternateRowFlipHorizontal() && (t_y + t_pad) % 2 == 1)
+    if (t_cellShape.getAlternateRowFlipHorizontal() && t_y % 2 != 0)
         flipState.horizontal = !flipState.horizontal;
-    if (t_cellShape.getAlternateColFlipVertical() && (t_x + t_pad) % 2 == 1)
+    if (t_cellShape.getAlternateColFlipVertical() && t_x % 2 != 0)
         flipState.vertical = !flipState.vertical;
-    if (t_cellShape.getAlternateRowFlipVertical() && (t_y + t_pad) % 2 == 1)
+    if (t_cellShape.getAlternateRowFlipVertical() && t_y % 2 != 0)
         flipState.vertical = !flipState.vertical;
 
     return flipState;

@@ -138,7 +138,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                     at(x + GridUtility::PAD_GRID).has_value())
                 {
                     auto [cell, cellBounds] = getCellAt(normalCellShape, detailCellShape, x, y,
-                                                        GridUtility::PAD_GRID, mainImage);
+                                                        mainImage);
 
                     //Copy cell image to device
                     copyMatToDevice<float>(cell, d_cellImage);
@@ -153,8 +153,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
 
 
                     //Calculate if and how current cell is flipped
-                    const auto flipState = GridUtility::getFlipStateAt(detailCellShape, x, y,
-                                                                       GridUtility::PAD_GRID);
+                    const auto flipState = GridUtility::getFlipStateAt(detailCellShape, x, y);
                     //Select correct device mask image
                     uchar *d_mask = d_maskImages.at(flipState.horizontal + flipState.vertical * 2);
 

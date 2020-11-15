@@ -92,10 +92,10 @@ CPUPhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape,
                                          const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
                                          const GridUtility::StepBestFit &t_grid) const
 {
-    auto [cell, cellBounds] = getCellAt(t_cellShape, t_detailCellShape, x, y, t_pad, t_image);
+    auto [cell, cellBounds] = getCellAt(t_cellShape, t_detailCellShape, x, y, t_image);
 
     //Calculate if and how current cell is flipped
-    const auto flipState = GridUtility::getFlipStateAt(t_cellShape, x, y, t_pad);
+    const auto flipState = GridUtility::getFlipStateAt(t_cellShape, x, y);
 
     const cv::Mat &cellMask = t_detailCellShape.getCellMask(flipState.horizontal,
                                                             flipState.vertical);

@@ -147,8 +147,7 @@ cv::Mat PhotomosaicGeneratorBase::buildPhotomosaic(const cv::Scalar &t_backgroun
                                               xEnd - xStart, yEnd - yStart);
 
                 //Calculate if and how current cell is flipped
-                const auto flipState = GridUtility::getFlipStateAt(normalCellShape, x, y,
-                                                                   GridUtility::PAD_GRID);
+                const auto flipState = GridUtility::getFlipStateAt(normalCellShape, x, y);
 
                 //Creates mask bounded
                 const cv::Mat maskBounded(normalCellShape.getCellMask(flipState.horizontal,
@@ -306,8 +305,7 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGeneratorBase::resizeAndCvtC
 //Returns the cell image at given position and it's local bounds
 std::pair<cv::Mat, cv::Rect> PhotomosaicGeneratorBase::getCellAt(
     const CellShape &t_cellShape, const CellShape &t_detailCellShape,
-    const int x, const int y, const int t_pad,
-    const cv::Mat &t_image) const
+    const int x, const int y, const cv::Mat &t_image) const
 {
     //Gets bounds of cell in global space
     const cv::Rect cellGlobalBound = GridUtility::getRectAt(t_cellShape, x, y);
@@ -321,9 +319,6 @@ std::pair<cv::Mat, cv::Rect> PhotomosaicGeneratorBase::getCellAt(
     //Bounds of cell in local space
     const cv::Rect cellLocalBound(xStart - cellGlobalBound.x, yStart - cellGlobalBound.y,
                                   xEnd - xStart, yEnd - yStart);
-
-    //Calculate if and how current cell is flipped
-    const auto flipState = GridUtility::getFlipStateAt(t_cellShape, x, y, t_pad);
 
     //Copies visible part of main image to cell
     cv::Mat cell(cellGlobalBound.height, cellGlobalBound.width, t_image.type(), cv::Scalar(0));

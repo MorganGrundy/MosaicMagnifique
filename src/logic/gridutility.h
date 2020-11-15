@@ -55,8 +55,7 @@ namespace GridUtility
     };
 
     //Returns the flip state of the given cell at given grid position
-    FlipState getFlipStateAt(const CellShape &t_cellShape, const int t_x, const int t_y,
-                             const int t_pad);
+    FlipState getFlipStateAt(const CellShape &t_cellShape, const int t_x, const int t_y);
 };
 
 #endif // CELLGRID_H

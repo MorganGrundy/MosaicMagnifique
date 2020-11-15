@@ -148,8 +148,7 @@ void GridEditViewer::editSingle(const cv::Point t_gridPos)
 
         //Check if click is in active cell area
         const auto cellFlip = GridUtility::getFlipStateAt(m_cells.getCell(m_sizeStep),
-                                                          cell.second.x, cell.second.y,
-                                                          GridUtility::PAD_GRID);
+                                                          cell.second.x, cell.second.y);
         if (m_cells.getCell(m_sizeStep).getCellMask(cellFlip.horizontal, cellFlip.vertical).
             at<uchar>(cellPos) != 0)
         {
@@ -206,8 +205,7 @@ void GridEditViewer::editSelection(const cv::Rect t_selectionRect)
 
         //Get cell mask
         const auto cellFlip = GridUtility::getFlipStateAt(m_cells.getCell(m_sizeStep),
-                                                          cell.second.x, cell.second.y,
-                                                          GridUtility::PAD_GRID);
+                                                          cell.second.x, cell.second.y);
         const cv::Mat &cellMask = m_cells.getCell(m_sizeStep).getCellMask(cellFlip.horizontal,
                                                                           cellFlip.vertical);
 

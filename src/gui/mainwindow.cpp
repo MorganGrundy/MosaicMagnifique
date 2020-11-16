@@ -26,6 +26,7 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QProgressDialog>
+#include <QThread>
 #include <opencv2/imgcodecs.hpp>
 #include <chrono>
 
@@ -214,7 +215,7 @@ void MainWindow::tabChanged(int t_index)
             ui->widgetGridPreview->getCellGroup().setCellShape(
                 newCellShape.resized(ui->spinCellSize->value()));
 
-            ui->widgetGridPreview->updateGrid();
+            updateGridPreview();
         }
     }
 }
@@ -253,7 +254,7 @@ void MainWindow::selectMainImage()
         if (mainImage.empty())
         {
             ui->widgetGridPreview->setBackground(cv::Mat());
-            ui->widgetGridPreview->updateGrid();
+            updateGridPreview();
             QMessageBox msgBox;
             msgBox.setText(tr("The main image \"") + ui->lineMainImage->text() +
                            tr("\" failed to load"));
@@ -274,7 +275,7 @@ void MainWindow::selectMainImage()
 
         //Gives main image to grid preview
         ui->widgetGridPreview->setBackground(mainImage);
-        ui->widgetGridPreview->updateGrid();
+        updateGridPreview();
     }
 }
 
@@ -325,7 +326,7 @@ void MainWindow::photomosaicWidthChanged(int i)
             ImageUtility::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
                                       ui->spinPhotomosaicWidth->value(),
                                       ImageUtility::ResizeType::INCLUSIVE));
-        ui->widgetGridPreview->updateGrid();
+        updateGridPreview();
     }
 }
 
@@ -348,7 +349,7 @@ void MainWindow::photomosaicHeightChanged(int i)
             ImageUtility::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
                                       ui->spinPhotomosaicWidth->value(),
                                       ImageUtility::ResizeType::INCLUSIVE));
-        ui->widgetGridPreview->updateGrid();
+        updateGridPreview();
     }
 }
 
@@ -372,7 +373,7 @@ void MainWindow::loadImageSize()
         ui->widgetGridPreview->setBackground(
                     ImageUtility::resizeImage(mainImage, mainImage.rows, mainImage.cols,
                                               ImageUtility::ResizeType::INCLUSIVE));
-        ui->widgetGridPreview->updateGrid();
+        updateGridPreview();
     }
 }
 
@@ -383,7 +384,7 @@ void MainWindow::photomosaicDetailChanged([[maybe_unused]] int i)
 
     ui->widgetGridPreview->getCellGroup().setDetail(ui->spinDetail->value());
     if (!mainImage.empty())
-        ui->widgetGridPreview->updateGrid();
+        updateGridPreview();
 }
 
 //Updates cell size
@@ -408,7 +409,7 @@ void MainWindow::cellSizeChanged(int t_value)
 
     ui->widgetGridPreview->getCellGroup().setSizeSteps(ui->spinMinCellSize->getHalveSteps());
 
-    ui->widgetGridPreview->updateGrid();
+    updateGridPreview();
 }
 
 //Updates cell grid size steps
@@ -417,7 +418,7 @@ void MainWindow::minimumCellSizeChanged([[maybe_unused]] int t_value)
     clampDetail();
 
     ui->widgetGridPreview->getCellGroup().setSizeSteps(ui->spinMinCellSize->getHalveSteps());
-    ui->widgetGridPreview->updateGrid();
+    updateGridPreview();
 }
 
 //Enables/disables custom cell shapes
@@ -433,7 +434,7 @@ void MainWindow::enableCellShape(bool t_state)
     {
         ui->widgetGridPreview->getCellGroup().setCellShape(CellShape(ui->spinCellSize->value()));
     }
-    ui->widgetGridPreview->updateGrid();
+    updateGridPreview();
 }
 
 //Allows user to manually edit current cell grid
@@ -578,4 +579,33 @@ void MainWindow::clampDetail()
         const int minDetail = std::ceil(100.0 / minCellSize);
         ui->spinDetail->setValue(minDetail);
     }
+}
+
+//Updates grid preview
+void MainWindow::updateGridPreview()
+{
+    //Get focus
+    QWidget *focusWidget = QApplication::focusWidget();
+    //Disable window interactions
+    setEnabled(false);
+
+    //Setup up progress bar for looping
+    progressBar->setRange(0, 0);
+    progressBar->setValue(0);
+    progressBar->show();
+
+    //Update grid preview in another thread
+    QThread *thread = QThread::create([=]{ui->widgetGridPreview->updateGrid();});
+    thread->start();
+
+    //Keep GUI responsive while grid preview being updated
+    while (thread->isRunning())
+        QCoreApplication::processEvents();
+
+    progressBar->hide();
+    //Enable window interactions
+    setEnabled(true);
+    //Return focus to last widget
+    if (focusWidget)
+        focusWidget->setFocus();
 }

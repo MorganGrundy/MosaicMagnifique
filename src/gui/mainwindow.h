@@ -95,6 +95,9 @@ private:
     //Clamps detail level so that cell size never reaches 0px
     void clampDetail();
 
+    //Updates grid preview
+    void updateGridPreview();
+
     Ui::MainWindow *ui;
     QProgressBar *progressBar;
 

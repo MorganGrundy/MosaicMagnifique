@@ -356,10 +356,13 @@ border: 1px solid dimgray;
 }</string>
                   </property>
                   <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::PlusMinus</enum>
+                   <enum>QAbstractSpinBox::NoButtons</enum>
                   </property>
                   <property name="specialValueText">
                    <string/>
+                  </property>
+                  <property name="keyboardTracking">
+                   <bool>false</bool>
                   </property>
                   <property name="showGroupSeparator" stdset="0">
                    <bool>false</bool>
@@ -418,7 +421,10 @@ border: 1px solid dimgray;
 }</string>
                   </property>
                   <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::PlusMinus</enum>
+                   <enum>QAbstractSpinBox::NoButtons</enum>
+                  </property>
+                  <property name="keyboardTracking">
+                   <bool>false</bool>
                   </property>
                   <property name="suffix">
                    <string>px</string>
@@ -470,7 +476,10 @@ border: 1px solid dimgray;
 }</string>
                   </property>
                   <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::PlusMinus</enum>
+                   <enum>QAbstractSpinBox::NoButtons</enum>
+                  </property>
+                  <property name="keyboardTracking">
+                   <bool>false</bool>
                   </property>
                   <property name="suffix">
                    <string>%</string>
@@ -695,10 +704,13 @@ border: 1px solid dimgray;
 }</string>
                   </property>
                   <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::PlusMinus</enum>
+                   <enum>QAbstractSpinBox::NoButtons</enum>
                   </property>
                   <property name="specialValueText">
                    <string/>
+                  </property>
+                  <property name="keyboardTracking">
+                   <bool>false</bool>
                   </property>
                   <property name="suffix">
                    <string>px</string>
@@ -839,7 +851,7 @@ border: 1px solid dimgray;
 }</string>
                  </property>
                  <property name="buttonSymbols">
-                  <enum>QAbstractSpinBox::PlusMinus</enum>
+                  <enum>QAbstractSpinBox::NoButtons</enum>
                  </property>
                  <property name="suffix">
                   <string>px</string>
@@ -1012,6 +1024,9 @@ border: 1px solid dimgray;
                   <property name="specialValueText">
                    <string/>
                   </property>
+                  <property name="keyboardTracking">
+                   <bool>false</bool>
+                  </property>
                   <property name="showGroupSeparator" stdset="0">
                    <bool>false</bool>
                   </property>
@@ -1062,6 +1077,9 @@ border: 1px solid dimgray;
                   </property>
                   <property name="specialValueText">
                    <string/>
+                  </property>
+                  <property name="keyboardTracking">
+                   <bool>false</bool>
                   </property>
                   <property name="showGroupSeparator" stdset="0">
                    <bool>false</bool>

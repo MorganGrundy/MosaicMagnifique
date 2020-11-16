@@ -114,12 +114,6 @@ MainWindow::MainWindow(QWidget *t_parent)
     connect(ui->imageLibraryEditor, &ImageLibraryEditor::imageLibraryChanged,
             this, &MainWindow::updateImageLibraryCount);
 
-    //Disable keyboard tracking on spin boxes
-    ui->spinPhotomosaicWidth->setKeyboardTracking(false);
-    ui->spinPhotomosaicHeight->setKeyboardTracking(false);
-    ui->spinDetail->setKeyboardTracking(false);
-    ui->spinCellSize->setKeyboardTracking(false);
-
     //Connects generator settings to appropriate methods
     connect(ui->buttonMainImage, &QPushButton::released, this, &MainWindow::selectMainImage);
     connect(ui->buttonCompareColours, &QPushButton::released, this, &MainWindow::compareColours);

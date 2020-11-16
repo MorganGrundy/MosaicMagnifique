@@ -289,7 +289,10 @@ border: 1px solid dimgray;
 }</string>
           </property>
           <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::PlusMinus</enum>
+           <enum>QAbstractSpinBox::NoButtons</enum>
+          </property>
+          <property name="keyboardTracking">
+           <bool>false</bool>
           </property>
           <property name="suffix">
            <string>px</string>
@@ -335,7 +338,10 @@ border: 1px solid dimgray;
 }</string>
           </property>
           <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::PlusMinus</enum>
+           <enum>QAbstractSpinBox::NoButtons</enum>
+          </property>
+          <property name="keyboardTracking">
+           <bool>false</bool>
           </property>
           <property name="suffix">
            <string>px</string>
@@ -365,7 +371,10 @@ border: 1px solid dimgray;
 }</string>
           </property>
           <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::PlusMinus</enum>
+           <enum>QAbstractSpinBox::NoButtons</enum>
+          </property>
+          <property name="keyboardTracking">
+           <bool>false</bool>
           </property>
           <property name="suffix">
            <string>px</string>
@@ -408,7 +417,10 @@ border: 1px solid dimgray;
 }</string>
           </property>
           <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::PlusMinus</enum>
+           <enum>QAbstractSpinBox::NoButtons</enum>
+          </property>
+          <property name="keyboardTracking">
+           <bool>false</bool>
           </property>
           <property name="suffix">
            <string>px</string>
@@ -651,7 +663,10 @@ QSpinBox:disabled {
 }</string>
           </property>
           <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::PlusMinus</enum>
+           <enum>QAbstractSpinBox::NoButtons</enum>
+          </property>
+          <property name="keyboardTracking">
+           <bool>false</bool>
           </property>
           <property name="suffix">
            <string>px</string>
@@ -716,7 +731,10 @@ QSpinBox:disabled {
 }</string>
           </property>
           <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::PlusMinus</enum>
+           <enum>QAbstractSpinBox::NoButtons</enum>
+          </property>
+          <property name="keyboardTracking">
+           <bool>false</bool>
           </property>
           <property name="suffix">
            <string>px</string>

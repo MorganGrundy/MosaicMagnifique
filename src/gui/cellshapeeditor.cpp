@@ -86,6 +86,14 @@ CellShapeEditor::CellShapeEditor(QWidget *parent) :
     ui->cellShapeViewer->getCellGroup().setCellShape(defaultCellShape);
     ui->spinCellSpacingCol->setValue(CellShape::DEFAULT_CELL_SIZE);
     ui->spinCellSpacingRow->setValue(CellShape::DEFAULT_CELL_SIZE);
+
+    //Disable keyboard tracking on spin boxes
+    ui->spinCellSpacingCol->setKeyboardTracking(false);
+    ui->spinCellSpacingRow->setKeyboardTracking(false);
+    ui->spinCellAlternateOffsetCol->setKeyboardTracking(false);
+    ui->spinCellAlternateOffsetRow->setKeyboardTracking(false);
+    ui->spinCellAlternateSpacingRow->setKeyboardTracking(false);
+    ui->spinCellAlternateSpacingCol->setKeyboardTracking(false);
 }
 
 CellShapeEditor::~CellShapeEditor()

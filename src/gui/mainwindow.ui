@@ -356,7 +356,7 @@ border: 1px solid dimgray;
 }</string>
                   </property>
                   <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::NoButtons</enum>
+                   <enum>QAbstractSpinBox::PlusMinus</enum>
                   </property>
                   <property name="specialValueText">
                    <string/>
@@ -421,7 +421,7 @@ border: 1px solid dimgray;
 }</string>
                   </property>
                   <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::NoButtons</enum>
+                   <enum>QAbstractSpinBox::PlusMinus</enum>
                   </property>
                   <property name="keyboardTracking">
                    <bool>false</bool>
@@ -476,7 +476,7 @@ border: 1px solid dimgray;
 }</string>
                   </property>
                   <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::NoButtons</enum>
+                   <enum>QAbstractSpinBox::PlusMinus</enum>
                   </property>
                   <property name="keyboardTracking">
                    <bool>false</bool>
@@ -704,7 +704,7 @@ border: 1px solid dimgray;
 }</string>
                   </property>
                   <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::NoButtons</enum>
+                   <enum>QAbstractSpinBox::PlusMinus</enum>
                   </property>
                   <property name="specialValueText">
                    <string/>
@@ -828,22 +828,22 @@ QLineEdit:disabled {
                 <number>0</number>
                </property>
                <item>
-                <widget class="QLabel" name="labelMinCellSize">
+                <widget class="QLabel" name="labelSizeSteps">
                  <property name="statusTip">
-                  <string>Minimum width and height of each cell in pixels</string>
+                  <string>Maximum number of times cell can be split</string>
                  </property>
                  <property name="text">
-                  <string>Minimum Cell Size:</string>
+                  <string>Size Steps:</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="HalvingSpinBox" name="spinMinCellSize">
+                <widget class="QSpinBox" name="spinSizeSteps">
                  <property name="statusTip">
-                  <string>Minimum width and height of each cell in pixels</string>
+                  <string>Maximum number of times cell can be split</string>
                  </property>
                  <property name="whatsThis">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Photomosaics can be generated using variable cell sizes. Areas of higher detail will use a smaller cell size.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;For each step down a cell is split into four smaller cells of half the size (and rounded down). For best cell alignment the cell size should be a power of 2.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Photomosaics can be generated using variable cell sizes. Areas of higher detail will use a smaller cell size.&lt;/p&gt;&lt;p&gt;For each step down a cell is split into four smaller cells of half the size (and rounded down). For best cell alignment the cell size should be a power of 2.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="styleSheet">
                   <string notr="true">QSpinBox {
@@ -851,10 +851,10 @@ border: 1px solid dimgray;
 }</string>
                  </property>
                  <property name="buttonSymbols">
-                  <enum>QAbstractSpinBox::NoButtons</enum>
+                  <enum>QAbstractSpinBox::PlusMinus</enum>
                  </property>
                  <property name="suffix">
-                  <string>px</string>
+                  <string/>
                  </property>
                 </widget>
                </item>
@@ -872,6 +872,16 @@ border: 1px solid dimgray;
                 </spacer>
                </item>
               </layout>
+             </item>
+             <item>
+              <widget class="QLabel" name="labelCellSizesList">
+               <property name="statusTip">
+                <string>List of cell sizes</string>
+               </property>
+               <property name="text">
+                <string>Cell Sizes: 10px</string>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="Line" name="line_6">
@@ -1251,11 +1261,6 @@ border: 1px solid dimgray;
    <extends>QWidget</extends>
    <header>gridviewer.h</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>HalvingSpinBox</class>
-   <extends>QSpinBox</extends>
-   <header>halvingspinbox.h</header>
   </customwidget>
   <customwidget>
    <class>CellShapeEditor</class>

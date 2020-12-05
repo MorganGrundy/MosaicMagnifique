@@ -279,6 +279,10 @@ bool CellShape::getAlternateRowFlipVertical() const
 //Returns the cell shape resized to the given size
 CellShape CellShape::resized(const int t_size) const
 {
+    //Throw exception if target size less than minimum
+    if (t_size < MIN_CELL_SIZE)
+        throw std::invalid_argument(Q_FUNC_INFO" Target cell size less than minimum");
+
     //If cell mask is empty or new size is equal to current size
     //then just return copy of cell shape
     if (empty() || t_size == getSize())

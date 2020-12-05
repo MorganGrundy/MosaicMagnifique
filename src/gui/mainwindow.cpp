@@ -132,8 +132,8 @@ MainWindow::MainWindow(QWidget *t_parent)
 
     connect(ui->spinCellSize, qOverload<int>(&QSpinBox::valueChanged),
             this, &MainWindow::cellSizeChanged);
-    connect(ui->spinMinCellSize, qOverload<int>(&HalvingSpinBox::valueChanged),
-            this, &MainWindow::minimumCellSizeChanged);
+    connect(ui->spinSizeSteps, qOverload<int>(&QSpinBox::valueChanged),
+            this, &MainWindow::sizeStepsChanged);
     connect(ui->checkCellShape, &QCheckBox::clicked, this, &MainWindow::enableCellShape);
 
     connect(ui->buttonEditGrid, &QPushButton::released, this, &MainWindow::editCellGrid);
@@ -148,7 +148,9 @@ MainWindow::MainWindow(QWidget *t_parent)
 #endif
 
     //Sets default cell size
+    ui->spinSizeSteps->setValue(0);
     ui->spinCellSize->setValue(CellShape::DEFAULT_CELL_SIZE);
+    minCellSize = CellShape::DEFAULT_CELL_SIZE;
 
     //tabWidget starts on Generator Settings tab
     ui->tabWidget->setCurrentIndex(2);
@@ -391,33 +393,27 @@ void MainWindow::photomosaicDetailChanged([[maybe_unused]] int i)
 void MainWindow::cellSizeChanged(int t_value)
 {
     //Updates minimum cell size
-    ui->spinMinCellSize->blockSignals(true);
-    ui->spinMinCellSize->setMaximum(t_value);
-    ui->spinMinCellSize->stepBy(0);
-    ui->spinMinCellSize->blockSignals(false);
+    updateCellSizes();
 
     clampDetail();
 
     if (ui->checkCellShape->isChecked())
-    {
         ui->widgetGridPreview->getCellGroup().setCellShape(newCellShape.resized(t_value));
-    }
     else
-    {
         ui->widgetGridPreview->getCellGroup().setCellShape(CellShape(t_value));
-    }
-
-    ui->widgetGridPreview->getCellGroup().setSizeSteps(ui->spinMinCellSize->getHalveSteps());
 
     updateGridPreview();
 }
 
 //Updates cell grid size steps
-void MainWindow::minimumCellSizeChanged([[maybe_unused]] int t_value)
+void MainWindow::sizeStepsChanged([[maybe_unused]] int t_value)
 {
+    //Updates minimum cell size
+    updateCellSizes();
+
     clampDetail();
 
-    ui->widgetGridPreview->getCellGroup().setSizeSteps(ui->spinMinCellSize->getHalveSteps());
+    ui->widgetGridPreview->getCellGroup().setSizeSteps(ui->spinSizeSteps->value());
     updateGridPreview();
 }
 
@@ -425,15 +421,13 @@ void MainWindow::minimumCellSizeChanged([[maybe_unused]] int t_value)
 void MainWindow::enableCellShape(bool t_state)
 {
     ui->lineCellShape->setEnabled(t_state);
+
     if (t_state)
-    {
         ui->widgetGridPreview->getCellGroup().setCellShape(
             newCellShape.resized(ui->spinCellSize->value()));
-    }
     else
-    {
         ui->widgetGridPreview->getCellGroup().setCellShape(CellShape(ui->spinCellSize->value()));
-    }
+
     updateGridPreview();
 }
 
@@ -569,10 +563,40 @@ void MainWindow::generatePhotomosaic()
     }
 }
 
+//Update list of cell sizes
+void MainWindow::updateCellSizes()
+{
+    //Create string listing cell sizes for each size step
+    QString cellSizes("Cell Sizes: ");
+    int cellSize = ui->spinCellSize->value();
+    cellSizes.append(QString::number(cellSize));
+    int i = 0;
+    //For each size step, stop if cell size will subseed minimum cell size
+    for (; i < ui->spinSizeSteps->value() && cellSize > CellShape::MIN_CELL_SIZE * 2; ++i)
+    {
+        cellSize /= 2;
+
+        cellSizes.append(", ");
+        cellSizes.append(QString::number(cellSize));
+    }
+
+    //Size steps would subseed minimum cell size, instead limit size steps
+    if (i != ui->spinSizeSteps->value())
+    {
+        ui->spinSizeSteps->blockSignals(true);
+        ui->spinSizeSteps->setValue(i);
+        ui->spinSizeSteps->blockSignals(false);
+    }
+
+    //Save minimum cell size
+    minCellSize = cellSize;
+    //Show list
+    ui->labelCellSizesList->setText(cellSizes);
+}
+
 //Clamps detail level so that cell size never reaches 0px
 void MainWindow::clampDetail()
 {
-    const int minCellSize = ui->spinMinCellSize->value();
     const double detailLevel = ui->spinDetail->value() / 100.0;
     if (std::floor(minCellSize * detailLevel) < 1)
     {
@@ -589,20 +613,9 @@ void MainWindow::updateGridPreview()
     //Disable window interactions
     setEnabled(false);
 
-    //Setup up progress bar for looping
-    progressBar->setRange(0, 0);
-    progressBar->setValue(0);
-    progressBar->show();
+    //Update grid preview
+    ui->widgetGridPreview->updateGrid();
 
-    //Update grid preview in another thread
-    QThread *thread = QThread::create([=]{ui->widgetGridPreview->updateGrid();});
-    thread->start();
-
-    //Keep GUI responsive while grid preview being updated
-    while (thread->isRunning())
-        QCoreApplication::processEvents();
-
-    progressBar->hide();
     //Enable window interactions
     setEnabled(true);
     //Return focus to last widget

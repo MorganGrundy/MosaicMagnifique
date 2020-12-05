@@ -22,7 +22,7 @@
 #include "imageutility.h"
 
 CellGroup::CellGroup() : cells{1}, detailCells{1}, edgeCells{1, std::vector<cv::Mat>(4)},
-    detail{1}, sizeSteps{1}
+    detail{1}, sizeSteps{0}
 {}
 
 //Sets the cell shape

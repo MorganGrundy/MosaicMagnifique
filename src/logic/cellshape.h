@@ -32,6 +32,8 @@ public:
 
     //Default cell size
     static const size_t DEFAULT_CELL_SIZE = 128;
+    //Minimum cell size
+    static const int MIN_CELL_SIZE = 8;
 
     //Constructors
     CellShape();

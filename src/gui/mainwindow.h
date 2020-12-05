@@ -71,7 +71,7 @@ public slots:
     //Updates cell size
     void cellSizeChanged(int t_value);
     //Updates cell grid size steps
-    void minimumCellSizeChanged(int t_value);
+    void sizeStepsChanged(int t_value);
     //Enables/disables custom cell shapes
     void enableCellShape(bool t_state);
 
@@ -92,6 +92,9 @@ private:
     void CUDAinit();
 #endif
 
+    //Update list of cell sizes
+    void updateCellSizes();
+
     //Clamps detail level so that cell size never reaches 0px
     void clampDetail();
 
@@ -103,6 +106,7 @@ private:
 
     bool cellShapeChanged;
     CellShape newCellShape;
+    int minCellSize;
 
     double photomosaicSizeRatio;
 

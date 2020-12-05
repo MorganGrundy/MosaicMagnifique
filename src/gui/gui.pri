@@ -3,7 +3,7 @@ win32:RC_ICONS += $$PWD/MosaicMagnifique.ico
 #Application version
 VERSION_MAJOR = 3
 VERSION_MINOR = 2
-VERSION_BUILD = 13
+VERSION_BUILD = 14
 
 DEFINES += "VERSION_MAJOR=$$VERSION_MAJOR" \
 	"VERSION_MINOR=$$VERSION_MINOR" \
@@ -29,7 +29,6 @@ HEADERS += \
 	$$PWD/grideditor.h \
 	$$PWD/grideditviewer.h \
 	$$PWD/gridviewer.h \
-	$$PWD/halvingspinbox.h \
 	$$PWD/imagelibraryeditor.h \
 	$$PWD/imagesquarer.h \
 	$$PWD/mainwindow.h \
@@ -44,7 +43,6 @@ SOURCES += \
 	$$PWD/grideditor.cpp \
 	$$PWD/grideditviewer.cpp \
 	$$PWD/gridviewer.cpp \
-	$$PWD/halvingspinbox.cpp \
 	$$PWD/imagelibraryeditor.cpp \
 	$$PWD/imagesquarer.cpp \
 	$$PWD/main.cpp \

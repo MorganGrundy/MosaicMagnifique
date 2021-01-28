@@ -608,7 +608,12 @@ void MainWindow::clampDetail()
 //Updates grid preview
 void MainWindow::updateGridPreview()
 {
-    //Get focus
+    //Save current status message
+    QString savedMessage = ui->statusbar->currentMessage();
+    //Set status message
+    ui->statusbar->showMessage("Updating grid preview...");
+    QCoreApplication::processEvents(QEventLoop::ProcessEventsFlag::ExcludeUserInputEvents);
+    //Save focus widget
     QWidget *focusWidget = QApplication::focusWidget();
     //Disable window interactions
     setEnabled(false);
@@ -616,9 +621,11 @@ void MainWindow::updateGridPreview()
     //Update grid preview
     ui->widgetGridPreview->updateGrid();
 
+    //Return saved status message
+    ui->statusbar->showMessage(savedMessage);
     //Enable window interactions
     setEnabled(true);
-    //Return focus to last widget
+    //Return focus to saved widget
     if (focusWidget)
         focusWidget->setFocus();
 }

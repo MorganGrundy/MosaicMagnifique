@@ -37,6 +37,10 @@ namespace GridUtility
     cv::Point calculateGridSize(const CellShape &t_cellShape,
                                 const int t_imageWidth, const int t_imageHeight,
                                 const int t_pad);
+    //Calculates the minimum image size containing target number of cells
+    cv::Point calculateImageSize(const CellShape &t_cellShape,
+                                 const int t_cellX, const int t_cellY,
+                                 const int t_pad);
 
     //Returns rect of cell shape at the given grid position
     cv::Rect getRectAt(const CellShape &t_cellShape, const int t_x, const int t_y);

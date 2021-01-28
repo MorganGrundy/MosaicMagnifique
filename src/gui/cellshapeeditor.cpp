@@ -138,7 +138,7 @@ void CellShapeEditor::loadCellShape()
 
         //Give cell shape to grid preview
         ui->cellShapeViewer->getCellGroup().setCellShape(tmpCellShape);
-        ui->cellShapeViewer->updateGrid();
+        updateGridPreview();
 
         //Update cell settings in ui
         ui->lineCellName->setText(tmpCellShape.getName());
@@ -175,7 +175,7 @@ void CellShapeEditor::loadCellMask()
 
         //Give cell shape to grid preview
         ui->cellShapeViewer->getCellGroup().setCellShape(cellShape);
-        ui->cellShapeViewer->updateGrid();
+        updateGridPreview();
         emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
     }
 }
@@ -193,7 +193,7 @@ void CellShapeEditor::cellSpacingColChanged(int t_value)
 
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->cellShapeViewer->updateGrid();
+    updateGridPreview();
     emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
@@ -210,7 +210,7 @@ void CellShapeEditor::cellSpacingRowChanged(int t_value)
 
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->cellShapeViewer->updateGrid();
+    updateGridPreview();
     emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
@@ -223,7 +223,7 @@ void CellShapeEditor::cellAlternateOffsetColChanged(int t_value)
 
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->cellShapeViewer->updateGrid();
+    updateGridPreview();
     emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
@@ -236,7 +236,7 @@ void CellShapeEditor::cellAlternateOffsetRowChanged(int t_value)
 
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->cellShapeViewer->updateGrid();
+    updateGridPreview();
     emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
@@ -249,7 +249,7 @@ void CellShapeEditor::cellColumnFlipHorizontalChanged(bool t_state)
 
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->cellShapeViewer->updateGrid();
+    updateGridPreview();
     emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
@@ -262,7 +262,7 @@ void CellShapeEditor::cellColumnFlipVerticalChanged(bool t_state)
 
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->cellShapeViewer->updateGrid();
+    updateGridPreview();
     emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
@@ -275,7 +275,7 @@ void CellShapeEditor::cellRowFlipHorizontalChanged(bool t_state)
 
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->cellShapeViewer->updateGrid();
+    updateGridPreview();
     emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
@@ -288,7 +288,7 @@ void CellShapeEditor::cellRowFlipVerticalChanged(bool t_state)
 
     //Give cell shape to grid preview
     ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
-    ui->cellShapeViewer->updateGrid();
+    updateGridPreview();
     emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
 }
 
@@ -323,7 +323,7 @@ void CellShapeEditor::cellAlternateSpacingRowChanged(int t_value)
 
         //Give cell shape to grid preview
         ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
-        ui->cellShapeViewer->updateGrid();
+        updateGridPreview();
         emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
     }
 }
@@ -339,7 +339,7 @@ void CellShapeEditor::cellAlternateSpacingColChanged(int t_value)
 
         //Give cell shape to grid preview
         ui->cellShapeViewer->getCellGroup().setCellShape(newCellShape);
-        ui->cellShapeViewer->updateGrid();
+        updateGridPreview();
         emit cellShapeChanged(ui->cellShapeViewer->getCellGroup().getCell(0));
     }
 }
@@ -382,4 +382,22 @@ void CellShapeEditor::loadSettingsFromCellShape(const CellShape &t_cellShape)
     ui->checkCellColFlipV->setChecked(t_cellShape.getAlternateColFlipVertical());
     ui->checkCellRowFlipH->setChecked(t_cellShape.getAlternateRowFlipHorizontal());
     ui->checkCellRowFlipV->setChecked(t_cellShape.getAlternateRowFlipVertical());
+}
+
+//Updates grid preview
+void CellShapeEditor::updateGridPreview()
+{
+    //Save focus widget
+    QWidget *focusWidget = QApplication::focusWidget();
+    //Disable window interactions
+    setEnabled(false);
+
+    //Update grid preview
+    ui->cellShapeViewer->updateGrid();
+
+    //Enable window interactions
+    setEnabled(true);
+    //Return focus to saved widget
+    if (focusWidget)
+        focusWidget->setFocus();
 }

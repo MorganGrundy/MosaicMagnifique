@@ -67,16 +67,34 @@ GridViewer::~GridViewer()
 //Gets grid state of current options and creates grid
 void GridViewer::updateGrid()
 {
-    //Height & Width to use when no back image
-    const int viewerHeight = viewport()->rect().height();
-    const int viewerWidth = viewport()->rect().width();
-    gridState = GridGenerator::getGridState(m_cells, backImage, viewerHeight, viewerWidth);
+    if (backImage.empty())
+    {
+        //Viewer size ratio
+        const int viewerHeight = viewport()->rect().height();
+        const int viewerWidth = viewport()->rect().width();
+        const double viewerGridRatio = static_cast<double>(viewerHeight) / viewerWidth;
 
-    //Calculate grid size
-    const int gridHeight = (backImage.empty()) ? viewerHeight : backImage.rows;
-    const int gridWidth = (backImage.empty()) ? viewerWidth : backImage.cols;
+        //Height & Width for minimum grid size
+        cv::Point defaultSize = GridUtility::calculateImageSize(m_cells.getCell(0),
+                                        EMPTY_GRID_SIZE, EMPTY_GRID_SIZE, GridUtility::PAD_GRID);
 
-    createGrid(gridHeight, gridWidth);
+        //Calculate minimum image size with same ratio as viewer
+        defaultSize.x = std::max(defaultSize.x,
+                                 static_cast<int>(std::round(defaultSize.y / viewerGridRatio)));
+        defaultSize.y = std::max(defaultSize.y,
+                                 static_cast<int>(std::round(defaultSize.x * viewerGridRatio)));
+
+        //Update grid state
+        gridState = GridGenerator::getGridState(m_cells, backImage, defaultSize.y, defaultSize.x);
+
+        createGrid(defaultSize.y, defaultSize.x);
+    }
+    else
+    {
+        gridState = GridGenerator::getGridState(m_cells, backImage, backImage.rows, backImage.cols);
+        createGrid(backImage.rows, backImage.cols);
+    }
+
     updateView();
 }
 
@@ -163,15 +181,27 @@ void GridViewer::setGridState(const GridUtility::MosaicBestFit &t_gridState)
 {
     gridState = t_gridState;
 
-    //Height & Width to use when no back image
-    const int viewerHeight = viewport()->rect().height();
-    const int viewerWidth = viewport()->rect().width();
+    if (backImage.empty())
+    {
+        //Viewer size ratio
+        const int viewerHeight = viewport()->rect().height();
+        const int viewerWidth = viewport()->rect().width();
+        const double viewerGridRatio = static_cast<double>(viewerHeight) / viewerWidth;
 
-    //Calculate grid size
-    const int gridHeight = (backImage.empty()) ? viewerHeight : backImage.rows;
-    const int gridWidth = (backImage.empty()) ? viewerWidth : backImage.cols;
+        //Height & Width for minimum grid size
+        cv::Point defaultSize = GridUtility::calculateImageSize(
+            m_cells.getCell(0), EMPTY_GRID_SIZE, EMPTY_GRID_SIZE, GridUtility::PAD_GRID);
 
-    createGrid(gridHeight, gridWidth);
+        //Calculate minimum image size with same ratio as viewer
+        defaultSize.x = std::max(defaultSize.x,
+                                 static_cast<int>(std::round(defaultSize.y / viewerGridRatio)));
+        defaultSize.y = std::max(defaultSize.y,
+                                 static_cast<int>(std::round(defaultSize.x * viewerGridRatio)));
+
+        createGrid(defaultSize.y, defaultSize.x);
+    }
+    else
+        createGrid(backImage.rows, backImage.cols);
 }
 
 //Returns state of current grid

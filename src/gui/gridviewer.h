@@ -37,6 +37,9 @@ class GridViewer : public CustomGraphicsView
 {
     Q_OBJECT
 public:
+    //Minimum grid size to use when no background
+    static const int EMPTY_GRID_SIZE = 10 + GridUtility::PAD_GRID;
+
     explicit GridViewer(QWidget *parent = nullptr);
     ~GridViewer();
 

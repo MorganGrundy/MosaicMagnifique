@@ -78,10 +78,13 @@ signals:
     void cellNameChanged(const QString &t_name);
 
 private:
-    Ui::CellShapeEditor *ui;
-
     //Loads settings from given cell shape
     void loadSettingsFromCellShape(const CellShape &t_cellShape);
+
+    //Updates grid preview
+    void updateGridPreview();
+
+    Ui::CellShapeEditor *ui;
 };
 
 #endif // CELLSHAPEEDITOR_H

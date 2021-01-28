@@ -23,8 +23,8 @@
 
 //Calculates the number of given cells needed to fill an image of given size
 cv::Point GridUtility::calculateGridSize(const CellShape &t_cellShape,
-                                      const int t_imageWidth, const int t_imageHeight,
-                                      const int t_pad)
+                                         const int t_imageWidth, const int t_imageHeight,
+                                         const int t_pad)
 {
     cv::Point gridSize;
     //Calculates number of cells across x-axis
@@ -49,6 +49,37 @@ cv::Point GridUtility::calculateGridSize(const CellShape &t_cellShape,
     gridSize.y += t_pad;
 
     return gridSize;
+}
+
+
+//Calculates the minimum image size containing target number of cells
+cv::Point GridUtility::calculateImageSize(const CellShape &t_cellShape,
+                                          const int t_cellX, const int t_cellY,
+                                          const int t_pad)
+{
+    cv::Point imageSize;
+
+    //Remove padding
+    int cellX = t_cellX - t_pad;
+    int cellY = t_cellY - t_pad;
+
+    //Calculate image width
+    if (t_cellShape.getColSpacing() != t_cellShape.getAlternateColSpacing())
+        imageSize.x = (cellX / 2)
+                      * (t_cellShape.getColSpacing() + t_cellShape.getAlternateColSpacing())
+                      - t_cellShape.getAlternateColSpacing() - t_cellShape.getColSpacing() + 1;
+    else
+        imageSize.x = (cellX * t_cellShape.getColSpacing()) - t_cellShape.getColSpacing() + 1;
+
+    //Calculate image height
+    if (t_cellShape.getRowSpacing() != t_cellShape.getAlternateRowSpacing())
+        imageSize.y = (cellY / 2)
+                      * (t_cellShape.getRowSpacing() + t_cellShape.getAlternateRowSpacing())
+                      - t_cellShape.getAlternateRowSpacing() - t_cellShape.getRowSpacing() + 1;
+    else
+        imageSize.y = (cellY * t_cellShape.getRowSpacing()) - t_cellShape.getRowSpacing() + 1;
+
+    return imageSize;
 }
 
 //Returns rect of cell shape at the given grid position

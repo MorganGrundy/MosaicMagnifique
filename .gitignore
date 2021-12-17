@@ -1,0 +1,20 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/test/release
+/test/debug
+/src/release
+/src/debug
+/test/testcases
+/src/ui_photomosaicviewer.h
+/src/ui_mainwindow.h
+/src/ui_imagesquarer.h
+/src/ui_imagelibraryeditor.h
+/src/ui_grideditor.h
+/src/ui_colourvisualisation.h
+/src/ui_cellshapeeditor.h
+/src/MosaicMagnifique.vcxproj.user
+/test/test.vcxproj.user
+/src/MosaicMagnifique_resource.aps

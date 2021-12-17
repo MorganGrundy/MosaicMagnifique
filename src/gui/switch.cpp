@@ -1,6 +1,7 @@
 #include "switch.h"
 
 #include <QPainter>
+#include <stdexcept>
 
 Switch::Switch(QWidget *t_parent)
     : QAbstractButton{t_parent}, m_fontMetric{QFont()}, m_leftColour{Qt::white}, m_rightColour{Qt::white}

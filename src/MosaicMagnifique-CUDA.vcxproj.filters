@@ -222,12 +222,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="debug\moc_predefs.h.cbt">
-      <Filter>Generated Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="release\moc_predefs.h.cbt">
-      <Filter>Generated Files</Filter>
-    </CustomBuild>
+    <CustomBuild Include="$(Configuration)-$(Platform)-CUDA\moc_predefs.h.cbt" />
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="gui\cellshapeeditor.ui">

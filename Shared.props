@@ -13,7 +13,7 @@
   <ItemDefinitionGroup>
     <Link>
       <AdditionalDependencies>opencv_core$(OpenCV-Version)$(DebugSuffix).lib;opencv_imgcodecs$(OpenCV-Version)$(DebugSuffix).lib;opencv_imgproc$(OpenCV-Version)$(DebugSuffix).lib;opencv_features2d$(OpenCV-Version)$(DebugSuffix).lib;opencv_objdetect$(OpenCV-Version)$(DebugSuffix).lib;shell32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\OpenCV\opencv-$(OpenCV-VersionDot)\build\install\x64\vc16\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\OpenCV\opencv-$(OpenCV-VersionDot)\build\install\$(PlatformShortName)\vc16\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

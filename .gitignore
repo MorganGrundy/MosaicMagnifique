@@ -22,3 +22,8 @@
 /src/vc140.pdb
 /src/debugCUDA
 /src/releaseCUDA
+/build
+/src/Release-x64
+/src/Debug-x64
+/src/Release-x64-CUDA
+/src/Debug-x64-CUDA

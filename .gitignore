@@ -18,3 +18,7 @@
 /src/MosaicMagnifique.vcxproj.user
 /test/test.vcxproj.user
 /src/MosaicMagnifique_resource.aps
+/src/MosaicMagnifique-CUDA.vcxproj.user
+/src/vc140.pdb
+/src/debugCUDA
+/src/releaseCUDA

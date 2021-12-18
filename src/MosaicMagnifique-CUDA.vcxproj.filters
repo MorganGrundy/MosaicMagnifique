@@ -45,6 +45,15 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="CUDA">
+      <UniqueIdentifier>{a35fd8f6-c219-4854-8d1e-3429e8c3c9e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CUDA\CUDA Headers">
+      <UniqueIdentifier>{a30e1ab9-ce30-41dc-a23c-05ad83734b8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CUDA\CUDA Sources">
+      <UniqueIdentifier>{6e3d6ac6-d5fd-4402-8791-f6ca0a14d1c3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="logic\cellgroup.cpp">
@@ -122,6 +131,9 @@
     <ClCompile Include="gui\switch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="logic\cudaphotomosaicgenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="logic\cellgroup.h">
@@ -196,6 +208,18 @@
     <QtMoc Include="gui\switch.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <ClInclude Include="logic\reduction.cuh">
+      <Filter>CUDA\CUDA Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="logic\photomosaicgenerator.cuh">
+      <Filter>CUDA\CUDA Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="logic\cudaphotomosaicgenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="logic\cudautility.h">
+      <Filter>CUDA\CUDA Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="debug\moc_predefs.h.cbt">
@@ -246,5 +270,13 @@
     <ResourceCompile Include=".\MosaicMagnifique_resource.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="logic\photomosaicgenerator.cu">
+      <Filter>CUDA\CUDA Sources</Filter>
+    </CudaCompile>
+    <CudaCompile Include="logic\reduction.cu">
+      <Filter>CUDA\CUDA Sources</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

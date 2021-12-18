@@ -1,5 +1,6 @@
 #ifndef CUDAUTILITY_H
 #define CUDAUTILITY_H
+#ifdef CUDA
 
 #include <cuda_runtime_api.h>
 #include <cstdio>
@@ -22,4 +23,5 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
 
 }
 
+#endif // CUDA
 #endif // CUDAUTILITY_H

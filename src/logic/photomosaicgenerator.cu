@@ -19,6 +19,10 @@
 
 #include <math_constants.h>
 #include <algorithm>
+#include <cuda_runtime.h>
+#include <cuda.h>
+#include <device_launch_parameters.h>
+#include <math.h>
 
 //Calculates the euclidean difference between main image and library images
 __global__
@@ -50,9 +54,9 @@ void euclideanDifferenceKernel(float *im_1, float *im_2, size_t noLibIm,
         if (mask_im[grayscaleIndex] == 0)
             variants[i / channels] = 0;
         else
-            variants[i / channels] = sqrt(pow((double) im_1[im_1_index] - im_2[i], 2.0) +
-                                          pow((double) im_1[im_1_index + 1] - im_2[i + 1], 2.0) +
-                                          pow((double) im_1[im_1_index + 2] - im_2[i + 2], 2.0));
+            variants[i / channels] = sqrt(pow((double) (im_1[im_1_index] - im_2[i]), (double)2.0) +
+                                          pow((double) (im_1[im_1_index + 1] - im_2[i + 1]), (double)2.0) +
+                                          pow((double) (im_1[im_1_index + 2] - im_2[i + 2]), (double)2.0));
     }
 }
 
@@ -117,7 +121,7 @@ void CIEDE2000DifferenceKernel(float *im_1, float *im_2, size_t noLibIm,
                     (im_2[i + 2] * im_2[i + 2]));
             const double barC = (C1 + C2) / 2.0;
 
-            const double G = 0.5 * (1 - sqrt(pow(barC, 7) / (pow(barC, 7) + pow25To7)));
+            const double G = 0.5 * (1 - sqrt(pow(barC, (double)7.0) / (pow(barC, (double)7.0) + pow25To7)));
 
             const double a1Prime = (1.0 + G) * im_1[im_1_index + 1];
             const double a2Prime = (1.0 + G) * im_2[i + 1];
@@ -197,20 +201,20 @@ void CIEDE2000DifferenceKernel(float *im_1, float *im_2, size_t noLibIm,
             const double deltaTheta = degToRadKernel(30.0) *
                     exp(-pow((barhPrime - degToRadKernel(275.0)) / degToRadKernel(25.0), 2.0));
 
-            const double R_C = 2.0 * sqrt(pow(barCPrime, 7.0) /
-                                          (pow(barCPrime, 7.0) + pow25To7));
+            const double R_C = 2.0 * sqrt(pow(barCPrime, (double)7.0) /
+                                          (pow(barCPrime, (double)7.0) + pow25To7));
 
-            const double S_L = 1 + ((0.015 * pow(barLPrime - 50.0, 2.0)) /
-                                    sqrt(20 + pow(barLPrime - 50.0, 2.0)));
+            const double S_L = 1 + ((0.015 * pow(barLPrime - 50.0, (double)2.0)) /
+                                    sqrt(20 + pow(barLPrime - 50.0, (double)2.0)));
             const double S_C = 1 + (0.045 * barCPrime);
             const double S_H = 1 + (0.015 * barCPrime * T);
 
             const double R_T = (-sin(2.0 * deltaTheta)) * R_C;
 
 
-            variants[i / channels] = (double) sqrt(pow(deltaLPrime / (k_L * S_L), 2.0) +
-                                                   pow(deltaCPrime / (k_C * S_C), 2.0) +
-                                                   pow(deltaHPrime / (k_H * S_H), 2.0) +
+            variants[i / channels] = (double) sqrt(pow(deltaLPrime / (k_L * S_L), (double)2.0) +
+                                                   pow(deltaCPrime / (k_C * S_C), (double)2.0) +
+                                                   pow(deltaHPrime / (k_H * S_H), (double)2.0) +
                                                    (R_T * (deltaCPrime / (k_C * S_C)) *
                                                     (deltaHPrime / (k_H * S_H))));
         }

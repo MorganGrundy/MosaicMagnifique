@@ -16,6 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
+#ifdef CUDA
 
 #include "cudaphotomosaicgenerator.h"
 
@@ -262,3 +263,5 @@ void CUDAPhotomosaicGenerator::copyMatToDevice(const cv::Mat &t_mat, T *t_device
                              cudaMemcpyHostToDevice));
     }
 }
+
+#endif // CUDA

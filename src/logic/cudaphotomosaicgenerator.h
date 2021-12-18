@@ -19,6 +19,7 @@
 
 #ifndef CUDAPHOTOMOSAICGENERATORBASE_H
 #define CUDAPHOTOMOSAICGENERATORBASE_H
+#ifdef CUDA
 
 #include "photomosaicgeneratorbase.h"
 
@@ -38,4 +39,5 @@ private:
     void copyMatToDevice(const cv::Mat &t_mat, T *t_device) const;
 };
 
+#endif // CUDA
 #endif // CUDAPHOTOMOSAICGENERATORBASE_H

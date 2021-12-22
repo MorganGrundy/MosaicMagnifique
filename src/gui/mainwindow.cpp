@@ -51,6 +51,12 @@ MainWindow::MainWindow(QWidget *t_parent)
 {
     ui->setupUi(this);
 
+    //Populate colour difference and scheme combo boxes
+    for (auto type : ColourDifference::Type_STR)
+        ui->comboColourDifference->addItem(type);
+    for (auto type : ColourScheme::Type_STR)
+        ui->comboColourScheme->addItem(type);
+
     //Setup progress bar in status bar
     progressBar = new QProgressBar(ui->statusbar);
     progressBar->setRange(0, 0);
@@ -104,36 +110,26 @@ MainWindow::MainWindow(QWidget *t_parent)
     cellShapeChanged = false;
     newCellShape = CellShape(CellShape::DEFAULT_CELL_SIZE);
 
-    connect(ui->cellShapeEditor, &CellShapeEditor::cellShapeChanged,
-            this, &MainWindow::updateCellShape);
-    connect(ui->cellShapeEditor, &CellShapeEditor::cellNameChanged,
-            this, &MainWindow::updateCellName);
+    connect(ui->cellShapeEditor, &CellShapeEditor::cellShapeChanged, this, &MainWindow::updateCellShape);
+    connect(ui->cellShapeEditor, &CellShapeEditor::cellNameChanged, this, &MainWindow::updateCellName);
 
     //Image Library Editor
     ui->imageLibraryEditor->setProgressBar(progressBar);
-    connect(ui->imageLibraryEditor, &ImageLibraryEditor::imageLibraryChanged,
-            this, &MainWindow::updateImageLibraryCount);
+    connect(ui->imageLibraryEditor, &ImageLibraryEditor::imageLibraryChanged, this, &MainWindow::updateImageLibraryCount);
 
     //Connects generator settings to appropriate methods
     connect(ui->buttonMainImage, &QPushButton::released, this, &MainWindow::selectMainImage);
     connect(ui->buttonCompareColours, &QPushButton::released, this, &MainWindow::compareColours);
 
-    connect(ui->buttonPhotomosaicSizeLink, &QPushButton::released,
-            this, &MainWindow::photomosaicSizeLink);
-    connect(ui->spinPhotomosaicWidth, qOverload<int>(&QSpinBox::valueChanged),
-            this, &MainWindow::photomosaicWidthChanged);
-    connect(ui->spinPhotomosaicHeight, qOverload<int>(&QSpinBox::valueChanged),
-            this, &MainWindow::photomosaicHeightChanged);
-    connect(ui->buttonPhotomosaicSize, &QPushButton::released,
-            this, &MainWindow::loadImageSize);
+    connect(ui->buttonPhotomosaicSizeLink, &QPushButton::released, this, &MainWindow::photomosaicSizeLink);
+    connect(ui->spinPhotomosaicWidth, qOverload<int>(&QSpinBox::valueChanged), this, &MainWindow::photomosaicWidthChanged);
+    connect(ui->spinPhotomosaicHeight, qOverload<int>(&QSpinBox::valueChanged), this, &MainWindow::photomosaicHeightChanged);
+    connect(ui->buttonPhotomosaicSize, &QPushButton::released, this, &MainWindow::loadImageSize);
 
-    connect(ui->spinDetail, qOverload<int>(&QSpinBox::valueChanged),
-            this, &MainWindow::photomosaicDetailChanged);
+    connect(ui->spinDetail, qOverload<int>(&QSpinBox::valueChanged), this, &MainWindow::photomosaicDetailChanged);
 
-    connect(ui->spinCellSize, qOverload<int>(&QSpinBox::valueChanged),
-            this, &MainWindow::cellSizeChanged);
-    connect(ui->spinSizeSteps, qOverload<int>(&QSpinBox::valueChanged),
-            this, &MainWindow::sizeStepsChanged);
+    connect(ui->spinCellSize, qOverload<int>(&QSpinBox::valueChanged), this, &MainWindow::cellSizeChanged);
+    connect(ui->spinSizeSteps, qOverload<int>(&QSpinBox::valueChanged), this, &MainWindow::sizeStepsChanged);
     connect(ui->checkCellShape, &QCheckBox::clicked, this, &MainWindow::enableCellShape);
 
     connect(ui->buttonEditGrid, &QPushButton::released, this, &MainWindow::editCellGrid);
@@ -521,12 +517,8 @@ void MainWindow::generatePhotomosaic()
 
     generator->setLibrary(library);
 
-    if (ui->comboMode->currentText() == "RGB Euclidean")
-        generator->setMode(PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN);
-    else if (ui->comboMode->currentText() == "CIE76")
-        generator->setMode(PhotomosaicGeneratorBase::Mode::CIE76);
-    else if (ui->comboMode->currentText() == "CIEDE2000")
-        generator->setMode(PhotomosaicGeneratorBase::Mode::CIEDE2000);
+    generator->setColourDifference(ColourDifference::strToEnum(ui->comboColourDifference->currentText()));
+    generator->setColourScheme(ColourScheme::strToEnum(ui->comboColourScheme->currentText()));
 
     generator->setCellGroup(ui->widgetGridPreview->getCellGroup());
     generator->setGridState(ui->widgetGridPreview->getGridState());

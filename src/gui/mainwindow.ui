@@ -138,7 +138,7 @@ padding: 0 3px 0 3px;
            <number>9</number>
           </property>
           <item>
-           <widget class="QGroupBox" name="groupPhotomosaic">
+           <widget class="QGroupBox" name="groupGeneral">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
               <horstretch>0</horstretch>
@@ -146,7 +146,7 @@ padding: 0 3px 0 3px;
              </sizepolicy>
             </property>
             <property name="title">
-             <string>Photomosaic</string>
+             <string>General</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -529,21 +529,54 @@ border: 1px solid dimgray;
               </widget>
              </item>
              <item>
-              <widget class="Line" name="line_3">
+              <spacer name="verticalSpacer">
                <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+                <enum>Qt::Vertical</enum>
                </property>
-              </widget>
+               <property name="sizeType">
+                <enum>QSizePolicy::MinimumExpanding</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>1</width>
+                 <height>0</height>
+                </size>
+               </property>
+              </spacer>
              </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="groupColour">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="title">
+             <string>Colour</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+            <property name="flat">
+             <bool>false</bool>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_7">
+             <property name="topMargin">
+              <number>14</number>
+             </property>
              <item>
-              <widget class="QFrame" name="frameMode">
+              <widget class="QFrame" name="frameMode_2">
                <property name="frameShape">
                 <enum>QFrame::StyledPanel</enum>
                </property>
                <property name="frameShadow">
                 <enum>QFrame::Raised</enum>
                </property>
-               <layout class="QGridLayout" name="gridLayout_4">
+               <layout class="QGridLayout" name="gridLayout_5">
                 <property name="leftMargin">
                  <number>0</number>
                 </property>
@@ -556,8 +589,31 @@ border: 1px solid dimgray;
                 <property name="bottomMargin">
                  <number>0</number>
                 </property>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="labelColourDifference">
+                  <property name="statusTip">
+                   <string>Controls how a Photomosaic is generated</string>
+                  </property>
+                  <property name="text">
+                   <string>Difference:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="2">
+                 <spacer name="horizontalSpacer_8">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
                 <item row="0" column="1">
-                 <widget class="QComboBox" name="comboMode">
+                 <widget class="QComboBox" name="comboColourDifference">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -576,51 +632,23 @@ border: 1px solid dimgray;
 &lt;/ul&gt;
 &lt;/body&gt;&lt;/html&gt;</string>
                   </property>
-                  <item>
-                   <property name="text">
-                    <string>RGB Euclidean</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>CIE76</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>CIEDE2000</string>
-                   </property>
-                  </item>
                  </widget>
                 </item>
-                <item row="0" column="2">
-                 <spacer name="horizontalSpacer_5">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item row="0" column="0">
-                 <widget class="QLabel" name="labelMode">
-                  <property name="statusTip">
-                   <string>Controls how a Photomosaic is generated</string>
-                  </property>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="labelColourScheme">
                   <property name="text">
-                   <string>Mode:</string>
+                   <string>Scheme:</string>
                   </property>
                  </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QComboBox" name="comboColourScheme"/>
                 </item>
                </layout>
               </widget>
              </item>
              <item>
-              <spacer name="verticalSpacer">
+              <spacer name="verticalSpacer_4">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
                </property>
@@ -916,7 +944,7 @@ border: 1px solid dimgray;
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
-                 <width>20</width>
+                 <width>1</width>
                  <height>0</height>
                 </size>
                </property>
@@ -1124,7 +1152,7 @@ border: 1px solid dimgray;
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
-                 <width>20</width>
+                 <width>1</width>
                  <height>0</height>
                 </size>
                </property>
@@ -1132,6 +1160,22 @@ border: 1px solid dimgray;
              </item>
             </layout>
            </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_5">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::MinimumExpanding</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>1</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
           </item>
           <item>
            <layout class="QHBoxLayout" name="groupGenerate">
@@ -1224,7 +1268,7 @@ border: 1px solid dimgray;
      <x>0</x>
      <y>0</y>
      <width>1080</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuAbout">

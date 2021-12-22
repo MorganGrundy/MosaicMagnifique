@@ -134,6 +134,9 @@
     <ClCompile Include="logic\cudaphotomosaicgenerator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="logic\ColourScheme.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="logic\cellgroup.h">
@@ -219,6 +222,9 @@
     </ClInclude>
     <ClInclude Include="logic\cudautility.h">
       <Filter>CUDA\CUDA Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="logic\ColourScheme.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

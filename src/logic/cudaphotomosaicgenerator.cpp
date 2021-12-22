@@ -170,18 +170,9 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                                          cudaMemcpyHostToDevice));
 
                     //Calculate difference
-                    if (m_mode == Mode::CIEDE2000)
-                        CIEDE2000DifferenceKernelWrapper(d_cellImage, d_libraryImage,
-                                                         resizedLib.size(), d_mask, cell.rows,
-                                                         cell.channels(), d_targetArea, d_variants,
-                                                         blockSize);
-                    else if (m_mode == Mode::RGB_EUCLIDEAN || m_mode == Mode::CIE76)
-                        euclideanDifferenceKernelWrapper(d_cellImage, d_libraryImage,
-                                                         resizedLib.size(), d_mask, cell.rows,
-                                                         cell.channels(), d_targetArea, d_variants,
-                                                         blockSize);
-                    else
-                        throw std::invalid_argument(Q_FUNC_INFO " Unsupported mode");
+                    ColourDifference::getCUDAFunction(m_colourDiffType)(d_cellImage, d_libraryImage,
+                        resizedLib.size(), d_mask, cell.rows, cell.channels(), d_targetArea, d_variants,
+                        blockSize);
                     gpuErrchk(cudaPeekAtLastError());
 
                     //Reduce variants

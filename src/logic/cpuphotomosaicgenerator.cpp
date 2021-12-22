@@ -126,14 +126,7 @@ CPUPhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape,
                 //Check pixel active in mask
                 if (p_mask[col] != 0)
                 {
-                    if (m_mode == Mode::RGB_EUCLIDEAN)
-                        variant += ColourDifference::calculateRGBEuclidean(p_main[col], p_im[col]);
-                    else if (m_mode == Mode::CIE76)
-                        variant += ColourDifference::calculateCIE76(p_main[col], p_im[col]);
-                    else if (m_mode == Mode::CIEDE2000)
-                        variant += ColourDifference::calculateCIEDE2000(p_main[col], p_im[col]);
-                    else
-                        qDebug() << Q_FUNC_INFO << "Unsupported mode";
+                    variant += m_colourDiffFunc(p_main[col], p_im[col]);
                 }
             }
         }

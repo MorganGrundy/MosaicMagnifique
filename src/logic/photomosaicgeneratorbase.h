@@ -27,13 +27,13 @@
 #include "gridbounds.h"
 #include "gridutility.h"
 #include "cellgroup.h"
+#include "colourdifference.h"
+#include "ColourScheme.h"
 
 class PhotomosaicGeneratorBase : public QObject
 {
     Q_OBJECT
 public:
-    enum class Mode {RGB_EUCLIDEAN, CIE76, CIEDE2000};
-
     PhotomosaicGeneratorBase();
     ~PhotomosaicGeneratorBase();
 
@@ -43,8 +43,11 @@ public:
     //Sets library images
     void setLibrary(const std::vector<cv::Mat> &t_lib);
 
-    //Sets photomosaic mode
-    void setMode(const Mode t_mode = Mode::RGB_EUCLIDEAN);
+    //Sets colour difference type
+    void setColourDifference(const ColourDifference::Type t_type = ColourDifference::Type::RGB_EUCLIDEAN);
+
+    //Sets colour scheme type
+    void setColourScheme(const ColourScheme::Type t_type = ColourScheme::Type::NONE);
 
     //Sets cell group
     void setCellGroup(const CellGroup &t_cellGroup);
@@ -83,7 +86,10 @@ protected:
     cv::Mat m_img;
     std::vector<cv::Mat> m_lib;
 
-    Mode m_mode;
+    ColourDifference::Type m_colourDiffType;
+    ColourDifference::FunctionType m_colourDiffFunc;
+    ColourScheme::Type m_colourSchemeType;
+    ColourScheme::FunctionType m_colourSchemeFunc;
 
     CellGroup m_cells;
 

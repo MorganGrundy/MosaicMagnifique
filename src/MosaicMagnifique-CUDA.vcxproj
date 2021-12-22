@@ -148,7 +148,7 @@
     </QtRcc>
     <QtUic>
       <ExecutionDescription>Uic'ing %(Identity)...</ExecutionDescription>
-      <QtUicDir>$(ProjectDir)</QtUicDir>
+      <QtUicDir>$(ProjectDir)\gui\</QtUicDir>
       <QtUicFileName>ui_%(Filename).h</QtUicFileName>
     </QtUic>
     <CudaCompile>
@@ -218,7 +218,7 @@
     </QtRcc>
     <QtUic>
       <ExecutionDescription>Uic'ing %(Identity)...</ExecutionDescription>
-      <QtUicDir>$(ProjectDir)</QtUicDir>
+      <QtUicDir>$(ProjectDir)\gui\</QtUicDir>
       <QtUicFileName>ui_%(Filename).h</QtUicFileName>
     </QtUic>
     <CudaCompile>
@@ -240,6 +240,7 @@
     <ClCompile Include="gui\cellshapeeditor.cpp" />
     <ClCompile Include="logic\colourdifference.cpp" />
     <ClCompile Include="gui\colourvisualisation.cpp" />
+    <ClCompile Include="logic\ColourScheme.cpp" />
     <ClCompile Include="logic\cpuphotomosaicgenerator.cpp" />
     <ClCompile Include="gui\cropgraphicsobject.cpp" />
     <ClCompile Include="gui\customgraphicsview.cpp" />
@@ -265,6 +266,7 @@
   <ItemGroup>
     <ClInclude Include="logic\cellgroup.h" />
     <ClInclude Include="logic\cellshape.h" />
+    <ClInclude Include="logic\ColourScheme.h" />
     <ClInclude Include="logic\cudaphotomosaicgenerator.h" />
     <ClInclude Include="logic\cudautility.h" />
     <ClInclude Include="logic\photomosaicgenerator.cuh" />

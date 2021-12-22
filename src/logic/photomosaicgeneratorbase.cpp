@@ -31,7 +31,7 @@
 #include "gridbounds.h"
 
 PhotomosaicGeneratorBase::PhotomosaicGeneratorBase()
-    : m_progress{0}, m_wasCanceled{false}, m_img{}, m_lib{}, m_mode{Mode::RGB_EUCLIDEAN},
+    : m_progress{0}, m_wasCanceled{false}, m_img{}, m_lib{}, m_colourDiffType{ColourDifference::Type::RGB_EUCLIDEAN}, m_colourSchemeType{ColourScheme::Type::NONE},
       m_repeatRange{0}, m_repeatAddition{0}
 {}
 
@@ -49,10 +49,18 @@ void PhotomosaicGeneratorBase::setLibrary(const std::vector<cv::Mat> &t_lib)
     m_lib = t_lib;
 }
 
-//Sets photomosaic mode
-void PhotomosaicGeneratorBase::setMode(const Mode t_mode)
+//Sets colour difference type
+void PhotomosaicGeneratorBase::setColourDifference(const ColourDifference::Type t_type)
 {
-    m_mode = t_mode;
+    m_colourDiffType = t_type;
+    m_colourDiffFunc = ColourDifference::getFunction(t_type);
+}
+
+//Sets colour scheme type
+void PhotomosaicGeneratorBase::setColourScheme(const ColourScheme::Type t_type)
+{
+    m_colourSchemeType = t_type;
+    m_colourSchemeFunc = ColourScheme::getFunction(t_type);
 }
 
 //Sets cell group
@@ -263,7 +271,7 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGeneratorBase::resizeAndCvtC
     stream.waitForCompletion();
 #else
     //Main image
-    if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
+    if (m_colourDiffType == ColourDifference::Type::CIE76 || m_colourDiffType == ColourDifference::Type::CIEDE2000)
     {
         //Convert 8U [0..255] to 32F [0..1]
         m_img.convertTo(resultMain, CV_32F, 1 / 255.0);
@@ -284,7 +292,7 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGeneratorBase::resizeAndCvtC
         else
             result.at(i) = m_lib.at(i).clone();
 
-        if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
+        if (m_colourDiffType == ColourDifference::Type::CIE76 || m_colourDiffType == ColourDifference::Type::CIEDE2000)
         {
             //Convert 8U [0..255] to 32F [0..1]
             result.at(i).convertTo(result.at(i), CV_32F, 1 / 255.0);

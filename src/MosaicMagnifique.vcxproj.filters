@@ -122,6 +122,9 @@
     <ClCompile Include="gui\switch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="logic\ColourScheme.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="logic\cellgroup.h">
@@ -199,6 +202,9 @@
     <ClInclude Include="resource.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
+    <ClInclude Include="logic\ColourScheme.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="$(Configuration)-$(Platform)\moc_predefs.h.cbt" />
@@ -246,7 +252,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="icon1.ico" />
     <Image Include="gui\MosaicMagnifique.ico">
       <Filter>Resource Files</Filter>
     </Image>

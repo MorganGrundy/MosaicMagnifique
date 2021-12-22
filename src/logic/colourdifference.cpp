@@ -1,6 +1,30 @@
 #include "colourdifference.h"
 
-//Calculates difference between two RGB (any order) value using RGB Euclidean
+//Converts type string to type enum
+ColourDifference::Type ColourDifference::strToEnum(const QString& t_type)
+{
+    for (size_t i = 0; i < static_cast<size_t>(Type::MAX); ++i)
+    {
+        if (Type_STR.at(i).compare(t_type) == 0)
+            return static_cast<Type>(i);
+    }
+
+    return Type::MAX;
+}
+
+//Returns function wrapper from enum
+ColourDifference::FunctionType ColourDifference::getFunction(const Type& t_type)
+{
+    switch (t_type)
+    {
+    case Type::RGB_EUCLIDEAN: return calculateRGBEuclidean;
+    case Type::CIE76: return calculateRGBEuclidean;
+    case Type::CIEDE2000: return calculateCIEDE2000;
+    default: throw std::invalid_argument(Q_FUNC_INFO " No function for given type");
+    }
+}
+
+//Calculates difference between two colours using Euclidean distance
 double ColourDifference::calculateRGBEuclidean(const cv::Vec3d &t_first, const cv::Vec3d &t_second)
 {
     return sqrt(pow(t_first[0] - t_second[0], 2) +
@@ -18,8 +42,8 @@ constexpr double ColourDifference::degToRad(const double deg)
 double ColourDifference::calculateCIEDE2000(const cv::Vec3d &t_first, const cv::Vec3d &t_second)
 {
     const double k_L = 1.0, k_C = 1.0, k_H = 1.0;
-    const double deg360InRad = degToRad(360.0);
-    const double deg180InRad = degToRad(180.0);
+    constexpr double deg360InRad = degToRad(360.0);
+    constexpr double deg180InRad = degToRad(180.0);
     const double pow25To7 = 6103515625.0; //pow(25, 7)
 
     const double C1 = sqrt((t_first[1] * t_first[1]) +
@@ -124,3 +148,19 @@ double ColourDifference::calculateCIEDE2000(const cv::Vec3d &t_first, const cv::
                 pow(deltaHPrime / (k_H * S_H), 2.0) +
                 (R_T * (deltaCPrime / (k_C * S_C)) * (deltaHPrime / (k_H * S_H))));
 }
+
+#ifdef CUDA
+#include "photomosaicgenerator.cuh"
+
+//Returns CUDA function wrapper from enum
+ColourDifference::CUDAFunctionType ColourDifference::getCUDAFunction(const Type& t_type)
+{
+    switch (t_type)
+    {
+    case Type::RGB_EUCLIDEAN: return euclideanDifferenceKernelWrapper;
+    case Type::CIE76: return euclideanDifferenceKernelWrapper;
+    case Type::CIEDE2000: return CIEDE2000DifferenceKernelWrapper;
+    default: throw std::invalid_argument(Q_FUNC_INFO " No function for given type");
+    }
+}
+#endif

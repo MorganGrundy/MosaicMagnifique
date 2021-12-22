@@ -8,13 +8,6 @@
 /src/release
 /src/debug
 /test/testcases
-/src/ui_photomosaicviewer.h
-/src/ui_mainwindow.h
-/src/ui_imagesquarer.h
-/src/ui_imagelibraryeditor.h
-/src/ui_grideditor.h
-/src/ui_colourvisualisation.h
-/src/ui_cellshapeeditor.h
 /src/MosaicMagnifique.vcxproj.user
 /test/test.vcxproj.user
 /src/MosaicMagnifique_resource.aps
@@ -27,3 +20,10 @@
 /src/Debug-x64
 /src/Release-x64-CUDA
 /src/Debug-x64-CUDA
+/src/gui/ui_photomosaicviewer.h
+/src/gui/ui_mainwindow.h
+/src/gui/ui_imagesquarer.h
+/src/gui/ui_imagelibraryeditor.h
+/src/gui/ui_grideditor.h
+/src/gui/ui_colourvisualisation.h
+/src/gui/ui_cellshapeeditor.h

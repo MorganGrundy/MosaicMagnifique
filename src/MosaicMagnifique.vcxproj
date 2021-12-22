@@ -140,7 +140,7 @@
     </QtRcc>
     <QtUic>
       <ExecutionDescription>Uic'ing %(Identity)...</ExecutionDescription>
-      <QtUicDir>$(ProjectDir)</QtUicDir>
+      <QtUicDir>$(ProjectDir)\gui\</QtUicDir>
       <QtUicFileName>ui_%(Filename).h</QtUicFileName>
     </QtUic>
   </ItemDefinitionGroup>
@@ -202,11 +202,12 @@
     </QtRcc>
     <QtUic>
       <ExecutionDescription>Uic'ing %(Identity)...</ExecutionDescription>
-      <QtUicDir>$(ProjectDir)</QtUicDir>
+      <QtUicDir>$(ProjectDir)\gui\</QtUicDir>
       <QtUicFileName>ui_%(Filename).h</QtUicFileName>
     </QtUic>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="logic\ColourScheme.cpp" />
     <ClCompile Include="logic\cellgroup.cpp" />
     <ClCompile Include="logic\cellshape.cpp" />
     <ClCompile Include="gui\cellshapeeditor.cpp" />
@@ -234,6 +235,7 @@
     <ClCompile Include="gui\switch.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="logic\ColourScheme.h" />
     <ClInclude Include="logic\cellgroup.h" />
     <ClInclude Include="logic\cellshape.h" />
     <ClInclude Include="resource.h" />
@@ -310,7 +312,6 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="gui\MosaicMagnifique.ico" />
-    <Image Include="icon1.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

@@ -1,10 +1,9 @@
-#ifndef IMAGELIBRARY_H
-#define IMAGELIBRARY_H
+#pragma once
 
 #include <opencv2/core.hpp>
 #include <QString>
 
-#include "imageutility.h"
+#include "ImageUtility.h"
 
 class ImageLibrary
 {
@@ -50,5 +49,3 @@ private:
     std::vector<cv::Mat> m_resizedImages; //Library images resized
 
 };
-
-#endif // IMAGELIBRARY_H

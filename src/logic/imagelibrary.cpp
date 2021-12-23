@@ -1,4 +1,4 @@
-#include "imagelibrary.h"
+#include "ImageLibrary.h"
 
 #include <QDebug>
 #include <QFile>

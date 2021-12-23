@@ -17,7 +17,7 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "imagehistogramcompare.h"
+#include "ImageHistogramCompare.h"
 
 #include <opencv2/imgproc.hpp>
 

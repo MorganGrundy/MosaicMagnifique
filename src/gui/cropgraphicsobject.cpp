@@ -1,4 +1,4 @@
-#include "cropgraphicsobject.h"
+#include "CropGraphicsObject.h"
 
 #include <QPainter>
 

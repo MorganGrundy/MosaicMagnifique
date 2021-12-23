@@ -1,5 +1,4 @@
-#ifndef CROPGRAPHICSOBJECT_H
-#define CROPGRAPHICSOBJECT_H
+#pragma once
 
 #include <QGraphicsObject>
 #include <QGraphicsSceneMouseEvent>
@@ -32,5 +31,3 @@ private:
     //Position of click start
     QPoint m_clickStart;
 };
-
-#endif // CROPGRAPHICSOBJECT_H

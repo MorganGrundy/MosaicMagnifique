@@ -17,12 +17,11 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef GRIDEDITOR_H
-#define GRIDEDITOR_H
+#pragma once
 
 #include <QMainWindow>
 
-#include "grideditviewer.h"
+#include "GridEditViewer.h"
 
 namespace Ui {
 class GridEditor;
@@ -50,5 +49,3 @@ protected:
 private:
     Ui::GridEditor *ui;
 };
-
-#endif // GRIDEDITOR_H

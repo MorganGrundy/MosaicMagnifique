@@ -20,7 +20,7 @@
 #ifndef SHARED_CPP_
 #define SHARED_CPP_
 
-#include "imageutility.h"
+#include "ImageUtility.h"
 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>

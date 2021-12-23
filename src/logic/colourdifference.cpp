@@ -1,4 +1,4 @@
-#include "colourdifference.h"
+#include "ColourDifference.h"
 
 //Converts type string to type enum
 ColourDifference::Type ColourDifference::strToEnum(const QString& t_type)

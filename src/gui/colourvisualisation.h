@@ -17,8 +17,7 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef COLOURVISUALISATION_H
-#define COLOURVISUALISATION_H
+#pragma once
 
 #include <QMainWindow>
 #include <opencv2/core/mat.hpp>
@@ -41,5 +40,3 @@ public:
 
     const int iconSize = 100;
 };
-
-#endif // COLOURVISUALISATION_H

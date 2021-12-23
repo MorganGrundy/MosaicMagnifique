@@ -17,8 +17,7 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CELLSHAPE_H
-#define CELLSHAPE_H
+#pragma once
 
 #include <opencv2/core/mat.hpp>
 #include <QDataStream>
@@ -109,5 +108,3 @@ private:
     //Name of cell shape
     QString m_name;
 };
-
-#endif // CELLSHAPE_H

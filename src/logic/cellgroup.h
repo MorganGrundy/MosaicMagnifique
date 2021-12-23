@@ -17,12 +17,11 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CELLGROUP_H
-#define CELLGROUP_H
+#pragma once
 
 #include <opencv2/core/mat.hpp>
 
-#include "cellshape.h"
+#include "CellShape.h"
 
 class CellGroup
 {
@@ -63,5 +62,3 @@ private:
     double detail;
     size_t sizeSteps;
 };
-
-#endif // CELLGROUP_H

@@ -17,14 +17,13 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef GRIDEDITVIEWER_H
-#define GRIDEDITVIEWER_H
+#pragma once
 
-#include "gridviewer.h"
+#include "GridViewer.h"
 
 #include <QMouseEvent>
 
-#include "quadtree.h"
+#include "QuadTree.h"
 
 class GridEditViewer : public GridViewer
 {
@@ -78,5 +77,3 @@ private:
     //Rect for displaying selection
     QGraphicsRectItem *selectionItem;
 };
-
-#endif // GRIDEDITVIEWER_H

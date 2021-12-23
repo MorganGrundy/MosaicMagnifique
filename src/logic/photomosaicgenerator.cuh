@@ -1,5 +1,4 @@
-#ifndef CUDA_PHOTOMOSAICGENERATOR_H
-#define CUDA_PHOTOMOSAICGENERATOR_H
+#pragma once
 
 //Wrapper for euclidean difference kernel
 void euclideanDifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm,
@@ -23,5 +22,3 @@ void calculateRepeatsKernelWrapper(double *variants,
 //Wrapper for find lowest kernel
 void findLowestKernelWrapper(double *lowestVariant, size_t *bestFit, double *variants,
                              size_t noLibIm);
-
-#endif // CUDA_PHOTOMOSAICGENERATOR_H

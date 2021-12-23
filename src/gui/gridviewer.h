@@ -17,8 +17,7 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef GRIDVIEWER_H
-#define GRIDVIEWER_H
+#pragma once
 
 #include <opencv2/core/mat.hpp>
 #include <QGridLayout>
@@ -26,12 +25,12 @@
 #include <QSpacerItem>
 #include <QGraphicsPixmapItem>
 
-#include "customgraphicsview.h"
-#include "switch.h"
-#include "cellshape.h"
-#include "gridbounds.h"
-#include "gridutility.h"
-#include "cellgroup.h"
+#include "CustomGraphicsView.h"
+#include "Switch.h"
+#include "CellShape.h"
+#include "GridBounds.h"
+#include "GridUtility.h"
+#include "CellGroup.h"
 
 class GridViewer : public CustomGraphicsView
 {
@@ -95,5 +94,3 @@ private:
 
     QPixmap whiteGrid, blackGrid;
 };
-
-#endif // GRIDVIEWER_H

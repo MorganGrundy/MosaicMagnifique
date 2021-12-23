@@ -17,8 +17,8 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
+#include "MainWindow.h"
+#include "ui_MainWindow.h"
 
 #include <QDesktopServices>
 #include <QFileDialog>
@@ -30,16 +30,16 @@
 #include <opencv2/imgcodecs.hpp>
 #include <chrono>
 
-#include "imageutility.h"
-#include "photomosaicviewer.h"
-#include "colourvisualisation.h"
-#include "cpuphotomosaicgenerator.h"
-#include "grideditor.h"
+#include "ImageUtility.h"
+#include "PhotomosaicViewer.h"
+#include "ColourVisualisation.h"
+#include "CPUPhotomosaicGenerator.h"
+#include "GridEditor.h"
 
 #ifdef CUDA
 #include <cuda_runtime.h>
-#include "cudautility.h"
-#include "cudaphotomosaicgenerator.h"
+#include "CUDAUtility.h"
+#include "CUDAPhotomosaicGenerator.h"
 #endif
 
 #ifdef OPENCV_W_CUDA

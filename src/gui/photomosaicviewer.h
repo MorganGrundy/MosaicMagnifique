@@ -17,16 +17,15 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef IMAGEVIEWER_H
-#define IMAGEVIEWER_H
+#pragma once
 
 #include <QMainWindow>
 #include <opencv2/core/mat.hpp>
 #include <QGraphicsScene>
 
-#include "cellgroup.h"
-#include "gridutility.h"
-#include "photomosaicgeneratorbase.h"
+#include "CellGroup.h"
+#include "GridUtility.h"
+#include "PhotomosaicGeneratorBase.h"
 
 namespace Ui {
 class PhotomosaicViewer;
@@ -62,5 +61,3 @@ private:
 
     QColor m_backgroundColor;
 };
-
-#endif // IMAGEVIEWER_H

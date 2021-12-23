@@ -17,7 +17,7 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "customgraphicsview.h"
+#include "CustomGraphicsView.h"
 
 CustomGraphicsView::CustomGraphicsView(QWidget *t_parent)
     : QGraphicsView{t_parent}, MIN_ZOOM{0.8}, MAX_ZOOM{10}

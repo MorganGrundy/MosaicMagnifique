@@ -17,8 +17,8 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "photomosaicviewer.h"
-#include "ui_photomosaicviewer.h"
+#include "PhotomosaicViewer.h"
+#include "ui_PhotomosaicViewer.h"
 
 #include <QFileDialog>
 #include <QErrorMessage>
@@ -26,8 +26,8 @@
 #include <QColorDialog>
 #include <opencv2/imgcodecs.hpp>
 
-#include "imageutility.h"
-#include "customgraphicsview.h"
+#include "ImageUtility.h"
+#include "CustomGraphicsView.h"
 
 PhotomosaicViewer::PhotomosaicViewer(
     QWidget *t_parent, std::shared_ptr<PhotomosaicGeneratorBase> t_photomosaicGenerator,

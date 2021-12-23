@@ -17,8 +17,8 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "imagelibraryeditor.h"
-#include "ui_imagelibraryeditor.h"
+#include "ImageLibraryEditor.h"
+#include "ui_ImageLibraryEditor.h"
 
 #include <QFileDialog>
 #include <QDebug>
@@ -26,9 +26,9 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "imageutility.h"
-#include "cellshape.h"
-#include "imagesquarer.h"
+#include "ImageUtility.h"
+#include "CellShape.h"
+#include "ImageSquarer.h"
 
 ImageLibraryEditor::ImageLibraryEditor(QWidget *parent) :
     QWidget(parent),

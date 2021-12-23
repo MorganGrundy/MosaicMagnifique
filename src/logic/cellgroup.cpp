@@ -17,9 +17,9 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "cellgroup.h"
+#include "CellGroup.h"
 
-#include "imageutility.h"
+#include "ImageUtility.h"
 
 CellGroup::CellGroup() : cells{1}, detailCells{1}, edgeCells{1, std::vector<cv::Mat>(4)},
     detail{1}, sizeSteps{0}

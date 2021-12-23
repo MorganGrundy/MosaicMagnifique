@@ -17,17 +17,16 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef IMAGELIBRARYEDITOR_H
-#define IMAGELIBRARYEDITOR_H
+#pragma once
 
 #include <QWidget>
 #include <QListWidgetItem>
 #include <QProgressBar>
 #include <opencv2/core/mat.hpp>
 
-#include "imageutility.h"
-#include "imagesquarer.h"
-#include "imagelibrary.h"
+#include "ImageUtility.h"
+#include "ImageSquarer.h"
+#include "ImageLibrary.h"
 
 namespace Ui {
 class ImageLibraryEditor;
@@ -88,5 +87,3 @@ private:
     std::vector<std::shared_ptr<QListWidgetItem>> m_imageWidgets;
     ImageLibrary m_images;
 };
-
-#endif // IMAGELIBRARYEDITOR_H

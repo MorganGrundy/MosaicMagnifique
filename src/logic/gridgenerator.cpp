@@ -17,10 +17,10 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "gridgenerator.h"
+#include "GridGenerator.h"
 
-#include "imageutility.h"
-#include "cellgroup.h"
+#include "ImageUtility.h"
+#include "CellGroup.h"
 
 GridGenerator::GridGenerator()
 {}

@@ -1,4 +1,4 @@
-#include "quadtree.h"
+#include "QuadTree.h"
 
 Quadtree::Quadtree(const cv::Rect &t_bounds)
     : m_bounds{t_bounds}

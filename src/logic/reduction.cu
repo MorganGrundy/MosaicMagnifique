@@ -17,8 +17,8 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "reduction.cuh"
-#include "cudautility.h"
+#include "Reduction.cuh"
+#include "CudaUtility.h"
 
 //Performs sum reduction in a single warp
 template <size_t blockSize>

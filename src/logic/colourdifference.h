@@ -1,5 +1,4 @@
-#ifndef COLOURDIFFERENCE_H
-#define COLOURDIFFERENCE_H
+#pragma once
 
 #include <opencv2/core.hpp>
 #include <QString>
@@ -51,5 +50,3 @@ namespace ColourDifference
 	CUDAFunctionType getCUDAFunction(const Type& t_type);
 #endif
 }
-
-#endif // COLOURDIFFERENCE_H

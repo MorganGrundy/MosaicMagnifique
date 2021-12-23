@@ -17,8 +17,7 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SHARED_H
-#define SHARED_H
+#pragma once
 
 #include <opencv2/core.hpp>
 #include <opencv2/features2d.hpp>
@@ -97,5 +96,3 @@ QDataStream &operator<<(QDataStream &t_out, const cv::Mat &t_mat);
 //Inputs a OpenCV mat from a QDataStream
 //Can be used to load a OpenCV mat from a file
 QDataStream &operator>>(QDataStream &t_in, cv::Mat &t_mat);
-
-#endif //SHARED_H

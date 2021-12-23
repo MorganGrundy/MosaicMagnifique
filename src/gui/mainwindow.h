@@ -17,14 +17,13 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 #include <QProgressBar>
 #include <opencv2/core/mat.hpp>
 
-#include "cellshape.h"
+#include "CellShape.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -112,4 +111,3 @@ private:
 
     cv::Mat mainImage;
 };
-#endif // MAINWINDOW_H

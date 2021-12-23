@@ -17,15 +17,14 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef GRIDGENERATOR_H
-#define GRIDGENERATOR_H
+#pragma once
 
 #include <opencv2/core/mat.hpp>
 
-#include "cellshape.h"
-#include "gridutility.h"
-#include "gridbounds.h"
-#include "cellgroup.h"
+#include "CellShape.h"
+#include "GridUtility.h"
+#include "GridBounds.h"
+#include "CellGroup.h"
 
 class GridGenerator
 {
@@ -41,5 +40,3 @@ private:
     findCellState(const CellGroup &t_cells, const cv::Mat &t_mainImage, const int x, const int y,
                   const GridBounds &t_bounds, const size_t t_step = 0);
 };
-
-#endif // GRIDGENERATOR_H

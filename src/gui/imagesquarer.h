@@ -1,5 +1,4 @@
-#ifndef IMAGESQUARER_H
-#define IMAGESQUARER_H
+#pragma once
 
 #include <QMainWindow>
 #include <QGraphicsScene>
@@ -7,7 +6,7 @@
 #include <opencv2/features2d.hpp>
 #include <opencv2/objdetect.hpp>
 
-#include "cropgraphicsobject.h"
+#include "CropGraphicsObject.h"
 
 namespace Ui {
 class ImageSquarer;
@@ -49,5 +48,3 @@ private:
     std::shared_ptr<QGraphicsScene> scene;
     std::shared_ptr<CropGraphicsObject> cropObject;
 };
-
-#endif // IMAGESQUARER_H

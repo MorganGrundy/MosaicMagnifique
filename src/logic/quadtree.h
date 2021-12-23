@@ -1,5 +1,4 @@
-#ifndef QUADTREE_H
-#define QUADTREE_H
+#pragma once
 
 #include <vector>
 #include <memory>
@@ -45,5 +44,3 @@ private:
     std::shared_ptr<Quadtree> m_quadrantSW;
     std::shared_ptr<Quadtree> m_quadrantSE;
 };
-
-#endif // QUADTREE_H

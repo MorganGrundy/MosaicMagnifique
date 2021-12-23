@@ -17,13 +17,12 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CELLGRID_H
-#define CELLGRID_H
+#pragma once
 
 #include <opencv2/core/mat.hpp>
 #include <optional>
 
-#include "cellshape.h"
+#include "CellShape.h"
 
 namespace GridUtility
 {
@@ -61,5 +60,3 @@ namespace GridUtility
     //Returns the flip state of the given cell at given grid position
     FlipState getFlipStateAt(const CellShape &t_cellShape, const int t_x, const int t_y);
 };
-
-#endif // CELLGRID_H

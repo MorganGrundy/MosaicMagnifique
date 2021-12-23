@@ -17,7 +17,7 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "gridbounds.h"
+#include "GridBounds.h"
 
 GridBounds::GridBounds() {}
 

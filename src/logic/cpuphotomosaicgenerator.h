@@ -17,10 +17,9 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CPUPHOTOMOSAICGENERATOR_H
-#define CPUPHOTOMOSAICGENERATOR_H
+#pragma once
 
-#include "photomosaicgeneratorbase.h"
+#include "PhotomosaicGeneratorBase.h"
 
 //Generates a Photomosaic on CPU
 class CPUPhotomosaicGenerator : public PhotomosaicGeneratorBase
@@ -45,5 +44,3 @@ private:
     std::map<size_t, int> calculateRepeats(const GridUtility::StepBestFit &grid,
                                            const int x, const int y) const;
 };
-
-#endif // CPUPHOTOMOSAICGENERATOR_H

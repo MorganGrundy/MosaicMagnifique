@@ -208,70 +208,70 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="logic\ColourScheme.cpp" />
-    <ClCompile Include="logic\cellgroup.cpp" />
-    <ClCompile Include="logic\cellshape.cpp" />
-    <ClCompile Include="gui\cellshapeeditor.cpp" />
-    <ClCompile Include="logic\colourdifference.cpp" />
-    <ClCompile Include="gui\colourvisualisation.cpp" />
-    <ClCompile Include="logic\cpuphotomosaicgenerator.cpp" />
-    <ClCompile Include="gui\cropgraphicsobject.cpp" />
-    <ClCompile Include="gui\customgraphicsview.cpp" />
-    <ClCompile Include="logic\gridbounds.cpp" />
-    <ClCompile Include="gui\grideditor.cpp" />
-    <ClCompile Include="gui\grideditviewer.cpp" />
-    <ClCompile Include="logic\gridgenerator.cpp" />
-    <ClCompile Include="logic\gridutility.cpp" />
-    <ClCompile Include="gui\gridviewer.cpp" />
-    <ClCompile Include="logic\imagehistogramcompare.cpp" />
-    <ClCompile Include="logic\imagelibrary.cpp" />
-    <ClCompile Include="gui\imagelibraryeditor.cpp" />
-    <ClCompile Include="gui\imagesquarer.cpp" />
-    <ClCompile Include="logic\imageutility.cpp" />
-    <ClCompile Include="gui\main.cpp" />
-    <ClCompile Include="gui\mainwindow.cpp" />
-    <ClCompile Include="logic\photomosaicgeneratorbase.cpp" />
-    <ClCompile Include="gui\photomosaicviewer.cpp" />
-    <ClCompile Include="logic\quadtree.cpp" />
-    <ClCompile Include="gui\switch.cpp" />
+    <ClCompile Include="logic\CellGroup.cpp" />
+    <ClCompile Include="logic\CellShape.cpp" />
+    <ClCompile Include="gui\CellShapeEditor.cpp" />
+    <ClCompile Include="logic\ColourDifference.cpp" />
+    <ClCompile Include="gui\ColourVisualisation.cpp" />
+    <ClCompile Include="logic\CPUPhotomosaicGenerator.cpp" />
+    <ClCompile Include="gui\CropGraphicsObject.cpp" />
+    <ClCompile Include="gui\CustomGraphicsView.cpp" />
+    <ClCompile Include="logic\GridBounds.cpp" />
+    <ClCompile Include="gui\GridEditor.cpp" />
+    <ClCompile Include="gui\GridEditViewer.cpp" />
+    <ClCompile Include="logic\GridGenerator.cpp" />
+    <ClCompile Include="logic\GridUtility.cpp" />
+    <ClCompile Include="gui\GridViewer.cpp" />
+    <ClCompile Include="logic\ImageHistogramCompare.cpp" />
+    <ClCompile Include="logic\ImageLibrary.cpp" />
+    <ClCompile Include="gui\ImageLibraryEditor.cpp" />
+    <ClCompile Include="gui\ImageSquarer.cpp" />
+    <ClCompile Include="logic\ImageUtility.cpp" />
+    <ClCompile Include="gui\Main.cpp" />
+    <ClCompile Include="gui\MainWindow.cpp" />
+    <ClCompile Include="logic\PhotomosaicGeneratorBase.cpp" />
+    <ClCompile Include="gui\PhotomosaicViewer.cpp" />
+    <ClCompile Include="logic\QuadTree.cpp" />
+    <ClCompile Include="gui\Switch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="logic\ColourScheme.h" />
-    <ClInclude Include="logic\cellgroup.h" />
-    <ClInclude Include="logic\cellshape.h" />
+    <ClInclude Include="logic\CellGroup.h" />
+    <ClInclude Include="logic\CellShape.h" />
     <ClInclude Include="resource.h" />
-    <QtMoc Include="gui\cellshapeeditor.h">
+    <QtMoc Include="gui\CellShapeEditor.h">
     </QtMoc>
-    <ClInclude Include="logic\colourdifference.h" />
-    <QtMoc Include="gui\colourvisualisation.h">
+    <ClInclude Include="logic\ColourDifference.h" />
+    <QtMoc Include="gui\ColourVisualisation.h">
     </QtMoc>
-    <ClInclude Include="logic\cpuphotomosaicgenerator.h" />
-    <ClInclude Include="gui\cropgraphicsobject.h" />
-    <QtMoc Include="gui\customgraphicsview.h">
+    <ClInclude Include="logic\CPUPhotomosaicGenerator.h" />
+    <ClInclude Include="gui\CropGraphicsObject.h" />
+    <QtMoc Include="gui\CustomGraphicsView.h">
     </QtMoc>
-    <ClInclude Include="logic\gridbounds.h" />
-    <QtMoc Include="gui\grideditor.h">
+    <ClInclude Include="logic\GridBounds.h" />
+    <QtMoc Include="gui\GridEditor.h">
     </QtMoc>
-    <QtMoc Include="gui\grideditviewer.h">
+    <QtMoc Include="gui\GridEditViewer.h">
     </QtMoc>
-    <ClInclude Include="logic\gridgenerator.h" />
-    <ClInclude Include="logic\gridutility.h" />
-    <QtMoc Include="gui\gridviewer.h">
+    <ClInclude Include="logic\GridGenerator.h" />
+    <ClInclude Include="logic\GridUtility.h" />
+    <QtMoc Include="gui\GridViewer.h">
     </QtMoc>
-    <ClInclude Include="logic\imagehistogramcompare.h" />
-    <ClInclude Include="logic\imagelibrary.h" />
-    <QtMoc Include="gui\imagelibraryeditor.h">
+    <ClInclude Include="logic\ImageHistogramCompare.h" />
+    <ClInclude Include="logic\ImageLibrary.h" />
+    <QtMoc Include="gui\ImageLibraryeditor.h">
     </QtMoc>
-    <QtMoc Include="gui\imagesquarer.h">
+    <QtMoc Include="gui\ImageSquarer.h">
     </QtMoc>
-    <ClInclude Include="logic\imageutility.h" />
-    <QtMoc Include="gui\mainwindow.h">
+    <ClInclude Include="logic\ImageUtility.h" />
+    <QtMoc Include="gui\MainWindow.h">
     </QtMoc>
-    <QtMoc Include="logic\photomosaicgeneratorbase.h">
+    <QtMoc Include="logic\PhotomosaicGeneratorBase.h">
     </QtMoc>
-    <QtMoc Include="gui\photomosaicviewer.h">
+    <QtMoc Include="gui\PhotomosaicViewer.h">
     </QtMoc>
-    <ClInclude Include="logic\quadtree.h" />
-    <QtMoc Include="gui\switch.h">
+    <ClInclude Include="logic\QuadTree.h" />
+    <QtMoc Include="gui\Switch.h">
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -285,19 +285,19 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <QtUic Include="gui\cellshapeeditor.ui">
+    <QtUic Include="gui\CellShapeEditor.ui">
     </QtUic>
-    <QtUic Include="gui\colourvisualisation.ui">
+    <QtUic Include="gui\ColourVisualisation.ui">
     </QtUic>
-    <QtUic Include="gui\grideditor.ui">
+    <QtUic Include="gui\GridEditor.ui">
     </QtUic>
-    <QtUic Include="gui\imagelibraryeditor.ui">
+    <QtUic Include="gui\ImageLibraryeditor.ui">
     </QtUic>
-    <QtUic Include="gui\imagesquarer.ui">
+    <QtUic Include="gui\ImageSquarer.ui">
     </QtUic>
-    <QtUic Include="gui\mainwindow.ui">
+    <QtUic Include="gui\MainWindow.ui">
     </QtUic>
-    <QtUic Include="gui\photomosaicviewer.ui">
+    <QtUic Include="gui\PhotomosaicViewer.ui">
     </QtUic>
   </ItemGroup>
   <ItemGroup>

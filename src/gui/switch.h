@@ -1,5 +1,4 @@
-#ifndef SWITCH_H
-#define SWITCH_H
+#pragma once
 
 #include <QAbstractButton>
 #include <QPaintEvent>
@@ -38,5 +37,3 @@ private:
     //Colour of switch head in each position
     QColor m_leftColour, m_rightColour;
 };
-
-#endif // SWITCH_H

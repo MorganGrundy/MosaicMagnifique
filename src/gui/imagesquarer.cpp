@@ -1,10 +1,10 @@
-#include "imagesquarer.h"
-#include "ui_imagesquarer.h"
+#include "ImageSquarer.h"
+#include "ui_ImageSquarer.h"
 
 #include <QDebug>
 #include <opencv2/imgproc.hpp>
 
-#include "imageutility.h"
+#include "ImageUtility.h"
 
 ImageSquarer::ImageSquarer(QWidget *parent) :
     QMainWindow(parent), ui(new Ui::ImageSquarer)

@@ -17,10 +17,10 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "colourvisualisation.h"
-#include "ui_colourvisualisation.h"
+#include "ColourVisualisation.h"
+#include "ui_ColourVisualisation.h"
 
-#include "imagehistogramcompare.h"
+#include "ImageHistogramCompare.h"
 
 ColourVisualisation::ColourVisualisation(QWidget *parent) :
     QMainWindow(parent),

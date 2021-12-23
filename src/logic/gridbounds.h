@@ -17,8 +17,7 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef GRIDBOUNDS_H
-#define GRIDBOUNDS_H
+#pragma once
 
 #include <opencv2/core.hpp>
 
@@ -42,5 +41,3 @@ public:
 private:
     std::vector<cv::Rect> bounds;
 };
-
-#endif // GRIDBOUNDS_H

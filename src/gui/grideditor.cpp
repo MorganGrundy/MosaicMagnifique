@@ -17,8 +17,8 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "grideditor.h"
-#include "ui_grideditor.h"
+#include "GridEditor.h"
+#include "ui_GridEditor.h"
 
 GridEditor::GridEditor(QWidget *parent) :
     QMainWindow(parent),

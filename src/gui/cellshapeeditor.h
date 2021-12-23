@@ -17,12 +17,11 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CELLSHAPEEDITOR_H
-#define CELLSHAPEEDITOR_H
+#pragma once
 
 #include <QWidget>
 
-#include "cellshape.h"
+#include "CellShape.h"
 
 namespace Ui {
 class CellShapeEditor;
@@ -86,5 +85,3 @@ private:
 
     Ui::CellShapeEditor *ui;
 };
-
-#endif // CELLSHAPEEDITOR_H

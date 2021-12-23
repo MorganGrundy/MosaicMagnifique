@@ -17,8 +17,7 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CUSTOMGRAPHICSVIEW_H
-#define CUSTOMGRAPHICSVIEW_H
+#pragma once
 
 #include <QGraphicsView>
 #include <QWheelEvent>
@@ -43,5 +42,3 @@ protected:
 
     const double MIN_ZOOM, MAX_ZOOM;
 };
-
-#endif // CUSTOMGRAPHICSVIEW_H

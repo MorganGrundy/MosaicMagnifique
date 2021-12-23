@@ -17,10 +17,7 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CUDA_REDUCTION_H
-#define CUDA_REDUCTION_H
+#pragma once
 
 //Wrapper for reduce add kernel
 void reduceAddKernelWrapper(size_t blockSize, size_t size, double *variants, double *reductionMem);
-
-#endif // CUDA_REDUCTION_H

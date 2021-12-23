@@ -17,7 +17,7 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "grideditviewer.h"
+#include "GridEditViewer.h"
 
 GridEditViewer::GridEditViewer(QWidget *parent)
     : GridViewer(parent), m_sizeStep{0}, m_quadtree{}, m_tool{Tool::Single}

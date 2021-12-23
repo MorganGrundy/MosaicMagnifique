@@ -17,8 +17,8 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "cellshapeeditor.h"
-#include "ui_cellshapeeditor.h"
+#include "CellShapeEditor.h"
+#include "ui_CellShapeEditor.h"
 
 #include <QMessageBox>
 #include <QFileDialog>

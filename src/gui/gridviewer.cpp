@@ -17,13 +17,13 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "gridviewer.h"
+#include "GridViewer.h"
 
 #include <opencv2/imgproc.hpp>
 
-#include "gridutility.h"
-#include "imageutility.h"
-#include "gridgenerator.h"
+#include "GridUtility.h"
+#include "ImageUtility.h"
+#include "GridGenerator.h"
 
 GridViewer::GridViewer(QWidget *parent)
     : CustomGraphicsView(parent), m_cells{}, scene{nullptr}

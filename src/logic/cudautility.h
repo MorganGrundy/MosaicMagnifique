@@ -1,6 +1,4 @@
-#ifndef CUDAUTILITY_H
-#define CUDAUTILITY_H
-#ifdef CUDA
+#pragma once
 
 #include <cuda_runtime_api.h>
 #include <cstdio>
@@ -11,17 +9,14 @@
 namespace CUDAUtility
 {
 
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true)
-{
-    if (code != cudaSuccess)
+    inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort = true)
     {
-        fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-        if (abort)
-            exit(code);
+        if (code != cudaSuccess)
+        {
+            fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+            if (abort)
+                exit(code);
+        }
     }
-}
 
-}
-
-#endif // CUDA
-#endif // CUDAUTILITY_H
+};

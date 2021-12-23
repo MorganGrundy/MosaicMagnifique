@@ -17,11 +17,11 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "cpuphotomosaicgenerator.h"
+#include "CPUPhotomosaicGenerator.h"
 
 #include <QDebug>
 
-#include "colourdifference.h"
+#include "ColourDifference.h"
 
 CPUPhotomosaicGenerator::CPUPhotomosaicGenerator()
 {}

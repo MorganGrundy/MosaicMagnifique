@@ -17,7 +17,7 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "photomosaicgeneratorbase.h"
+#include "PhotomosaicGeneratorBase.h"
 
 #include <opencv2/imgproc.hpp>
 #include <QDebug>
@@ -27,8 +27,8 @@
 #include <opencv2/cudaimgproc.hpp>
 #endif
 
-#include "gridutility.h"
-#include "gridbounds.h"
+#include "GridUtility.h"
+#include "GridBounds.h"
 
 PhotomosaicGeneratorBase::PhotomosaicGeneratorBase()
     : m_progress{0}, m_wasCanceled{false}, m_img{}, m_lib{}, m_colourDiffType{ColourDifference::Type::RGB_EUCLIDEAN}, m_colourSchemeType{ColourScheme::Type::NONE},

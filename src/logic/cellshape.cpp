@@ -17,13 +17,13 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "cellshape.h"
+#include "CellShape.h"
 
 #include <opencv2/imgproc.hpp>
 #include <QDebug>
 #include <QFile>
 
-#include "imageutility.h"
+#include "ImageUtility.h"
 
 CellShape::CellShape()
     : m_cellMask{}, m_rowSpacing{0}, m_colSpacing{0},

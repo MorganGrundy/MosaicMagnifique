@@ -17,7 +17,7 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include <QApplication>
 

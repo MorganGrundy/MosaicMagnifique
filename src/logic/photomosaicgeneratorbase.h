@@ -17,17 +17,16 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef PHOTOMOSAICGENERATORBASE_H
-#define PHOTOMOSAICGENERATORBASE_H
+#pragma once
 
 #include <opencv2/core/mat.hpp>
 
-#include "cellshape.h"
-#include "imageutility.h"
-#include "gridbounds.h"
-#include "gridutility.h"
-#include "cellgroup.h"
-#include "colourdifference.h"
+#include "CellShape.h"
+#include "ImageUtility.h"
+#include "GridBounds.h"
+#include "GridUtility.h"
+#include "CellGroup.h"
+#include "ColourDifference.h"
 #include "ColourScheme.h"
 
 class PhotomosaicGeneratorBase : public QObject
@@ -108,5 +107,3 @@ protected:
         const CellShape &t_cellShape, const CellShape &t_detailCellShape,
         const int x, const int y, const cv::Mat &t_image) const;
 };
-
-#endif // PHOTOMOSAICGENERATORBASE_H

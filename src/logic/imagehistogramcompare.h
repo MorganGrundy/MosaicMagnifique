@@ -17,8 +17,7 @@
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef IMAGEHISTOGRAMCOMPARE_H
-#define IMAGEHISTOGRAMCOMPARE_H
+#pragma once
 
 #include <opencv2/core/mat.hpp>
 
@@ -31,5 +30,3 @@ typedef std::vector<std::pair<std::tuple<int, int, int>, float>> colourPriorityL
 //Uses image histograms with colour grouped into 30x30x30 bins
 colourPriorityList getColourPriorityList(const cv::Mat &t_image, const std::vector<cv::Mat> &t_libImages);
 };
-
-#endif // IMAGEHISTOGRAMCOMPARE_H

@@ -1,4 +1,4 @@
-#include "switch.h"
+#include "Switch.h"
 
 #include <QPainter>
 #include <stdexcept>

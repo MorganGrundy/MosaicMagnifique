@@ -20,10 +20,10 @@
 /src/Debug-x64
 /src/Release-x64-CUDA
 /src/Debug-x64-CUDA
-/src/gui/ui_photomosaicviewer.h
-/src/gui/ui_mainwindow.h
-/src/gui/ui_imagesquarer.h
-/src/gui/ui_imagelibraryeditor.h
-/src/gui/ui_grideditor.h
-/src/gui/ui_colourvisualisation.h
-/src/gui/ui_cellshapeeditor.h
+/src/gui/ui_PhotomosaicViewer.h
+/src/gui/ui_MainWindow.h
+/src/gui/ui_ImageSquarer.h
+/src/gui/ui_ImageLibraryeditor.h
+/src/gui/ui_GridEditor.h
+/src/gui/ui_ColourVisualisation.h
+/src/gui/ui_CellShapeEditor.h

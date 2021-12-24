@@ -102,8 +102,14 @@ protected:
     //Returns results
     std::pair<cv::Mat, std::vector<cv::Mat>> resizeAndCvtColor();
 
+    //Performs preprocessing steps on main image: resize, create variants (colour theory), convert colour space
+    std::vector<cv::Mat> preprocessMainImage();
+
+    //Performs preprocessing steps on library images: resize, convert colour space
+    std::vector<cv::Mat> preprocessLibraryImages();
+
     //Returns the cell image at given position and it's local bounds
-    std::pair<cv::Mat, cv::Rect> getCellAt(
+    std::pair<std::vector<cv::Mat>, cv::Rect> getCellAt(
         const CellShape &t_cellShape, const CellShape &t_detailCellShape,
-        const int x, const int y, const cv::Mat &t_image) const;
+        const int x, const int y, const std::vector<cv::Mat> &t_mains) const;
 };

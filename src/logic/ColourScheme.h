@@ -3,6 +3,7 @@
 #include <QString>
 #include <vector>
 #include <functional>
+#include <opencv2/core/mat.hpp>
 
 namespace ColourScheme
 {
@@ -26,9 +27,12 @@ namespace ColourScheme
     Type strToEnum(const QString& t_type);
 
     //Alias for function wrapper
-    using FunctionType = std::function<void()>;
+    using FunctionType = std::function<std::vector<cv::Mat>(const cv::Mat &)>;
 
     //Returns function wrapper from enum
     FunctionType getFunction(const Type& t_type);
+
+    //Returns image variants for colour scheme "none" (just returns the given image)
+    std::vector<cv::Mat> getColourSchemeNone(const cv::Mat &t_image);
 };
 

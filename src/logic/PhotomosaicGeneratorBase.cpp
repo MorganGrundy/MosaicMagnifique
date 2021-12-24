@@ -310,45 +310,105 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGeneratorBase::resizeAndCvtC
     return {resultMain, result};
 }
 
+//Performs preprocessing steps on main image: resize, create variants (colour theory), convert colour space
+std::vector<cv::Mat> PhotomosaicGeneratorBase::preprocessMainImage()
+{
+    //Resize
+    cv::Mat resizedImage = m_img;
+    //cv::resize(m_img, tmp, );
+
+    //Create variants
+    std::vector<cv::Mat> result = m_colourSchemeFunc(resizedImage);
+
+    //Convert colour space
+    cv::Mat tmp;
+    for (auto &image : result)
+    {
+        if (m_colourDiffType == ColourDifference::Type::CIE76 || m_colourDiffType == ColourDifference::Type::CIEDE2000)
+        {
+            //Convert 8U [0..255] to 32F [0..1]
+            image.convertTo(image, CV_32F, 1 / 255.0);
+            //Convert BGR to Lab
+            cv::cvtColor(image, image, cv::COLOR_BGR2Lab);
+        }
+        else
+            //Convert 8U [0..255] to 32F [0..255]
+            image.convertTo(image, CV_32F);
+    }
+
+    return result;
+}
+
+//Performs preprocessing steps on library images: resize, convert colour space
+std::vector<cv::Mat> PhotomosaicGeneratorBase::preprocessLibraryImages()
+{
+    //Resize
+    std::vector<cv::Mat> result(m_lib.size(), cv::Mat());
+    //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
+    cv::InterpolationFlags flags = (m_cells.getDetail() < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
+    int cellSize = std::round(m_cells.getCellSize(0, true));
+
+    for (size_t i = 0; i < m_lib.size(); ++i)
+    {
+        if (m_cells.getDetail() != 1)
+            cv::resize(m_lib.at(i), result.at(i), cv::Size(cellSize, cellSize), 0, 0, flags);
+        else
+            result.at(i) = m_lib.at(i).clone();
+    }
+
+    //Convert colour space
+    for (auto &image: result)
+    {
+        if (m_colourDiffType == ColourDifference::Type::CIE76 || m_colourDiffType == ColourDifference::Type::CIEDE2000)
+        {
+            //Convert 8U [0..255] to 32F [0..1]
+            image.convertTo(image, CV_32F, 1 / 255.0);
+            //Convert BGR to Lab
+            cv::cvtColor(image, image, cv::COLOR_BGR2Lab);
+        }
+        else
+            //Convert 8U [0..255] to 32F [0..255]
+            image.convertTo(image, CV_32F);
+    }
+
+    return result;
+}
+
 //Returns the cell image at given position and it's local bounds
-std::pair<cv::Mat, cv::Rect> PhotomosaicGeneratorBase::getCellAt(
+std::pair<std::vector<cv::Mat>, cv::Rect> PhotomosaicGeneratorBase::getCellAt(
     const CellShape &t_cellShape, const CellShape &t_detailCellShape,
-    const int x, const int y, const cv::Mat &t_image) const
+    const int x, const int y, const std::vector<cv::Mat> &t_mains) const
 {
     //Gets bounds of cell in global space
     const cv::Rect cellGlobalBound = GridUtility::getRectAt(t_cellShape, x, y);
 
     //Bound cell in image area
-    const int yStart = std::clamp(cellGlobalBound.y, 0, t_image.rows);
-    const int yEnd = std::clamp(cellGlobalBound.br().y, 0, t_image.rows);
-    const int xStart = std::clamp(cellGlobalBound.x, 0, t_image.cols);
-    const int xEnd = std::clamp(cellGlobalBound.br().x, 0, t_image.cols);
+    const int yStart = std::clamp(cellGlobalBound.y, 0, t_mains.front().rows);
+    const int yEnd = std::clamp(cellGlobalBound.br().y, 0, t_mains.front().rows);
+    const int xStart = std::clamp(cellGlobalBound.x, 0, t_mains.front().cols);
+    const int xEnd = std::clamp(cellGlobalBound.br().x, 0, t_mains.front().cols);
 
     //Bounds of cell in local space
-    const cv::Rect cellLocalBound(xStart - cellGlobalBound.x, yStart - cellGlobalBound.y,
-                                  xEnd - xStart, yEnd - yStart);
+    const cv::Rect cellLocalBound(xStart - cellGlobalBound.x, yStart - cellGlobalBound.y, xEnd - xStart, yEnd - yStart);
 
     //Copies visible part of main image to cell
-    cv::Mat cell(cellGlobalBound.height, cellGlobalBound.width, t_image.type(), cv::Scalar(0));
-    t_image(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)).copyTo(cell(cellLocalBound));
+    std::vector<cv::Mat> cells(t_mains.size(),  cv::Mat(cellGlobalBound.height, cellGlobalBound.width, t_mains.front().type(), cv::Scalar(0)));
+    for (size_t i = 0; i < t_mains.size(); ++i)
+        t_mains.at(i)(cv::Range(yStart, yEnd), cv::Range(xStart, xEnd)).copyTo(cells.at(i)(cellLocalBound));
 
     //Resize image cell to detail level
-    cell = ImageUtility::resizeImage(cell, t_detailCellShape.getSize(), t_detailCellShape.getSize(),
-                                     ImageUtility::ResizeType::EXACT);
+    for (auto &cell: cells)
+        cell = ImageUtility::resizeImage(cell, t_detailCellShape.getSize(), t_detailCellShape.getSize(), ImageUtility::ResizeType::EXACT);
 
     //Resizes bounds of cell in local space to detail level
     cv::Rect detailCellLocalBound(
-        std::min(t_detailCellShape.getSize() - 1,
-                 static_cast<int>(cellLocalBound.x * m_cells.getDetail())),
-        std::min(t_detailCellShape.getSize() - 1,
-                 static_cast<int>(cellLocalBound.y * m_cells.getDetail())),
+        std::min(t_detailCellShape.getSize() - 1, static_cast<int>(cellLocalBound.x * m_cells.getDetail())),
+        std::min(t_detailCellShape.getSize() - 1, static_cast<int>(cellLocalBound.y * m_cells.getDetail())),
         std::max(1, static_cast<int>(cellLocalBound.width * m_cells.getDetail())),
         std::max(1, static_cast<int>(cellLocalBound.height * m_cells.getDetail())));
 
-    detailCellLocalBound.width = std::min(t_detailCellShape.getSize() - detailCellLocalBound.x,
-                                          detailCellLocalBound.width);
-    detailCellLocalBound.height = std::min(t_detailCellShape.getSize() - detailCellLocalBound.y,
-                                           detailCellLocalBound.height);
+    detailCellLocalBound.width = std::min(t_detailCellShape.getSize() - detailCellLocalBound.x, detailCellLocalBound.width);
+    detailCellLocalBound.height = std::min(t_detailCellShape.getSize() - detailCellLocalBound.y, detailCellLocalBound.height);
 
-    return {cell, detailCellLocalBound};
+    return {cells, detailCellLocalBound};
 }

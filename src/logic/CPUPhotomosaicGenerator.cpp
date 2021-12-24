@@ -32,7 +32,8 @@ bool CPUPhotomosaicGenerator::generateBestFits()
 {
     //Converts colour space of main image and library images
     //Resizes library based on detail level
-    auto [mainImage, resizedLib] = resizeAndCvtColor();
+    auto mainImages = preprocessMainImage();
+    auto lib = preprocessLibraryImages();
 
     //For all size steps, stop if no bounds for step
     for (size_t step = 0; step < m_bestFits.size(); ++step)
@@ -44,27 +45,20 @@ bool CPUPhotomosaicGenerator::generateBestFits()
         const CellShape &detailCellShape = m_cells.getCell(step, true);
 
         //Find best match for each cell in grid
-        for (int y = -GridUtility::PAD_GRID;
-             y < static_cast<int>(m_bestFits.at(step).size()) - GridUtility::PAD_GRID; ++y)
+        for (int y = -GridUtility::PAD_GRID; y < static_cast<int>(m_bestFits.at(step).size()) - GridUtility::PAD_GRID; ++y)
         {
-            for (int x = -GridUtility::PAD_GRID;
-                 x < static_cast<int>(m_bestFits.at(step).at(y + GridUtility::PAD_GRID).size())
-                         - GridUtility::PAD_GRID; ++x)
+            for (int x = -GridUtility::PAD_GRID; x < static_cast<int>(m_bestFits.at(step).at(y + GridUtility::PAD_GRID).size()) - GridUtility::PAD_GRID; ++x)
             {
                 //If user hits cancel in QProgressDialog then return empty best fit
                 if (m_wasCanceled)
                     return false;
 
                 //If cell is valid
-                if (m_bestFits.at(step).at(y + GridUtility::PAD_GRID).
-                    at(x + GridUtility::PAD_GRID).has_value())
+                if (m_bestFits.at(step).at(y + GridUtility::PAD_GRID).at(x + GridUtility::PAD_GRID).has_value())
                 {
                     //Find cell best fit
-                    m_bestFits.at(step).at(y + GridUtility::PAD_GRID).
-                        at(x + GridUtility::PAD_GRID) =
-                            findCellBestFit(normalCellShape, detailCellShape, x, y,
-                                            GridUtility::PAD_GRID, mainImage, resizedLib,
-                                            m_bestFits.at(step));
+                    m_bestFits.at(step).at(y + GridUtility::PAD_GRID).at(x + GridUtility::PAD_GRID) =
+                        findCellBestFit(normalCellShape, detailCellShape, x, y, GridUtility::PAD_GRID, mainImages, lib, m_bestFits.at(step));
                 }
 
                 //Increment progress bar
@@ -77,7 +71,7 @@ bool CPUPhotomosaicGenerator::generateBestFits()
         if ((step + 1) < m_bestFits.size())
         {
             //Halve cell size
-            ImageUtility::batchResizeMat(resizedLib);
+            ImageUtility::batchResizeMat(lib);
         }
     }
 
@@ -89,10 +83,10 @@ std::optional<size_t>
 CPUPhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape,
                                          const CellShape &t_detailCellShape,
                                          const int x, const int y, const int t_pad,
-                                         const cv::Mat &t_image, const std::vector<cv::Mat> &t_lib,
+                                         const std::vector<cv::Mat> &t_mains, const std::vector<cv::Mat> &t_lib,
                                          const GridUtility::StepBestFit &t_grid) const
 {
-    auto [cell, cellBounds] = getCellAt(t_cellShape, t_detailCellShape, x, y, t_image);
+    auto [cells, cellBounds] = getCellAt(t_cellShape, t_detailCellShape, x, y, t_mains);
 
     //Calculate if and how current cell is flipped
     const auto flipState = GridUtility::getFlipStateAt(t_cellShape, x, y);
@@ -108,34 +102,37 @@ CPUPhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape,
     double bestVariant = std::numeric_limits<double>::max();
     for (size_t i = 0; i < t_lib.size(); ++i)
     {
-        //Calculate difference between cell and library image
-        //Increase difference based on repeating library images in range
-        const auto it = repeats.find(i);
-        double variant = (it != repeats.end()) ? it->second : 0;
-
-        //Sum difference of corresponding pixels in cell and library image
-        const cv::Vec3f *p_main, *p_im;
-        const uchar *p_mask;
-        for (int row = cellBounds.y; row < cellBounds.br().y && variant < bestVariant; ++row)
+        for (const auto &cell : cells)
         {
-            p_main = cell.ptr<cv::Vec3f>(row);
-            p_im = t_lib.at(i).ptr<cv::Vec3f>(row);
-            p_mask = cellMask.ptr<uchar>(row);
-            for (int col = cellBounds.x; col < cellBounds.br().x && variant < bestVariant; ++col)
+            //Calculate difference between cell and library image
+            //Increase difference based on repeating library images in range
+            const auto it = repeats.find(i);
+            double variant = (it != repeats.end()) ? it->second : 0;
+
+            //Sum difference of corresponding pixels in cell and library image
+            const cv::Vec3f *p_main, *p_im;
+            const uchar *p_mask;
+            for (int row = cellBounds.y; row < cellBounds.br().y && variant < bestVariant; ++row)
             {
-                //Check pixel active in mask
-                if (p_mask[col] != 0)
+                p_main = cell.ptr<cv::Vec3f>(row);
+                p_im = t_lib.at(i).ptr<cv::Vec3f>(row);
+                p_mask = cellMask.ptr<uchar>(row);
+                for (int col = cellBounds.x; col < cellBounds.br().x && variant < bestVariant; ++col)
                 {
-                    variant += m_colourDiffFunc(p_main[col], p_im[col]);
+                    //Check pixel active in mask
+                    if (p_mask[col] != 0)
+                    {
+                        variant += m_colourDiffFunc(p_main[col], p_im[col]);
+                    }
                 }
             }
-        }
 
-        //If image difference is less than current lowest then replace
-        if (variant < bestVariant)
-        {
-            bestVariant = variant;
-            bestFit = static_cast<int>(i);
+            //If image difference is less than current lowest then replace
+            if (variant < bestVariant)
+            {
+                bestVariant = variant;
+                bestFit = static_cast<int>(i);
+            }
         }
     }
 

@@ -155,7 +155,6 @@
       <CodeGeneration>compute_35,sm_35</CodeGeneration>
       <Defines>WIN32</Defines>
       <Runtime>InheritFromHost</Runtime>
-      <Include>%(Include)</Include>
       <CudaRuntime>Static</CudaRuntime>
     </CudaCompile>
   </ItemDefinitionGroup>
@@ -188,7 +187,7 @@
       <IgnoreImportLibrary>true</IgnoreImportLibrary>
       <OutputFile>$(OutDir)\$(TargetName)$(TargetExt)</OutputFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <Version>3.2</Version>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
@@ -223,7 +222,6 @@
     </QtUic>
     <CudaCompile>
       <TargetMachinePlatform>32</TargetMachinePlatform>
-      <Include>C:/ProgramData/NVIDIA Corporation/CUDA Samples/v10.1/common/inc</Include>
     </CudaCompile>
     <CudaLink>
       <AdditionalLibraryDirectories>

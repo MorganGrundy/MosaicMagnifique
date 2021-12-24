@@ -63,7 +63,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     //Device memory for lowest variant
     double *d_lowestVariant;
     gpuErrchk(cudaMalloc((void **)&d_lowestVariant, sizeof(double)));
-    const double maxVariant = std::numeric_limits<double>::max();
+    constexpr double maxVariant = std::numeric_limits<double>::max();
 
     //For all size steps, stop if no bounds for step
     for (size_t step = 0; step < m_bestFits.size(); ++step)

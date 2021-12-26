@@ -32,7 +32,13 @@ namespace ColourScheme
     //Returns function wrapper from enum
     FunctionType getFunction(const Type& t_type);
 
-    //Returns image variants for colour scheme "none" (just returns the given image)
+    //Returns image variants for colour scheme "none"
+    //Original image
     std::vector<cv::Mat> getColourSchemeNone(const cv::Mat &t_image);
+
+    //Returns image variants for colour scheme "complementary"
+    //Original image
+    //Hue rotated 180°; H = (H + 180°) mod 360°
+    std::vector<cv::Mat> getColourSchemeComplementary(const cv::Mat& t_image);
 };
 

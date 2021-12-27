@@ -205,6 +205,9 @@
     <ClInclude Include="logic\ColourScheme.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MatUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="$(Configuration)-$(Platform)\moc_predefs.h.cbt" />

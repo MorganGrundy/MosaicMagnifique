@@ -2,6 +2,8 @@
 #include <stdexcept>
 #include <opencv2/imgproc.hpp>
 
+#include "MatUtility.h"
+
 //Converts type string to type enum
 ColourScheme::Type ColourScheme::strToEnum(const QString& t_type)
 {
@@ -47,7 +49,7 @@ std::vector<cv::Mat> ColourScheme::getColourSchemeComplementary(const cv::Mat& t
     cv::cvtColor(complement, complement, cv::COLOR_BGR2HSV_FULL);
 
     //Rotate hue 180°
-    complement.forEach<cv::Point3_<float>>([](cv::Point3_<float>&p, [[maybe_unused]] const int *position) { p.x = fmod(p.x + 180.0f, 360.0f); });
+    complement.forEach<cv::Point3f>([](cv::Point3f &p, [[maybe_unused]] const int *position) { p.x = fmod(p.x + 180.0f, 360.0f); });
 
     //Convert back to BGR and original depth
     cv::cvtColor(complement, complement, cv::COLOR_HSV2BGR_FULL);
@@ -62,24 +64,25 @@ std::vector<cv::Mat> ColourScheme::getColourSchemeComplementary(const cv::Mat& t
 //Hue rotated 240°; H = (H + 240°) mod 360°
 std::vector<cv::Mat> ColourScheme::getColourSchemeTriadic(const cv::Mat& t_image)
 {
-    cv::Mat triadic1, triadic2;
     //Need to convert image to float and use HSV_FULL (not HSV) to prevent precision loss
-    t_image.convertTo(triadic1, CV_32F);
+    cv::Mat_<cv::Point3f> triadic1(t_image), triadic2(t_image.rows, t_image.cols);
     cv::cvtColor(triadic1, triadic1, cv::COLOR_BGR2HSV_FULL);
-    triadic2 = triadic1.clone();
 
-    //Rotate hue 120°
-    triadic1.forEach<cv::Point3_<float>>([](cv::Point3_<float>& p, [[maybe_unused]] const int* position) { p.x = fmod(p.x + 120.0f, 360.0f); });
-    //Rotate hue 240°
-    triadic2.forEach<cv::Point3_<float>>([](cv::Point3_<float>& p, [[maybe_unused]] const int* position) { p.x = fmod(p.x + 240.0f, 360.0f); });
+    //Calculate hue rotations
+    MatUtility::forEach_2_impl<cv::Point3f>(const_cast<cv::Mat_<cv::Point3f> *>(&triadic1), const_cast<cv::Mat_<cv::Point3f> *>(&triadic2), [](cv::Point3f &p1, cv::Point3f &p2, [[maybe_unused]] const int *position)
+        {
+            p2.x = fmod(p1.x + 240.0f, 360.0f); p2.y = p1.y; p2.z = p1.z; //Rotate hue 240°
+            p1.x = fmod(p1.x + 120.0f, 360.0f); //Rotate hue 120°
+        });
 
     //Convert back to BGR and original depth
+    cv::Mat triadicResult1, triadicResult2;
     cv::cvtColor(triadic1, triadic1, cv::COLOR_HSV2BGR_FULL);
-    triadic1.convertTo(triadic1, CV_MAT_DEPTH(t_image.type()));
+    triadic1.convertTo(triadicResult1, CV_MAT_DEPTH(t_image.type()));
     cv::cvtColor(triadic2, triadic2, cv::COLOR_HSV2BGR_FULL);
-    triadic2.convertTo(triadic2, CV_MAT_DEPTH(t_image.type()));
+    triadic2.convertTo(triadicResult2, CV_MAT_DEPTH(t_image.type()));
 
-    return { t_image, triadic1, triadic2 };
+    return { t_image, triadicResult1, triadicResult2 };
 }
 
 //Returns image variants for colour scheme "Compound"
@@ -88,24 +91,25 @@ std::vector<cv::Mat> ColourScheme::getColourSchemeTriadic(const cv::Mat& t_image
 //Hue rotated 210°; H = (H + 210°) mod 360°
 std::vector<cv::Mat> ColourScheme::getColourSchemeCompound(const cv::Mat& t_image)
 {
-    cv::Mat compound1, compound2;
     //Need to convert image to float and use HSV_FULL (not HSV) to prevent precision loss
-    t_image.convertTo(compound1, CV_32F);
+    cv::Mat_<cv::Point3f> compound1(t_image), compound2(t_image.rows, t_image.cols);
     cv::cvtColor(compound1, compound1, cv::COLOR_BGR2HSV_FULL);
-    compound2 = compound1.clone();
 
-    //Rotate hue 120°
-    compound1.forEach<cv::Point3_<float>>([](cv::Point3_<float>& p, [[maybe_unused]] const int* position) { p.x = fmod(p.x + 120.0f, 360.0f); });
-    //Rotate hue 240°
-    compound2.forEach<cv::Point3_<float>>([](cv::Point3_<float>& p, [[maybe_unused]] const int* position) { p.x = fmod(p.x + 240.0f, 360.0f); });
+    //Calculate hue rotations
+    MatUtility::forEach_2_impl<cv::Point3f>(const_cast<cv::Mat_<cv::Point3f> *>(&compound1), const_cast<cv::Mat_<cv::Point3f> *>(&compound2), [](cv::Point3f &p1, cv::Point3f &p2, [[maybe_unused]] const int *position)
+        {
+            p2.x = fmod(p1.x + 210.0f, 360.0f); p2.y = p1.y; p2.z = p1.z; //Rotate hue 210°
+            p1.x = fmod(p1.x + 150.0f, 360.0f); //Rotate hue 150°
+        });
 
     //Convert back to BGR and original depth
+    cv::Mat compoundResult1, compoundResult2;
     cv::cvtColor(compound1, compound1, cv::COLOR_HSV2BGR_FULL);
-    compound1.convertTo(compound1, CV_MAT_DEPTH(t_image.type()));
+    compound1.convertTo(compoundResult1, CV_MAT_DEPTH(t_image.type()));
     cv::cvtColor(compound2, compound2, cv::COLOR_HSV2BGR_FULL);
-    compound2.convertTo(compound2, CV_MAT_DEPTH(t_image.type()));
+    compound2.convertTo(compoundResult2, CV_MAT_DEPTH(t_image.type()));
 
-    return { t_image, compound1, compound2 };
+    return { t_image, compoundResult1, compoundResult2 };
 }
 
 //Returns image variants for colour scheme "Tetradic"
@@ -115,29 +119,29 @@ std::vector<cv::Mat> ColourScheme::getColourSchemeCompound(const cv::Mat& t_imag
 //Hue rotated 270°; H = (H + 270°) mod 360°
 std::vector<cv::Mat> ColourScheme::getColourSchemeTetradic(const cv::Mat& t_image)
 {
-    cv::Mat tetradic1, tetradic2, tetradic3;
     //Need to convert image to float and use HSV_FULL (not HSV) to prevent precision loss
-    t_image.convertTo(tetradic1, CV_32F);
+    cv::Mat_<cv::Point3f> tetradic1(t_image), tetradic2(t_image.rows, t_image.cols), tetradic3(t_image.rows, t_image.cols);
     cv::cvtColor(tetradic1, tetradic1, cv::COLOR_BGR2HSV_FULL);
-    tetradic2 = tetradic1.clone();
-    tetradic3 = tetradic1.clone();
 
-    //Rotate hue 90°
-    tetradic1.forEach<cv::Point3_<float>>([](cv::Point3_<float>& p, [[maybe_unused]] const int* position) { p.x = fmod(p.x + 90.0f, 360.0f); });
-    //Rotate hue 180°
-    tetradic2.forEach<cv::Point3_<float>>([](cv::Point3_<float>& p, [[maybe_unused]] const int* position) { p.x = fmod(p.x + 180.0f, 360.0f); });
-    //Rotate hue 270°
-    tetradic3.forEach<cv::Point3_<float>>([](cv::Point3_<float>& p, [[maybe_unused]] const int* position) { p.x = fmod(p.x + 270.0f, 360.0f); });
+    //Calculate hue rotations
+    MatUtility::forEach_3_impl<cv::Point3f>(const_cast<cv::Mat_<cv::Point3f> *>(&tetradic1), const_cast<cv::Mat_<cv::Point3f> *>(&tetradic2), const_cast<cv::Mat_<cv::Point3f> *>(&tetradic3),
+        [](cv::Point3f &p1, cv::Point3f &p2, cv::Point3f &p3, [[maybe_unused]] const int *position)
+        {
+            p3.x = fmod(p1.x + 270.0f, 360.0f); p3.y = p1.y; p3.z = p1.z; //Rotate hue 270°
+            p2.x = fmod(p1.x + 180.0f, 360.0f); p2.y = p1.y; p2.z = p1.z; //Rotate hue 180°
+            p1.x = fmod(p1.x + 90.0f, 360.0f); //Rotate hue 90°
+        });
 
     //Convert back to BGR and original depth
+    cv::Mat tetradicResult1, tetradicResult2, tetradicResult3;
     cv::cvtColor(tetradic1, tetradic1, cv::COLOR_HSV2BGR_FULL);
-    tetradic1.convertTo(tetradic1, CV_MAT_DEPTH(t_image.type()));
+    tetradic1.convertTo(tetradicResult1, CV_MAT_DEPTH(t_image.type()));
     cv::cvtColor(tetradic2, tetradic2, cv::COLOR_HSV2BGR_FULL);
-    tetradic2.convertTo(tetradic2, CV_MAT_DEPTH(t_image.type()));
+    tetradic2.convertTo(tetradicResult2, CV_MAT_DEPTH(t_image.type()));
     cv::cvtColor(tetradic3, tetradic3, cv::COLOR_HSV2BGR_FULL);
-    tetradic3.convertTo(tetradic3, CV_MAT_DEPTH(t_image.type()));
+    tetradic3.convertTo(tetradicResult3, CV_MAT_DEPTH(t_image.type()));
 
-    return { t_image, tetradic1, tetradic2, tetradic3 };
+    return { t_image, tetradicResult1, tetradicResult2, tetradicResult3 };
 }
 
 //Returns image variants for colour scheme "Analagous"
@@ -147,27 +151,27 @@ std::vector<cv::Mat> ColourScheme::getColourSchemeTetradic(const cv::Mat& t_imag
 //Hue rotated 90°; H = (H + 90°) mod 360°
 std::vector<cv::Mat> ColourScheme::getColourSchemeAnalagous(const cv::Mat& t_image)
 {
-    cv::Mat analagous1, analagous2, analagous3;
     //Need to convert image to float and use HSV_FULL (not HSV) to prevent precision loss
-    t_image.convertTo(analagous1, CV_32F);
+    cv::Mat_<cv::Point3f> analagous1(t_image), analagous2(t_image.rows, t_image.cols), analagous3(t_image.rows, t_image.cols);
     cv::cvtColor(analagous1, analagous1, cv::COLOR_BGR2HSV_FULL);
-    analagous2 = analagous1.clone();
-    analagous3 = analagous1.clone();
 
-    //Rotate hue 30°
-    analagous1.forEach<cv::Point3_<float>>([](cv::Point3_<float>& p, [[maybe_unused]] const int* position) { p.x = fmod(p.x + 30.0f, 360.0f); });
-    //Rotate hue 60°
-    analagous2.forEach<cv::Point3_<float>>([](cv::Point3_<float>& p, [[maybe_unused]] const int* position) { p.x = fmod(p.x + 60.0f, 360.0f); });
-    //Rotate hue 90°
-    analagous3.forEach<cv::Point3_<float>>([](cv::Point3_<float>& p, [[maybe_unused]] const int* position) { p.x = fmod(p.x + 90.0f, 360.0f); });
+    //Calculate hue rotations
+    MatUtility::forEach_3_impl<cv::Point3f>(const_cast<cv::Mat_<cv::Point3f> *>(&analagous1), const_cast<cv::Mat_<cv::Point3f> *>(&analagous2), const_cast<cv::Mat_<cv::Point3f> *>(&analagous3),
+        [](cv::Point3f &p1, cv::Point3f &p2, cv::Point3f &p3, [[maybe_unused]] const int *position)
+        {
+            p3.x = fmod(p1.x + 90.0f, 360.0f); p3.y = p1.y; p3.z = p1.z; //Rotate hue 90°
+            p2.x = fmod(p1.x + 60.0f, 360.0f); p2.y = p1.y; p2.z = p1.z; //Rotate hue 60°
+            p1.x = fmod(p1.x + 30.0f, 360.0f); //Rotate hue 30°
+        });
 
     //Convert back to BGR and original depth
+    cv::Mat analagousResult1, analagousResult2, analagousResult3;
     cv::cvtColor(analagous1, analagous1, cv::COLOR_HSV2BGR_FULL);
-    analagous1.convertTo(analagous1, CV_MAT_DEPTH(t_image.type()));
+    analagous1.convertTo(analagousResult1, CV_MAT_DEPTH(t_image.type()));
     cv::cvtColor(analagous2, analagous2, cv::COLOR_HSV2BGR_FULL);
-    analagous2.convertTo(analagous2, CV_MAT_DEPTH(t_image.type()));
+    analagous2.convertTo(analagousResult2, CV_MAT_DEPTH(t_image.type()));
     cv::cvtColor(analagous3, analagous3, cv::COLOR_HSV2BGR_FULL);
-    analagous3.convertTo(analagous3, CV_MAT_DEPTH(t_image.type()));
+    analagous3.convertTo(analagousResult3, CV_MAT_DEPTH(t_image.type()));
 
-    return { t_image, analagous1, analagous2, analagous3 };
+    return { t_image, analagousResult1, analagousResult2, analagousResult3 };
 }

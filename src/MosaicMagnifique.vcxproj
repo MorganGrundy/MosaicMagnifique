@@ -173,7 +173,7 @@
       <IgnoreImportLibrary>true</IgnoreImportLibrary>
       <OutputFile>$(OutDir)\$(TargetName)$(TargetExt)</OutputFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <Version>3.2</Version>
     </Link>
@@ -238,6 +238,7 @@
     <ClInclude Include="logic\ColourScheme.h" />
     <ClInclude Include="logic\CellGroup.h" />
     <ClInclude Include="logic\CellShape.h" />
+    <ClInclude Include="MatUtility.h" />
     <ClInclude Include="resource.h" />
     <QtMoc Include="gui\CellShapeEditor.h">
     </QtMoc>

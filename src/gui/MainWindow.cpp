@@ -145,6 +145,7 @@ MainWindow::MainWindow(QWidget *t_parent)
 
     //Sets default cell size
     ui->spinSizeSteps->setValue(0);
+    ui->spinCellSize->setMinimum(CellShape::MIN_CELL_SIZE);
     ui->spinCellSize->setValue(CellShape::DEFAULT_CELL_SIZE);
     minCellSize = CellShape::DEFAULT_CELL_SIZE;
 
@@ -378,8 +379,6 @@ void MainWindow::loadImageSize()
 //Updates detail level
 void MainWindow::photomosaicDetailChanged([[maybe_unused]] int i)
 {
-    clampDetail();
-
     ui->widgetGridPreview->getCellGroup().setDetail(ui->spinDetail->value());
     if (!mainImage.empty())
         updateGridPreview();
@@ -390,8 +389,6 @@ void MainWindow::cellSizeChanged(int t_value)
 {
     //Updates minimum cell size
     updateCellSizes();
-
-    clampDetail();
 
     if (ui->checkCellShape->isChecked())
         ui->widgetGridPreview->getCellGroup().setCellShape(newCellShape.resized(t_value));
@@ -406,8 +403,6 @@ void MainWindow::sizeStepsChanged([[maybe_unused]] int t_value)
 {
     //Updates minimum cell size
     updateCellSizes();
-
-    clampDetail();
 
     ui->widgetGridPreview->getCellGroup().setSizeSteps(ui->spinSizeSteps->value());
     updateGridPreview();
@@ -584,17 +579,6 @@ void MainWindow::updateCellSizes()
     minCellSize = cellSize;
     //Show list
     ui->labelCellSizesList->setText(cellSizes);
-}
-
-//Clamps detail level so that cell size never reaches 0px
-void MainWindow::clampDetail()
-{
-    const double detailLevel = ui->spinDetail->value() / 100.0;
-    if (std::floor(minCellSize * detailLevel) < 1)
-    {
-        const int minDetail = std::ceil(100.0 / minCellSize);
-        ui->spinDetail->setValue(minDetail);
-    }
 }
 
 //Updates grid preview

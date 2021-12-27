@@ -66,7 +66,7 @@ void CellGroup::setDetail(const int t_detail, const bool t_reset)
 {
     double newDetail = detail;
     if (!t_reset)
-        newDetail = (t_detail < 1) ? 0.01 : t_detail / 100.0;
+        newDetail = t_detail / 100.0;
 
     if (newDetail != detail || t_reset)
     {
@@ -75,8 +75,8 @@ void CellGroup::setDetail(const int t_detail, const bool t_reset)
         //Create top level detail cell
         if (!cells.at(0).getCellMask(0, 0).empty())
         {
-            const int cellSize = cells.at(0).getSize();
-            detailCells.at(0) = cells.at(0).resized(cellSize * detail);
+            const int cellSize = std::max(static_cast<int>(cells.at(0).getSize() * detail), 1);
+            detailCells.at(0) = cells.at(0).resized(cellSize);
         }
 
         //Update size steps for all cells
@@ -111,7 +111,7 @@ void CellGroup::setSizeSteps(const size_t t_steps, const bool t_reset)
             cells.at(step) = cells.at(step - 1).resized(cellSize);
 
             //Create detail cell mask
-            detailCells.at(step) = cells.at(step).resized(cellSize * detail);
+            detailCells.at(step) = cells.at(step).resized(std::max(static_cast<int>(cellSize * detail), 1));
 
             //Create edge cell mask
             cv::Mat cellMask;

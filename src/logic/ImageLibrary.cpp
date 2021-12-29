@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QFile>
 #include <stdexcept>
+#include <random>
 
 ImageLibrary::ImageLibrary(const size_t t_imageSize)
     : m_imageSize{t_imageSize}
@@ -52,8 +53,9 @@ size_t ImageLibrary::getImageSize() const
     return m_imageSize;
 }
 
-//Add image to library with given name
-void ImageLibrary::addImage(const cv::Mat &t_im, const QString &t_name)
+//Add image to library with given name at random index
+//Returns the index
+size_t ImageLibrary::addImage(const cv::Mat &t_im, const QString &t_name)
 {
     //Empty image, do not add
     if (t_im.empty())
@@ -66,11 +68,18 @@ void ImageLibrary::addImage(const cv::Mat &t_im, const QString &t_name)
         ImageUtility::imageToSquare(squaredIm, ImageUtility::SquareMethod::CROP);
     }
 
-    m_names.push_back(t_name);
-    m_originalImages.push_back(squaredIm);
-    m_resizedImages.push_back(ImageUtility::resizeImage(squaredIm, static_cast<int>(m_imageSize),
-                                                        static_cast<int>(m_imageSize),
-                                                        ImageUtility::ResizeType::EXACT));
+    //Insert image in a random position
+    std::random_device rand_dev;
+    std::mt19937 generator(rand_dev());
+    std::uniform_int_distribution<size_t> distr(0, m_originalImages.size());
+    const size_t randomIndex = distr(generator);
+
+    m_names.insert(m_names.begin() + randomIndex, t_name);
+    m_originalImages.insert(m_originalImages.begin() + randomIndex, squaredIm);
+    m_resizedImages.insert(m_resizedImages.begin() + randomIndex, ImageUtility::resizeImage(squaredIm,
+        static_cast<int>(m_imageSize), static_cast<int>(m_imageSize), ImageUtility::ResizeType::EXACT));
+
+    return randomIndex;
 }
 
 //Returns const reference to library image names
@@ -194,9 +203,26 @@ void ImageLibrary::loadFromFile(const QString t_filename)
                 QString name;
                 in >> name;
 
-                m_names.push_back(name);
-                m_originalImages.push_back(image);
-                m_resizedImages.push_back(image);
+                //Random sorting of library images was introduced in version 5
+                //For any mil before then we need to randomly sort when loading the mil
+                if (version < 5)
+                {
+                    //Insert image in a random position
+                    std::random_device rand_dev;
+                    std::mt19937 generator(rand_dev());
+                    std::uniform_int_distribution<size_t> distr(0, m_originalImages.size());
+                    const size_t randomIndex = distr(generator);
+
+                    m_names.insert(m_names.begin() + randomIndex, name);
+                    m_originalImages.insert(m_originalImages.begin() + randomIndex, image);
+                    m_resizedImages.insert(m_resizedImages.begin() + randomIndex, image);
+                }
+                else
+                {
+                    m_names.push_back(name);
+                    m_originalImages.push_back(image);
+                    m_resizedImages.push_back(image);
+                }
             }
 
             file.close();

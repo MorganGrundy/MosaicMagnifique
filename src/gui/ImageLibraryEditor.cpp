@@ -196,12 +196,12 @@ void ImageLibraryEditor::addImages()
         try
         {
             //Add image to library
-            m_images.addImage(image, imageName);
+            const size_t imageIndex = m_images.addImage(image, imageName);
 
             //Add image to list widget
-            m_imageWidgets.push_back(std::make_shared<QListWidgetItem>(
-                QIcon(ImageUtility::matToQPixmap(m_images.getImages().back())), imageName));
-            ui->listPhoto->addItem(m_imageWidgets.back().get());
+            auto listWidgetItem = std::make_shared<QListWidgetItem>(QIcon(ImageUtility::matToQPixmap(m_images.getImages().at(imageIndex))), imageName);
+            m_imageWidgets.insert(m_imageWidgets.begin() + imageIndex, listWidgetItem);
+            ui->listPhoto->insertItem(imageIndex, listWidgetItem.get());
         }
         catch (const std::invalid_argument &e)
         {
@@ -219,6 +219,8 @@ void ImageLibraryEditor::addImages()
 
     if (m_progressBar != nullptr)
         m_progressBar->setVisible(false);
+
+    ui->listPhoto->update();
 
     //Emit new image library size
     emit imageLibraryChanged(m_images.getImages().size());
@@ -284,8 +286,7 @@ void ImageLibraryEditor::updateCellSize()
     m_images.setImageSize(ui->spinLibCellSize->value());
 
     //Update image library with new resized images
-    for (auto [widgetIt, imageIt] = std::pair{m_imageWidgets.begin(),
-                                              m_images.getImages().begin()};
+    for (auto [widgetIt, imageIt] = std::pair{m_imageWidgets.begin(), m_images.getImages().begin()};
          widgetIt != m_imageWidgets.end(); ++widgetIt, ++imageIt)
     {
         widgetIt->get()->setIcon(QIcon(ImageUtility::matToQPixmap(*imageIt)));
@@ -338,15 +339,18 @@ void ImageLibraryEditor::loadLibrary()
 
     ui->spinLibCellSize->setValue(static_cast<int>(m_images.getImageSize()));
 
+    //Clear list widget
+    m_imageWidgets.clear();
+    ui->listPhoto->clear();
+
     //Add images to list widget
-    for (auto [imageIt, nameIt] = std::pair{m_images.getImages().cbegin() + libSizeBefore,
-                                            m_images.getNames().cbegin() + libSizeBefore};
+    for (auto [imageIt, nameIt] = std::pair{m_images.getImages().cbegin(), m_images.getNames().cbegin()};
          imageIt != m_images.getImages().cend(); ++imageIt, ++nameIt)
     {
-        m_imageWidgets.push_back(std::make_shared<QListWidgetItem>(
-            QIcon(ImageUtility::matToQPixmap(*imageIt)), *nameIt));
+        m_imageWidgets.push_back(std::make_shared<QListWidgetItem>(QIcon(ImageUtility::matToQPixmap(*imageIt)), *nameIt));
         ui->listPhoto->addItem(m_imageWidgets.back().get());
     }
+    ui->listPhoto->update();
 
     //Emit new image library size
     emit imageLibraryChanged(m_images.getImages().size());

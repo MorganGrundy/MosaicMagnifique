@@ -8,7 +8,7 @@
 class ImageLibrary
 {
 public:
-    static const quint32 MIL_VERSION = 4;
+    static const quint32 MIL_VERSION = 5;
     static const quint32 MIL_MAGIC = 0xADBE2480;
 
     ImageLibrary(const size_t t_imageSize);
@@ -21,8 +21,9 @@ public:
     //Returns image size
     size_t getImageSize() const;
 
-    //Add image to library with given name
-    void addImage(const cv::Mat &t_im, const QString &t_name = QString());
+    //Add image to library with given name at random index
+    //Returns the index
+    size_t addImage(const cv::Mat &t_im, const QString &t_name = QString());
 
     //Returns const reference to library image names
     const std::vector<QString> &getNames() const;

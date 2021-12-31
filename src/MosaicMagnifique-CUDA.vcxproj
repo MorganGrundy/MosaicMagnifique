@@ -87,14 +87,14 @@
   </ImportGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;C:\OpenCV\opencv-4.5.2\build\install\include;logic;gui;release;/include;$(CudaToolkitDir)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;C:\OpenCV\opencv-4.5.2\build\install\include;logic;gui;release;/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>$(Configuration)-$(Platform)-CUDA\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
       <DebugInformationFormat>None</DebugInformationFormat>
       <DisableSpecificWarnings>4577;4467;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <ExceptionHandling>Sync</ExceptionHandling>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <ObjectFileName>$(Configuration)-$(Platform)-CUDA\</ObjectFileName>
       <Optimization>MaxSpeed</Optimization>
       <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;_USE_MATH_DEFINES;QT_DEPRECATED_WARNINGS;VERSION_MAJOR=3;VERSION_MINOR=2;VERSION_BUILD=16;NDEBUG;QT_NO_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -167,7 +167,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>4577;4467;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <ExceptionHandling>Sync</ExceptionHandling>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <ObjectFileName>$(Configuration)-$(Platform)-CUDA\</ObjectFileName>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_WINDOWS;UNICODE;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;_USE_MATH_DEFINES;QT_DEPRECATED_WARNINGS;VERSION_MAJOR=3;VERSION_MINOR=2;VERSION_BUILD=16;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -267,6 +267,7 @@
     <ClInclude Include="logic\ColourScheme.h" />
     <ClInclude Include="logic\CUDAPhotomosaicGenerator.h" />
     <ClInclude Include="logic\CUDAUtility.h" />
+    <ClInclude Include="logic\MatUtility.h" />
     <ClInclude Include="logic\PhotomosaicGenerator.cuh" />
     <ClInclude Include="logic\Reduction.cuh" />
     <QtMoc Include="gui\CellShapeEditor.h">

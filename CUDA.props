@@ -10,6 +10,7 @@
     </Link>
     <ClCompile>
       <PreprocessorDefinitions>CUDA=TRUE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CudaToolkitDir)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <CudaCompile>
       <Include>C:/ProgramData/NVIDIA Corporation/CUDA Samples/v10.1/common/inc</Include>

@@ -205,7 +205,7 @@
     <ClInclude Include="logic\ColourScheme.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MatUtility.h">
+    <ClInclude Include="logic\MatUtility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

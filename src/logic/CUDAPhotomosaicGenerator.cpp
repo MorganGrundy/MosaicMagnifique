@@ -35,12 +35,18 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
 {
     //Converts colour space of main image and library images
     //Resizes library based on detail level
-    auto [mainImage, resizedLib] = resizeAndCvtColor();
+    auto mainImages = preprocessMainImage();
+    auto lib = preprocessLibraryImages();
 
     //Get CUDA block size
     cudaDeviceProp deviceProp;
     gpuErrchk(cudaGetDeviceProperties(&deviceProp, 0));
+    //Cannot use full blockSize in debug, so half it
+#ifndef NDEBUG
+    const size_t blockSize = deviceProp.maxThreadsPerBlock / 2;
+#else
     const size_t blockSize = deviceProp.maxThreadsPerBlock;
+#endif
 
     //Device memory for mask images
     std::vector<uchar *> d_maskImages(4);
@@ -86,19 +92,16 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                 gpuErrchk(cudaMalloc((void **)&d_maskImages.at(i), cellSize * sizeof(uchar)));
 
             //Library images
-            gpuErrchk(cudaMalloc((void **)&d_libraryImage,
-                                 resizedLib.size() * cellSize * 3 * sizeof(float)));
+            gpuErrchk(cudaMalloc((void **)&d_libraryImage, lib.size() * cellSize * 3 * sizeof(float)));
 
             //Cell image
             gpuErrchk(cudaMalloc((void **)&d_cellImage, cellSize * 3 * sizeof(float)));
 
             //Variants
-            gpuErrchk(cudaMalloc((void **)&d_variants,
-                                 resizedLib.size() * cellSize * sizeof(double)));
+            gpuErrchk(cudaMalloc((void **)&d_variants, lib.size() * cellSize * sizeof(double)));
 
             //Reduction memory
-            gpuErrchk(cudaMalloc((void **)&d_reductionMem,
-                                 resizedLib.size() * reductionMemSize * sizeof(double)));
+            gpuErrchk(cudaMalloc((void **)&d_reductionMem, lib.size() * reductionMemSize * sizeof(double)));
         }
 
         //Copy cell masks to device
@@ -108,15 +111,15 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         copyMatToDevice<uchar>(detailCellShape.getCellMask(1, 1), d_maskImages.at(3));
 
         //Copy image library to device
-        for (size_t libI = 0; libI < resizedLib.size(); ++libI)
-            copyMatToDevice<float>(resizedLib.at(libI), d_libraryImage + libI * cellSize * 3);
+        for (size_t libI = 0; libI < lib.size(); ++libI)
+            copyMatToDevice<float>(lib.at(libI), d_libraryImage + libI * cellSize * 3);
 
 
         //Total number of cells in grid
         const size_t noOfCells = m_bestFits.at(step).size() * m_bestFits.at(step).at(0).size();
         //Create best fits and set to max value
         gpuErrchk(cudaMalloc((void **)&d_bestFit, noOfCells * sizeof(size_t)));
-        const size_t maxBestFit = resizedLib.size();
+        const size_t maxBestFit = lib.size();
         gpuErrchk(cudaMemcpy(d_bestFit, &maxBestFit, sizeof(size_t), cudaMemcpyHostToDevice));
         for (size_t cellIndex = 1; cellIndex < noOfCells; ++cellIndex)
             gpuErrchk(cudaMemcpy(d_bestFit + cellIndex, d_bestFit, sizeof(size_t),
@@ -138,11 +141,10 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                 if (m_bestFits.at(step).at(y + GridUtility::PAD_GRID).
                     at(x + GridUtility::PAD_GRID).has_value())
                 {
-                    auto [cell, cellBounds] = getCellAt(normalCellShape, detailCellShape, x, y,
-                                                        mainImage);
+                    auto [cell, cellBounds] = getCellAt(normalCellShape, detailCellShape, x, y, mainImages);
 
                     //Copy cell image to device
-                    copyMatToDevice<float>(cell, d_cellImage);
+                    copyMatToDevice<float>(cell.front(), d_cellImage);
 
                     //Copy target area to device
                     const size_t targetArea[4] = {static_cast<size_t>(cellBounds.y),
@@ -159,24 +161,22 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                     uchar *d_mask = d_maskImages.at(flipState.horizontal + flipState.vertical * 2);
 
                     //Clear variants
-                    gpuErrchk(cudaMemset(d_variants, 0, resizedLib.size() * cellSize * sizeof(double)));
+                    gpuErrchk(cudaMemset(d_variants, 0, lib.size() * cellSize * sizeof(double)));
 
                     //Clear reduction memory
-                    gpuErrchk(cudaMemset(d_reductionMem, 0,
-                                         resizedLib.size() * reductionMemSize * sizeof(double)));
+                    gpuErrchk(cudaMemset(d_reductionMem, 0, lib.size() * reductionMemSize * sizeof(double)));
 
                     //Reset lowest variant
-                    gpuErrchk(cudaMemcpy(d_lowestVariant, &maxVariant, sizeof(double),
-                                         cudaMemcpyHostToDevice));
+                    gpuErrchk(cudaMemcpy(d_lowestVariant, &maxVariant, sizeof(double), cudaMemcpyHostToDevice));
 
                     //Calculate difference
                     ColourDifference::getCUDAFunction(m_colourDiffType)(d_cellImage, d_libraryImage,
-                        resizedLib.size(), d_mask, cell.rows, cell.channels(), d_targetArea, d_variants,
+                        lib.size(), d_mask, cell.front().rows, cell.front().channels(), d_targetArea, d_variants,
                         blockSize);
                     gpuErrchk(cudaPeekAtLastError());
 
                     //Reduce variants
-                    for (size_t libI = 0; libI < resizedLib.size(); ++libI)
+                    for (size_t libI = 0; libI < lib.size(); ++libI)
                     {
                         reduceAddKernelWrapper(blockSize, cellSize,
                                                d_variants + libI * cellSize, d_reductionMem);
@@ -189,26 +189,22 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                     //Calculate repeats and add to variants
                     const size_t gridWidth = m_bestFits.at(step).at(0).size();
                     calculateRepeatsKernelWrapper(d_variants,
-                                                  d_bestFit, resizedLib.size(),
+                                                  d_bestFit, lib.size(),
                                                   gridWidth, x, y,
                                                   GridUtility::PAD_GRID,
                                                   m_repeatRange, m_repeatAddition);
                     gpuErrchk(cudaPeekAtLastError());
 
                     //Find lowest variant
-                    const size_t cellPosition = (y + GridUtility::PAD_GRID) * gridWidth
-                                                + (x + GridUtility::PAD_GRID);
-                    findLowestKernelWrapper(d_lowestVariant, d_bestFit + cellPosition, d_variants,
-                                            resizedLib.size());
+                    const size_t cellPosition = (y + GridUtility::PAD_GRID) * gridWidth + (x + GridUtility::PAD_GRID);
+                    findLowestKernelWrapper(d_lowestVariant, d_bestFit + cellPosition, d_variants, lib.size());
                     gpuErrchk(cudaPeekAtLastError());
 
                     //Copy best fit to host
                     size_t bestFit = 0;
-                    gpuErrchk(cudaMemcpy(&bestFit, d_bestFit + cellPosition, sizeof(size_t),
-                                         cudaMemcpyDeviceToHost));
+                    gpuErrchk(cudaMemcpy(&bestFit, d_bestFit + cellPosition, sizeof(size_t), cudaMemcpyDeviceToHost));
 
-                    m_bestFits.at(step).at(y + GridUtility::PAD_GRID).
-                        at(x + GridUtility::PAD_GRID) = bestFit;
+                    m_bestFits.at(step).at(y + GridUtility::PAD_GRID).at(x + GridUtility::PAD_GRID) = bestFit;
                 }
 
                 //Increment progress bar
@@ -224,7 +220,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         if ((step + 1) < m_bestFits.size())
         {
             //Halve cell size
-            ImageUtility::batchResizeMat(resizedLib);
+            ImageUtility::batchResizeMat(lib);
         }
     }
 

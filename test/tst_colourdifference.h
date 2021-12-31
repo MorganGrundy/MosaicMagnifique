@@ -41,7 +41,7 @@ TEST(ColourDifference, RGBEuclidean)
         const double result = ColourDifference::calculateRGBEuclidean(colourDiffPair.first,
                                                                       colourDiffPair.second);
 
-        ASSERT_NEAR(result, colourDiffPair.difference, 0.00000001);
+        EXPECT_NEAR(result, colourDiffPair.difference, 0.00000001);
     }
 }
 
@@ -62,7 +62,7 @@ TEST(ColourDifference, CIE76)
         const double result = ColourDifference::calculateCIE76(colourDiffPair.first,
                                                                colourDiffPair.second);
 
-        ASSERT_NEAR(result, colourDiffPair.difference, 0.00000001);
+        EXPECT_NEAR(result, colourDiffPair.difference, 0.00000001);
     }
 }
 
@@ -114,7 +114,7 @@ TEST(ColourDifference, CIEDE2000)
         const double result = ColourDifference::calculateCIEDE2000(colourDiffPair.first,
                                                                    colourDiffPair.second);
 
-        ASSERT_NEAR(result, colourDiffPair.difference, 0.0001);
+        EXPECT_NEAR(result, colourDiffPair.difference, 0.0001);
     }
 }
 
@@ -185,7 +185,7 @@ TEST(ColourDifference, CUDA_RGBEuclidean)
         gpuErrchk(cudaMemcpy(&HOST_result, result, sizeof(double), cudaMemcpyDeviceToHost));
 
         //Check result
-        ASSERT_NEAR(HOST_result, colourDiffPair.difference, 0.00000001);
+        EXPECT_NEAR(HOST_result, colourDiffPair.difference, 0.00000001);
     }
 
     //Free mask
@@ -255,7 +255,7 @@ TEST(ColourDifference, CUDA_CIE76)
         gpuErrchk(cudaMemcpy(&HOST_result, result, sizeof(double), cudaMemcpyDeviceToHost));
 
         //Check result
-        ASSERT_NEAR(HOST_result, colourDiffPair.difference, 0.00000001);
+        EXPECT_NEAR(HOST_result, colourDiffPair.difference, 0.00000001);
     }
 
     //Free mask
@@ -356,7 +356,81 @@ TEST(ColourDifference, CUDA_CIEDE2000)
         gpuErrchk(cudaMemcpy(&HOST_result, result, sizeof(double), cudaMemcpyDeviceToHost));
 
         //Check result
-        ASSERT_NEAR(HOST_result, colourDiffPair.difference, 0.0001);
+        EXPECT_NEAR(HOST_result, colourDiffPair.difference, 0.0001);
+    }
+
+    //Free mask
+    gpuErrchk(cudaFree(mask));
+    //Free target area
+    gpuErrchk(cudaFree(target_area));
+    //Free pair
+    gpuErrchk(cudaFree(first));
+    gpuErrchk(cudaFree(second));
+    //Free result
+    gpuErrchk(cudaFree(result));
+}
+
+//Creates random colour pairs and compares results from RGBEuclidean and CUDA RGBEuclidean difference
+TEST(ColourDifference, RANDOM_RGBEuclideanvsCUDA_RGBEuclidean)
+{
+    constexpr size_t iterations = 1ULL << 14;
+    srand(static_cast<unsigned int>(time(NULL)));
+
+    //Create mask on GPU
+    uchar HOST_mask = 1;
+    uchar *mask;
+    gpuErrchk(cudaMalloc((void **)&mask, sizeof(uchar)));
+    gpuErrchk(cudaMemcpy(mask, &HOST_mask, sizeof(uchar), cudaMemcpyHostToDevice));
+
+    //Create target area on GPU
+    size_t HOST_target_area[4] = { 0, 1, 0, 1 };
+    size_t *target_area;
+    gpuErrchk(cudaMalloc((void **)&target_area, 4 * sizeof(size_t)));
+    gpuErrchk(cudaMemcpy(target_area, &HOST_target_area, 4 * sizeof(size_t),
+        cudaMemcpyHostToDevice));
+
+    //Allocate pair on GPU
+    float *first, *second;
+    gpuErrchk(cudaMalloc((void **)&first, 3 * sizeof(float)));
+    gpuErrchk(cudaMalloc((void **)&second, 3 * sizeof(float)));
+
+    //Allocate memory on GPU for result
+    double HOST_result;
+    double *result;
+    gpuErrchk(cudaMalloc((void **)&result, sizeof(double)));
+
+    for (size_t i = 0; i < iterations; ++i)
+    {
+        //Create random colour diff pair
+        ColourDiffPairFloat colourDiffPair = {
+            {TestUtility::randFloat(0, 255), TestUtility::randFloat(0, 255),
+             TestUtility::randFloat(0, 255)},
+            {TestUtility::randFloat(0, 255), TestUtility::randFloat(0, 255),
+             TestUtility::randFloat(0, 255)}, 0 };
+
+        //Copy pair to GPU
+        gpuErrchk(cudaMemcpy(first, colourDiffPair.first.val, 3 * sizeof(float),
+            cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(second, colourDiffPair.second.val, 3 * sizeof(float),
+            cudaMemcpyHostToDevice));
+
+        //Calculate differences
+        cudaDeviceProp deviceProp;
+        gpuErrchk(cudaGetDeviceProperties(&deviceProp, 0));
+        const size_t blockSize = deviceProp.maxThreadsPerBlock;
+        euclideanDifferenceKernelWrapper(first, second, 1, mask, 1, 3, target_area, result,
+            blockSize);
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
+
+        //Copy result to host
+        gpuErrchk(cudaMemcpy(&HOST_result, result, sizeof(double), cudaMemcpyDeviceToHost));
+
+        const double cpu_result = ColourDifference::calculateRGBEuclidean(colourDiffPair.first,
+            colourDiffPair.second);
+
+        //Check result
+        EXPECT_NEAR(HOST_result, cpu_result, 0.0001);
     }
 
     //Free mask
@@ -373,7 +447,7 @@ TEST(ColourDifference, CUDA_CIEDE2000)
 //Creates random colour pairs and compares results from CIE76 and CUDA CIE76 difference
 TEST(ColourDifference, RANDOM_CIE76vsCUDA_CIE76)
 {
-    const size_t iterations = 1 << 14;
+    constexpr size_t iterations = 1ULL << 14;
     srand(static_cast<unsigned int>(time(NULL)));
 
     //Create mask on GPU
@@ -430,7 +504,81 @@ TEST(ColourDifference, RANDOM_CIE76vsCUDA_CIE76)
                                                                    colourDiffPair.second);
 
         //Check result
-        ASSERT_DOUBLE_EQ(HOST_result, cpu_result);
+        EXPECT_NEAR(HOST_result, cpu_result, 0.0001);
+    }
+
+    //Free mask
+    gpuErrchk(cudaFree(mask));
+    //Free target area
+    gpuErrchk(cudaFree(target_area));
+    //Free pair
+    gpuErrchk(cudaFree(first));
+    gpuErrchk(cudaFree(second));
+    //Free result
+    gpuErrchk(cudaFree(result));
+}
+
+//Creates random colour pairs and compares results from CIEDE2000 and CUDA CIEDE2000 difference
+TEST(ColourDifference, RANDOM_CIEDE2000vsCUDA_CIEDE2000)
+{
+    constexpr size_t iterations = 1ULL << 14;
+    srand(static_cast<unsigned int>(time(NULL)));
+
+    //Create mask on GPU
+    uchar HOST_mask = 1;
+    uchar *mask;
+    gpuErrchk(cudaMalloc((void **)&mask, sizeof(uchar)));
+    gpuErrchk(cudaMemcpy(mask, &HOST_mask, sizeof(uchar), cudaMemcpyHostToDevice));
+
+    //Create target area on GPU
+    size_t HOST_target_area[4] = { 0, 1, 0, 1 };
+    size_t *target_area;
+    gpuErrchk(cudaMalloc((void **)&target_area, 4 * sizeof(size_t)));
+    gpuErrchk(cudaMemcpy(target_area, &HOST_target_area, 4 * sizeof(size_t),
+        cudaMemcpyHostToDevice));
+
+    //Allocate pair on GPU
+    float *first, *second;
+    gpuErrchk(cudaMalloc((void **)&first, 3 * sizeof(float)));
+    gpuErrchk(cudaMalloc((void **)&second, 3 * sizeof(float)));
+
+    //Allocate memory on GPU for result
+    double HOST_result;
+    double *result;
+    gpuErrchk(cudaMalloc((void **)&result, sizeof(double)));
+
+    for (size_t i = 0; i < iterations; ++i)
+    {
+        //Create random colour diff pair
+        ColourDiffPairFloat colourDiffPair = {
+            {TestUtility::randFloat(0, 100), TestUtility::randFloat(-128, 127),
+             TestUtility::randFloat(-128, 127)},
+            {TestUtility::randFloat(0, 100), TestUtility::randFloat(-128, 127),
+             TestUtility::randFloat(-128, 127)}, 0 };
+
+        //Copy pair to GPU
+        gpuErrchk(cudaMemcpy(first, colourDiffPair.first.val, 3 * sizeof(float),
+            cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(second, colourDiffPair.second.val, 3 * sizeof(float),
+            cudaMemcpyHostToDevice));
+
+        //Calculate differences
+        cudaDeviceProp deviceProp;
+        gpuErrchk(cudaGetDeviceProperties(&deviceProp, 0));
+        const size_t blockSize = deviceProp.maxThreadsPerBlock;
+        CIEDE2000DifferenceKernelWrapper(first, second, 1, mask, 1, 3, target_area, result,
+            blockSize);
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
+
+        //Copy result to host
+        gpuErrchk(cudaMemcpy(&HOST_result, result, sizeof(double), cudaMemcpyDeviceToHost));
+
+        const double cpu_result = ColourDifference::calculateCIEDE2000(colourDiffPair.first,
+            colourDiffPair.second);
+
+        //Check result
+        EXPECT_NEAR(HOST_result, cpu_result, 0.0001);
     }
 
     //Free mask

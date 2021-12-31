@@ -33,7 +33,10 @@
 PhotomosaicGeneratorBase::PhotomosaicGeneratorBase()
     : m_progress{0}, m_wasCanceled{false}, m_img{}, m_lib{}, m_colourDiffType{ColourDifference::Type::RGB_EUCLIDEAN}, m_colourSchemeType{ColourScheme::Type::NONE},
       m_repeatRange{0}, m_repeatAddition{0}
-{}
+{
+    m_colourDiffFunc = ColourDifference::getFunction(m_colourDiffType);
+    m_colourSchemeFunc = ColourScheme::getFunction(m_colourSchemeType);
+}
 
 PhotomosaicGeneratorBase::~PhotomosaicGeneratorBase() {}
 

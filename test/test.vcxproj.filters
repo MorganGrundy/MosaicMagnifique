@@ -25,6 +25,15 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="CUDA">
+      <UniqueIdentifier>{d11e9ada-e33f-4fac-bb1d-abfbdac50d6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CUDA\CUDA Headers">
+      <UniqueIdentifier>{7b936d3e-95b2-40e2-874f-63fbcd872ea3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CUDA\CUDA Sources">
+      <UniqueIdentifier>{705b2cb5-7500-4d93-b337-88aed3860cd2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\logic\cellgroup.cpp">
@@ -73,6 +82,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="testutility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\logic\CUDAPhotomosaicGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\logic\ColourScheme.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -131,15 +146,39 @@
     <ClInclude Include="tst_imagelibrary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\logic\CUDAUtility.h">
+      <Filter>CUDA\CUDA Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\logic\PhotomosaicGenerator.cuh">
+      <Filter>CUDA\CUDA Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\logic\Reduction.cuh">
+      <Filter>CUDA\CUDA Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\logic\CUDAPhotomosaicGenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\logic\ColourScheme.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\logic\MatUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    
-    
     <CustomBuild Include="debug\moc_predefs.h.cbt">
       <Filter>Generated Files</Filter>
     </CustomBuild>
     <CustomBuild Include="release\moc_predefs.h.cbt">
       <Filter>Generated Files</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\src\logic\PhotomosaicGenerator.cu">
+      <Filter>CUDA\CUDA Sources</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\logic\Reduction.cu">
+      <Filter>CUDA\CUDA Sources</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

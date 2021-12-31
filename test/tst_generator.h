@@ -78,8 +78,8 @@ TEST(Generator, RGB_EUCLIDEAN_Detail_100)
     CPUPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::RGB_EUCLIDEAN;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -136,8 +136,8 @@ TEST(Generator, RGB_EUCLIDEAN_Detail_50)
     CPUPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::RGB_EUCLIDEAN;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -194,8 +194,8 @@ TEST(Generator, CIE76_Detail_100)
     CPUPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIE76;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -252,8 +252,8 @@ TEST(Generator, CIE76_Detail_50)
     CPUPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIE76;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -310,8 +310,8 @@ TEST(Generator, CIEDE2000_Detail_100)
     CPUPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIEDE2000;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -368,8 +368,8 @@ TEST(Generator, CIEDE2000_Detail_50)
     CPUPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIEDE2000;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -432,8 +432,8 @@ TEST(Generator, CUDA_RGB_EUCLIDEAN_Detail_100)
     CUDAPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::RGB_EUCLIDEAN;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -490,8 +490,8 @@ TEST(Generator, CUDA_RGB_EUCLIDEAN_Detail_50)
     CUDAPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::RGB_EUCLIDEAN;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -548,8 +548,8 @@ TEST(Generator, CUDA_CIE76_Detail_100)
     CUDAPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIE76;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -606,8 +606,8 @@ TEST(Generator, CUDA_CIE76_Detail_50)
     CUDAPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIE76;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -664,8 +664,8 @@ TEST(Generator, CUDA_CIEDE2000_Detail_100)
     CUDAPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIEDE2000;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -722,8 +722,8 @@ TEST(Generator, CUDA_CIEDE2000_Detail_50)
     CUDAPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIEDE2000;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -787,8 +787,8 @@ TEST(Generator, RGB_EUCLIDEAN_Detail_50_Repeats)
     CPUPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::RGB_EUCLIDEAN;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -845,8 +845,8 @@ TEST(Generator, CIE76_Detail_50_Repeats)
     CPUPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIE76;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -903,8 +903,8 @@ TEST(Generator, CIEDE2000_Detail_50_Repeats)
     CPUPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIEDE2000;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -966,8 +966,8 @@ TEST(Generator, RGB_EUCLIDEAN_Size_Steps)
     CPUPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::RGB_EUCLIDEAN;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -1024,8 +1024,8 @@ TEST(Generator, CIE76_Size_Steps)
     CPUPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIE76;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -1082,8 +1082,8 @@ TEST(Generator, CIEDE2000_Size_Steps)
     CPUPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIEDE2000;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -1146,8 +1146,8 @@ TEST(Generator, CUDA_RGB_EUCLIDEAN_Repeats)
     CUDAPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::RGB_EUCLIDEAN;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -1204,8 +1204,8 @@ TEST(Generator, CUDA_CIE76_Repeats)
     CUDAPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIE76;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -1262,8 +1262,8 @@ TEST(Generator, CUDA_CIEDE2000_Repeats)
     CUDAPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIEDE2000;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -1325,8 +1325,8 @@ TEST(Generator, CUDA_RGB_EUCLIDEAN_Size_Steps)
     CUDAPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::RGB_EUCLIDEAN;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -1383,8 +1383,8 @@ TEST(Generator, CUDA_CIE76_Size_Steps)
     CUDAPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIE76;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -1441,8 +1441,8 @@ TEST(Generator, CUDA_CIEDE2000_Size_Steps)
     CUDAPhotomosaicGenerator generator;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
-    generator.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIEDE2000;
+    generator.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -1511,9 +1511,9 @@ TEST(Generator, RGB_EUCLIDEAN_Detail_100_vs_CUDA)
     CUDAPhotomosaicGenerator generatorCUDA;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
-    generator.setMode(mode);
-    generatorCUDA.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::RGB_EUCLIDEAN;
+    generator.setColourDifference(colourDifferenceType);
+    generatorCUDA.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -1593,9 +1593,9 @@ TEST(Generator, RGB_EUCLIDEAN_Detail_50_vs_CUDA)
     CUDAPhotomosaicGenerator generatorCUDA;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
-    generator.setMode(mode);
-    generatorCUDA.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::RGB_EUCLIDEAN;
+    generator.setColourDifference(colourDifferenceType);
+    generatorCUDA.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -1675,9 +1675,9 @@ TEST(Generator, CIE76_Detail_100_vs_CUDA)
     CUDAPhotomosaicGenerator generatorCUDA;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
-    generator.setMode(mode);
-    generatorCUDA.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIE76;
+    generator.setColourDifference(colourDifferenceType);
+    generatorCUDA.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -1757,9 +1757,9 @@ TEST(Generator, CIE76_Detail_50_vs_CUDA)
     CUDAPhotomosaicGenerator generatorCUDA;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
-    generator.setMode(mode);
-    generatorCUDA.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIE76;
+    generator.setColourDifference(colourDifferenceType);
+    generatorCUDA.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -1839,9 +1839,9 @@ TEST(Generator, CIEDE2000_Detail_100_vs_CUDA)
     CUDAPhotomosaicGenerator generatorCUDA;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
-    generator.setMode(mode);
-    generatorCUDA.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIEDE2000;
+    generator.setColourDifference(colourDifferenceType);
+    generatorCUDA.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -1921,9 +1921,9 @@ TEST(Generator, CIEDE2000_Detail_50_vs_CUDA)
     CUDAPhotomosaicGenerator generatorCUDA;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
-    generator.setMode(mode);
-    generatorCUDA.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIEDE2000;
+    generator.setColourDifference(colourDifferenceType);
+    generatorCUDA.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -2008,9 +2008,9 @@ TEST(Generator, RGB_EUCLIDEAN_Repeats_vs_CUDA)
     CUDAPhotomosaicGenerator generatorCUDA;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
-    generator.setMode(mode);
-    generatorCUDA.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::RGB_EUCLIDEAN;
+    generator.setColourDifference(colourDifferenceType);
+    generatorCUDA.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -2090,9 +2090,9 @@ TEST(Generator, CIE76_Repeats_vs_CUDA)
     CUDAPhotomosaicGenerator generatorCUDA;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
-    generator.setMode(mode);
-    generatorCUDA.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIE76;
+    generator.setColourDifference(colourDifferenceType);
+    generatorCUDA.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -2172,9 +2172,9 @@ TEST(Generator, CIEDE2000_Repeats_vs_CUDA)
     CUDAPhotomosaicGenerator generatorCUDA;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
-    generator.setMode(mode);
-    generatorCUDA.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIEDE2000;
+    generator.setColourDifference(colourDifferenceType);
+    generatorCUDA.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -2259,9 +2259,9 @@ TEST(Generator, RGB_EUCLIDEAN_Size_Steps_vs_CUDA)
     CUDAPhotomosaicGenerator generatorCUDA;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::RGB_EUCLIDEAN;
-    generator.setMode(mode);
-    generatorCUDA.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::RGB_EUCLIDEAN;
+    generator.setColourDifference(colourDifferenceType);
+    generatorCUDA.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -2341,9 +2341,9 @@ TEST(Generator, CIE76_Size_Steps_vs_CUDA)
     CUDAPhotomosaicGenerator generatorCUDA;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIE76;
-    generator.setMode(mode);
-    generatorCUDA.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIE76;
+    generator.setColourDifference(colourDifferenceType);
+    generatorCUDA.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;
@@ -2423,9 +2423,9 @@ TEST(Generator, CIEDE2000_Size_Steps_vs_CUDA)
     CUDAPhotomosaicGenerator generatorCUDA;
 
     //Set mode
-    PhotomosaicGeneratorBase::Mode mode = PhotomosaicGeneratorBase::Mode::CIEDE2000;
-    generator.setMode(mode);
-    generatorCUDA.setMode(mode);
+    ColourDifference::Type colourDifferenceType = ColourDifference::Type::CIEDE2000;
+    generator.setColourDifference(colourDifferenceType);
+    generatorCUDA.setColourDifference(colourDifferenceType);
 
     //Set cell group
     const size_t cellSize = 128;

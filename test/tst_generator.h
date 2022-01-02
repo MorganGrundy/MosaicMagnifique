@@ -1,5 +1,4 @@
-#ifndef TST_GENERATOR_H
-#define TST_GENERATOR_H
+#pragma once
 
 #include <gtest/gtest.h>
 #include <gmock/gmock-matchers.h>
@@ -16,8 +15,6 @@
 #include "testutility.h"
 #include "gridgenerator.h"
 #include "imagelibrary.h"
-
-using namespace testing;
 
 namespace TST_Generator
 {
@@ -2491,5 +2488,3 @@ TEST(Generator, CIEDE2000_Size_Steps_vs_CUDA)
 }
 
 #endif
-
-#endif // TST_GENERATOR_H

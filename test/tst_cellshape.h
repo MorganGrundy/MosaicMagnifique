@@ -1,5 +1,4 @@
-#ifndef TST_CELLSHAPE_H
-#define TST_CELLSHAPE_H
+#pragma once
 
 #include <gtest/gtest.h>
 #include <gmock/gmock-matchers.h>
@@ -77,5 +76,3 @@ TEST(CellShape, Random_SaveAndLoad)
         ASSERT_EQ(cell, loadedCell);
     }
 }
-
-#endif // TST_CELLSHAPE_H

@@ -62,9 +62,7 @@
     <OutDir>$(SolutionDir)\build\$(Configuration)-$(Platform)-CUDA\</OutDir>
     <IntDir>$(Configuration)-$(Platform)-CUDA\</IntDir>
     <TargetName>MosaicMagnifique</TargetName>
-    <IgnoreImportLibrary>false</IgnoreImportLibrary>
-    <IncludePath>$(IncludePath)</IncludePath>
-    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <IgnoreImportLibrary>true</IgnoreImportLibrary>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

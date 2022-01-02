@@ -1,5 +1,4 @@
-#ifndef TST_COLOURDIFFERENCE_H
-#define TST_COLOURDIFFERENCE_H
+#pragma once
 
 #include <gtest/gtest.h>
 #include <gmock/gmock-matchers.h>
@@ -12,8 +11,6 @@
 #include "cudautility.h"
 #include "photomosaicgenerator.cuh"
 #endif
-
-using namespace testing;
 
 struct ColourDiffPair
 {
@@ -592,5 +589,3 @@ TEST(ColourDifference, RANDOM_CIEDE2000vsCUDA_CIEDE2000)
     gpuErrchk(cudaFree(result));
 }
 #endif
-
-#endif // TST_COLOURDIFFERENCE_H

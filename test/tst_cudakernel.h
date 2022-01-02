@@ -1,5 +1,4 @@
-#ifndef TST_CUDAKERNEL_H
-#define TST_CUDAKERNEL_H
+#pragma once
 
 #ifdef CUDA
 
@@ -13,8 +12,6 @@
 #include "testutility.h"
 #include "photomosaicgenerator.cuh"
 #include "reduction.cuh"
-
-using namespace testing;
 
 TEST(CUDAKernel, CalculateRepeats)
 {
@@ -188,5 +185,3 @@ TEST(CUDAKernel, AddReduction)
 }
 
 #endif
-
-#endif // TST_CUDAKERNEL_H

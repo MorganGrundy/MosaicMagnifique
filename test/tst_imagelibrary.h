@@ -1,5 +1,4 @@
-#ifndef TST_IMAGELIBRARY_H
-#define TST_IMAGELIBRARY_H
+#pragma once
 
 #include <gtest/gtest.h>
 #include <gmock/gmock-matchers.h>
@@ -83,5 +82,3 @@ TEST(ImageLibrary, Random_SaveAndLoad)
         ASSERT_EQ(lib, loadedLib);
     }
 }
-
-#endif // TST_IMAGELIBRARY_H

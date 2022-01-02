@@ -202,7 +202,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
 
                     //Copy best fit to host
                     size_t bestFit = 0;
-                    gpuErrchk(cudaMemcpy(&bestFit, d_bestFit + cellPosition, sizeof(size_t), cudaMemcpyDeviceToHost));
+                    gpuErrchk(cudaMemcpy(&bestFit, d_bestFit + cellPosition, sizeof(size_t), cudaMemcpyDeviceToHost)); //Unknown error
 
                     m_bestFits.at(step).at(y + GridUtility::PAD_GRID).at(x + GridUtility::PAD_GRID) = bestFit;
                 }

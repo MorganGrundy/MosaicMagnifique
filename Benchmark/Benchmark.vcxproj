@@ -59,15 +59,15 @@
     <Import Project="$(QtMsBuild)\qt_defaults.props" />
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(SolutionDir)\build\$(Configuration)-$(Platform)\</OutDir>
-    <IntDir>$(Configuration)-$(Platform)\</IntDir>
+    <OutDir>$(SolutionDir)\build\$(Configuration)-$(Platform)-CUDA\</OutDir>
+    <IntDir>$(Configuration)-$(Platform)-CUDA\</IntDir>
     <TargetName>MosaicMagnifique-Benchmark</TargetName>
     <IgnoreImportLibrary>true</IgnoreImportLibrary>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)\build\$(Configuration)-$(Platform)\</OutDir>
-    <IntDir>$(Configuration)-$(Platform)\</IntDir>
+    <OutDir>$(SolutionDir)\build\$(Configuration)-$(Platform)-CUDA\</OutDir>
+    <IntDir>$(Configuration)-$(Platform)-CUDA\</IntDir>
     <TargetName>MosaicMagnifique-Benchmark</TargetName>
     <IgnoreImportLibrary>true</IgnoreImportLibrary>
     <LinkIncremental>false</LinkIncremental>
@@ -131,10 +131,10 @@
     </ResourceCompile>
     <QtMoc>
       <CompilerFlavor>msvc</CompilerFlavor>
-      <Include>./$(Configuration)-$(Platform)/moc_predefs.h</Include>
+      <Include>./$(Configuration)-$(Platform)-CUDA/moc_predefs.h</Include>
       <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
       <DynamicSource>output</DynamicSource>
-      <QtMocDir>$(Configuration)-$(Platform)\</QtMocDir>
+      <QtMocDir>$(Configuration)-$(Platform)-CUDA\</QtMocDir>
       <QtMocFileName>moc_%(Filename).cpp</QtMocFileName>
     </QtMoc>
     <QtRcc>
@@ -200,10 +200,10 @@
     </ResourceCompile>
     <QtMoc>
       <CompilerFlavor>msvc</CompilerFlavor>
-      <Include>./$(Configuration)-$(Platform)/moc_predefs.h</Include>
+      <Include>./$(Configuration)-$(Platform)-CUDA/moc_predefs.h</Include>
       <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
       <DynamicSource>output</DynamicSource>
-      <QtMocDir>$(Configuration)-$(Platform)\</QtMocDir>
+      <QtMocDir>$(Configuration)-$(Platform)-CUDA\</QtMocDir>
       <QtMocFileName>moc_%(Filename).cpp</QtMocFileName>
     </QtMoc>
     <QtRcc>

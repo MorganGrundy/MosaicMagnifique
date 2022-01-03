@@ -14,7 +14,7 @@
 #include "TestUtility.h"
 
 //Generates a photomosaic with the given parameters and returns the time
-size_t GeneratePhotomosaic(const QString &libFile, const std::string &mainImageFile, const bool useCUDA, const ColourDifference::Type colourDiff = ColourDifference::Type::CIE76,
+size_t GeneratePhotomosaic(const QString &libFile, const std::string &mainImageFile, const QString &cellShapeFile, const bool useCUDA, const ColourDifference::Type colourDiff = ColourDifference::Type::CIE76,
     const int detail = 100, const size_t sizeSteps = 0, const size_t cellSize = 128, const double mainImageSize = 1.0, const int repeatRange = 0, const int repeatAddition = 0, const ColourScheme::Type colourScheme = ColourScheme::Type::NONE)
 {
     //Choose which generator to use
@@ -31,8 +31,14 @@ size_t GeneratePhotomosaic(const QString &libFile, const std::string &mainImageF
     generator->setColourScheme(colourScheme);
 
     //Set cell group
+    CellShape cellShape(cellSize);
+    try
+    {
+        cellShape.loadFromFile(cellShapeFile);
+    }
+    catch (const std::exception &e) {}
     CellGroup cellGroup;
-    cellGroup.setCellShape(CellShape(cellSize));
+    cellGroup.setCellShape(cellShape);
     cellGroup.setSizeSteps(sizeSteps);
     cellGroup.setDetail(detail);
     generator->setCellGroup(cellGroup);
@@ -98,7 +104,7 @@ void LogTimes(std::vector<size_t> &timeCPU, std::vector<size_t> &timeCUDA)
 }
 
 //Generates a photomosaic with the given parameters on both CPU and CUDA iteration times, and outputs the times
-void PerfGenerate(const size_t iterations, const QString &libFile, const std::string &mainImageFile, const ColourDifference::Type colourDiff = ColourDifference::Type::CIE76,
+void PerfGenerate(const size_t iterations, const QString &libFile, const std::string &mainImageFile, const QString &cellShapeFile, const ColourDifference::Type colourDiff = ColourDifference::Type::CIE76,
     const int detail = 100, const size_t sizeSteps = 0, const size_t cellSize = 128, const double mainImageSize = 1.0, const int repeatRange = 0, const int repeatAddition = 0, const ColourScheme::Type colourScheme = ColourScheme::Type::NONE)
 {
     std::vector<size_t> timeCPU, timeCUDA;
@@ -106,7 +112,7 @@ void PerfGenerate(const size_t iterations, const QString &libFile, const std::st
     {
         for (const auto useCUDA : { false, true })
         {
-            auto generateTime = GeneratePhotomosaic(libFile, mainImageFile, useCUDA, colourDiff, detail, sizeSteps, cellSize, mainImageSize, repeatRange, repeatAddition, colourScheme);
+            auto generateTime = GeneratePhotomosaic(libFile, mainImageFile, cellShapeFile, useCUDA, colourDiff, detail, sizeSteps, cellSize, mainImageSize, repeatRange, repeatAddition, colourScheme);
             if (useCUDA)
                 timeCUDA.push_back(generateTime);
             else
@@ -123,7 +129,7 @@ void Benchmark_Generator_ColourDifference()
     for (size_t colourDiff = 0; colourDiff < static_cast<size_t>(ColourDifference::Type::MAX); ++colourDiff)
     {
         std::cout << "Colour Difference = " << ColourDifference::Type_STR.at(colourDiff).toStdString() << "\n";
-        PerfGenerate(2, TestUtility::LIB_FILE, TestUtility::EDGAR_PEREZ, static_cast<ColourDifference::Type>(colourDiff), 20);
+        PerfGenerate(2, TestUtility::LIB_FILE, TestUtility::EDGAR_PEREZ, "", static_cast<ColourDifference::Type>(colourDiff), 20);
     }
 }
 
@@ -133,7 +139,7 @@ void Benchmark_Generator_Detail()
     for (auto detail: {0, 25, 50, 75, 100})
     {
         std::cout << "Detail = " << detail << "%\n";
-        PerfGenerate(2, TestUtility::LIB_FILE, TestUtility::EDGAR_PEREZ, ColourDifference::Type::CIE76, detail);
+        PerfGenerate(2, TestUtility::LIB_FILE, TestUtility::EDGAR_PEREZ, "", ColourDifference::Type::CIE76, detail);
     }
 }
 
@@ -143,7 +149,7 @@ void Benchmark_Generator_SizeSteps()
     for (auto sizeSteps : { 0, 1, 2 })
     {
         std::cout << "Size Steps = " << sizeSteps << "\n";
-        PerfGenerate(2, TestUtility::LIB_FILE, TestUtility::EDGAR_PEREZ, ColourDifference::Type::CIE76, 20, sizeSteps);
+        PerfGenerate(2, TestUtility::LIB_FILE, TestUtility::EDGAR_PEREZ, "", ColourDifference::Type::CIE76, 20, sizeSteps);
     }
 }
 
@@ -153,7 +159,7 @@ void Benchmark_Generator_CellSize()
     for (auto cellSize : { 128, 64, 32, 16, 8 })
     {
         std::cout << "Cell Size = " << cellSize << "\n";
-        PerfGenerate(2, TestUtility::LIB_FILE, TestUtility::EDGAR_PEREZ, ColourDifference::Type::CIE76, 20, 0, cellSize);
+        PerfGenerate(2, TestUtility::LIB_FILE, TestUtility::EDGAR_PEREZ, "", ColourDifference::Type::CIE76, 20, 0, cellSize);
     }
 }
 
@@ -164,7 +170,7 @@ void Benchmark_Generator_Lib()
     for (const auto &lib : { TestUtility::LIB_FILE, TestUtility::BIG_LIB_FILE })
     {
         std::cout << "Image Library = " << lib.toStdString() << "\n";
-        PerfGenerate(2, lib, TestUtility::EDGAR_PEREZ, ColourDifference::Type::CIE76, 20);
+        PerfGenerate(2, lib, TestUtility::EDGAR_PEREZ, "", ColourDifference::Type::CIE76, 20);
     }
 }
 

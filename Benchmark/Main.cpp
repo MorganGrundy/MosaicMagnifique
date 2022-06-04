@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 			cellShapeFile = argv[3];
 
 		if (argc > 4)
-			useCUDA = (argv[4] == "1") ? true : false;
+			useCUDA = (std::stoi(argv[4]) == 1) ? true : false;
 
 		if (argc > 5)
 			colourDiff = static_cast<ColourDifference::Type>(std::stoi(argv[5]));
@@ -56,6 +56,20 @@ int main(int argc, char *argv[])
 		if (argc > 12)
 			colourScheme = static_cast<ColourScheme::Type>(std::stoi(argv[12]));
 
+		std::cout << "Generating with: "
+			<< "\nLibrary: " << libFile.toStdString()
+			<< "\nMain Image: " << mainImageFile
+			<< "\nCell Shape: " << cellShapeFile.toStdString()
+			<< "\nCUDA: " << useCUDA
+			<< "\nColour Diff: " << ColourDifference::Type_STR.at(static_cast<size_t>(colourDiff)).toStdString()
+			<< "\nDetail: " << detail
+			<< "\nSize steps: " << sizeSteps
+			<< "\nCell size: " << cellSize
+			<< "\nMain Image size: " << mainImageSize
+			<< "\nRepeat range: " << repeatRange
+			<< "\nRepeat addition: " << repeatAddition
+			<< "\nColour scheme: " << ColourScheme::Type_STR.at(static_cast<size_t>(colourScheme)).toStdString()
+			<< "\n\n";
 		auto time = GeneratePhotomosaic(libFile, mainImageFile, cellShapeFile, useCUDA, colourDiff, detail, sizeSteps, cellSize, mainImageSize, repeatRange, repeatAddition, colourScheme);
 		std::cout << "Generated in " << time << "ms\n";
 	}

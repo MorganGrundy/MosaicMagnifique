@@ -226,7 +226,7 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGeneratorBase::resizeAndCvtC
 #ifdef OPENCV_W_CUDA
     cv::cuda::Stream stream;
     //Main image
-    if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
+    if (m_colourDiffType == ColourDifference::Type::CIE76 || m_colourDiffType == ColourDifference::Type::CIEDE2000)
     {
         cv::cuda::GpuMat main, mainConverted;
         main.upload(m_img, stream);
@@ -258,7 +258,7 @@ std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGeneratorBase::resizeAndCvtC
                                       std::round(m_cells.getCellSize(0, true))),
                              0, 0, flags, stream);
 
-        if (m_mode == Mode::CIE76 || m_mode == Mode::CIEDE2000)
+        if (m_colourDiffType == ColourDifference::Type::CIE76 || m_colourDiffType == ColourDifference::Type::CIEDE2000)
         {
             //Convert 8U [0..255] to 32F [0..1]
             src.at(i).convertTo(tmpConvertTo, CV_32F, 1 / 255.0, stream);

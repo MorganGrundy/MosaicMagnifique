@@ -249,7 +249,7 @@
     <ClCompile Include="gui\GridViewer.cpp" />
     <ClCompile Include="logic\ImageHistogramCompare.cpp" />
     <ClCompile Include="logic\ImageLibrary.cpp" />
-    <ClCompile Include="gui\ImageLibraryeditor.cpp" />
+    <ClCompile Include="gui\ImageLibraryEditor.cpp" />
     <ClCompile Include="gui\ImageSquarer.cpp" />
     <ClCompile Include="logic\ImageUtility.cpp" />
     <ClCompile Include="gui\Main.cpp" />
@@ -288,7 +288,7 @@
     </QtMoc>
     <ClInclude Include="logic\ImageHistogramCompare.h" />
     <ClInclude Include="logic\ImageLibrary.h" />
-    <QtMoc Include="gui\ImageLibraryeditor.h">
+    <QtMoc Include="gui\ImageLibraryEditor.h">
     </QtMoc>
     <QtMoc Include="gui\ImageSquarer.h">
     </QtMoc>
@@ -320,7 +320,7 @@
     </QtUic>
     <QtUic Include="gui\GridEditor.ui">
     </QtUic>
-    <QtUic Include="gui\ImageLibraryeditor.ui">
+    <QtUic Include="gui\ImageLibraryEditor.ui">
     </QtUic>
     <QtUic Include="gui\ImageSquarer.ui">
     </QtUic>

@@ -26,8 +26,11 @@ class CellShape
 {
 public:
     //Current version number
-    static const quint32 MCS_VERSION = 7;
+    static const quint32 MCS_VERSION = 8;
     static const quint32 MCS_MAGIC = 0x87AECFB1;
+
+    //Version that image encoding was added
+    static const quint32 MCS_VERSION_ENCODED = 8;
 
     //Default cell size
     static const size_t DEFAULT_CELL_SIZE = 128;

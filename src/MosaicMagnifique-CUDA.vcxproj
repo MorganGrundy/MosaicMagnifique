@@ -231,6 +231,7 @@
     </CudaLink>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="logic\CUDAImageLibrary.cpp" />
     <ClCompile Include="logic\CellGroup.cpp" />
     <ClCompile Include="logic\CellShape.cpp" />
     <ClCompile Include="gui\CellShapeEditor.cpp" />
@@ -260,6 +261,8 @@
     <ClCompile Include="gui\Switch.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="logic\CUDAImageLibrary.h" />
+    <ClInclude Include="logic\CustomQDataStream.h" />
     <ClInclude Include="logic\CellGroup.h" />
     <ClInclude Include="logic\CellShape.h" />
     <ClInclude Include="logic\ColourScheme.h" />

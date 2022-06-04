@@ -88,11 +88,3 @@ namespace ImageUtility
     void squareToCascadeClassifier(const cv::Mat &t_in, cv::Mat &t_out,
                                    cv::CascadeClassifier &t_cascadeClassifier);
 };
-
-//Outputs a OpenCV mat to a QDataStream
-//Can be used to save a OpenCV mat to a file
-QDataStream &operator<<(QDataStream &t_out, const cv::Mat &t_mat);
-
-//Inputs a OpenCV mat from a QDataStream
-//Can be used to load a OpenCV mat from a file
-QDataStream &operator>>(QDataStream &t_in, cv::Mat &t_mat);

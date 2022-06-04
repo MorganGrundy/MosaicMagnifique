@@ -24,6 +24,7 @@
 #include <QFile>
 
 #include "ImageUtility.h"
+#include "CustomQDataStream.h"
 
 CellShape::CellShape()
     : m_cellMask{}, m_rowSpacing{0}, m_colSpacing{0},
@@ -329,27 +330,29 @@ void CellShape::saveToFile(const QString t_filename) const
             throw std::invalid_argument("File is not writable: " + t_filename.toStdString());
         else
         {
-            QDataStream out(&file);
+            CustomQDataStream out(&file, CustomQDataStream::CVMatMode::ENCODE_PNG);
+            QDataStream *outParent = &out;
+
             //Write header with "magic number" and version
-            out << MCS_MAGIC;
-            out << MCS_VERSION;
+            *outParent << MCS_MAGIC;
+            *outParent << MCS_VERSION;
 
             out.setVersion(QDataStream::Qt_5_0);
 
             //Write cell shape
-            out << m_name;
+            *outParent << m_name;
             out << m_cellMask;
 
             //Write cell spacing
-            out << static_cast<qint32>(m_rowSpacing) << static_cast<qint32>(m_colSpacing);
-            out << static_cast<qint32>(m_alternateRowSpacing)
+            *outParent << static_cast<qint32>(m_rowSpacing) << static_cast<qint32>(m_colSpacing);
+            *outParent << static_cast<qint32>(m_alternateRowSpacing)
                 << static_cast<qint32>(m_alternateColSpacing);
-            out << static_cast<qint32>(m_alternateRowOffset)
+            *outParent << static_cast<qint32>(m_alternateRowOffset)
                 << static_cast<qint32>(m_alternateColOffset);
 
             //Write flip states
-            out << m_alternateColFlipHorizontal << m_alternateColFlipVertical;
-            out << m_alternateRowFlipHorizontal << m_alternateRowFlipVertical;
+            *outParent << m_alternateColFlipHorizontal << m_alternateColFlipVertical;
+            *outParent << m_alternateRowFlipHorizontal << m_alternateRowFlipVertical;
 
             file.close();
         }
@@ -369,18 +372,19 @@ void CellShape::loadFromFile(const QString t_filename)
             throw std::invalid_argument("File is not readable: " + t_filename.toStdString());
         else
         {
-            QDataStream in(&file);
+            CustomQDataStream in(&file, CustomQDataStream::CVMatMode::ENCODE_PNG);
+            QDataStream *inParent = &in;
 
             //Read and check magic number
             quint32 magic;
-            in >> magic;
+            *inParent >> magic;
             if (magic != MCS_MAGIC)
                 throw std::invalid_argument("File is not a valid .mcs: "
                                             + t_filename.toStdString());
 
             //Read the version
             quint32 version;
-            in >> version;
+            *inParent >> version;
             if (version <= MCS_VERSION && version >= 7)
                 in.setVersion(QDataStream::Qt_5_0);
             else
@@ -393,8 +397,13 @@ void CellShape::loadFromFile(const QString t_filename)
                                                 + t_filename.toStdString());
             }
 
+            //Encoding of images in .mcs was introduced in version 8
+            //For any mcs before then we need to load with no encoding
+            if (version < MCS_VERSION_ENCODED)
+                in.SetCVMatMode(CustomQDataStream::CVMatMode::RAW);
+
             //Read cell shape
-            in >> m_name;
+            *inParent >> m_name;
             in >> m_cellMask;
             //Create flipped masks
             cv::flip(m_cellMask, m_cellMaskFlippedH, 1);
@@ -403,21 +412,21 @@ void CellShape::loadFromFile(const QString t_filename)
 
             //Read cell spacing
             qint32 tmpRow, tmpCol;
-            in >> tmpRow >> tmpCol;
+            *inParent >> tmpRow >> tmpCol;
             m_rowSpacing = static_cast<int>(tmpRow);
             m_colSpacing = static_cast<int>(tmpCol);
 
-            in >> tmpRow >> tmpCol;
+            *inParent >> tmpRow >> tmpCol;
             m_alternateRowSpacing = static_cast<int>(tmpRow);
             m_alternateColSpacing = static_cast<int>(tmpCol);
 
-            in >> tmpRow >> tmpCol;
+            *inParent >> tmpRow >> tmpCol;
             m_alternateRowOffset = static_cast<int>(tmpRow);
             m_alternateColOffset = static_cast<int>(tmpCol);
 
             //Read flip states
-            in >> m_alternateColFlipHorizontal >> m_alternateColFlipVertical;
-            in >> m_alternateRowFlipHorizontal >> m_alternateRowFlipVertical;
+            *inParent >> m_alternateColFlipHorizontal >> m_alternateColFlipVertical;
+            *inParent >> m_alternateRowFlipHorizontal >> m_alternateRowFlipVertical;
 
             file.close();
         }

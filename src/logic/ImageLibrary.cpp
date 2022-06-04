@@ -5,6 +5,10 @@
 #include <stdexcept>
 #include <random>
 
+#include <opencv2/imgcodecs.hpp>
+
+#include "CustomQDataStream.h"
+
 ImageLibrary::ImageLibrary(const size_t t_imageSize)
     : m_imageSize{t_imageSize}
 {}
@@ -75,9 +79,8 @@ size_t ImageLibrary::addImage(const cv::Mat &t_im, const QString &t_name)
     const size_t randomIndex = distr(generator);
 
     m_names.insert(m_names.begin() + randomIndex, t_name);
-    m_originalImages.insert(m_originalImages.begin() + randomIndex, ImageUtility::resizeImage(squaredIm,
-        static_cast<int>(m_imageSize), static_cast<int>(m_imageSize), ImageUtility::ResizeType::EXACT));
-    m_resizedImages.insert(m_resizedImages.begin() + randomIndex, m_originalImages.at(randomIndex));
+
+    addImageInternal(randomIndex, ImageUtility::resizeImage(squaredIm, static_cast<int>(m_imageSize), static_cast<int>(m_imageSize), ImageUtility::ResizeType::EXACT));
 
     return randomIndex;
 }
@@ -123,23 +126,25 @@ void ImageLibrary::saveToFile(const QString t_filename) const
             throw std::invalid_argument("File is not writable: " + t_filename.toStdString());
         else
         {
-            QDataStream out(&file);
+            CustomQDataStream out(&file, CustomQDataStream::CVMatMode::ENCODE_PNG);
+            QDataStream *outParent = &out;
+
             //Write header with "magic number" and version
-            out << MIL_MAGIC;
-            out << MIL_VERSION;
+            *outParent << MIL_MAGIC;
+            *outParent << MIL_VERSION;
 
             out.setVersion(QDataStream::Qt_5_0);
 
             //Write image size and library size
-            out << static_cast<quint32>(m_imageSize);
-            out << static_cast<quint32>(m_resizedImages.size());
+            *outParent << static_cast<quint32>(m_imageSize);
+            *outParent << static_cast<quint32>(m_resizedImages.size());
 
             //Write images and names
             for (auto [image, name] = std::pair{m_resizedImages.cbegin(), m_names.cbegin()};
                  image != m_resizedImages.cend(); ++image, ++name)
             {
                 out << *image;
-                out << *name;
+                *outParent << *name;
             }
 
             file.close();
@@ -160,18 +165,19 @@ void ImageLibrary::loadFromFile(const QString t_filename)
             throw std::invalid_argument("File is not readable: " + t_filename.toStdString());
         else
         {
-            QDataStream in(&file);
+            CustomQDataStream in(&file, CustomQDataStream::CVMatMode::ENCODE_PNG);
+            QDataStream *inParent = &in;
 
             //Read and check magic number
             quint32 magic;
-            in >> magic;
+            *inParent >> magic;
             if (magic != MIL_MAGIC)
                 throw std::invalid_argument("File is not a valid .mil: "
                                             + t_filename.toStdString());
 
             //Read the version
             quint32 version;
-            in >> version;
+            *inParent >> version;
             if (version <= MIL_VERSION && version >= 4)
                 in.setVersion(QDataStream::Qt_5_0);
             else
@@ -184,14 +190,19 @@ void ImageLibrary::loadFromFile(const QString t_filename)
                                                 + t_filename.toStdString());
             }
 
+            //Encoding of images in .mil was introduced in version 6
+            //For any mil before then we need to load with no encoding
+            if (version < MIL_VERSION_ENCODED)
+                in.SetCVMatMode(CustomQDataStream::CVMatMode::RAW);
+
             //Read image size
             quint32 imageSize;
-            in >> imageSize;
+            *inParent >> imageSize;
             m_imageSize = static_cast<size_t>(imageSize);
 
             //Read library size
             quint32 numberOfImage;
-            in >> numberOfImage;
+            *inParent >> numberOfImage;
 
             //Read images and names
             while (numberOfImage > 0)
@@ -203,6 +214,7 @@ void ImageLibrary::loadFromFile(const QString t_filename)
                 QString name;
                 in >> name;
 
+                size_t index = m_originalImages.size();
                 //Random sorting of library images was introduced in version 5
                 //For any mil before then we need to randomly sort when loading the mil
                 if (version < 5)
@@ -211,21 +223,22 @@ void ImageLibrary::loadFromFile(const QString t_filename)
                     std::random_device rand_dev;
                     std::mt19937 generator(rand_dev());
                     std::uniform_int_distribution<size_t> distr(0, m_originalImages.size());
-                    const size_t randomIndex = distr(generator);
+                    index = distr(generator);
+                }
 
-                    m_names.insert(m_names.begin() + randomIndex, name);
-                    m_originalImages.insert(m_originalImages.begin() + randomIndex, image);
-                    m_resizedImages.insert(m_resizedImages.begin() + randomIndex, image);
-                }
-                else
-                {
-                    m_names.push_back(name);
-                    m_originalImages.push_back(image);
-                    m_resizedImages.push_back(image);
-                }
+                m_names.insert(m_names.begin() + index, name);
+                addImageInternal(index, image);
             }
 
             file.close();
         }
     }
+}
+
+//Internals of addImage, adds image at the given index in relevant containers
+//Allows this to be overriden for CUDA functionality while using the same addImage
+void ImageLibrary::addImageInternal(const size_t index, const cv::Mat &t_im)
+{
+    m_originalImages.insert(m_originalImages.begin() + index, t_im);
+    m_resizedImages.insert(m_resizedImages.begin() + index, t_im);
 }

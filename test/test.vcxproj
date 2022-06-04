@@ -109,44 +109,45 @@
     </QtMoc>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\logic\cellgroup.cpp" />
-    <ClCompile Include="..\src\logic\cellshape.cpp" />
-    <ClCompile Include="..\src\logic\colourdifference.cpp" />
+    <ClCompile Include="..\src\logic\CellGroup.cpp" />
+    <ClCompile Include="..\src\logic\CellShape.cpp" />
+    <ClCompile Include="..\src\logic\ColourDifference.cpp" />
     <ClCompile Include="..\src\logic\ColourScheme.cpp" />
-    <ClCompile Include="..\src\logic\cpuphotomosaicgenerator.cpp" />
+    <ClCompile Include="..\src\logic\CPUPhotomosaicGenerator.cpp" />
     <ClCompile Include="..\src\logic\CUDAPhotomosaicGenerator.cpp" />
     <ClCompile Include="C:\google-lib\googletest-master\googlemock\src\gmock-all.cc" />
-    <ClCompile Include="..\src\logic\gridbounds.cpp" />
-    <ClCompile Include="..\src\logic\gridgenerator.cpp" />
-    <ClCompile Include="..\src\logic\gridutility.cpp" />
+    <ClCompile Include="..\src\logic\GridBounds.cpp" />
+    <ClCompile Include="..\src\logic\GridGenerator.cpp" />
+    <ClCompile Include="..\src\logic\GridUtility.cpp" />
     <ClCompile Include="C:\google-lib\googletest-master\googletest\src\gtest-all.cc" />
-    <ClCompile Include="..\src\logic\imagehistogramcompare.cpp" />
-    <ClCompile Include="..\src\logic\imagelibrary.cpp" />
-    <ClCompile Include="..\src\logic\imageutility.cpp" />
+    <ClCompile Include="..\src\logic\ImageHistogramCompare.cpp" />
+    <ClCompile Include="..\src\logic\ImageLibrary.cpp" />
+    <ClCompile Include="..\src\logic\ImageUtility.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="..\src\logic\photomosaicgeneratorbase.cpp" />
-    <ClCompile Include="..\src\logic\quadtree.cpp" />
+    <ClCompile Include="..\src\logic\PhotomosaicGeneratorBase.cpp" />
+    <ClCompile Include="..\src\logic\QuadTree.cpp" />
     <ClCompile Include="testutility.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\logic\cellgroup.h" />
-    <ClInclude Include="..\src\logic\cellshape.h" />
-    <ClInclude Include="..\src\logic\colourdifference.h" />
+    <ClInclude Include="..\src\logic\CustomQDataStream.h" />
+    <ClInclude Include="..\src\logic\CellGroup.h" />
+    <ClInclude Include="..\src\logic\CellShape.h" />
+    <ClInclude Include="..\src\logic\ColourDifference.h" />
     <ClInclude Include="..\src\logic\ColourScheme.h" />
-    <ClInclude Include="..\src\logic\cpuphotomosaicgenerator.h" />
+    <ClInclude Include="..\src\logic\CPUPhotomosaicGenerator.h" />
     <ClInclude Include="..\src\logic\CUDAPhotomosaicGenerator.h" />
     <ClInclude Include="..\src\logic\CUDAUtility.h" />
-    <ClInclude Include="..\src\logic\gridbounds.h" />
-    <ClInclude Include="..\src\logic\gridgenerator.h" />
-    <ClInclude Include="..\src\logic\gridutility.h" />
-    <ClInclude Include="..\src\logic\imagehistogramcompare.h" />
-    <ClInclude Include="..\src\logic\imagelibrary.h" />
-    <ClInclude Include="..\src\logic\imageutility.h" />
-    <QtMoc Include="..\src\logic\photomosaicgeneratorbase.h">
+    <ClInclude Include="..\src\logic\GridBounds.h" />
+    <ClInclude Include="..\src\logic\GridGenerator.h" />
+    <ClInclude Include="..\src\logic\GridUtility.h" />
+    <ClInclude Include="..\src\logic\ImageHistogramCompare.h" />
+    <ClInclude Include="..\src\logic\ImageLibrary.h" />
+    <ClInclude Include="..\src\logic\ImageUtility.h" />
+    <QtMoc Include="..\src\logic\PhotomosaicGeneratorBase.h">
     </QtMoc>
     <ClInclude Include="..\src\logic\MatUtility.h" />
     <ClInclude Include="..\src\logic\PhotomosaicGenerator.cuh" />
-    <ClInclude Include="..\src\logic\quadtree.h" />
+    <ClInclude Include="..\src\logic\QuadTree.h" />
     <ClInclude Include="..\src\logic\Reduction.cuh" />
     <ClInclude Include="testutility.h" />
     <ClInclude Include="tst_cellshape.h" />

@@ -8,8 +8,14 @@
 class ImageLibrary
 {
 public:
-    static const quint32 MIL_VERSION = 5;
+    //Current version number
+    static const quint32 MIL_VERSION = 6;
     static const quint32 MIL_MAGIC = 0xADBE2480;
+
+    //Version that random sorting was added
+    static const quint32 MIL_VERSION_RANDOMSORT = 5;
+    //Version that image encoding was added
+    static const quint32 MIL_VERSION_ENCODED = 6;
 
     ImageLibrary(const size_t t_imageSize);
 
@@ -41,6 +47,11 @@ public:
     //Loads image library from given file
     void loadFromFile(const QString t_filename);
 
+protected:
+    //Internals of addImage, adds image at the given index in relevant containers
+    //Allows this to be overriden for CUDA functionality while using the same addImage
+    virtual void addImageInternal(const size_t index, const cv::Mat &t_im);
+
 private:
     //Size of images in library
     size_t m_imageSize;
@@ -48,5 +59,4 @@ private:
     std::vector<QString> m_names; //Image names
     std::vector<cv::Mat> m_originalImages; //Original images
     std::vector<cv::Mat> m_resizedImages; //Library images resized
-
 };

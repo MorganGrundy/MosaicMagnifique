@@ -238,6 +238,7 @@
     <ClInclude Include="logic\ColourScheme.h" />
     <ClInclude Include="logic\CellGroup.h" />
     <ClInclude Include="logic\CellShape.h" />
+    <ClInclude Include="logic\CustomQDataStream.h" />
     <ClInclude Include="logic\MatUtility.h" />
     <ClInclude Include="resource.h" />
     <QtMoc Include="gui\CellShapeEditor.h">

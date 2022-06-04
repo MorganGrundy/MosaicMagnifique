@@ -75,9 +75,9 @@ size_t ImageLibrary::addImage(const cv::Mat &t_im, const QString &t_name)
     const size_t randomIndex = distr(generator);
 
     m_names.insert(m_names.begin() + randomIndex, t_name);
-    m_originalImages.insert(m_originalImages.begin() + randomIndex, squaredIm);
-    m_resizedImages.insert(m_resizedImages.begin() + randomIndex, ImageUtility::resizeImage(squaredIm,
+    m_originalImages.insert(m_originalImages.begin() + randomIndex, ImageUtility::resizeImage(squaredIm,
         static_cast<int>(m_imageSize), static_cast<int>(m_imageSize), ImageUtility::ResizeType::EXACT));
+    m_resizedImages.insert(m_resizedImages.begin() + randomIndex, m_originalImages.at(randomIndex));
 
     return randomIndex;
 }

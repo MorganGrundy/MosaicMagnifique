@@ -25,10 +25,6 @@
 #include <QPixmap>
 #include <QProgressBar>
 
-#ifdef CUDA
-#include <opencv2/cudaimgproc.hpp>
-#endif
-
 namespace ImageUtility
 {
     //Represents the different resize types
@@ -46,12 +42,6 @@ namespace ImageUtility
     void batchResizeMat(const std::vector<cv::Mat> &t_src, std::vector<cv::Mat> &t_dst,
                         const int t_targetHeight, const int t_targetWidth, const ResizeType t_type,
                         QProgressBar *progressBar = nullptr);
-
-#ifdef CUDA
-    //Populates dst with copy of images resized to target size with given resize type from src
-    void batchResizeMat(const std::vector<cv::cuda::GpuMat> &t_src, std::vector<cv::cuda::GpuMat> &t_dst,
-        const int t_targetHeight, const int t_targetWidth, const ResizeType t_type);
-#endif
 
     //Resizes images to (first image size * ratio)
     bool batchResizeMat(std::vector<cv::Mat> &t_images, const double t_ratio = 0.5);

@@ -64,11 +64,48 @@ cv::Mat ImageUtility::resizeImage(const cv::Mat &t_img,
 //Populates dst with copy of images resized to target size with given resize type from src
 //If OpenCV CUDA is available then will resize on gpu
 void ImageUtility::batchResizeMat(const std::vector<cv::Mat> &t_src, std::vector<cv::Mat> &t_dst,
-                                  const int t_targetHeight, const int t_targetWidth,
-                                  const ResizeType t_type, QProgressBar *progressBar)
+    const int t_targetHeight, const int t_targetWidth,
+    const ResizeType t_type, QProgressBar *progressBar)
 {
     t_dst.resize(t_src.size());
 
+#ifdef OPENCV_W_CUDA
+    if (progressBar != nullptr)
+    {
+        progressBar->setMaximum(0);
+        progressBar->setValue(0);
+        progressBar->setVisible(true);
+    }
+
+    cv::cuda::Stream stream;
+    std::vector<cv::cuda::GpuMat> src(t_src.size()), dst(t_src.size());
+    for (size_t i = 0; i < t_src.size(); ++i)
+    {
+        //Calculates resize factor
+        double resizeFactor = static_cast<double>(t_targetHeight) / t_src.at(i).rows;
+        if ((t_type == ResizeType::EXCLUSIVE &&
+            t_targetWidth < resizeFactor * t_src.at(i).cols) ||
+            (t_type == ResizeType::INCLUSIVE &&
+                t_targetWidth > resizeFactor * t_src.at(i).cols))
+            resizeFactor = static_cast<double>(t_targetWidth) / t_src.at(i).cols;
+
+        //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
+        cv::InterpolationFlags flags = (resizeFactor < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
+
+        //Resize image
+        src.at(i).upload(t_src.at(i), stream);
+        if (t_type == ResizeType::EXACT)
+            cv::cuda::resize(src.at(i), dst.at(i), cv::Size(t_targetWidth, t_targetHeight),
+                0, 0, flags, stream);
+        else
+            cv::cuda::resize(src.at(i), dst.at(i),
+                cv::Size(std::round(resizeFactor * src.at(i).cols),
+                    std::round(resizeFactor * src.at(i).rows)),
+                0, 0, flags, stream);
+        dst.at(i).download(t_dst.at(i), stream);
+    }
+    stream.waitForCompletion();
+#else
     if (progressBar != nullptr)
     {
         progressBar->setMaximum(static_cast<int>(t_src.size()));
@@ -82,43 +119,10 @@ void ImageUtility::batchResizeMat(const std::vector<cv::Mat> &t_src, std::vector
         if (progressBar != nullptr)
             progressBar->setValue(progressBar->value() + 1);
     }
-
+#endif
     if (progressBar != nullptr)
         progressBar->setVisible(false);
 }
-
-#ifdef CUDA
-//Populates dst with copy of images resized to target size with given resize type from src
-void ImageUtility::batchResizeMat(const std::vector<cv::cuda::GpuMat> &t_src, std::vector<cv::cuda::GpuMat> &t_dst,
-    const int t_targetHeight, const int t_targetWidth, const ResizeType t_type)
-{
-    t_dst.resize(t_src.size());
-
-    cv::cuda::Stream stream;
-    for (size_t i = 0; i < t_src.size(); ++i)
-    {
-        //Calculates resize factor
-        double resizeFactor = static_cast<double>(t_targetHeight) / t_src.at(i).rows;
-        if ((t_type == ResizeType::EXCLUSIVE && t_targetWidth < resizeFactor * t_src.at(i).cols) ||
-            (t_type == ResizeType::INCLUSIVE && t_targetWidth > resizeFactor * t_src.at(i).cols))
-            resizeFactor = static_cast<double>(t_targetWidth) / t_src.at(i).cols;
-
-        //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
-        cv::InterpolationFlags flags = (resizeFactor < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
-
-        //Resize image
-        if (t_type == ResizeType::EXACT)
-            cv::cuda::resize(t_src.at(i), t_dst.at(i), cv::Size(t_targetWidth, t_targetHeight),
-                0, 0, flags, stream);
-        else
-            cv::cuda::resize(t_src.at(i), t_dst.at(i),
-                cv::Size(std::round(resizeFactor * t_src.at(i).cols),
-                    std::round(resizeFactor * t_src.at(i).rows)),
-                0, 0, flags, stream);
-    }
-    stream.waitForCompletion();
-}
-#endif
 
 //Resizes images to (first image size * ratio)
 bool ImageUtility::batchResizeMat(std::vector<cv::Mat> &t_images, const double t_ratio)

@@ -80,7 +80,7 @@
   </ImportGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;C:\OpenCV\opencv-4.5.2\build\install\include;logic;gui;release;/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;C:\OpenCV\opencv-4.5.2\build\install\include;release;/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>$(Configuration)-$(Platform)\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
@@ -140,13 +140,13 @@
     </QtRcc>
     <QtUic>
       <ExecutionDescription>Uic'ing %(Identity)...</ExecutionDescription>
-      <QtUicDir>$(ProjectDir)\gui\</QtUicDir>
+      <QtUicDir>%(InputFile)\..\</QtUicDir>
       <QtUicFileName>ui_%(Filename).h</QtUicFileName>
     </QtUic>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;C:\OpenCV\opencv-4.5.2\build\install\include;logic;gui;debug;/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;C:\OpenCV\opencv-4.5.2\build\install\include;debug;/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>$(Configuration)-$(Platform)\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
@@ -202,78 +202,78 @@
     </QtRcc>
     <QtUic>
       <ExecutionDescription>Uic'ing %(Identity)...</ExecutionDescription>
-      <QtUicDir>$(ProjectDir)\gui\</QtUicDir>
+      <QtUicDir>%(InputFile)\..\</QtUicDir>
       <QtUicFileName>ui_%(Filename).h</QtUicFileName>
     </QtUic>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="logic\ColourScheme.cpp" />
-    <ClCompile Include="logic\CellGroup.cpp" />
-    <ClCompile Include="logic\CellShape.cpp" />
-    <ClCompile Include="gui\CellShapeEditor.cpp" />
-    <ClCompile Include="logic\ColourDifference.cpp" />
-    <ClCompile Include="gui\ColourVisualisation.cpp" />
-    <ClCompile Include="logic\CPUPhotomosaicGenerator.cpp" />
-    <ClCompile Include="gui\CropGraphicsObject.cpp" />
-    <ClCompile Include="gui\CustomGraphicsView.cpp" />
-    <ClCompile Include="logic\GridBounds.cpp" />
-    <ClCompile Include="gui\GridEditor.cpp" />
-    <ClCompile Include="gui\GridEditViewer.cpp" />
-    <ClCompile Include="logic\GridGenerator.cpp" />
-    <ClCompile Include="logic\GridUtility.cpp" />
-    <ClCompile Include="gui\GridViewer.cpp" />
-    <ClCompile Include="logic\ImageHistogramCompare.cpp" />
-    <ClCompile Include="logic\ImageLibrary.cpp" />
-    <ClCompile Include="gui\ImageLibraryEditor.cpp" />
-    <ClCompile Include="gui\ImageSquarer.cpp" />
-    <ClCompile Include="logic\ImageUtility.cpp" />
-    <ClCompile Include="gui\Main.cpp" />
-    <ClCompile Include="gui\MainWindow.cpp" />
-    <ClCompile Include="logic\PhotomosaicGeneratorBase.cpp" />
-    <ClCompile Include="gui\PhotomosaicViewer.cpp" />
-    <ClCompile Include="logic\QuadTree.cpp" />
-    <ClCompile Include="gui\Switch.cpp" />
+    <ClCompile Include="Photomosaic\ColourScheme.cpp" />
+    <ClCompile Include="CellShape\CellGroup.cpp" />
+    <ClCompile Include="CellShape\CellShape.cpp" />
+    <ClCompile Include="CellShape\CellShapeEditor.cpp" />
+    <ClCompile Include="Photomosaic\ColourDifference.cpp" />
+    <ClCompile Include="ImageLibrary\ColourVisualisation.cpp" />
+    <ClCompile Include="Photomosaic\CPUPhotomosaicGenerator.cpp" />
+    <ClCompile Include="Other\CropGraphicsObject.cpp" />
+    <ClCompile Include="Other\CustomGraphicsView.cpp" />
+    <ClCompile Include="Grid\GridBounds.cpp" />
+    <ClCompile Include="Grid\GridEditor.cpp" />
+    <ClCompile Include="Grid\GridEditViewer.cpp" />
+    <ClCompile Include="Grid\GridGenerator.cpp" />
+    <ClCompile Include="Grid\GridUtility.cpp" />
+    <ClCompile Include="Grid\GridViewer.cpp" />
+    <ClCompile Include="ImageLibrary\ImageHistogramCompare.cpp" />
+    <ClCompile Include="ImageLibrary\ImageLibrary.cpp" />
+    <ClCompile Include="ImageLibrary\ImageLibraryEditor.cpp" />
+    <ClCompile Include="ImageLibrary\ImageSquarer.cpp" />
+    <ClCompile Include="Other\ImageUtility.cpp" />
+    <ClCompile Include="Other\Main.cpp" />
+    <ClCompile Include="Other\MainWindow.cpp" />
+    <ClCompile Include="Photomosaic\PhotomosaicGeneratorBase.cpp" />
+    <ClCompile Include="Photomosaic\PhotomosaicViewer.cpp" />
+    <ClCompile Include="Grid\QuadTree.cpp" />
+    <ClCompile Include="Other\Switch.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="logic\ColourScheme.h" />
-    <ClInclude Include="logic\CellGroup.h" />
-    <ClInclude Include="logic\CellShape.h" />
-    <ClInclude Include="logic\CustomQDataStream.h" />
-    <ClInclude Include="logic\MatUtility.h" />
-    <ClInclude Include="resource.h" />
-    <QtMoc Include="gui\CellShapeEditor.h">
+    <ClInclude Include="Photomosaic\ColourScheme.h" />
+    <ClInclude Include="CellShape\CellGroup.h" />
+    <ClInclude Include="CellShape\CellShape.h" />
+    <ClInclude Include="Other\CustomQDataStream.h" />
+    <ClInclude Include="Other\MatUtility.h" />
+    <ClInclude Include="Resources\resource.h" />
+    <QtMoc Include="CellShape\CellShapeEditor.h">
     </QtMoc>
-    <ClInclude Include="logic\ColourDifference.h" />
-    <QtMoc Include="gui\ColourVisualisation.h">
+    <ClInclude Include="Photomosaic\ColourDifference.h" />
+    <QtMoc Include="ImageLibrary\ColourVisualisation.h">
     </QtMoc>
-    <ClInclude Include="logic\CPUPhotomosaicGenerator.h" />
-    <ClInclude Include="gui\CropGraphicsObject.h" />
-    <QtMoc Include="gui\CustomGraphicsView.h">
+    <ClInclude Include="Photomosaic\CPUPhotomosaicGenerator.h" />
+    <ClInclude Include="Other\CropGraphicsObject.h" />
+    <QtMoc Include="Other\CustomGraphicsView.h">
     </QtMoc>
-    <ClInclude Include="logic\GridBounds.h" />
-    <QtMoc Include="gui\GridEditor.h">
+    <ClInclude Include="Grid\GridBounds.h" />
+    <QtMoc Include="Grid\GridEditor.h">
     </QtMoc>
-    <QtMoc Include="gui\GridEditViewer.h">
+    <QtMoc Include="Grid\GridEditViewer.h">
     </QtMoc>
-    <ClInclude Include="logic\GridGenerator.h" />
-    <ClInclude Include="logic\GridUtility.h" />
-    <QtMoc Include="gui\GridViewer.h">
+    <ClInclude Include="Grid\GridGenerator.h" />
+    <ClInclude Include="Grid\GridUtility.h" />
+    <QtMoc Include="Grid\GridViewer.h">
     </QtMoc>
-    <ClInclude Include="logic\ImageHistogramCompare.h" />
-    <ClInclude Include="logic\ImageLibrary.h" />
-    <QtMoc Include="gui\ImageLibraryeditor.h">
+    <ClInclude Include="ImageLibrary\ImageHistogramCompare.h" />
+    <ClInclude Include="ImageLibrary\ImageLibrary.h" />
+    <QtMoc Include="ImageLibrary\ImageLibraryeditor.h">
     </QtMoc>
-    <QtMoc Include="gui\ImageSquarer.h">
+    <QtMoc Include="ImageLibrary\ImageSquarer.h">
     </QtMoc>
-    <ClInclude Include="logic\ImageUtility.h" />
-    <QtMoc Include="gui\MainWindow.h">
+    <ClInclude Include="Other\ImageUtility.h" />
+    <QtMoc Include="Other\MainWindow.h">
     </QtMoc>
-    <QtMoc Include="logic\PhotomosaicGeneratorBase.h">
+    <QtMoc Include="Photomosaic\PhotomosaicGeneratorBase.h">
     </QtMoc>
-    <QtMoc Include="gui\PhotomosaicViewer.h">
+    <QtMoc Include="Photomosaic\PhotomosaicViewer.h">
     </QtMoc>
-    <ClInclude Include="logic\QuadTree.h" />
-    <QtMoc Include="gui\Switch.h">
+    <ClInclude Include="Grid\QuadTree.h" />
+    <QtMoc Include="Other\Switch.h">
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -287,33 +287,33 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <QtUic Include="gui\CellShapeEditor.ui">
+    <QtUic Include="CellShape\CellShapeEditor.ui">
     </QtUic>
-    <QtUic Include="gui\ColourVisualisation.ui">
+    <QtUic Include="ImageLibrary\ColourVisualisation.ui">
     </QtUic>
-    <QtUic Include="gui\GridEditor.ui">
+    <QtUic Include="Grid\GridEditor.ui">
     </QtUic>
-    <QtUic Include="gui\ImageLibraryeditor.ui">
+    <QtUic Include="ImageLibrary\ImageLibraryeditor.ui">
     </QtUic>
-    <QtUic Include="gui\ImageSquarer.ui">
+    <QtUic Include="ImageLibrary\ImageSquarer.ui">
     </QtUic>
-    <QtUic Include="gui\MainWindow.ui">
+    <QtUic Include="Other\MainWindow.ui">
     </QtUic>
-    <QtUic Include="gui\PhotomosaicViewer.ui">
+    <QtUic Include="Photomosaic\PhotomosaicViewer.ui">
     </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <None Include="gui\LinkIcon.png" />
-    <None Include="gui\MosaicMagnifique.png" />
-    <None Include="gui\UnlinkIcon.png" />
-    <QtRcc Include="gui\ui.qrc">
+    <None Include="Resources\LinkIcon.png" />
+    <None Include="Resources\MosaicMagnifique.png" />
+    <None Include="Resources\UnlinkIcon.png" />
+    <QtRcc Include="Resources\ui.qrc">
     </QtRcc>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="MosaicMagnifique_resource.rc" />
+    <ResourceCompile Include="Resources\MosaicMagnifique_resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="gui\MosaicMagnifique.ico" />
+    <Image Include="Resources\MosaicMagnifique.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

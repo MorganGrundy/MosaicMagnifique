@@ -42,7 +42,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\logic\ImageUtility.cpp">
+    <ClCompile Include="..\src\Other\ImageUtility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Main.cpp">
@@ -51,51 +51,51 @@
     <ClCompile Include="..\test\testutility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\logic\ColourDifference.cpp">
+    <ClCompile Include="..\src\Photomosaic\ColourDifference.cpp">
       <Filter>Photomosaic</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\logic\ColourScheme.cpp">
+    <ClCompile Include="..\src\Photomosaic\ColourScheme.cpp">
       <Filter>Photomosaic</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\logic\CPUPhotomosaicGenerator.cpp">
+    <ClCompile Include="..\src\Photomosaic\CPUPhotomosaicGenerator.cpp">
       <Filter>Photomosaic</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\logic\PhotomosaicGeneratorBase.cpp">
+    <ClCompile Include="..\src\Photomosaic\PhotomosaicGeneratorBase.cpp">
       <Filter>Photomosaic</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\logic\CUDAPhotomosaicGenerator.cpp">
+    <ClCompile Include="..\src\Photomosaic\CUDA\CUDAPhotomosaicGenerator.cpp">
       <Filter>Photomosaic\CUDA</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\logic\ImageHistogramCompare.cpp">
+    <ClCompile Include="..\src\ImageLibrary\ImageHistogramCompare.cpp">
       <Filter>Image Library</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\logic\ImageLibrary.cpp">
+    <ClCompile Include="..\src\ImageLibrary\ImageLibrary.cpp">
       <Filter>Image Library</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\logic\GridBounds.cpp">
+    <ClCompile Include="..\src\Grid\GridBounds.cpp">
       <Filter>Grid</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\logic\GridGenerator.cpp">
+    <ClCompile Include="..\src\Grid\GridGenerator.cpp">
       <Filter>Grid</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\logic\GridUtility.cpp">
+    <ClCompile Include="..\src\Grid\GridUtility.cpp">
       <Filter>Grid</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\logic\CellGroup.cpp">
+    <ClCompile Include="..\src\CellShape\CellGroup.cpp">
       <Filter>Cell Shape</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\logic\CellShape.cpp">
+    <ClCompile Include="..\src\CellShape\CellShape.cpp">
       <Filter>Cell Shape</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\logic\QuadTree.cpp">
+    <ClCompile Include="..\src\Grid\QuadTree.cpp">
       <Filter>Grid</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\logic\ImageUtility.h">
+    <ClInclude Include="..\src\Other\ImageUtility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\MatUtility.h">
+    <ClInclude Include="..\src\Other\MatUtility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Benchmark_Generator.h">
@@ -104,62 +104,62 @@
     <ClInclude Include="..\test\testutility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\CUDAUtility.h">
+    <ClInclude Include="..\src\Photomosaic\CUDA\CUDAUtility.h">
       <Filter>Photomosaic\CUDA</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\PhotomosaicGenerator.cuh">
+    <ClInclude Include="..\src\Photomosaic\CUDA\PhotomosaicGenerator.cuh">
       <Filter>Photomosaic\CUDA</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\Reduction.cuh">
+    <ClInclude Include="..\src\Photomosaic\CUDA\Reduction.cuh">
       <Filter>Photomosaic\CUDA</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\CUDAPhotomosaicGenerator.h">
+    <ClInclude Include="..\src\Photomosaic\CUDA\CUDAPhotomosaicGenerator.h">
       <Filter>Photomosaic\CUDA</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\ColourDifference.h">
+    <ClInclude Include="..\src\Photomosaic\ColourDifference.h">
       <Filter>Photomosaic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\ColourScheme.h">
+    <ClInclude Include="..\src\Photomosaic\ColourScheme.h">
       <Filter>Photomosaic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\CPUPhotomosaicGenerator.h">
+    <ClInclude Include="..\src\Photomosaic\CPUPhotomosaicGenerator.h">
       <Filter>Photomosaic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\ImageLibrary.h">
+    <ClInclude Include="..\src\ImageLibrary\ImageLibrary.h">
       <Filter>Image Library</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\ImageHistogramCompare.h">
+    <ClInclude Include="..\src\ImageLibrary\ImageHistogramCompare.h">
       <Filter>Image Library</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\GridBounds.h">
+    <ClInclude Include="..\src\Grid\GridBounds.h">
       <Filter>Grid</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\GridGenerator.h">
+    <ClInclude Include="..\src\Grid\GridGenerator.h">
       <Filter>Grid</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\GridUtility.h">
+    <ClInclude Include="..\src\Grid\GridUtility.h">
       <Filter>Grid</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\CellGroup.h">
+    <ClInclude Include="..\src\CellShape\CellGroup.h">
       <Filter>Cell Shape</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\CellShape.h">
+    <ClInclude Include="..\src\CellShape\CellShape.h">
       <Filter>Cell Shape</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\logic\QuadTree.h">
+    <ClInclude Include="..\src\Grid\QuadTree.h">
       <Filter>Grid</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="..\src\logic\PhotomosaicGenerator.cu">
+    <CudaCompile Include="..\src\Photomosaic\CUDA\PhotomosaicGenerator.cu">
       <Filter>Photomosaic\CUDA</Filter>
     </CudaCompile>
-    <CudaCompile Include="..\src\logic\Reduction.cu">
+    <CudaCompile Include="..\src\Photomosaic\CUDA\Reduction.cu">
       <Filter>Photomosaic\CUDA</Filter>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="..\src\logic\PhotomosaicGeneratorBase.h">
+    <QtMoc Include="..\src\Photomosaic\PhotomosaicGeneratorBase.h">
       <Filter>Photomosaic</Filter>
     </QtMoc>
   </ItemGroup>

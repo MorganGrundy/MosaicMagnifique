@@ -4,12 +4,12 @@
 #include <gmock/gmock-matchers.h>
 #include <opencv2/core.hpp>
 
-#include "colourdifference.h"
+#include "..\src\Photomosaic\ColourDifference.h"
 #include "testutility.h"
 
 #ifdef CUDA
-#include "cudautility.h"
-#include "photomosaicgenerator.cuh"
+#include "..\src\Photomosaic\CUDA\CUDAUtility.h"
+#include "..\src\Photomosaic\CUDA\PhotomosaicGenerator.cuh"
 #endif
 
 struct ColourDiffPair

@@ -8,10 +8,10 @@
 #include <vector>
 #include <execution>
 
-#include "cudautility.h"
+#include "..\src\Photomosaic\CUDA\CUDAUtility.h"
 #include "testutility.h"
-#include "photomosaicgenerator.cuh"
-#include "reduction.cuh"
+#include "..\src\Photomosaic\CUDA\PhotomosaicGenerator.cuh"
+#include "..\src\Photomosaic\CUDA\Reduction.cuh"
 
 TEST(CUDAKernel, CalculateRepeats)
 {

@@ -5,7 +5,7 @@
 #include <QDir>
 #include <QFileInfo>
 
-#include "imagelibrary.h"
+#include "..\src\ImageLibrary\ImageLibrary.h"
 #include "testutility.h"
 
 //Creates an image library, saves it to a file

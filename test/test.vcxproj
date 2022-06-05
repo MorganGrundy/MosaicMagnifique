@@ -56,7 +56,7 @@
   </ImportGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;C:\google-lib\googletest-master\googletest;C:\google-lib\googletest-master\googletest\include;C:\google-lib\googletest-master\googlemock;C:\google-lib\googletest-master\googlemock\include;C:\OpenCV\opencv-4.5.2\build\install\include;..\src\logic;release;/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;C:\google-lib\googletest-master\googletest;C:\google-lib\googletest-master\googletest\include;C:\google-lib\googletest-master\googlemock;C:\google-lib\googletest-master\googlemock\include;C:\OpenCV\opencv-4.5.2\build\install\include;release;/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>release\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
@@ -109,46 +109,46 @@
     </QtMoc>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\logic\CellGroup.cpp" />
-    <ClCompile Include="..\src\logic\CellShape.cpp" />
-    <ClCompile Include="..\src\logic\ColourDifference.cpp" />
-    <ClCompile Include="..\src\logic\ColourScheme.cpp" />
-    <ClCompile Include="..\src\logic\CPUPhotomosaicGenerator.cpp" />
-    <ClCompile Include="..\src\logic\CUDAPhotomosaicGenerator.cpp" />
+    <ClCompile Include="..\src\CellShape\CellGroup.cpp" />
+    <ClCompile Include="..\src\CellShape\CellShape.cpp" />
+    <ClCompile Include="..\src\Photomosaic\ColourDifference.cpp" />
+    <ClCompile Include="..\src\Photomosaic\ColourScheme.cpp" />
+    <ClCompile Include="..\src\Photomosaic\CPUPhotomosaicGenerator.cpp" />
+    <ClCompile Include="..\src\Photomosaic\CUDA\CUDAPhotomosaicGenerator.cpp" />
     <ClCompile Include="C:\google-lib\googletest-master\googlemock\src\gmock-all.cc" />
-    <ClCompile Include="..\src\logic\GridBounds.cpp" />
-    <ClCompile Include="..\src\logic\GridGenerator.cpp" />
-    <ClCompile Include="..\src\logic\GridUtility.cpp" />
+    <ClCompile Include="..\src\Grid\GridBounds.cpp" />
+    <ClCompile Include="..\src\Grid\GridGenerator.cpp" />
+    <ClCompile Include="..\src\Grid\GridUtility.cpp" />
     <ClCompile Include="C:\google-lib\googletest-master\googletest\src\gtest-all.cc" />
-    <ClCompile Include="..\src\logic\ImageHistogramCompare.cpp" />
-    <ClCompile Include="..\src\logic\ImageLibrary.cpp" />
-    <ClCompile Include="..\src\logic\ImageUtility.cpp" />
+    <ClCompile Include="..\src\ImageLibrary\ImageHistogramCompare.cpp" />
+    <ClCompile Include="..\src\ImageLibrary\ImageLibrary.cpp" />
+    <ClCompile Include="..\src\Other\ImageUtility.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="..\src\logic\PhotomosaicGeneratorBase.cpp" />
-    <ClCompile Include="..\src\logic\QuadTree.cpp" />
+    <ClCompile Include="..\src\Photomosaic\PhotomosaicGeneratorBase.cpp" />
+    <ClCompile Include="..\src\Grid\QuadTree.cpp" />
     <ClCompile Include="testutility.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\logic\CustomQDataStream.h" />
-    <ClInclude Include="..\src\logic\CellGroup.h" />
-    <ClInclude Include="..\src\logic\CellShape.h" />
-    <ClInclude Include="..\src\logic\ColourDifference.h" />
-    <ClInclude Include="..\src\logic\ColourScheme.h" />
-    <ClInclude Include="..\src\logic\CPUPhotomosaicGenerator.h" />
-    <ClInclude Include="..\src\logic\CUDAPhotomosaicGenerator.h" />
-    <ClInclude Include="..\src\logic\CUDAUtility.h" />
-    <ClInclude Include="..\src\logic\GridBounds.h" />
-    <ClInclude Include="..\src\logic\GridGenerator.h" />
-    <ClInclude Include="..\src\logic\GridUtility.h" />
-    <ClInclude Include="..\src\logic\ImageHistogramCompare.h" />
-    <ClInclude Include="..\src\logic\ImageLibrary.h" />
-    <ClInclude Include="..\src\logic\ImageUtility.h" />
-    <QtMoc Include="..\src\logic\PhotomosaicGeneratorBase.h">
+    <ClInclude Include="..\src\Other\CustomQDataStream.h" />
+    <ClInclude Include="..\src\CellShape\CellGroup.h" />
+    <ClInclude Include="..\src\CellShape\CellShape.h" />
+    <ClInclude Include="..\src\Photomosaic\ColourDifference.h" />
+    <ClInclude Include="..\src\Photomosaic\ColourScheme.h" />
+    <ClInclude Include="..\src\Photomosaic\CPUPhotomosaicGenerator.h" />
+    <ClInclude Include="..\src\Photomosaic\CUDA\CUDAPhotomosaicGenerator.h" />
+    <ClInclude Include="..\src\Photomosaic\CUDA\CUDAUtility.h" />
+    <ClInclude Include="..\src\Grid\GridBounds.h" />
+    <ClInclude Include="..\src\Grid\GridGenerator.h" />
+    <ClInclude Include="..\src\Grid\GridUtility.h" />
+    <ClInclude Include="..\src\ImageLibrary\ImageHistogramCompare.h" />
+    <ClInclude Include="..\src\ImageLibrary\ImageLibrary.h" />
+    <ClInclude Include="..\src\Other\ImageUtility.h" />
+    <QtMoc Include="..\src\Photomosaic\PhotomosaicGeneratorBase.h">
     </QtMoc>
-    <ClInclude Include="..\src\logic\MatUtility.h" />
-    <ClInclude Include="..\src\logic\PhotomosaicGenerator.cuh" />
-    <ClInclude Include="..\src\logic\QuadTree.h" />
-    <ClInclude Include="..\src\logic\Reduction.cuh" />
+    <ClInclude Include="..\src\Other\MatUtility.h" />
+    <ClInclude Include="..\src\Photomosaic\CUDA\PhotomosaicGenerator.cuh" />
+    <ClInclude Include="..\src\Grid\QuadTree.h" />
+    <ClInclude Include="..\src\Photomosaic\CUDA\Reduction.cuh" />
     <ClInclude Include="testutility.h" />
     <ClInclude Include="tst_cellshape.h" />
     <ClInclude Include="tst_colourdifference.h" />
@@ -170,8 +170,8 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="..\src\logic\PhotomosaicGenerator.cu" />
-    <CudaCompile Include="..\src\logic\Reduction.cu" />
+    <CudaCompile Include="..\src\Photomosaic\CUDA\PhotomosaicGenerator.cu" />
+    <CudaCompile Include="..\src\Photomosaic\CUDA\Reduction.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

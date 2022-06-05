@@ -8,13 +8,13 @@
 
 #ifdef CUDA
 #include <cuda_runtime.h>
-#include "cudaphotomosaicgenerator.h"
+#include "..\src\Photomosaic\CUDA\CUDAPhotomosaicGenerator.h"
 #endif
 
-#include "cpuphotomosaicgenerator.h"
+#include "..\src\Photomosaic\CPUPhotomosaicGenerator.h"
 #include "testutility.h"
-#include "gridgenerator.h"
-#include "imagelibrary.h"
+#include "..\src\Grid\GridGenerator.h"
+#include "..\src\ImageLibrary\ImageLibrary.h"
 
 namespace TST_Generator
 {

@@ -5,7 +5,7 @@
 #include <QDir>
 #include <QFileInfo>
 
-#include "cellshape.h"
+#include "..\src\CellShape\CellShape.h"
 #include "testutility.h"
 
 //Creates a cell shape, saves it to a file

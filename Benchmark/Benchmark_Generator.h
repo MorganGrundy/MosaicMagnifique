@@ -7,11 +7,11 @@
 #include <utility>
 #include <iomanip>
 
-#include "CUDAPhotomosaicGenerator.h"
-#include "CPUPhotomosaicGenerator.h"
-#include "ImageLibrary.h"
-#include "GridGenerator.h"
-#include "TestUtility.h"
+#include "..\src\Photomosaic\CUDA\CUDAPhotomosaicGenerator.h"
+#include "..\src\Photomosaic\CPUPhotomosaicGenerator.h"
+#include "..\src\ImageLibrary\ImageLibrary.h"
+#include "..\src\Grid\GridGenerator.h"
+#include "..\test\testutility.h"
 
 //Generates a photomosaic with the given parameters and returns the time
 size_t GeneratePhotomosaic(const QString &libFile, const std::string &mainImageFile, const QString &cellShapeFile, const bool useCUDA, const ColourDifference::Type colourDiff = ColourDifference::Type::CIE76,

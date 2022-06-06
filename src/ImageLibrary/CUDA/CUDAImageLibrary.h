@@ -7,11 +7,13 @@
 class CUDAImageLibrary : public ImageLibrary
 {
 public:
+    CUDAImageLibrary(const size_t t_imageSize);
+
     //Set image size
     void setImageSize(const size_t t_size) override;
 
-    //Returns const reference to GPU library images
-    const std::vector<cv::cuda::GpuMat> &getGPUImages() const;
+    //Returns const reference to CUDA library images
+    const std::vector<cv::cuda::GpuMat> &getCUDAImages() const;
 
     //Removes the image at given index
     void removeAtIndex(const size_t t_index) override;

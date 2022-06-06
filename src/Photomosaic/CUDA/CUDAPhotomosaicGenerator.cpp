@@ -21,6 +21,7 @@
 #include "cudaphotomosaicgenerator.h"
 
 #include <QDebug>
+#include <opencv2/cudawarping.hpp>
 
 #include "cudautility.h"
 #include "photomosaicgenerator.cuh"
@@ -29,6 +30,12 @@
 CUDAPhotomosaicGenerator::CUDAPhotomosaicGenerator()
 {}
 
+//Sets CUDA library images
+void CUDAPhotomosaicGenerator::setCUDALibrary(const std::vector<cv::cuda::GpuMat> &t_lib)
+{
+    m_cudaLib = t_lib;
+}
+
 //Generate best fits for Photomosaic cells
 //Returns true if successful
 bool CUDAPhotomosaicGenerator::generateBestFits()
@@ -36,7 +43,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     //Converts colour space of main image and library images
     //Resizes library based on detail level
     auto mainImages = preprocessMainImage();
-    auto lib = preprocessLibraryImages();
+    auto lib = preprocessCUDALibraryImages();
 
     //Get CUDA block size
     cudaDeviceProp deviceProp;
@@ -237,6 +244,39 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     return true;
 }
 
+//Performs preprocessing steps on library images: resize, convert colour space
+std::vector<cv::cuda::GpuMat> CUDAPhotomosaicGenerator::preprocessCUDALibraryImages()
+{
+    //Resize
+    std::vector<cv::cuda::GpuMat> result(m_cudaLib.size(), cv::cuda::GpuMat());
+    //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
+    cv::InterpolationFlags flags = (m_cells.getDetail() < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
+    int cellSize = std::round(m_cells.getCellSize(0, true));
+
+    cv::cuda::Stream stream;
+    for (size_t i = 0; i < m_cudaLib.size(); ++i)
+    {
+        if (m_cells.getDetail() != 1)
+            cv::cuda::resize(m_cudaLib.at(i), result.at(i), cv::Size(cellSize, cellSize), 0, 0, flags, stream);
+        else
+            result.at(i) = m_cudaLib.at(i).clone();
+
+        if (m_colourDiffType == ColourDifference::Type::CIE76 || m_colourDiffType == ColourDifference::Type::CIEDE2000)
+        {
+            //Convert 8U [0..255] to 32F [0..1]
+            result.at(i).convertTo(result.at(i), CV_32F, 1 / 255.0, stream);
+            //Convert BGR to Lab
+            cv::cuda::cvtColor(result.at(i), result.at(i), cv::COLOR_BGR2Lab, 0, stream);
+        }
+        else
+            //Convert 8U [0..255] to 32F [0..255]
+            result.at(i).convertTo(result.at(i), CV_32F, stream);
+    }
+    stream.waitForCompletion();
+
+    return result;
+}
+
 //Copies mat to device pointer
 template <typename T>
 void CUDAPhotomosaicGenerator::copyMatToDevice(const cv::Mat &t_mat, T *t_device) const
@@ -248,6 +288,20 @@ void CUDAPhotomosaicGenerator::copyMatToDevice(const cv::Mat &t_mat, T *t_device
         gpuErrchk(cudaMemcpy(t_device + row * t_mat.cols * t_mat.channels(), p_im,
                              t_mat.cols * t_mat.channels() * sizeof(T),
                              cudaMemcpyHostToDevice));
+    }
+}
+
+//Copies mat to device pointer
+template <typename T>
+void CUDAPhotomosaicGenerator::copyMatToDevice(const cv::cuda::GpuMat &t_mat, T *t_device) const
+{
+    const T *p_im;
+    for (int row = 0; row < t_mat.rows; ++row)
+    {
+        p_im = t_mat.ptr<T>(row);
+        gpuErrchk(cudaMemcpy(t_device + row * t_mat.cols * t_mat.channels(), p_im,
+                             t_mat.cols * t_mat.channels() * sizeof(T),
+                             cudaMemcpyDeviceToDevice));
     }
 }
 

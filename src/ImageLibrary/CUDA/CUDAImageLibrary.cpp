@@ -1,5 +1,8 @@
 #include "CUDAImageLibrary.h"
 
+CUDAImageLibrary::CUDAImageLibrary(const size_t t_imageSize) : ImageLibrary(t_imageSize)
+{}
+
 //Set image size
 void CUDAImageLibrary::setImageSize(const size_t t_size)
 {
@@ -13,8 +16,8 @@ void CUDAImageLibrary::setImageSize(const size_t t_size)
 		static_cast<int>(t_size), ImageUtility::ResizeType::EXACT);
 }
 
-//Returns const reference to GPU library images
-const std::vector<cv::cuda::GpuMat> &CUDAImageLibrary::getGPUImages() const
+//Returns const reference to CUDA library images
+const std::vector<cv::cuda::GpuMat> &CUDAImageLibrary::getCUDAImages() const
 {
 	return m_gpuResizedImages;
 }

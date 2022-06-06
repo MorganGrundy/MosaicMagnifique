@@ -47,14 +47,17 @@ namespace ImageUtility
                         const int t_targetHeight, const int t_targetWidth, const ResizeType t_type,
                         QProgressBar *progressBar = nullptr);
 
+    //Resizes images to (first image size * ratio)
+    bool batchResizeMat(std::vector<cv::Mat> &t_images, const double t_ratio = 0.5);
+
 #ifdef CUDA
     //Populates dst with copy of images resized to target size with given resize type from src
     void batchResizeMat(const std::vector<cv::cuda::GpuMat> &t_src, std::vector<cv::cuda::GpuMat> &t_dst,
         const int t_targetHeight, const int t_targetWidth, const ResizeType t_type);
-#endif
 
     //Resizes images to (first image size * ratio)
-    bool batchResizeMat(std::vector<cv::Mat> &t_images, const double t_ratio = 0.5);
+    bool batchResizeMat(std::vector<cv::cuda::GpuMat> &t_images, const double t_ratio = 0.5);
+#endif
 
     //Converts an OpenCV Mat to a QPixmap and returns
     QPixmap matToQPixmap(const cv::Mat &t_mat,

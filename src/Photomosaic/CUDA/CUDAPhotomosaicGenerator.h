@@ -29,14 +29,26 @@ class CUDAPhotomosaicGenerator : public PhotomosaicGeneratorBase
 public:
     CUDAPhotomosaicGenerator();
 
+    //Sets CUDA library images
+    void setCUDALibrary(const std::vector<cv::cuda::GpuMat> &t_lib);
+
     //Generate best fits for Photomosaic cells
     //Returns true if successful
     bool generateBestFits() override;
 
 private:
+    std::vector<cv::cuda::GpuMat> m_cudaLib;
+
     //Copies mat to device pointer
     template <typename T>
     void copyMatToDevice(const cv::Mat &t_mat, T *t_device) const;
+
+    //Copies mat to device pointer
+    template <typename T>
+    void copyMatToDevice(const cv::cuda::GpuMat &t_mat, T *t_device) const;
+
+    //Performs preprocessing steps on library images: resize, convert colour space
+    std::vector<cv::cuda::GpuMat> preprocessCUDALibraryImages();
 };
 
 #endif // CUDA

@@ -97,11 +97,6 @@ protected:
 
     int m_repeatRange, m_repeatAddition;
 
-    //Converts colour space of main image and library images
-    //Resizes library based on detail level
-    //Returns results
-    std::pair<cv::Mat, std::vector<cv::Mat>> resizeAndCvtColor();
-
     //Performs preprocessing steps on main image: resize, create variants (colour theory), convert colour space
     std::vector<cv::Mat> preprocessMainImage();
 

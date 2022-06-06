@@ -22,7 +22,7 @@
 #include <opencv2/imgproc.hpp>
 #include <QDebug>
 
-#ifdef OPENCV_W_CUDA
+#ifdef CUDA
 #include <opencv2/cudawarping.hpp>
 #include <opencv2/cudaimgproc.hpp>
 #endif
@@ -210,107 +210,6 @@ int PhotomosaicGeneratorBase::getMaxProgress()
 void PhotomosaicGeneratorBase::cancel()
 {
     m_wasCanceled = true;
-}
-
-//Converts colour space of main image and library images
-//Resizes library based on detail level
-//Returns results
-std::pair<cv::Mat, std::vector<cv::Mat>> PhotomosaicGeneratorBase::resizeAndCvtColor()
-{
-    cv::Mat resultMain;
-    std::vector<cv::Mat> result(m_lib.size(), cv::Mat());
-
-    //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
-    cv::InterpolationFlags flags = (m_cells.getDetail() < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
-
-#ifdef OPENCV_W_CUDA
-    cv::cuda::Stream stream;
-    //Main image
-    if (m_colourDiffType == ColourDifference::Type::CIE76 || m_colourDiffType == ColourDifference::Type::CIEDE2000)
-    {
-        cv::cuda::GpuMat main, mainConverted;
-        main.upload(m_img, stream);
-
-        //Convert 8U [0..255] to 32F [0..1]
-        //CUDA in-place convertTo doesn't work
-        main.convertTo(mainConverted, CV_32F, 1 / 255.0, stream);
-        //Convert BGR to Lab
-        cv::cuda::cvtColor(mainConverted, main, cv::COLOR_BGR2Lab, 0, stream);
-
-        main.download(resultMain, stream);
-    }
-    else
-        //Convert 8U [0..255] to 32F [0..255]
-        m_img.convertTo(resultMain, CV_32F);
-
-    //Library image
-    std::vector<cv::cuda::GpuMat> src(m_lib.size());
-    //CUDA in-place convertTo doesn't work
-    cv::cuda::GpuMat tmpConvertTo;
-    for (size_t i = 0; i < m_lib.size(); ++i)
-    {
-        src.at(i).upload(m_lib.at(i), stream);
-
-        //Resize image
-        if (m_cells.getDetail() != 1)
-            cv::cuda::resize(src.at(i), src.at(i),
-                             cv::Size(std::round(m_cells.getCellSize(0, true)),
-                                      std::round(m_cells.getCellSize(0, true))),
-                             0, 0, flags, stream);
-
-        if (m_colourDiffType == ColourDifference::Type::CIE76 || m_colourDiffType == ColourDifference::Type::CIEDE2000)
-        {
-            //Convert 8U [0..255] to 32F [0..1]
-            src.at(i).convertTo(tmpConvertTo, CV_32F, 1 / 255.0, stream);
-            //Convert BGR to Lab
-            cv::cuda::cvtColor(tmpConvertTo, tmpConvertTo, cv::COLOR_BGR2Lab, 0, stream);
-        }
-        else
-            //Convert 8U [0..255] to 32F [0..255]
-            src.at(i).convertTo(tmpConvertTo, CV_32F, stream);
-
-        tmpConvertTo.download(result.at(i), stream);
-    }
-    stream.waitForCompletion();
-#else
-    //Main image
-    if (m_colourDiffType == ColourDifference::Type::CIE76 || m_colourDiffType == ColourDifference::Type::CIEDE2000)
-    {
-        //Convert 8U [0..255] to 32F [0..1]
-        m_img.convertTo(resultMain, CV_32F, 1 / 255.0);
-        //Convert BGR to Lab
-        cv::cvtColor(resultMain, resultMain, cv::COLOR_BGR2Lab);
-    }
-    else
-        //Convert 8U [0..255] to 32F [0..255]
-        m_img.convertTo(resultMain, CV_32F);
-
-    //Library image
-    for (size_t i = 0; i < m_lib.size(); ++i)
-    {
-        if (m_cells.getDetail() != 1)
-            cv::resize(m_lib.at(i), result.at(i),
-                       cv::Size(std::round(m_cells.getCellSize(0, true)),
-                                std::round(m_cells.getCellSize(0, true))), 0, 0, flags);
-        else
-            result.at(i) = m_lib.at(i).clone();
-
-        if (m_colourDiffType == ColourDifference::Type::CIE76 || m_colourDiffType == ColourDifference::Type::CIEDE2000)
-        {
-            //Convert 8U [0..255] to 32F [0..1]
-            result.at(i).convertTo(result.at(i), CV_32F, 1 / 255.0);
-            //Convert BGR to Lab
-            cv::cvtColor(result.at(i), result.at(i), cv::COLOR_BGR2Lab);
-        }
-        else
-            //Convert 8U [0..255] to 32F [0..255]
-            result.at(i).convertTo(result.at(i), CV_32F);
-    }
-
-
-#endif
-
-    return {resultMain, result};
 }
 
 //Performs preprocessing steps on main image: resize, create variants (colour theory), convert colour space

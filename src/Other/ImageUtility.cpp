@@ -26,7 +26,7 @@
 #include <opencv2/imgproc.hpp>
 #include <QDebug>
 
-#ifdef OPENCV_W_CUDA
+#ifdef CUDA
 #include <opencv2/cudawarping.hpp>
 #endif
 
@@ -87,6 +87,19 @@ void ImageUtility::batchResizeMat(const std::vector<cv::Mat> &t_src, std::vector
         progressBar->setVisible(false);
 }
 
+//Resizes images to (first image size * ratio)
+bool ImageUtility::batchResizeMat(std::vector<cv::Mat> &t_images, const double t_ratio)
+{
+    //No images to resize
+    if (t_images.empty())
+        return false;
+
+    batchResizeMat(t_images, t_images, std::round(t_ratio * t_images.front().rows),
+        std::round(t_ratio * t_images.front().cols), ResizeType::EXACT);
+
+    return true;
+}
+
 #ifdef CUDA
 //Populates dst with copy of images resized to target size with given resize type from src
 void ImageUtility::batchResizeMat(const std::vector<cv::cuda::GpuMat> &t_src, std::vector<cv::cuda::GpuMat> &t_dst,
@@ -118,20 +131,20 @@ void ImageUtility::batchResizeMat(const std::vector<cv::cuda::GpuMat> &t_src, st
     }
     stream.waitForCompletion();
 }
-#endif
 
 //Resizes images to (first image size * ratio)
-bool ImageUtility::batchResizeMat(std::vector<cv::Mat> &t_images, const double t_ratio)
+bool ImageUtility::batchResizeMat(std::vector<cv::cuda::GpuMat> &t_images, const double t_ratio)
 {
     //No images to resize
     if (t_images.empty())
         return false;
 
     batchResizeMat(t_images, t_images, std::round(t_ratio * t_images.front().rows),
-                   std::round(t_ratio * t_images.front().cols), ResizeType::EXACT);
+        std::round(t_ratio * t_images.front().cols), ResizeType::EXACT);
 
     return true;
 }
+#endif
 
 //Converts an OpenCV Mat to a QPixmap and returns
 QPixmap ImageUtility::matToQPixmap(const cv::Mat &t_mat,

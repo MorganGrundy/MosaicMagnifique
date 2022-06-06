@@ -85,6 +85,14 @@ const std::vector<cv::Mat> ImageLibraryEditor::getImageLibrary() const
     return m_images.getImages();
 }
 
+#ifdef CUDA
+//Returns CUDA image library
+const std::vector<cv::cuda::GpuMat> ImageLibraryEditor::getCUDAImageLibrary() const
+{
+    return m_images.getCUDAImages();
+}
+#endif
+
 //Changes the cropping mode used for library images
 void ImageLibraryEditor::changeCropMode(const QString &t_mode)
 {

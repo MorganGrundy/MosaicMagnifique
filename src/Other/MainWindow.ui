@@ -504,7 +504,7 @@ border: 1px solid dimgray;
                    <string/>
                   </property>
                   <property name="icon">
-                   <iconset resource="ui.qrc">
+                   <iconset resource="../Resources/ui.qrc">
                     <normaloff>:/img/LinkIcon.png</normaloff>:/img/LinkIcon.png</iconset>
                   </property>
                   <property name="checkable">
@@ -1320,7 +1320,7 @@ border: 1px solid dimgray;
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="ui.qrc"/>
+  <include location="../Resources/ui.qrc"/>
  </resources>
  <connections/>
  <slots>

@@ -1,13 +1,13 @@
 #pragma once
 
 //Wrapper for euclidean difference kernel
-void euclideanDifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm,
+void euclideanDifferenceKernelWrapper(float *main_im, float **lib_im, size_t noLibIm,
                                       unsigned char *mask_im,
 									  size_t size, size_t channels, size_t *target_area,
 									  double *variants, size_t blockSize);
 
 //Wrapper for euclidean difference kernel
-void CIEDE2000DifferenceKernelWrapper(float *im_1, float *im_2, size_t noLibIm,
+void CIEDE2000DifferenceKernelWrapper(float *main_im, float **lib_im, size_t noLibIm,
                                       unsigned char *mask_im,
 									  size_t size, size_t channels, size_t *target_area,
 									  double *variants, size_t blockSize);

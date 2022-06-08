@@ -3,6 +3,10 @@
 #include <opencv2/core.hpp>
 #include <QString>
 
+#ifdef CUDA
+#include <cuda_runtime.h>
+#endif
+
 //Used for calculating difference between two colours
 namespace ColourDifference
 {
@@ -44,7 +48,7 @@ namespace ColourDifference
 
 #ifdef CUDA
 	//Alias for function wrapper
-	using CUDAFunctionType = std::function<void(float*, float**, size_t, unsigned char*, size_t, size_t, size_t*, double*, size_t)>;
+	using CUDAFunctionType = std::function<void(float*, float*, unsigned char*, size_t, size_t, size_t*, double*, size_t, cudaStream_t)>;
 
 	//Returns CUDA function wrapper from enum
 	CUDAFunctionType getCUDAFunction(const Type& t_type);

@@ -43,6 +43,10 @@ private:
     template <typename T>
     void copyMatToDevice(const cv::Mat &t_mat, T *t_device) const;
 
+    //Copies gpumat to device pointer
+    template <typename T>
+    void copyMatToDevice(const cv::cuda::GpuMat &t_mat, T *t_device) const;
+
     //Performs preprocessing steps on library images: resize, convert colour space
     std::vector<cv::cuda::GpuMat> preprocessCUDALibraryImages();
 };

@@ -101,7 +101,7 @@ void reduceAdd(double *g_idata, double *g_odata, const size_t N)
 }
 
 //Wrapper for reduce add kernel
-void reduceAddKernelWrapper(size_t blockSize, size_t size, double *variants, double *reductionMem)
+void reduceAddKernelWrapper(size_t blockSize, size_t size, double *variants, double *reductionMem, cudaStream_t stream)
 {
     //Size of data to be reduced
     size_t reduceDataSize = size;
@@ -129,80 +129,80 @@ void reduceAddKernelWrapper(size_t blockSize, size_t size, double *variants, dou
         case 2048:
             reduceAdd<2048><<<static_cast<unsigned int>(numBlocks),
                               static_cast<unsigned int>(threads),
-                              static_cast<unsigned int>(threads * sizeof(double))>>>(
+                              static_cast<unsigned int>(threads * sizeof(double)), stream>>>(
                 variants, reductionMem, reduceDataSize);
             break;
         case 1024:
             reduceAdd<1024><<<static_cast<unsigned int>(numBlocks),
                               static_cast<unsigned int>(threads),
-                              static_cast<unsigned int>(threads * sizeof(double))>>>(
+                              static_cast<unsigned int>(threads * sizeof(double)), stream >>>(
                 variants, reductionMem, reduceDataSize);
             break;
         case 512:
             reduceAdd<512><<<static_cast<unsigned int>(numBlocks),
                              static_cast<unsigned int>(threads),
-                             static_cast<unsigned int>(threads * sizeof(double))>>>(
+                             static_cast<unsigned int>(threads * sizeof(double)), stream >>>(
                 variants, reductionMem, reduceDataSize);
             break;
         case 256:
             reduceAdd<256><<<static_cast<unsigned int>(numBlocks),
                              static_cast<unsigned int>(threads),
-                             static_cast<unsigned int>(threads * sizeof(double))>>>(
+                             static_cast<unsigned int>(threads * sizeof(double)), stream >>>(
                 variants, reductionMem, reduceDataSize);
             break;
         case 128:
             reduceAdd<128><<<static_cast<unsigned int>(numBlocks),
                              static_cast<unsigned int>(threads),
-                             static_cast<unsigned int>(threads * sizeof(double))>>>(
+                             static_cast<unsigned int>(threads * sizeof(double)), stream >>>(
                 variants, reductionMem, reduceDataSize);
             break;
         case 64:
             reduceAdd<64><<<static_cast<unsigned int>(numBlocks),
                             static_cast<unsigned int>(threads),
-                            static_cast<unsigned int>(threads * sizeof(double))>>>(
+                            static_cast<unsigned int>(threads * sizeof(double)), stream >>>(
                 variants, reductionMem, reduceDataSize);
             break;
         case 32:
             reduceAdd<32><<<static_cast<unsigned int>(numBlocks),
                             static_cast<unsigned int>(threads),
-                            static_cast<unsigned int>(threads * sizeof(double))>>>(
+                            static_cast<unsigned int>(threads * sizeof(double)), stream >>>(
                 variants, reductionMem, reduceDataSize);
             break;
         case 16:
             reduceAdd<16><<<static_cast<unsigned int>(numBlocks),
                             static_cast<unsigned int>(threads),
-                            static_cast<unsigned int>(threads * sizeof(double))>>>(
+                            static_cast<unsigned int>(threads * sizeof(double)), stream >>>(
                 variants, reductionMem, reduceDataSize);
             break;
         case 8:
             reduceAdd<8><<<static_cast<unsigned int>(numBlocks),
                            static_cast<unsigned int>(threads),
-                           static_cast<unsigned int>(threads * sizeof(double))>>>(
+                           static_cast<unsigned int>(threads * sizeof(double)), stream >>>(
                 variants, reductionMem, reduceDataSize);
             break;
         case 4:
             reduceAdd<4><<<static_cast<unsigned int>(numBlocks),
                            static_cast<unsigned int>(threads),
-                           static_cast<unsigned int>(threads * sizeof(double))>>>(
+                           static_cast<unsigned int>(threads * sizeof(double)), stream >>>(
                 variants, reductionMem, reduceDataSize);
             break;
         case 2:
             reduceAdd<2><<<static_cast<unsigned int>(numBlocks),
                            static_cast<unsigned int>(threads),
-                           static_cast<unsigned int>(threads * sizeof(double))>>>(
+                           static_cast<unsigned int>(threads * sizeof(double)), stream >>>(
                 variants, reductionMem, reduceDataSize);
             break;
         case 1:
             reduceAdd<1><<<static_cast<unsigned int>(numBlocks),
                            static_cast<unsigned int>(threads),
-                           static_cast<unsigned int>(threads * sizeof(double))>>>(
+                           static_cast<unsigned int>(threads * sizeof(double)), stream >>>(
                 variants, reductionMem, reduceDataSize);
             break;
         }
 
         //Copy results back to data
-        gpuErrchk(cudaMemcpy(variants, reductionMem, numBlocks * sizeof(double),
-                             cudaMemcpyDeviceToDevice));
+        gpuErrchk(cudaMemcpyAsync(variants, reductionMem, numBlocks * sizeof(double),
+                             cudaMemcpyDeviceToDevice, stream));
 
         //New data length is equal to number of blocks
         reduceDataSize = numBlocks;

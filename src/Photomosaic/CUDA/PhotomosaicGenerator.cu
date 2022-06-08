@@ -26,18 +26,16 @@
 
 //Calculates the euclidean difference between main image and library images
 __global__
-void euclideanDifferenceKernel(float *main_im, float **lib_im, size_t noLibIm,
-                               unsigned char *mask_im,
+void euclideanDifferenceKernel(float *main_im, float *lib_im, unsigned char *mask_im,
                                size_t size, size_t channels, size_t *target_area, double *variants)
 {
     const size_t index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
     const size_t stride = blockDim.x * gridDim.x * channels;
     const size_t imageSize = size * size * channels;
-    for (size_t i = index; i < imageSize * noLibIm; i += stride)
+    for (size_t i = index; i < imageSize; i += stride)
     {
         const size_t im_index = i % imageSize;
         const size_t grayscaleIndex = im_index / channels;
-        const size_t lib_im_arr_index = i / imageSize;
 
         const size_t row = grayscaleIndex / size;
         if (row < target_area[0] || row >= target_area[1])
@@ -56,22 +54,21 @@ void euclideanDifferenceKernel(float *main_im, float **lib_im, size_t noLibIm,
         if (mask_im[grayscaleIndex] == 0)
             variants[i / channels] = 0;
         else
-            variants[i / channels] = sqrt(pow((double) (main_im[im_index] - lib_im[lib_im_arr_index][im_index]), (double)2.0) +
-                                          pow((double) (main_im[im_index + 1] - lib_im[lib_im_arr_index][im_index + 1]), (double)2.0) +
-                                          pow((double) (main_im[im_index + 2] - lib_im[lib_im_arr_index][im_index + 2]), (double)2.0));
+            variants[i / channels] = sqrt(pow((double) (main_im[im_index] - lib_im[im_index]), (double)2.0) +
+                                          pow((double) (main_im[im_index + 1] - lib_im[im_index + 1]), (double)2.0) +
+                                          pow((double) (main_im[im_index + 2] - lib_im[im_index + 2]), (double)2.0));
     }
 }
 
 //Wrapper for euclidean difference kernel
-void euclideanDifferenceKernelWrapper(float *main_im, float **lib_im, size_t noLibIm,
-                                      unsigned char *mask_im,
+void euclideanDifferenceKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
                                       size_t size, size_t channels, size_t *target_area,
-                                      double *variants, size_t blockSize)
+                                      double *variants, size_t blockSize, cudaStream_t stream)
 {
-    const size_t numBlocks = (size * size * noLibIm + blockSize - 1) / blockSize;
+    const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
     euclideanDifferenceKernel<<<static_cast<unsigned int>(numBlocks),
-                                static_cast<unsigned int>(blockSize)>>>(
-                                    main_im, lib_im, noLibIm, mask_im, size, channels, target_area, variants);
+                                static_cast<unsigned int>(blockSize), 0, stream>>>(
+                                    main_im, lib_im, mask_im, size, channels, target_area, variants);
 }
 
 //Converts degrees to radians
@@ -83,18 +80,16 @@ constexpr double degToRadKernel(const double deg)
 
 //Kernel that calculates the CIEDE2000 difference between main image and library images
 __global__
-void CIEDE2000DifferenceKernel(float *main_im, float **lib_im, size_t noLibIm,
-                               unsigned char *mask_im,
+void CIEDE2000DifferenceKernel(float *main_im, float *lib_im, unsigned char *mask_im,
                                size_t size, size_t channels, size_t *target_area, double *variants)
 {
     const size_t index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
     const size_t stride = blockDim.x * gridDim.x * channels;
     const size_t imageSize = size * size * channels;
-    for (size_t i = index; i < imageSize * noLibIm; i += stride)
+    for (size_t i = index; i < imageSize; i += stride)
     {
         const size_t im_index = i % imageSize;
         const size_t grayscaleIndex = im_index / channels;
-        const size_t lib_im_arr_index = i / imageSize;
 
         const size_t row = grayscaleIndex / size;
         if (row < target_area[0] || row >= target_area[1])
@@ -121,18 +116,18 @@ void CIEDE2000DifferenceKernel(float *main_im, float **lib_im, size_t noLibIm,
 
             const double C1 = sqrt((double) (main_im[im_index + 1] * main_im[im_index + 1]) +
                     (main_im[im_index + 2] * main_im[im_index + 2]));
-            const double C2 = sqrt((double) (lib_im[lib_im_arr_index][im_index + 1] * lib_im[lib_im_arr_index][im_index + 1]) +
-                    (lib_im[lib_im_arr_index][im_index + 2] * lib_im[lib_im_arr_index][im_index + 2]));
+            const double C2 = sqrt((double) (lib_im[im_index + 1] * lib_im[im_index + 1]) +
+                    (lib_im[im_index + 2] * lib_im[im_index + 2]));
             const double barC = (C1 + C2) / 2.0;
 
             const double G = 0.5 * (1 - sqrt(pow(barC, (double)7.0) / (pow(barC, (double)7.0) + pow25To7)));
 
             const double a1Prime = (1.0 + G) * main_im[im_index + 1];
-            const double a2Prime = (1.0 + G) * lib_im[lib_im_arr_index][im_index + 1];
+            const double a2Prime = (1.0 + G) * lib_im[im_index + 1];
 
             const double CPrime1 = sqrt((a1Prime * a1Prime) +
                                         (main_im[im_index + 2] * main_im[im_index + 2]));
-            const double CPrime2 = sqrt((a2Prime * a2Prime) +(lib_im[lib_im_arr_index][im_index + 2] * lib_im[lib_im_arr_index][im_index + 2]));
+            const double CPrime2 = sqrt((a2Prime * a2Prime) +(lib_im[im_index + 2] * lib_im[im_index + 2]));
 
             double hPrime1;
             if (main_im[im_index + 2] == 0 && a1Prime == 0.0)
@@ -147,18 +142,18 @@ void CIEDE2000DifferenceKernel(float *main_im, float **lib_im, size_t noLibIm,
             }
 
             double hPrime2;
-            if (lib_im[lib_im_arr_index][im_index + 2] == 0 && a2Prime == 0.0)
+            if (lib_im[im_index + 2] == 0 && a2Prime == 0.0)
                 hPrime2 = 0.0;
             else
             {
-                hPrime2 = atan2((double) lib_im[lib_im_arr_index][im_index + 2], a2Prime);
+                hPrime2 = atan2((double) lib_im[im_index + 2], a2Prime);
                 //This must be converted to a hue angle in degrees between 0 and 360 by
                 //addition of 2pi to negative hue angles.
                 if (hPrime2 < 0)
                     hPrime2 += deg360InRad;
             }
 
-            const double deltaLPrime = lib_im[lib_im_arr_index][im_index] - main_im[im_index];
+            const double deltaLPrime = lib_im[im_index] - main_im[im_index];
             const double deltaCPrime = CPrime2 - CPrime1;
 
             double deltahPrime;
@@ -177,7 +172,7 @@ void CIEDE2000DifferenceKernel(float *main_im, float **lib_im, size_t noLibIm,
 
             const double deltaHPrime = 2.0 * sqrt(CPrimeProduct) * sin(deltahPrime / 2.0);
 
-            const double barLPrime = (main_im[im_index] + lib_im[lib_im_arr_index][im_index]) / 2.0;
+            const double barLPrime = (main_im[im_index] + lib_im[im_index]) / 2.0;
             const double barCPrime = (CPrime1 + CPrime2) / 2.0;
 
             double barhPrime;
@@ -226,15 +221,14 @@ void CIEDE2000DifferenceKernel(float *main_im, float **lib_im, size_t noLibIm,
 }
 
 //Wrapper for euclidean difference kernel
-void CIEDE2000DifferenceKernelWrapper(float *main_im, float **lib_im, size_t noLibIm,
-                                      unsigned char *mask_im,
+void CIEDE2000DifferenceKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
                                       size_t size, size_t channels, size_t *target_area,
-                                      double *variants, size_t blockSize)
+                                      double *variants, size_t blockSize, cudaStream_t stream)
 {
-    const size_t numBlocks = (size * size * noLibIm + blockSize - 1) / blockSize;
+    const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
     CIEDE2000DifferenceKernel<<<static_cast<unsigned int>(numBlocks),
-                                static_cast<unsigned int>(blockSize)>>>(
-        main_im, lib_im, noLibIm, mask_im, size, channels, target_area, variants);
+                                static_cast<unsigned int>(blockSize), 0, stream>>>(
+        main_im, lib_im, mask_im, size, channels, target_area, variants);
 }
 
 //Calculates repeats in range and adds to variants

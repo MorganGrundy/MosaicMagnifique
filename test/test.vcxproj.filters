@@ -40,6 +40,9 @@
     <Filter Include="Grid">
       <UniqueIdentifier>{b4e04b16-3682-4db1-bb45-250af78d8754}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Image Library\CUDA">
+      <UniqueIdentifier>{a01b4e83-e767-404b-88f2-eab96f2e7391}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="C:\google-lib\googletest-master\googlemock\src\gmock-all.cc">
@@ -95,6 +98,9 @@
     </ClCompile>
     <ClCompile Include="..\src\Photomosaic\PhotomosaicGeneratorBase.cpp">
       <Filter>Photomosaic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ImageLibrary\CUDA\CUDAImageLibrary.cpp">
+      <Filter>Image Library\CUDA</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -169,6 +175,9 @@
     </ClInclude>
     <ClInclude Include="..\src\ImageLibrary\ImageHistogramCompare.h">
       <Filter>Image Library</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ImageLibrary\CUDA\CUDAImageLibrary.h">
+      <Filter>Image Library\CUDA</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

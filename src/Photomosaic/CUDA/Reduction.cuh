@@ -20,4 +20,4 @@
 #pragma once
 
 //Wrapper for reduce add kernel
-void reduceAddKernelWrapper(size_t blockSize, size_t size, double *variants, double *reductionMem);
+void reduceAddKernelWrapper(size_t blockSize, size_t size, double *variants, double *reductionMem, cudaStream_t stream);

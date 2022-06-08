@@ -23,3 +23,16 @@ cv::Mat TestUtility::createRandomImage(const int width, const int height, const 
 
     return randIm;
 }
+
+//Generates a vector of random floats
+std::vector<float> TestUtility::createRandomFloats(const size_t count, const std::vector<std::pair<float, float>> ranges)
+{
+    std::vector<float> results(count, 0);
+    for (size_t i = 0; i < count; ++i)
+    {
+        const auto &limit = ranges.at(i % ranges.size());
+        results.at(i) = randFloat(limit.first, limit.second);
+    }
+
+    return results;
+}

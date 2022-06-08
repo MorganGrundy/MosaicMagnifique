@@ -45,13 +45,6 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     auto mainImages = preprocessMainImage();
     auto libImages = preprocessCUDALibraryImages();
 
-    //Check that all the CUDA library images are continuous, if not then throw an exception
-    for (const auto &libIm : libImages)
-    {
-        if (!libIm.isContinuous())
-            throw std::invalid_argument("All the CUDA library images must be continuous!");
-    }
-
     //Get CUDA block size
     cudaDeviceProp deviceProp;
     gpuErrchk(cudaGetDeviceProperties(&deviceProp, 0));
@@ -62,14 +55,15 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     const size_t blockSize = deviceProp.maxThreadsPerBlock;
 #endif
 
+    const size_t streamCount = 16;
+    cudaStream_t streams[streamCount];
+    for (size_t i = 0; i < streamCount; ++i)
+        gpuErrchk(cudaStreamCreate(&streams[i]));
+
+    std::vector<float *> libIm_continuousD(libImages.size(), nullptr);
+
     //Device memory for mask images
     std::vector<uchar *> d_maskImages(4);
-
-    //Host - Array of library image device pointers
-    std::vector<float *> h_dLibraryImages(libImages.size());
-    //Device - Array of library image device pointers
-    float **d_dLibraryImages;
-    gpuErrchk(cudaMalloc((void **)&d_dLibraryImages, libImages.size() * sizeof(float *)));
 
     //Device memory for variants
     double *d_variants;
@@ -80,7 +74,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     gpuErrchk(cudaMalloc((void **)&d_targetArea, 4 * sizeof(size_t)));
 
     //Device memory for reduction memory
-    double *d_reductionMem;
+    std::vector<double *> d_reductionMems(streamCount);
 
     //Device memory for best fits
     size_t *d_bestFit;
@@ -116,20 +110,34 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
             gpuErrchk(cudaMalloc((void **)&d_variants, libImages.size() * cellSize * sizeof(double)));
 
             //Reduction memory
-            gpuErrchk(cudaMalloc((void **)&d_reductionMem, libImages.size() * reductionMemSize * sizeof(double)));
+            for (size_t streamI = 0; streamI < streamCount; ++streamI)
+                gpuErrchk(cudaMalloc((void **)&d_reductionMems.at(streamI), libImages.size() * reductionMemSize * sizeof(double)));
         }
+
+        size_t incontinuousCount = 0;
+        //Check that all the CUDA library images are continuous, I can't figure out what causes them not to be
+        //In the test project they seem to always be incontinuous but the actual CUDA project always continuous???
+        //So if a library image is incontinuous then we need to copy it to continuous memory
+        for (size_t libI = 0; libI < libImages.size(); ++libI)
+        {
+            if (!libImages.at(libI).isContinuous())
+            {
+                ++incontinuousCount;
+                if (libIm_continuousD.at(libI) == nullptr)
+                {
+                    gpuErrchk(cudaMalloc((void **)&libIm_continuousD.at(libI), cellSize * 3 * sizeof(float)));
+                }
+                copyMatToDevice<float>(libImages.at(libI), libIm_continuousD.at(libI));
+            }
+        }
+        if (incontinuousCount > 0)
+            qInfo() << "Not all library images were continuous (" << incontinuousCount << "/" << libImages.size() << "), this will have some performance impact.";
 
         //Copy cell masks to device
         copyMatToDevice<uchar>(detailCellShape.getCellMask(0, 0), d_maskImages.at(0));
         copyMatToDevice<uchar>(detailCellShape.getCellMask(1, 0), d_maskImages.at(1));
         copyMatToDevice<uchar>(detailCellShape.getCellMask(0, 1), d_maskImages.at(2));
         copyMatToDevice<uchar>(detailCellShape.getCellMask(1, 1), d_maskImages.at(3));
-
-        //Set host array of device library image pointers
-        for (size_t libI = 0; libI < libImages.size(); ++libI)
-            h_dLibraryImages.at(libI) = (float *)libImages.at(libI).cudaPtr();
-        //Copy host array to device array
-        gpuErrchk(cudaMemcpy(d_dLibraryImages, h_dLibraryImages.data(), libImages.size() * sizeof(float *), cudaMemcpyHostToDevice));
 
         //Total number of cells in grid
         const size_t noOfCells = m_bestFits.at(step).size() * m_bestFits.at(step).at(0).size();
@@ -180,27 +188,44 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                     gpuErrchk(cudaMemset(d_variants, 0, libImages.size() * cellSize * sizeof(double)));
 
                     //Clear reduction memory
-                    gpuErrchk(cudaMemset(d_reductionMem, 0, libImages.size() * reductionMemSize * sizeof(double)));
+                    for (size_t streamI = 0; streamI < streamCount; ++streamI)
+                        gpuErrchk(cudaMemsetAsync(d_reductionMems.at(streamI), 0, libImages.size() * reductionMemSize * sizeof(double), streams[streamI]));
 
                     //Reset lowest variant
                     gpuErrchk(cudaMemcpy(d_lowestVariant, &maxVariant, sizeof(double), cudaMemcpyHostToDevice));
 
+                    gpuErrchk(cudaDeviceSynchronize());
+
                     //Calculate difference
-                    ColourDifference::getCUDAFunction(m_colourDiffType)(d_cellImage, d_dLibraryImages,
-                        libImages.size(), d_mask, cell.front().rows, cell.front().channels(), d_targetArea, d_variants,
-                        blockSize);
-                    gpuErrchk(cudaPeekAtLastError());
+                    for (size_t libI = 0; libI < libImages.size(); ++libI)
+                    {
+                        const size_t streamIndex = libI % streamCount;
+
+                        float *d_libIm = libIm_continuousD.at(libI);
+                        if (d_libIm == nullptr)
+                            d_libIm = (float *)libImages.at(libI).cudaPtr();
+                        ColourDifference::getCUDAFunction(m_colourDiffType)(d_cellImage, d_libIm, d_mask,
+                            cell.front().rows, cell.front().channels(), d_targetArea, d_variants + libI * cellSize, blockSize, streams[streamIndex]);
+
+                        reduceAddKernelWrapper(blockSize, cellSize, d_variants + libI * cellSize, d_reductionMems.at(streamIndex), streams[streamIndex]);
+
+                        gpuErrchk(cudaPeekAtLastError());
+                    }
+
+                    for (size_t streamI = 0; streamI < streamCount; ++streamI)
+                        gpuErrchk(cudaStreamSynchronize(streams[streamI]));
 
                     //Reduce variants
                     for (size_t libI = 0; libI < libImages.size(); ++libI)
                     {
-                        reduceAddKernelWrapper(blockSize, cellSize,
-                                               d_variants + libI * cellSize, d_reductionMem);
-                        gpuErrchk(cudaPeekAtLastError());
+                        const size_t streamIndex = libI % streamCount;
                         //Shift variant so that all variants are continuous
-                        gpuErrchk(cudaMemcpy(d_variants + libI, d_variants + libI * cellSize,
-                                             sizeof(double), cudaMemcpyDeviceToDevice));
+                        gpuErrchk(cudaMemcpyAsync(d_variants + libI, d_variants + libI * cellSize,
+                                             sizeof(double), cudaMemcpyDeviceToDevice, streams[streamIndex]));
                     }
+
+                    for (size_t streamI = 0; streamI < streamCount; ++streamI)
+                        gpuErrchk(cudaStreamSynchronize(streams[streamI]));
 
                     //Calculate repeats and add to variants
                     const size_t gridWidth = m_bestFits.at(step).at(0).size();
@@ -240,12 +265,21 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         }
     }
 
+    for (size_t i = 0; i < streamCount; ++i)
+        gpuErrchk(cudaStreamDestroy(streams[i]));
+
     for (size_t i = 0; i < d_maskImages.size(); ++i)
         gpuErrchk(cudaFree(d_maskImages.at(i)));
-    gpuErrchk(cudaFree(d_dLibraryImages));
     gpuErrchk(cudaFree(d_variants));
     gpuErrchk(cudaFree(d_cellImage));
-    gpuErrchk(cudaFree(d_reductionMem));
+    for (size_t i = 0; i < streamCount; ++i)
+        gpuErrchk(cudaFree(d_reductionMems.at(i)));
+
+    for (auto d_libIm : libIm_continuousD)
+    {
+        if (d_libIm != nullptr)
+            gpuErrchk(cudaFree(d_libIm));
+    }
 
     gpuErrchk(cudaFree(d_targetArea));
     gpuErrchk(cudaFree(d_lowestVariant));
@@ -297,6 +331,20 @@ void CUDAPhotomosaicGenerator::copyMatToDevice(const cv::Mat &t_mat, T *t_device
         gpuErrchk(cudaMemcpy(t_device + row * t_mat.cols * t_mat.channels(), p_im,
                              t_mat.cols * t_mat.channels() * sizeof(T),
                              cudaMemcpyHostToDevice));
+    }
+}
+
+//Copies gpumat to device pointer
+template <typename T>
+void CUDAPhotomosaicGenerator::copyMatToDevice(const cv::cuda::GpuMat &t_mat, T *t_device) const
+{
+    const T *p_im;
+    for (int row = 0; row < t_mat.rows; ++row)
+    {
+        p_im = t_mat.ptr<T>(row);
+        gpuErrchk(cudaMemcpy(t_device + row * t_mat.cols * t_mat.channels(), p_im,
+            t_mat.cols * t_mat.channels() * sizeof(T),
+            cudaMemcpyDeviceToDevice));
     }
 }
 

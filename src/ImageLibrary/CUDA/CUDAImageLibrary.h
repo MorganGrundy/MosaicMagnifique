@@ -1,6 +1,6 @@
 #pragma once
 
-#include "..\ImageLibrary\ImageLibrary.h"
+#include "..\ImageLibrary.h"
 
 #include <opencv2/cudaimgproc.hpp>
 

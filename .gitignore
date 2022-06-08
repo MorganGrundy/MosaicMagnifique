@@ -13,3 +13,4 @@ ui_*.h
 *.pdb
 /Library/medium-lib-v4.mil
 /Library/big-lib-v4.mil
+/test/release

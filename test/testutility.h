@@ -15,4 +15,7 @@ namespace TestUtility
 
     //Generates a random image of given size
     cv::Mat createRandomImage(const int width, const int height, const bool singleChannel = false);
+
+    //Generates a vector of random floats
+    std::vector<float> createRandomFloats(const size_t count, const std::vector<std::pair<float, float>> ranges);
 };

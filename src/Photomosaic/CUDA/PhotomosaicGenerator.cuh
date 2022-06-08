@@ -1,16 +1,17 @@
 #pragma once
 
+#include <cuda_runtime.h>
 //Wrapper for euclidean difference kernel
-void euclideanDifferenceKernelWrapper(float *main_im, float **lib_im, size_t noLibIm,
+void euclideanDifferenceKernelWrapper(float *main_im, float *lib_im,
                                       unsigned char *mask_im,
 									  size_t size, size_t channels, size_t *target_area,
-									  double *variants, size_t blockSize);
+									  double *variants, size_t blockSize, cudaStream_t stream);
 
 //Wrapper for euclidean difference kernel
-void CIEDE2000DifferenceKernelWrapper(float *main_im, float **lib_im, size_t noLibIm,
+void CIEDE2000DifferenceKernelWrapper(float *main_im, float *lib_im,
                                       unsigned char *mask_im,
 									  size_t size, size_t channels, size_t *target_area,
-									  double *variants, size_t blockSize);
+									  double *variants, size_t blockSize, cudaStream_t stream);
 
 //Wrapper for calculate repeats kernel
 void calculateRepeatsKernelWrapper(double *variants,

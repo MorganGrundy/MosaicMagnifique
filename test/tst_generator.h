@@ -15,51 +15,52 @@
 #include "testutility.h"
 #include "..\src\Grid\GridGenerator.h"
 #include "..\src\ImageLibrary\ImageLibrary.h"
+#include "..\src\ImageLibrary\CUDA\CUDAImageLibrary.h"
 
 namespace TST_Generator
 {
-static const size_t ITERATIONS = 10;
+    static const size_t ITERATIONS = 10;
 
-//Check if best fits are equal
-size_t bestFitsDiff(const GridUtility::MosaicBestFit &bestFit1,
-                    const GridUtility::MosaicBestFit &bestFit2)
-{
-    const size_t maxSteps = std::max(bestFit1.size(), bestFit2.size());
-    const size_t minSteps = std::min(bestFit1.size(), bestFit2.size());
-
-    const size_t maxRows = std::max(bestFit1.at(0).size(), bestFit2.at(0).size());
-    const size_t minRows = std::min(bestFit1.at(0).size(), bestFit2.at(0).size());
-
-    const size_t maxCols = std::max(bestFit1.at(0).at(0).size(), bestFit2.at(0).at(0).size());
-    const size_t minCols = std::min(bestFit1.at(0).at(0).size(), bestFit2.at(0).at(0).size());
-
-    size_t differences = 0;
-    if (bestFit1.size() != bestFit2.size())
-        differences += (maxSteps - minSteps) * maxRows * maxCols;
-
-    for (size_t step = 0; step < minSteps; ++step)
+    //Check if best fits are equal
+    size_t bestFitsDiff(const GridUtility::MosaicBestFit &bestFit1,
+                        const GridUtility::MosaicBestFit &bestFit2)
     {
-        if (bestFit1.at(step).size() != bestFit2.at(step).size())
-            differences += (maxRows - minRows) * maxCols;
+        const size_t maxSteps = std::max(bestFit1.size(), bestFit2.size());
+        const size_t minSteps = std::min(bestFit1.size(), bestFit2.size());
 
-        for (size_t y = 0; y < minRows; ++y)
+        const size_t maxRows = std::max(bestFit1.at(0).size(), bestFit2.at(0).size());
+        const size_t minRows = std::min(bestFit1.at(0).size(), bestFit2.at(0).size());
+
+        const size_t maxCols = std::max(bestFit1.at(0).at(0).size(), bestFit2.at(0).at(0).size());
+        const size_t minCols = std::min(bestFit1.at(0).at(0).size(), bestFit2.at(0).at(0).size());
+
+        size_t differences = 0;
+        if (bestFit1.size() != bestFit2.size())
+            differences += (maxSteps - minSteps) * maxRows * maxCols;
+
+        for (size_t step = 0; step < minSteps; ++step)
         {
-            if (bestFit1.at(step).at(y).size() != bestFit2.at(step).at(y).size())
-                differences += (maxCols - minCols);
+            if (bestFit1.at(step).size() != bestFit2.at(step).size())
+                differences += (maxRows - minRows) * maxCols;
 
-            for (size_t x = 0; x < minCols; ++x)
+            for (size_t y = 0; y < minRows; ++y)
             {
-                if (bestFit1.at(step).at(y).at(x) != bestFit2.at(step).at(y).at(x))
+                if (bestFit1.at(step).at(y).size() != bestFit2.at(step).at(y).size())
+                    differences += (maxCols - minCols);
+
+                for (size_t x = 0; x < minCols; ++x)
                 {
-                    ++differences;
-                    std::cout << "Difference at (x:" << x << ", y:" << y << ")\n";
+                    if (bestFit1.at(step).at(y).at(x) != bestFit2.at(step).at(y).at(x))
+                    {
+                        ++differences;
+                        std::cout << "Difference at (x:" << x << ", y:" << y << ")\n";
+                    }
                 }
             }
         }
-    }
 
-    return differences;
-}
+        return differences;
+    }
 
 }
 
@@ -444,9 +445,9 @@ TEST(Generator, CUDA_RGB_EUCLIDEAN_Detail_100)
     generator.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
-    generator.setLibrary(lib.getImages());
+    generator.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -502,9 +503,9 @@ TEST(Generator, CUDA_RGB_EUCLIDEAN_Detail_50)
     generator.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
-    generator.setLibrary(lib.getImages());
+    generator.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -560,9 +561,9 @@ TEST(Generator, CUDA_CIE76_Detail_100)
     generator.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
-    generator.setLibrary(lib.getImages());
+    generator.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -618,9 +619,9 @@ TEST(Generator, CUDA_CIE76_Detail_50)
     generator.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
-    generator.setLibrary(lib.getImages());
+    generator.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -734,9 +735,9 @@ TEST(Generator, CUDA_CIEDE2000_Detail_50)
     generator.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
-    generator.setLibrary(lib.getImages());
+    generator.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -1158,9 +1159,9 @@ TEST(Generator, CUDA_RGB_EUCLIDEAN_Repeats)
     generator.setRepeat(20, 10000);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
-    generator.setLibrary(lib.getImages());
+    generator.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -1216,9 +1217,9 @@ TEST(Generator, CUDA_CIE76_Repeats)
     generator.setRepeat(20, 10000);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
-    generator.setLibrary(lib.getImages());
+    generator.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -1274,9 +1275,9 @@ TEST(Generator, CUDA_CIEDE2000_Repeats)
     generator.setRepeat(20, 10000);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
-    generator.setLibrary(lib.getImages());
+    generator.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -1337,9 +1338,9 @@ TEST(Generator, CUDA_RGB_EUCLIDEAN_Size_Steps)
     generator.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
-    generator.setLibrary(lib.getImages());
+    generator.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -1395,9 +1396,9 @@ TEST(Generator, CUDA_CIE76_Size_Steps)
     generator.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
-    generator.setLibrary(lib.getImages());
+    generator.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -1453,9 +1454,9 @@ TEST(Generator, CUDA_CIEDE2000_Size_Steps)
     generator.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
-    generator.setLibrary(lib.getImages());
+    generator.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -1526,10 +1527,11 @@ TEST(Generator, RGB_EUCLIDEAN_Detail_100_vs_CUDA)
     generatorCUDA.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
     generator.setLibrary(lib.getImages());
     generatorCUDA.setLibrary(lib.getImages());
+    generatorCUDA.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -1608,10 +1610,11 @@ TEST(Generator, RGB_EUCLIDEAN_Detail_50_vs_CUDA)
     generatorCUDA.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
     generator.setLibrary(lib.getImages());
     generatorCUDA.setLibrary(lib.getImages());
+    generatorCUDA.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -1690,10 +1693,11 @@ TEST(Generator, CIE76_Detail_100_vs_CUDA)
     generatorCUDA.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
     generator.setLibrary(lib.getImages());
     generatorCUDA.setLibrary(lib.getImages());
+    generatorCUDA.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -1772,10 +1776,11 @@ TEST(Generator, CIE76_Detail_50_vs_CUDA)
     generatorCUDA.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
     generator.setLibrary(lib.getImages());
     generatorCUDA.setLibrary(lib.getImages());
+    generatorCUDA.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -1854,10 +1859,11 @@ TEST(Generator, CIEDE2000_Detail_100_vs_CUDA)
     generatorCUDA.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
     generator.setLibrary(lib.getImages());
     generatorCUDA.setLibrary(lib.getImages());
+    generatorCUDA.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -1936,10 +1942,11 @@ TEST(Generator, CIEDE2000_Detail_50_vs_CUDA)
     generatorCUDA.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
     generator.setLibrary(lib.getImages());
     generatorCUDA.setLibrary(lib.getImages());
+    generatorCUDA.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -2023,10 +2030,11 @@ TEST(Generator, RGB_EUCLIDEAN_Repeats_vs_CUDA)
     generatorCUDA.setRepeat(20, 10000);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
     generator.setLibrary(lib.getImages());
     generatorCUDA.setLibrary(lib.getImages());
+    generatorCUDA.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -2105,10 +2113,11 @@ TEST(Generator, CIE76_Repeats_vs_CUDA)
     generatorCUDA.setRepeat(20, 10000);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
     generator.setLibrary(lib.getImages());
     generatorCUDA.setLibrary(lib.getImages());
+    generatorCUDA.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -2187,10 +2196,11 @@ TEST(Generator, CIEDE2000_Repeats_vs_CUDA)
     generatorCUDA.setRepeat(20, 10000);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
     generator.setLibrary(lib.getImages());
     generatorCUDA.setLibrary(lib.getImages());
+    generatorCUDA.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -2274,10 +2284,11 @@ TEST(Generator, RGB_EUCLIDEAN_Size_Steps_vs_CUDA)
     generatorCUDA.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
     generator.setLibrary(lib.getImages());
     generatorCUDA.setLibrary(lib.getImages());
+    generatorCUDA.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -2356,10 +2367,11 @@ TEST(Generator, CIE76_Size_Steps_vs_CUDA)
     generatorCUDA.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
     generator.setLibrary(lib.getImages());
     generatorCUDA.setLibrary(lib.getImages());
+    generatorCUDA.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");
@@ -2438,10 +2450,11 @@ TEST(Generator, CIEDE2000_Size_Steps_vs_CUDA)
     generatorCUDA.setRepeat(0, 0);
 
     //Load and set image library
-    ImageLibrary lib(128);
+    CUDAImageLibrary lib(128);
     lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
     generator.setLibrary(lib.getImages());
     generatorCUDA.setLibrary(lib.getImages());
+    generatorCUDA.setCUDALibrary(lib.getCUDAImages());
 
     //Folder containing multiple images
     QDir imageFolder("E:/Desktop/MosaicMagnifique/NewLib");

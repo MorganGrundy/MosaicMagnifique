@@ -166,7 +166,7 @@ TEST(CUDAKernel, AddReduction)
     gpuErrchk(cudaMemset(d_reductionMem, 0, reductionMemSize * sizeof(double)));
 
     //Run reduction kernel
-    reduceAddKernelWrapper(blockSize, imageSize * imageSize, d_variants, d_reductionMem);
+    reduceAddKernelWrapper(blockSize, imageSize * imageSize, d_variants, d_reductionMem, 0);
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 

@@ -237,6 +237,7 @@
     <ClInclude Include="testutility.h" />
     <ClInclude Include="tst_cellshape.h" />
     <ClInclude Include="tst_colourdifference.h" />
+    <ClInclude Include="tst_CUDAImageLibrary.h" />
     <ClInclude Include="tst_cudakernel.h" />
     <ClInclude Include="tst_generator.h" />
     <ClInclude Include="tst_imagelibrary.h" />

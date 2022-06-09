@@ -179,6 +179,9 @@
     <ClInclude Include="..\src\ImageLibrary\CUDA\CUDAImageLibrary.h">
       <Filter>Image Library\CUDA</Filter>
     </ClInclude>
+    <ClInclude Include="tst_CUDAImageLibrary.h">
+      <Filter>Image Library\CUDA</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="debug\moc_predefs.h.cbt">

@@ -34,7 +34,7 @@ TEST(CUDAKernel, CalculateRepeats)
     //Create variants
     double variants[noLibraryImages];
     for (size_t i = 0; i < noLibraryImages; ++i)
-        variants[i] = TestUtility::randFloat(0, 100);
+        variants[i] = TestUtility::randNum<float>(0, 100);
     double *d_variants;
     gpuErrchk(cudaMalloc((void **)&d_variants, noLibraryImages * sizeof(double)));
     gpuErrchk(cudaMemcpy(d_variants, variants, noLibraryImages * sizeof(double),
@@ -102,7 +102,7 @@ TEST(CUDAKernel, FindLowest)
     //Create variants
     double variants[noLibraryImages];
     for (size_t i = 0; i < noLibraryImages; ++i)
-        variants[i] = TestUtility::randFloat(0, 1000);
+        variants[i] = TestUtility::randNum<float>(0, 1000);
     double *d_variants;
     gpuErrchk(cudaMalloc((void **)&d_variants, noLibraryImages * sizeof(double)));
     gpuErrchk(cudaMemcpy(d_variants, variants, noLibraryImages * sizeof(double),
@@ -148,7 +148,7 @@ TEST(CUDAKernel, AddReduction)
     //Create variants
     std::vector<double> variants;
     for (size_t i = 0; i < imageSize * imageSize; ++i)
-        variants.push_back(TestUtility::randFloat(0, 1000));
+        variants.push_back(TestUtility::randNum<float>(0, 1000));
     double *d_variants;
     gpuErrchk(cudaMalloc((void **)&d_variants, imageSize * imageSize * sizeof(double)));
     gpuErrchk(cudaMemcpy(d_variants, variants.data(), imageSize * imageSize * sizeof(double),

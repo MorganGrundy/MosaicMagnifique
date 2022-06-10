@@ -21,7 +21,6 @@
 #include "cudaphotomosaicgenerator.h"
 
 #include <QDebug>
-#include <opencv2/cudawarping.hpp>
 
 #include "cudautility.h"
 #include "photomosaicgenerator.cuh"
@@ -30,12 +29,6 @@
 CUDAPhotomosaicGenerator::CUDAPhotomosaicGenerator()
 {}
 
-//Sets CUDA library images
-void CUDAPhotomosaicGenerator::setCUDALibrary(const std::vector<cv::cuda::GpuMat> &t_lib)
-{
-    m_cudaLib = t_lib;
-}
-
 //Generate best fits for Photomosaic cells
 //Returns true if successful
 bool CUDAPhotomosaicGenerator::generateBestFits()
@@ -43,7 +36,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     //Converts colour space of main image and library images
     //Resizes library based on detail level
     auto mainImages = preprocessMainImage();
-    auto libImages = preprocessCUDALibraryImages();
+    auto libImages = preprocessLibraryImages();
 
     //Get CUDA block size
     cudaDeviceProp deviceProp;
@@ -60,7 +53,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     for (size_t i = 0; i < streamCount; ++i)
         gpuErrchk(cudaStreamCreate(&streams[i]));
 
-    std::vector<float *> libIm_continuousD(libImages.size(), nullptr);
+    std::vector<float *> d_libIm(libImages.size(), nullptr);
 
     //Device memory for mask images
     std::vector<uchar *> d_maskImages(4);
@@ -112,26 +105,15 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
             //Reduction memory
             for (size_t streamI = 0; streamI < streamCount; ++streamI)
                 gpuErrchk(cudaMalloc((void **)&d_reductionMems.at(streamI), libImages.size() * reductionMemSize * sizeof(double)));
+
+            //Library images
+            for (size_t libI = 0; libI < libImages.size(); ++libI)
+                gpuErrchk(cudaMalloc((void **)&d_libIm.at(libI), cellSize * 3 * sizeof(float)));
         }
 
-        size_t incontinuousCount = 0;
-        //Check that all the CUDA library images are continuous, I can't figure out what causes them not to be
-        //In the test project they seem to always be incontinuous but the actual CUDA project always continuous???
-        //So if a library image is incontinuous then we need to copy it to continuous memory
+        //Copy library images to device memory
         for (size_t libI = 0; libI < libImages.size(); ++libI)
-        {
-            if (!libImages.at(libI).isContinuous())
-            {
-                ++incontinuousCount;
-                if (libIm_continuousD.at(libI) == nullptr)
-                {
-                    gpuErrchk(cudaMalloc((void **)&libIm_continuousD.at(libI), cellSize * 3 * sizeof(float)));
-                }
-                copyMatToDevice<float>(libImages.at(libI), libIm_continuousD.at(libI));
-            }
-        }
-        if (incontinuousCount > 0)
-            qInfo() << "Not all library images were continuous (" << incontinuousCount << "/" << libImages.size() << "), this will have some performance impact.";
+            copyMatToDevice<float>(libImages.at(libI), d_libIm.at(libI));
 
         //Copy cell masks to device
         copyMatToDevice<uchar>(detailCellShape.getCellMask(0, 0), d_maskImages.at(0));
@@ -165,10 +147,10 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                 if (m_bestFits.at(step).at(y + GridUtility::PAD_GRID).
                     at(x + GridUtility::PAD_GRID).has_value())
                 {
-                    auto [cell, cellBounds] = getCellAt(normalCellShape, detailCellShape, x, y, mainImages);
+                    auto [cells, cellBounds] = getCellAt(normalCellShape, detailCellShape, x, y, mainImages);
 
                     //Copy cell image to device
-                    copyMatToDevice<float>(cell.front(), d_cellImage);
+                    copyMatToDevice<float>(cells.front(), d_cellImage);
 
                     //Copy target area to device
                     const size_t targetArea[4] = {static_cast<size_t>(cellBounds.y),
@@ -194,18 +176,15 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                     //Reset lowest variant
                     gpuErrchk(cudaMemcpy(d_lowestVariant, &maxVariant, sizeof(double), cudaMemcpyHostToDevice));
 
-                    gpuErrchk(cudaDeviceSynchronize());
+                    gpuErrchk(cudaStreamSynchronize(0));
 
                     //Calculate difference
                     for (size_t libI = 0; libI < libImages.size(); ++libI)
                     {
                         const size_t streamIndex = libI % streamCount;
 
-                        float *d_libIm = libIm_continuousD.at(libI);
-                        if (d_libIm == nullptr)
-                            d_libIm = (float *)libImages.at(libI).cudaPtr();
-                        ColourDifference::getCUDAFunction(m_colourDiffType)(d_cellImage, d_libIm, d_mask,
-                            cell.front().rows, cell.front().channels(), d_targetArea, d_variants + libI * cellSize, blockSize, streams[streamIndex]);
+                        ColourDifference::getCUDAFunction(m_colourDiffType)(d_cellImage, d_libIm.at(libI), d_mask,
+                            cells.front().rows, cells.front().channels(), d_targetArea, d_variants + libI * cellSize, blockSize, streams[streamIndex]);
 
                         reduceAddKernelWrapper(blockSize, cellSize, d_variants + libI * cellSize, d_reductionMems.at(streamIndex), streams[streamIndex]);
 
@@ -275,11 +254,8 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     for (size_t i = 0; i < streamCount; ++i)
         gpuErrchk(cudaFree(d_reductionMems.at(i)));
 
-    for (auto d_libIm : libIm_continuousD)
-    {
-        if (d_libIm != nullptr)
-            gpuErrchk(cudaFree(d_libIm));
-    }
+    for (auto im : d_libIm)
+        gpuErrchk(cudaFree(im));
 
     gpuErrchk(cudaFree(d_targetArea));
     gpuErrchk(cudaFree(d_lowestVariant));
@@ -287,64 +263,25 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     return true;
 }
 
-//Performs preprocessing steps on library images: resize, convert colour space
-std::vector<cv::cuda::GpuMat> CUDAPhotomosaicGenerator::preprocessCUDALibraryImages()
-{
-    //Resize
-    std::vector<cv::cuda::GpuMat> result(m_cudaLib.size(), cv::cuda::GpuMat());
-    //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
-    cv::InterpolationFlags flags = (m_cells.getDetail() < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
-    int cellSize = std::round(m_cells.getCellSize(0, true));
-
-    cv::cuda::Stream stream;
-    for (size_t i = 0; i < m_cudaLib.size(); ++i)
-    {
-        if (m_cells.getDetail() != 1)
-            cv::cuda::resize(m_cudaLib.at(i), result.at(i), cv::Size(cellSize, cellSize), 0, 0, flags, stream);
-        else
-            result.at(i) = m_cudaLib.at(i).clone();
-
-        if (m_colourDiffType == ColourDifference::Type::CIE76 || m_colourDiffType == ColourDifference::Type::CIEDE2000)
-        {
-            //Convert 8U [0..255] to 32F [0..1]
-            result.at(i).convertTo(result.at(i), CV_32F, 1 / 255.0, stream);
-            //Convert BGR to Lab
-            cv::cuda::cvtColor(result.at(i), result.at(i), cv::COLOR_BGR2Lab, 0, stream);
-        }
-        else
-            //Convert 8U [0..255] to 32F [0..255]
-            result.at(i).convertTo(result.at(i), CV_32F, stream);
-    }
-    stream.waitForCompletion();
-
-    return result;
-}
-
 //Copies mat to device pointer
 template <typename T>
 void CUDAPhotomosaicGenerator::copyMatToDevice(const cv::Mat &t_mat, T *t_device) const
 {
-    const T *p_im;
-    for (int row = 0; row < t_mat.rows; ++row)
+    if (t_mat.isContinuous())
     {
-        p_im = t_mat.ptr<T>(row);
-        gpuErrchk(cudaMemcpy(t_device + row * t_mat.cols * t_mat.channels(), p_im,
-                             t_mat.cols * t_mat.channels() * sizeof(T),
-                             cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(t_device, t_mat.data, t_mat.rows * t_mat.cols * t_mat.channels() * sizeof(T),
+            cudaMemcpyHostToDevice));
     }
-}
-
-//Copies gpumat to device pointer
-template <typename T>
-void CUDAPhotomosaicGenerator::copyMatToDevice(const cv::cuda::GpuMat &t_mat, T *t_device) const
-{
-    const T *p_im;
-    for (int row = 0; row < t_mat.rows; ++row)
+    else
     {
-        p_im = t_mat.ptr<T>(row);
-        gpuErrchk(cudaMemcpy(t_device + row * t_mat.cols * t_mat.channels(), p_im,
-            t_mat.cols * t_mat.channels() * sizeof(T),
-            cudaMemcpyDeviceToDevice));
+        const T *p_im;
+        for (int row = 0; row < t_mat.rows; ++row)
+        {
+            p_im = t_mat.ptr<T>(row);
+            gpuErrchk(cudaMemcpy(t_device + row * t_mat.cols * t_mat.channels(), p_im,
+                t_mat.cols * t_mat.channels() * sizeof(T),
+                cudaMemcpyHostToDevice));
+        }
     }
 }
 

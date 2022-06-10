@@ -15,7 +15,6 @@
 #include "testutility.h"
 #include "..\src\Grid\GridGenerator.h"
 #include "..\src\ImageLibrary\ImageLibrary.h"
-#include "..\src\ImageLibrary\CUDA\CUDAImageLibrary.h"
 
 namespace TST_Generator
 {

@@ -26,11 +26,7 @@
 
 #include "..\Other\ImageUtility.h"
 #include "ImageSquarer.h"
-#ifdef CUDA
-#include "CUDA\CUDAImageLibrary.h"
-#else
 #include "ImageLibrary.h"
-#endif
 
 namespace Ui {
 class ImageLibraryEditor;
@@ -52,11 +48,6 @@ public:
 
     //Returns image library
     const std::vector<cv::Mat> getImageLibrary() const;
-
-#ifdef CUDA
-    //Returns CUDA image library
-    const std::vector<cv::cuda::GpuMat> getCUDAImageLibrary() const;
-#endif
 
 public slots:
     //Changes the cropping mode used for library images
@@ -94,9 +85,5 @@ private:
 
     //Stores library images
     std::vector<std::shared_ptr<QListWidgetItem>> m_imageWidgets;
-#ifdef CUDA
-    CUDAImageLibrary m_images;
-#else
     ImageLibrary m_images;
-#endif
 };

@@ -12,7 +12,6 @@
 #include "testutility.h"
 #include "..\src\Grid\GridGenerator.h"
 #include "..\src\ImageLibrary\ImageLibrary.h"
-#include "..\src\ImageLibrary\CUDA\CUDAImageLibrary.h"
 
 class CUDAGeneratorFixture : public ::testing::Test, public CUDAPhotomosaicGenerator
 {
@@ -30,10 +29,9 @@ protected:
 
     void LoadImageLibrary()
     {
-        CUDAImageLibrary lib(m_cells.getCellSize(0, false));
+        ImageLibrary lib(m_cells.getCellSize(0, false));
         lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
         setLibrary(lib.getImages());
-        setCUDALibrary(lib.getCUDAImages());
     }
 
     void LoadRandomImage(const double t_scale)
@@ -109,12 +107,11 @@ protected:
 
     void LoadImageLibrary()
     {
-        CUDAImageLibrary lib(cpuGenerator.getCellGroup().getCellSize(0, false));
+        ImageLibrary lib(cpuGenerator.getCellGroup().getCellSize(0, false));
         lib.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Library/lib.mil");
 
         cpuGenerator.setLibrary(lib.getImages());
         cudaGenerator.setLibrary(lib.getImages());
-        cudaGenerator.setCUDALibrary(lib.getCUDAImages());
     }
 
     void LoadRandomImage(const double t_scale)

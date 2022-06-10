@@ -231,7 +231,6 @@
     </CudaLink>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ImageLibrary\CUDA\CUDAImageLibrary.cpp" />
     <ClCompile Include="CellShape\CellGroup.cpp" />
     <ClCompile Include="CellShape\CellShape.cpp" />
     <ClCompile Include="CellShape\CellShapeEditor.cpp" />
@@ -261,7 +260,6 @@
     <ClCompile Include="Other\Switch.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ImageLibrary\CUDA\CUDAImageLibrary.h" />
     <ClInclude Include="Other\CustomQDataStream.h" />
     <ClInclude Include="CellShape\CellGroup.h" />
     <ClInclude Include="CellShape\CellShape.h" />

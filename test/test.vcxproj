@@ -194,7 +194,6 @@
   <ItemGroup>
     <ClCompile Include="..\src\CellShape\CellGroup.cpp" />
     <ClCompile Include="..\src\CellShape\CellShape.cpp" />
-    <ClCompile Include="..\src\ImageLibrary\CUDA\CUDAImageLibrary.cpp" />
     <ClCompile Include="..\src\Photomosaic\ColourDifference.cpp" />
     <ClCompile Include="..\src\Photomosaic\ColourScheme.cpp" />
     <ClCompile Include="..\src\Photomosaic\CPUPhotomosaicGenerator.cpp" />
@@ -213,7 +212,6 @@
     <ClCompile Include="TestUtility.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\ImageLibrary\CUDA\CUDAImageLibrary.h" />
     <ClInclude Include="..\src\Other\CustomQDataStream.h" />
     <ClInclude Include="..\src\CellShape\CellGroup.h" />
     <ClInclude Include="..\src\CellShape\CellShape.h" />
@@ -238,7 +236,6 @@
     <ClInclude Include="tst_CellShape.h" />
     <ClInclude Include="tst_ColourDifference.h" />
     <ClInclude Include="tst_CUDAGenerator.h" />
-    <ClInclude Include="tst_CUDAImageLibrary.h" />
     <ClInclude Include="tst_CUDAKernel.h" />
     <ClInclude Include="tst_Generator.h" />
     <ClInclude Include="tst_ImageLibrary.h" />

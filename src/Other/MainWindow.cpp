@@ -489,20 +489,11 @@ void MainWindow::generatePhotomosaic()
 
     //Resize image library
     std::vector<cv::Mat> library = ui->imageLibraryEditor->getImageLibrary();
-#ifdef CUDA
-    std::vector<cv::cuda::GpuMat> cudaLibrary = ui->imageLibraryEditor->getCUDAImageLibrary();
-#endif
     if (library.front().cols != ui->spinCellSize->value())
     {
         ImageUtility::batchResizeMat(library, library,
             ui->spinCellSize->value(), ui->spinCellSize->value(),
             ImageUtility::ResizeType::EXACT, progressBar);
-
-#ifdef CUDA
-        ImageUtility::batchResizeMat(cudaLibrary, cudaLibrary,
-            ui->spinCellSize->value(), ui->spinCellSize->value(),
-            ImageUtility::ResizeType::EXACT);
-#endif
     }
 
     //Generate Photomosaic
@@ -511,11 +502,7 @@ void MainWindow::generatePhotomosaic()
     //Choose which generator to use
 #ifdef CUDA
     if (ui->checkCUDA->isChecked())
-    {
-        std::shared_ptr<CUDAPhotomosaicGenerator> cudaGenerator = std::make_shared<CUDAPhotomosaicGenerator>();
-        generator = cudaGenerator;
-        cudaGenerator->setCUDALibrary(cudaLibrary);
-    }
+        generator = std::make_shared<CUDAPhotomosaicGenerator>();
     else
 #endif
         generator = std::make_shared<CPUPhotomosaicGenerator>();

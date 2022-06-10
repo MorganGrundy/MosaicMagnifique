@@ -60,9 +60,6 @@
     <Filter Include="Image Library">
       <UniqueIdentifier>{639cbba1-c510-491d-8048-054cc20689e3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Image Library\CUDA">
-      <UniqueIdentifier>{86c5b88a-ad7a-41bb-80ea-3cc02918c4be}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Other\CropGraphicsObject.cpp">
@@ -146,9 +143,6 @@
     <ClCompile Include="Photomosaic\CUDA\CUDAPhotomosaicGenerator.cpp">
       <Filter>Photomosaic\CUDA</Filter>
     </ClCompile>
-    <ClCompile Include="ImageLibrary\CUDA\CUDAImageLibrary.cpp">
-      <Filter>Image Library\CUDA</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Other\CropGraphicsObject.h">
@@ -192,9 +186,6 @@
     </ClInclude>
     <ClInclude Include="Other\CustomQDataStream.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ImageLibrary\CUDA\CUDAImageLibrary.h">
-      <Filter>Image Library\CUDA</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

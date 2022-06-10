@@ -101,7 +101,7 @@ bool PhotomosaicGeneratorBase::generateBestFits()
 }
 
 //Returns best fits
-GridUtility::MosaicBestFit PhotomosaicGeneratorBase::getBestFits()
+GridUtility::MosaicBestFit PhotomosaicGeneratorBase::getBestFits() const
 {
     return m_bestFits;
 }

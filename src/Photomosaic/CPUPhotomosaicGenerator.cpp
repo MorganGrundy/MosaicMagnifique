@@ -23,7 +23,7 @@
 
 #include "ColourDifference.h"
 
-CPUPhotomosaicGenerator::CPUPhotomosaicGenerator()
+CPUPhotomosaicGenerator::CPUPhotomosaicGenerator() : PhotomosaicGeneratorBase()
 {}
 
 //Generate best fits for Photomosaic cells

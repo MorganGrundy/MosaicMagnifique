@@ -72,6 +72,12 @@ void PhotomosaicGeneratorBase::setCellGroup(const CellGroup &t_cellGroup)
     m_cells = t_cellGroup;
 }
 
+//Gets cell group
+const CellGroup &PhotomosaicGeneratorBase::getCellGroup() const
+{
+    return m_cells;
+}
+
 //Sets grid state
 void PhotomosaicGeneratorBase::setGridState(const GridUtility::MosaicBestFit &t_gridState)
 {

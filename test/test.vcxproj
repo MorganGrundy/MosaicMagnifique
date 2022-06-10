@@ -210,7 +210,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="..\src\Photomosaic\PhotomosaicGeneratorBase.cpp" />
     <ClCompile Include="..\src\Grid\QuadTree.cpp" />
-    <ClCompile Include="testutility.cpp" />
+    <ClCompile Include="TestUtility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\ImageLibrary\CUDA\CUDAImageLibrary.h" />
@@ -234,13 +234,14 @@
     <ClInclude Include="..\src\Photomosaic\CUDA\PhotomosaicGenerator.cuh" />
     <ClInclude Include="..\src\Grid\QuadTree.h" />
     <ClInclude Include="..\src\Photomosaic\CUDA\Reduction.cuh" />
-    <ClInclude Include="testutility.h" />
-    <ClInclude Include="tst_cellshape.h" />
-    <ClInclude Include="tst_colourdifference.h" />
+    <ClInclude Include="TestUtility.h" />
+    <ClInclude Include="tst_CellShape.h" />
+    <ClInclude Include="tst_ColourDifference.h" />
+    <ClInclude Include="tst_CUDAGenerator.h" />
     <ClInclude Include="tst_CUDAImageLibrary.h" />
-    <ClInclude Include="tst_cudakernel.h" />
-    <ClInclude Include="tst_generator.h" />
-    <ClInclude Include="tst_imagelibrary.h" />
+    <ClInclude Include="tst_CUDAKernel.h" />
+    <ClInclude Include="tst_Generator.h" />
+    <ClInclude Include="tst_ImageLibrary.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="debug\moc_predefs.h.cbt">

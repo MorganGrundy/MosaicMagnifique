@@ -1,9 +1,10 @@
-#include "tst_colourdifference.h"
-#include "tst_cudakernel.h"
-#include "tst_imagelibrary.h"
+#include "tst_ColourDifference.h"
+#include "tst_CUDAKernel.h"
+#include "tst_ImageLibrary.h"
 #include "tst_CUDAImageLibrary.h"
-#include "tst_cellshape.h"
-#include "tst_generator.h"
+#include "tst_CellShape.h"
+#include "tst_Generator.h"
+#include "tst_CUDAGenerator.h"
 
 #include <gtest/gtest.h>
 

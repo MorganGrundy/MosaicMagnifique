@@ -50,6 +50,8 @@ public:
 
     //Sets cell group
     void setCellGroup(const CellGroup &t_cellGroup);
+    //Gets cell group
+    const CellGroup &getCellGroup() const;
 
     //Sets grid state
     void setGridState(const GridUtility::MosaicBestFit &t_gridState);

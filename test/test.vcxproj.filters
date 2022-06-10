@@ -57,7 +57,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="testutility.cpp">
+    <ClCompile Include="TestUtility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\CellShape\CellGroup.cpp">
@@ -107,7 +107,7 @@
     <ClInclude Include="..\src\Other\ImageUtility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="testutility.h">
+    <ClInclude Include="TestUtility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Other\MatUtility.h">
@@ -116,19 +116,19 @@
     <ClInclude Include="..\src\Other\CustomQDataStream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tst_imagelibrary.h">
+    <ClInclude Include="tst_ImageLibrary.h">
       <Filter>Image Library</Filter>
     </ClInclude>
-    <ClInclude Include="tst_generator.h">
+    <ClInclude Include="tst_Generator.h">
       <Filter>Photomosaic</Filter>
     </ClInclude>
-    <ClInclude Include="tst_colourdifference.h">
+    <ClInclude Include="tst_ColourDifference.h">
       <Filter>Photomosaic</Filter>
     </ClInclude>
-    <ClInclude Include="tst_cellshape.h">
+    <ClInclude Include="tst_CellShape.h">
       <Filter>Cell Shape</Filter>
     </ClInclude>
-    <ClInclude Include="tst_cudakernel.h">
+    <ClInclude Include="tst_CUDAKernel.h">
       <Filter>Photomosaic\CUDA</Filter>
     </ClInclude>
     <ClInclude Include="..\src\CellShape\CellGroup.h">
@@ -181,6 +181,9 @@
     </ClInclude>
     <ClInclude Include="tst_CUDAImageLibrary.h">
       <Filter>Image Library\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="tst_CUDAGenerator.h">
+      <Filter>Photomosaic\CUDA</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

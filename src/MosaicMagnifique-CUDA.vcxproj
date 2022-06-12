@@ -263,6 +263,7 @@
     <ClInclude Include="Other\CustomQDataStream.h" />
     <ClInclude Include="CellShape\CellGroup.h" />
     <ClInclude Include="CellShape\CellShape.h" />
+    <ClInclude Include="Other\TimingLogger.h" />
     <ClInclude Include="Photomosaic\ColourScheme.h" />
     <ClInclude Include="Photomosaic\CUDA\CUDAPhotomosaicGenerator.h" />
     <ClInclude Include="Photomosaic\CUDA\CUDAUtility.h" />

@@ -25,6 +25,7 @@
 #include "cudautility.h"
 #include "photomosaicgenerator.cuh"
 #include "reduction.cuh"
+#include "..\..\Other\TimingLogger.h"
 
 CUDAPhotomosaicGenerator::CUDAPhotomosaicGenerator()
 {}
@@ -33,11 +34,17 @@ CUDAPhotomosaicGenerator::CUDAPhotomosaicGenerator()
 //Returns true if successful
 bool CUDAPhotomosaicGenerator::generateBestFits()
 {
+    TimingLogger timingLogger;
+    timingLogger.StartTiming("generateBestFits");
+
+    timingLogger.StartTiming("Preprocess");
     //Converts colour space of main image and library images
     //Resizes library based on detail level
     auto mainImages = preprocessMainImage();
     auto libImages = preprocessLibraryImages();
+    timingLogger.StopTiming("Preprocess");
 
+    timingLogger.StartTiming("cudaMalloc");
     //Get CUDA block size
     cudaDeviceProp deviceProp;
     gpuErrchk(cudaGetDeviceProperties(&deviceProp, 0));
@@ -75,7 +82,9 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     double *d_lowestVariant;
     gpuErrchk(cudaMalloc((void **)&d_lowestVariant, sizeof(double)));
     constexpr double maxVariant = std::numeric_limits<double>::max();
+    timingLogger.StopTiming("cudaMalloc");
 
+    timingLogger.StartTiming("StepLoop");
     //For all size steps, stop if no bounds for step
     for (size_t step = 0; step < m_bestFits.size(); ++step)
     {
@@ -92,6 +101,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         //Allocate memory for device pointer
         if (step == 0)
         {
+            timingLogger.StartTiming("cudaMalloc");
             //Cell masks
             for (size_t i = 0; i < d_maskImages.size(); ++i)
                 gpuErrchk(cudaMalloc((void **)&d_maskImages.at(i), cellSize * sizeof(uchar)));
@@ -109,8 +119,9 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
             //Library images
             for (size_t libI = 0; libI < libImages.size(); ++libI)
                 gpuErrchk(cudaMalloc((void **)&d_libIm.at(libI), cellSize * 3 * sizeof(float)));
+            timingLogger.StopTiming("cudaMalloc");
         }
-
+        timingLogger.StartTiming("cudaMemcpy");
         //Copy library images to device memory
         for (size_t libI = 0; libI < libImages.size(); ++libI)
             copyMatToDevice<float>(libImages.at(libI), d_libIm.at(libI));
@@ -130,11 +141,14 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         for (size_t cellIndex = 1; cellIndex < noOfCells; ++cellIndex)
             gpuErrchk(cudaMemcpy(d_bestFit + cellIndex, d_bestFit, sizeof(size_t),
                                  cudaMemcpyDeviceToDevice));
+        timingLogger.StopTiming("cudaMemcpy");
 
+        timingLogger.StartTiming("YLoop");
         //Find best match for each cell in grid
         for (int y = -GridUtility::PAD_GRID;
              y < static_cast<int>(m_bestFits.at(step).size()) - GridUtility::PAD_GRID; ++y)
         {
+            timingLogger.StartTiming("XLoop");
             for (int x = -GridUtility::PAD_GRID;
                  x < static_cast<int>(m_bestFits.at(step).at(y + GridUtility::PAD_GRID).size())
                          - GridUtility::PAD_GRID; ++x)
@@ -149,6 +163,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                 {
                     auto [cells, cellBounds] = getCellAt(normalCellShape, detailCellShape, x, y, mainImages);
 
+                    timingLogger.StartTiming("cudaMemcpy");
                     //Copy cell image to device
                     copyMatToDevice<float>(cells.front(), d_cellImage);
 
@@ -177,7 +192,9 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                     gpuErrchk(cudaMemcpy(d_lowestVariant, &maxVariant, sizeof(double), cudaMemcpyHostToDevice));
 
                     gpuErrchk(cudaStreamSynchronize(0));
+                    timingLogger.StopTiming("cudaMemcpy");
 
+                    timingLogger.StartTiming("DiffReduce");
                     //Calculate difference
                     for (size_t libI = 0; libI < libImages.size(); ++libI)
                     {
@@ -191,9 +208,6 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                         gpuErrchk(cudaPeekAtLastError());
                     }
 
-                    for (size_t streamI = 0; streamI < streamCount; ++streamI)
-                        gpuErrchk(cudaStreamSynchronize(streams[streamI]));
-
                     //Reduce variants
                     for (size_t libI = 0; libI < libImages.size(); ++libI)
                     {
@@ -205,7 +219,9 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
 
                     for (size_t streamI = 0; streamI < streamCount; ++streamI)
                         gpuErrchk(cudaStreamSynchronize(streams[streamI]));
+                    timingLogger.StopTiming("DiffReduce");
 
+                    timingLogger.StartTiming("Repeats");
                     //Calculate repeats and add to variants
                     const size_t gridWidth = m_bestFits.at(step).at(0).size();
                     calculateRepeatsKernelWrapper(d_variants,
@@ -214,24 +230,31 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                                                   GridUtility::PAD_GRID,
                                                   m_repeatRange, m_repeatAddition);
                     gpuErrchk(cudaPeekAtLastError());
+                    timingLogger.StopTiming("Repeats");
 
+                    timingLogger.StartTiming("FindLowest");
                     //Find lowest variant
                     const size_t cellPosition = (y + GridUtility::PAD_GRID) * gridWidth + (x + GridUtility::PAD_GRID);
                     findLowestKernelWrapper(d_lowestVariant, d_bestFit + cellPosition, d_variants, libImages.size());
                     gpuErrchk(cudaPeekAtLastError());
+                    timingLogger.StopTiming("FindLowest");
 
+                    timingLogger.StartTiming("BestFit");
                     //Copy best fit to host
                     size_t bestFit = 0;
                     gpuErrchk(cudaMemcpy(&bestFit, d_bestFit + cellPosition, sizeof(size_t), cudaMemcpyDeviceToHost)); //Unknown error
 
                     m_bestFits.at(step).at(y + GridUtility::PAD_GRID).at(x + GridUtility::PAD_GRID) = bestFit;
+                    timingLogger.StopTiming("BestFit");
                 }
 
                 //Increment progress bar
                 m_progress += progressStep;
                 emit progress(m_progress);
             }
+            timingLogger.StopTiming("XLoop");
         }
+        timingLogger.StopTiming("YLoop");
 
         //Free best fits
         gpuErrchk(cudaFree(d_bestFit));
@@ -243,7 +266,9 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
             ImageUtility::batchResizeMat(libImages);
         }
     }
+    timingLogger.StopTiming("StepLoop");
 
+    timingLogger.StartTiming("cudaFree");
     for (size_t i = 0; i < streamCount; ++i)
         gpuErrchk(cudaStreamDestroy(streams[i]));
 
@@ -259,6 +284,10 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
 
     gpuErrchk(cudaFree(d_targetArea));
     gpuErrchk(cudaFree(d_lowestVariant));
+    timingLogger.StopTiming("cudaFree");
+    timingLogger.StopTiming("generateBestFits");
+    timingLogger.StopAllTiming();
+    timingLogger.LogTiming();
 
     return true;
 }

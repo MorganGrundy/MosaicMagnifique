@@ -100,52 +100,6 @@ bool ImageUtility::batchResizeMat(std::vector<cv::Mat> &t_images, const double t
     return true;
 }
 
-#ifdef CUDA
-//Populates dst with copy of images resized to target size with given resize type from src
-void ImageUtility::batchResizeMat(const std::vector<cv::cuda::GpuMat> &t_src, std::vector<cv::cuda::GpuMat> &t_dst,
-    const int t_targetHeight, const int t_targetWidth, const ResizeType t_type)
-{
-    t_dst.resize(t_src.size());
-
-    cv::cuda::Stream stream;
-    for (size_t i = 0; i < t_src.size(); ++i)
-    {
-        //Calculates resize factor
-        double resizeFactor = static_cast<double>(t_targetHeight) / t_src.at(i).rows;
-        if ((t_type == ResizeType::EXCLUSIVE && t_targetWidth < resizeFactor * t_src.at(i).cols) ||
-            (t_type == ResizeType::INCLUSIVE && t_targetWidth > resizeFactor * t_src.at(i).cols))
-            resizeFactor = static_cast<double>(t_targetWidth) / t_src.at(i).cols;
-
-        //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
-        cv::InterpolationFlags flags = (resizeFactor < 1) ? cv::INTER_AREA : cv::INTER_CUBIC;
-
-        //Resize image
-        if (t_type == ResizeType::EXACT)
-            cv::cuda::resize(t_src.at(i), t_dst.at(i), cv::Size(t_targetWidth, t_targetHeight),
-                0, 0, flags, stream);
-        else
-            cv::cuda::resize(t_src.at(i), t_dst.at(i),
-                cv::Size(std::round(resizeFactor * t_src.at(i).cols),
-                    std::round(resizeFactor * t_src.at(i).rows)),
-                0, 0, flags, stream);
-    }
-    stream.waitForCompletion();
-}
-
-//Resizes images to (first image size * ratio)
-bool ImageUtility::batchResizeMat(std::vector<cv::cuda::GpuMat> &t_images, const double t_ratio)
-{
-    //No images to resize
-    if (t_images.empty())
-        return false;
-
-    batchResizeMat(t_images, t_images, std::round(t_ratio * t_images.front().rows),
-        std::round(t_ratio * t_images.front().cols), ResizeType::EXACT);
-
-    return true;
-}
-#endif
-
 //Converts an OpenCV Mat to a QPixmap and returns
 QPixmap ImageUtility::matToQPixmap(const cv::Mat &t_mat,
                                    const QImage::Format t_format)

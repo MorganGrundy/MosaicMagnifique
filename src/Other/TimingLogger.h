@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <chrono>
+#include <stack>
 #include <QtCore/qdir.h>
 #include <QtCore/qdatetime.h>
 #include <QtCore/qcoreapplication.h>
@@ -29,46 +30,11 @@ public:
 		m_duration = std::chrono::duration_cast<std::chrono::microseconds>(m_endTime - m_startTime).count() / 1000.0;
 	}
 
-	//Returns a string of the TimingInfo formatted as XML
-	//t_depth controls the indent
-	//Example:
-	//<%ID% Duration="% ms" Percent="%%">
-	// ...
-	//</%ID%>
-	std::string toXMLString(size_t t_depth = 0)
-	{
-		//Indent tag by depth
-		std::string result(t_depth, ' ');
+	friend class TimingLogger;
+	friend class TimingInfoSummary;
+	friend class TimingInfoDataStream;
 
-		//Open tag of ID with attribute for duration
-		result += "<" + m_id + " Duration=\"" + std::to_string(m_duration) + " ms\"";
-		//We have a parent so add an attribute for percentage of parent duration
-		if (!m_parentInfo.expired())
-		{
-			auto parent = m_parentInfo.lock();
-			result += " Percent=\"" + std::to_string((m_duration * 100) / parent->m_duration) + "%\"";
-		}
-
-		//No child info so we can close the tag straight away
-		if (m_childInfo.empty())
-		{
-			result += "/>\n";
-		}
-		//Add child info as child tags
-		else
-		{
-			result += ">\n";
-
-			for (auto child : m_childInfo)
-				result += child->toXMLString(t_depth + 1);
-
-			//Close tag
-			result += std::string(t_depth, ' ') + "</" + m_id + ">\n";
-		}
-
-		return result;
-	}
-
+private:
 	const std::string m_id;
 
 	const std::chrono::steady_clock::time_point m_startTime;
@@ -82,11 +48,12 @@ public:
 class TimingInfoSummary
 {
 public:
-	typedef std::pair<std::vector<std::shared_ptr<TimingInfo>>, std::shared_ptr<TimingInfoSummary>> SummaryGroup;
+	//<count, duration, child summary>
+	typedef std::tuple<size_t, double, std::shared_ptr<TimingInfoSummary>> SummaryGroup;
+	//{<ID, summary group>, ...}
 	typedef std::vector<std::pair<std::string, SummaryGroup>> Summary;
 
 	TimingInfoSummary() {}
-	~TimingInfoSummary() {}
 
 	void add(std::shared_ptr<TimingInfo> t_timingInfo)
 	{
@@ -102,19 +69,76 @@ public:
 			m_summary.push_back(std::make_pair(t_timingInfo->m_id, SummaryGroup()));
 			it = m_summary.end() - 1;
 		}
-		//Add timing info to summary
-		it->second.first.push_back(t_timingInfo);
+		//Increment group count
+		++std::get<0>(it->second);
+		//Add duration to group duration
+		std::get<1>(it->second) += t_timingInfo->m_duration;
 
 		//Add child info to child TimingInfoSummary
 		if (!t_timingInfo->m_childInfo.empty())
 		{
 			//No child TimingInfoSummary yet, so add it
-			if (it->second.second == nullptr)
-				it->second.second = std::make_shared<TimingInfoSummary>();
+			if (std::get<2>(it->second) == nullptr)
+				std::get<2>(it->second) = std::make_shared<TimingInfoSummary>();
 
 			for (auto child : t_timingInfo->m_childInfo)
-				it->second.second->add(child);
+				std::get<2>(it->second)->add(child);
 		}
+	}
+
+	friend class TimingInfoDataStream;
+
+private:
+	Summary m_summary;
+};
+
+class TimingInfoDataStream : public QTextStream
+{
+public:
+	explicit TimingInfoDataStream(QIODevice *t_qIODevice) : QTextStream(t_qIODevice), m_depth(0) {}
+
+	//Returns a string of the TimingInfo formatted as XML
+	//m_depth controls the indent
+	//Example:
+	//<%ID% Duration="% ms" Percent="%%">
+	// ...
+	//</%ID%>
+	TimingInfoDataStream &operator<<(const TimingInfo &t_timingInfo)
+	{
+		QTextStream *thisParent = this;
+
+		//Indent tag by depth
+		*thisParent << QString(m_depth, ' ');
+
+		//Open tag of ID with attribute for duration
+		*thisParent << "<" << t_timingInfo.m_id.c_str() << " Duration=\"" << t_timingInfo.m_duration << " ms\"";
+		//We have a parent so add an attribute for percentage of parent duration
+		if (!t_timingInfo.m_parentInfo.expired())
+		{
+			auto parent = t_timingInfo.m_parentInfo.lock();
+			*thisParent << " Percent=\"" << ((t_timingInfo.m_duration * 100) / parent->m_duration) << "%\"";
+		}
+
+		//No child info so we can close the tag straight away
+		if (t_timingInfo.m_childInfo.empty())
+		{
+			*thisParent << "/>\n";
+		}
+		//Add child info as child tags
+		else
+		{
+			*thisParent << ">\n";
+
+			++m_depth;
+			for (auto child : t_timingInfo.m_childInfo)
+				*this << *child;
+			--m_depth;
+
+			//Close tag
+			*thisParent << QString(m_depth, ' ') << "</" << t_timingInfo.m_id.c_str() << ">\n";
+		}
+
+		return *this;
 	}
 
 	//Returns a string of the TimingInfo summary as XML
@@ -123,53 +147,56 @@ public:
 	//<%ID% Duration="% ms" Percent="%%" Count="%">
 	// ...
 	//<%ID%>
-	std::string toXMLString(size_t t_depth = 0, double t_parentDuration = 0.0)
+	TimingInfoDataStream &operator<<(const TimingInfoSummary &t_summary)
 	{
-		std::string result;
+		QTextStream *thisParent = this;
 
-		for (auto [id, timingInfoGroup] : m_summary)
+		for (auto [id, timingInfoGroup] : t_summary.m_summary)
 		{
 			//Calculate total duration
-			double duration = 0;
-			for (auto timingInfo : timingInfoGroup.first)
-			{
-				duration += timingInfo->m_duration;
-			}
+			const double duration = std::get<1>(timingInfoGroup);
 
 			//Indent tag by depth
-			result += std::string(t_depth, ' ');
+			*thisParent << QString(m_depth, ' ');
 			//Open tag of ID with attribute for duration
-			result += "<" + id + " Duration=\"" + std::to_string(duration) + " ms\"";
+			*thisParent << "<" << id.c_str() << " Duration=\"" << duration << " ms\"";
 			//We have a parent so add an attribute for percentage of parent duration
-			if (t_parentDuration > 0.0)
+			if (!m_durationStack.empty())
 			{
-				result += " Percent=\"" + std::to_string((duration * 100) / t_parentDuration) + "%\"";
+				*thisParent << " Percent=\"" << ((duration * 100) / m_durationStack.top()) << "%\"";
 			}
 			//Add an attribute for count
-			result += " Count=\"" + std::to_string(timingInfoGroup.first.size()) + "\"";
+			*thisParent << " Count=\"" << std::get<0>(timingInfoGroup) << "\"";
 
 			//No child summary so we can close the tag straight away
-			if (timingInfoGroup.second == nullptr)
+			if (std::get<2>(timingInfoGroup) == nullptr)
 			{
-				result += "/>\n";
+				*thisParent << "/>\n";
 			}
 			//Add child summary as child tags, then close tag
 			else
 			{
-				result += ">\n";
+				*thisParent << ">\n";
 
-				result += timingInfoGroup.second->toXMLString(t_depth + 1, duration);
+				++m_depth;
+				m_durationStack.push(duration);
+				*this << *(std::get<2>(timingInfoGroup));
+				m_durationStack.pop();
+				--m_depth;
 
 				//Close tag
-				result += std::string(t_depth, ' ') + "</" + id + ">\n";
+				*thisParent << QString(m_depth, ' ') << "</" << id.c_str() << ">\n";
 			}
 		}
 
-		return result;
+		return *this;
 	}
 
 private:
-	Summary m_summary;
+	//Tracks xml tag depth
+	int m_depth;
+	//Tracks durations of current tags (so we can get parent duration for TimingInfoSummary)
+	std::stack<double> m_durationStack;
 };
 #endif
 
@@ -195,28 +222,32 @@ public:
 		if (!folder.exists())
 			folder.mkpath(".");
 
+		QString dateTimeStr = QDateTime::currentDateTime().toString("yyyy-MM-dd#hh-mm-ss");
 		//Write full timing info to file
-		QFile file(folder.absoluteFilePath(QDateTime::currentDateTime().toString("yyyy-MM-dd#hh-mm-ss") + ".xml"));
+		QFile file(folder.absoluteFilePath(dateTimeStr + ".xml"));
 		file.open(QIODevice::WriteOnly | QIODevice::NewOnly);
 		if (!file.isWritable())
 			throw std::invalid_argument("File is not writable: " + file.fileName().toStdString());
 		else
 		{
-			file.write(m_timingInfo->toXMLString().c_str());
+			TimingInfoDataStream out(&file);
+			out << *m_timingInfo;
 
 			file.close();
 		}
-
+		
 		//Write summary timing info to file
-		QFile summaryFile(folder.absoluteFilePath(QDateTime::currentDateTime().toString("yyyy-MM-dd#hh-mm-ss") + "#Summary.xml"));
+		QFile summaryFile(folder.absoluteFilePath(dateTimeStr + "#Summary.xml"));
 		summaryFile.open(QIODevice::WriteOnly | QIODevice::NewOnly);
 		if (!summaryFile.isWritable())
 			throw std::invalid_argument("File is not writable: " + summaryFile.fileName().toStdString());
 		else
 		{
+			TimingInfoDataStream out(&summaryFile);
+
 			TimingInfoSummary timingInfoSummary;
 			timingInfoSummary.add(m_timingInfo);
-			summaryFile.write(timingInfoSummary.toXMLString().c_str());
+			out << timingInfoSummary;
 
 			summaryFile.close();
 		}

@@ -4,6 +4,8 @@
 #include <math.h>
 #include <math_constants.h>
 
+typedef double(*p_dfColourDifference)(float *, float *);
+
 //Calculates the euclidean difference between two 3-channel colour values
 __device__ inline double euclideanDifference(float *colour1, float *colour2)
 {

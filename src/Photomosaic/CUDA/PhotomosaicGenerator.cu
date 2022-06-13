@@ -26,12 +26,13 @@
 
 #include "ColourDifference.cuh"
 
-//Calculates the euclidean difference between two images (im_1, im_2) storing in variants
+//Calculates the difference (using template function func) between two images (im_1, im_2) storing in variants
 //Parts of the image can be ignored using im_mask (variant is set to 0)
 //Image rows = size, cols = size
+template<p_dfColourDifference func>
 __global__
-void imageEuclideanDifference(float *im_1, float *im_2, unsigned char *im_mask,
-                              size_t size, double *variants)
+void imageDifference(float *im_1, float *im_2, unsigned char *im_mask,
+                     size_t size, double *variants)
 {
     const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
     const size_t stride = blockDim.x * gridDim.x;
@@ -40,18 +41,19 @@ void imageEuclideanDifference(float *im_1, float *im_2, unsigned char *im_mask,
         if (im_mask[i] == 0)
             variants[i] = 0;
         else
-            variants[i] = euclideanDifference(im_1 + i*3, im_2 + i*3);
+            variants[i] = func(im_1 + i*3, im_2 + i*3);
     }
 }
 
-//Calculates the euclidean difference between two images (im_1, im_2) storing in variants
+//Calculates the difference (using template function func) between two images (im_1, im_2) storing in variants
 //Parts of the image can be ignored using im_mask (variant is set to 0)
 //Image rows = size, cols = size, channels = channels
-//Edge case equivalent of imageEuclideanDifference:
+//Edge case equivalent of imageDifference:
 //target_area contains bounds (min row, max row, min col, max col), variant set to 0 for out of bound pixels
+template<p_dfColourDifference func>
 __global__
-void imageEuclideanDifferenceEdge(float *im_1, float *im_2, unsigned char *mask_im,
-                                  size_t size, size_t *target_area, double *variants)
+void imageDifferenceEdge(float *im_1, float *im_2, unsigned char *mask_im,
+                         size_t size, size_t *target_area, double *variants)
 {
     const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
     const size_t stride = blockDim.x * gridDim.x;
@@ -69,100 +71,58 @@ void imageEuclideanDifferenceEdge(float *im_1, float *im_2, unsigned char *mask_
         if (mask_im[i] == 0)
             variants[i] = 0;
         else
-            variants[i] = euclideanDifference(im_1 + i*3, im_2 + i*3);
+            variants[i] = func(im_1 + i*3, im_2 + i*3);
     }
 }
 
-//Wrapper for imageEuclideanDifference kernel
+//Explicit instantiation of templates
+template __global__ void imageDifference<euclideanDifference>(float *im_1, float *im_2, unsigned char *im_mask, size_t size, double *variants);
+template __global__ void imageDifference<CIEDE2000Difference>(float *im_1, float *im_2, unsigned char *im_mask, size_t size, double *variants);
+template __global__ void imageDifferenceEdge<euclideanDifference>(float *im_1, float *im_2, unsigned char *im_mask, size_t size, size_t *target_area, double *variants);
+template __global__ void imageDifferenceEdge<CIEDE2000Difference>(float *im_1, float *im_2, unsigned char *im_mask, size_t size, size_t *target_area, double *variants);
+
+//Wrapper for imageDifference kernel with euclideanDifference kernel
 //target_area is unused, it is just there so the function parameters match the edge case one
 void euclideanDifferenceKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
                                       size_t size, size_t *target_area, double *variants,
                                       size_t blockSize, cudaStream_t stream)
 {
     const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
-    imageEuclideanDifference<<<static_cast<unsigned int>(numBlocks),
+    imageDifference<euclideanDifference><<<static_cast<unsigned int>(numBlocks),
                                static_cast<unsigned int>(blockSize),
                                0, stream>>>(main_im, lib_im, mask_im, size, variants);
 }
 
-//Wrapper for imageEuclideanDifferenceEdge kernel
+//Wrapper for imageDifference kernel with euclideanDifference kernel
 void euclideanDifferenceEdgeKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
                                           size_t size, size_t *target_area, double *variants,
                                           size_t blockSize, cudaStream_t stream)
 {
     const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
-    imageEuclideanDifferenceEdge<<<static_cast<unsigned int>(numBlocks),
+    imageDifferenceEdge<euclideanDifference><<<static_cast<unsigned int>(numBlocks),
                                   static_cast<unsigned int>(blockSize),
                                   0, stream>>>(main_im, lib_im, mask_im, size, target_area, variants);
 }
 
-//Calculates the CIEDE2000 difference between two images (im_1, im_2) storing in variants
-//Parts of the image can be ignored using im_mask (variant is set to 0)
-//Image rows = size, cols = size, channels = channels
-__global__
-void imageCIEDE2000Difference(float *im_1, float *im_2, unsigned char *mask_im,
-                              size_t size, double *variants)
-{
-    const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
-    const size_t stride = blockDim.x * gridDim.x;
-    const size_t imageSize = size * size;
-    for (size_t i = index; i < imageSize; i += stride)
-    {
-        if (mask_im[i] == 0)
-            variants[i] = 0;
-        else
-            variants[i] = CIEDE2000Difference(im_1 + i*3, im_2 + i*3);
-    }
-}
-
-//Calculates the CIEDE2000 difference between two images (im_1, im_2) storing in variants
-//Parts of the image can be ignored using im_mask (variant is set to 0)
-//Image rows = size, cols = size, channels = channels
-//Edge case equivalent of imageCIEDE2000Difference:
-//target_area contains bounds (min row, max row, min col, max col), variant set to 0 for out of bound pixels
-__global__
-void imageCIEDE2000DifferenceEdge(float *im_1, float *im_2, unsigned char *mask_im,
-                                  size_t size, size_t *target_area, double *variants)
-{
-    const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
-    const size_t stride = blockDim.x * gridDim.x;
-    const size_t imageSize = size * size;
-    for (size_t i = index; i < imageSize; i += stride)
-    {
-        const size_t row = i / size;
-        const size_t col = i % size;
-        if (row < target_area[0] || row >= target_area[1] || col < target_area[2] || col >= target_area[3])
-        {
-            variants[i] = 0;
-            continue;
-        }
-
-        if (mask_im[i] == 0)
-            variants[i] = 0;
-        else
-            variants[i] = CIEDE2000Difference(im_1 + i*3, im_2 + i*3);
-    }
-}
-
-//Wrapper for imageCIEDE2000Difference kernel
+//Wrapper for imageDifference kernel with CIEDE2000Difference kernel
 //target_area is unused, it is just there so the function parameters match the edge case one
 void CIEDE2000DifferenceKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
                                       size_t size, size_t *target_area, double *variants,
                                       size_t blockSize, cudaStream_t stream)
 {
     const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
-    imageCIEDE2000Difference<<<static_cast<unsigned int>(numBlocks),
+    imageDifference<CIEDE2000Difference><<<static_cast<unsigned int>(numBlocks),
                                static_cast<unsigned int>(blockSize),
                                0, stream>>>(main_im, lib_im, mask_im, size, variants);
 }
 
-//Wrapper for imageCIEDE2000DifferenceEdge kernel
+//Wrapper for imageDifference kernel with CIEDE2000Difference kernel
 void CIEDE2000DifferenceEdgeKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
                                           size_t size, size_t *target_area, double *variants,
                                           size_t blockSize, cudaStream_t stream)
 {
     const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
-    imageCIEDE2000DifferenceEdge<<<static_cast<unsigned int>(numBlocks),
+    imageDifferenceEdge<CIEDE2000Difference><<<static_cast<unsigned int>(numBlocks),
                                    static_cast<unsigned int>(blockSize),
                                    0, stream>>>(main_im, lib_im, mask_im, size, target_area, variants);
 }

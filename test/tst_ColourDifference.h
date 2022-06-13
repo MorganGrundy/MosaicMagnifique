@@ -472,7 +472,7 @@ TEST(ColourDifference, CIEDE2000_CPUvsBatchCUDA)
 TEST(ColourDifference, RGBEuclidean_CUDAEdgeCase)
 {
     const ColourDifference::Type diffType = ColourDifference::Type::RGB_EUCLIDEAN;
-    const size_t size = 10;
+    const size_t size = 1000;
     const size_t fullSize = size * size;
     const size_t totalFloats = fullSize * 3;
     srand(static_cast<unsigned int>(time(NULL)));
@@ -497,7 +497,7 @@ TEST(ColourDifference, RGBEuclidean_CUDAEdgeCase)
 TEST(ColourDifference, CIE76_CUDAEdgeCase)
 {
     const ColourDifference::Type diffType = ColourDifference::Type::CIE76;
-    const size_t size = 10;
+    const size_t size = 1000;
     const size_t fullSize = size * size;
     const size_t totalFloats = fullSize * 3;
     srand(static_cast<unsigned int>(time(NULL)));
@@ -522,7 +522,7 @@ TEST(ColourDifference, CIE76_CUDAEdgeCase)
 TEST(ColourDifference, CIEDE2000_CUDAEdgeCase)
 {
     const ColourDifference::Type diffType = ColourDifference::Type::CIEDE2000;
-    const size_t size = 10;
+    const size_t size = 1000;
     const size_t fullSize = size * size;
     const size_t totalFloats = fullSize * 3;
     srand(static_cast<unsigned int>(time(NULL)));

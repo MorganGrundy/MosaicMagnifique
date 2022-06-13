@@ -9,6 +9,7 @@
 #include <QtCore/qdatetime.h>
 #include <QtCore/qcoreapplication.h>
 
+//#define TIMING_LOGGER
 #ifdef TIMING_LOGGER
 class TimingInfo
 {
@@ -218,13 +219,20 @@ public:
 	{
 #ifdef TIMING_LOGGER
 		//Create folder for saving logging timing info
-		QDir folder(QCoreApplication::applicationDirPath() + "/TimingLogger/");
+		QDir folder(GetApplicationDir() + "/TimingLogger/");
 		if (!folder.exists())
 			folder.mkpath(".");
 
+		std::string folderStr = folder.absolutePath().toStdString();
 		QString dateTimeStr = QDateTime::currentDateTime().toString("yyyy-MM-dd#hh-mm-ss");
+
+		size_t fileID = 0;
+		QString fullTimingInfoFilePath = folder.absoluteFilePath(dateTimeStr + "(" + QString::number(fileID) + ").xml");
+		while (QFile::exists(fullTimingInfoFilePath))
+			fullTimingInfoFilePath = folder.absoluteFilePath(dateTimeStr + "(" + QString::number(++fileID) + ").xml");
+
 		//Write full timing info to file
-		QFile file(folder.absoluteFilePath(dateTimeStr + ".xml"));
+		QFile file(fullTimingInfoFilePath);
 		file.open(QIODevice::WriteOnly | QIODevice::NewOnly);
 		if (!file.isWritable())
 			throw std::invalid_argument("File is not writable: " + file.fileName().toStdString());
@@ -237,7 +245,7 @@ public:
 		}
 		
 		//Write summary timing info to file
-		QFile summaryFile(folder.absoluteFilePath(dateTimeStr + "#Summary.xml"));
+		QFile summaryFile(folder.absoluteFilePath(dateTimeStr + "(" + QString::number(fileID) + ")#Summary.xml"));
 		summaryFile.open(QIODevice::WriteOnly | QIODevice::NewOnly);
 		if (!summaryFile.isWritable())
 			throw std::invalid_argument("File is not writable: " + summaryFile.fileName().toStdString());
@@ -301,5 +309,25 @@ private:
 #ifdef TIMING_LOGGER
 	std::shared_ptr<TimingInfo> m_timingInfo;
 	std::weak_ptr<TimingInfo> m_latestActiveInfo;
+
+	QString GetApplicationDir()
+	{
+		static QString applicationDir;
+		//Only load the application dir once
+		if (applicationDir.isEmpty())
+		{
+			//Application dir from QCoreApplication is empty, so assume we have no QCoreApplication
+			if (QCoreApplication::applicationDirPath().isEmpty())
+			{
+				//Create a temporary QCoreApplication
+				int argc = 0;
+				QCoreApplication tmp(argc, 0);
+				applicationDir = QCoreApplication::applicationDirPath();
+			}
+			else
+				applicationDir = QCoreApplication::applicationDirPath();
+		}
+		return applicationDir;
+	}
 #endif
 };

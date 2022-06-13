@@ -125,25 +125,31 @@ struct ColourDiffPairFloat
     const double difference;
 };
 
-std::vector<double> calculateCPUDiff(const std::vector<float> &firsts, const std::vector<float> &seconds, const ColourDifference::Type diffType)
+std::vector<double> calculateCPUDiff(const std::vector<float> &firsts, const std::vector<float> &seconds, const size_t size, const ColourDifference::Type diffType, const size_t edgeCaseRows)
 {
-    std::vector<double> result(firsts.size() / 3);
+    const size_t fullSize = size * size;
+    const size_t totalFloats = fullSize * 3;
+    if (totalFloats != firsts.size() || totalFloats != seconds.size())
+        throw std::invalid_argument("Vectors firsts and seconds must contain 3 * size^2 elements");
 
-    for (size_t i = 0; i < firsts.size(); i += 3)
+    std::vector<double> result(fullSize);
+
+    for (size_t i = 0; i < fullSize; ++i)
     {
-        const cv::Vec3f first(firsts.at(i), firsts.at(i + 1), firsts.at(i + 2));
-        const cv::Vec3f second(seconds.at(i), seconds.at(i + 1), seconds.at(i + 2));
+        const cv::Vec3f first(firsts.at(i*3), firsts.at(i*3 + 1), firsts.at(i*3 + 2));
+        const cv::Vec3f second(seconds.at(i*3), seconds.at(i*3 + 1), seconds.at(i*3 + 2));
 
-        if (diffType == ColourDifference::Type::CIEDE2000)
-            result.at(i / 3) = ColourDifference::calculateCIEDE2000(first, second);
+        //Set the result for the last edgeCaseRows rows to 0, allows us to compare against the CUDA edge case kernel
+        if (i >= size * (size - edgeCaseRows))
+            result.at(i) = 0;
         else
-            result.at(i / 3) = ColourDifference::calculateRGBEuclidean(first, second);
+            result.at(i) = ColourDifference::getFunction(diffType)(first, second);
     }
 
     return result;
 }
 
-std::vector<double> calculateCUDADiff(const std::vector<float> &firsts, const std::vector<float> &seconds, const size_t size, const ColourDifference::Type diffType)
+std::vector<double> calculateCUDADiff(const std::vector<float> &firsts, const std::vector<float> &seconds, const size_t size, const ColourDifference::Type diffType, const size_t edgeCaseRows)
 {
     const size_t fullSize = size * size;
     const size_t totalFloats = fullSize * 3;
@@ -162,11 +168,11 @@ std::vector<double> calculateCUDADiff(const std::vector<float> &firsts, const st
     gpuErrchk(cudaMalloc((void **)&mask, fullSize * sizeof(uchar)));
     gpuErrchk(cudaMemcpy(mask, HOST_mask.data(), fullSize * sizeof(uchar), cudaMemcpyHostToDevice));
 
-    //Create target area on GPU, we aren't testing edge cases here so we won't actually use it
-    //size_t HOST_target_area[4] = { 0, size, 0, size };
+    //Create target area on GPU, this is only used if edgeCase is true
+    size_t HOST_target_area[4] = { 0, size - edgeCaseRows, 0, size};
     size_t *target_area;
     gpuErrchk(cudaMalloc((void **)&target_area, 4 * sizeof(size_t)));
-    //gpuErrchk(cudaMemcpy(target_area, &HOST_target_area, 4 * sizeof(size_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(target_area, &HOST_target_area, 4 * sizeof(size_t), cudaMemcpyHostToDevice));
 
     //Allocate memory on GPU for result
     std::vector<double> HOST_result(fullSize, 0);
@@ -181,7 +187,7 @@ std::vector<double> calculateCUDADiff(const std::vector<float> &firsts, const st
 #else
     const size_t blockSize = deviceProp.maxThreadsPerBlock;
 #endif
-    ColourDifference::getCUDAFunction(diffType, false)(d_first, d_second, mask, size, target_area, result, blockSize, 0);
+    ColourDifference::getCUDAFunction(diffType, edgeCaseRows > 0)(d_first, d_second, mask, size, target_area, result, blockSize, 0);
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 
@@ -215,7 +221,7 @@ void compareCUDADiff(const std::vector<ColourDiffPairFloat> &colourDiffPairs, co
         std::vector<float> h_seconds = { colourDiffPairs.at(i).second.val[0], colourDiffPairs.at(i).second.val[1], colourDiffPairs.at(i).second.val[2] };
 
         //Calculate differences with CUDA
-        std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType);
+        std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType, false);
 
         //Compare result against expect difference
         EXPECT_NEAR(cudaDifferences.at(0), colourDiffPairs.at(i).difference, 0.0001);
@@ -224,7 +230,7 @@ void compareCUDADiff(const std::vector<ColourDiffPairFloat> &colourDiffPairs, co
 
 ///////////////////////////////////////////////////////////// CUDA colour difference against known values /////////////////////////////////////////////////////////////
 
-TEST(ColourDifference, CUDA_RGBEuclidean)
+TEST(ColourDifference, RGBEuclidean_CUDA)
 {
     //Test data, difference rounded to 8 decimal places
     const std::vector<ColourDiffPairFloat> colourDiffPairs = {
@@ -241,7 +247,7 @@ TEST(ColourDifference, CUDA_RGBEuclidean)
     compareCUDADiff(colourDiffPairs, ColourDifference::Type::RGB_EUCLIDEAN);
 }
 
-TEST(ColourDifference, CUDA_CIE76)
+TEST(ColourDifference, CIE76_CUDA)
 {
     //Test data, difference rounded to 8 decimal places
     const std::vector<ColourDiffPairFloat> colourDiffPairs = {
@@ -256,7 +262,7 @@ TEST(ColourDifference, CUDA_CIE76)
     compareCUDADiff(colourDiffPairs, ColourDifference::Type::CIE76);
 }
 
-TEST(ColourDifference, CUDA_CIEDE2000)
+TEST(ColourDifference, CIEDE2000_CUDA)
 {
     //Test data obtained from:
     //Sharma, Gaurav et al. “The CIEDE2000 color-difference formula: Implementation notes,
@@ -306,7 +312,7 @@ TEST(ColourDifference, CUDA_CIEDE2000)
 
 //Creates random pixel and compares results from CPU RGBEuclidean and CUDA RGBEuclidean difference
 //Only calculates the difference with CUDA one at a time
-TEST(ColourDifference, RANDOM_RGBEuclideanvsCUDA_RGBEuclidean)
+TEST(ColourDifference, RGBEuclidean_CPUvsCUDA)
 {
     const size_t iterations = 1ULL << 14;
 
@@ -323,8 +329,8 @@ TEST(ColourDifference, RANDOM_RGBEuclideanvsCUDA_RGBEuclidean)
         std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
 
         //Calculate differences with CPU and CUDA
-        std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, diffType);
-        std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType);
+        std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, 0);
+        std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType, 0);
 
         //Compare results
         for (size_t i = 0; i < fullSize; ++i)
@@ -334,7 +340,7 @@ TEST(ColourDifference, RANDOM_RGBEuclideanvsCUDA_RGBEuclidean)
 
 //Creates random pixel and compares results from CPU CIE76 and CUDA CIE76 difference
 //Only calculates the difference with CUDA one at a time
-TEST(ColourDifference, RANDOM_CIE76vsCUDA_CIE76)
+TEST(ColourDifference, CIE76_CPUvsCUDA)
 {
     const size_t iterations = 1ULL << 14;
 
@@ -351,8 +357,8 @@ TEST(ColourDifference, RANDOM_CIE76vsCUDA_CIE76)
         std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
 
         //Calculate differences with CPU and CUDA
-        std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, diffType);
-        std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType);
+        std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, 0);
+        std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType, 0);
 
         //Compare results
         for (size_t i = 0; i < fullSize; ++i)
@@ -362,7 +368,7 @@ TEST(ColourDifference, RANDOM_CIE76vsCUDA_CIE76)
 
 //Creates random pixel and compares results from CPU CIEDE2000 and CUDA CIEDE2000 difference
 //Only calculates the difference with CUDA one at a time
-TEST(ColourDifference, RANDOM_CIEDE2000vsCUDA_CIEDE2000)
+TEST(ColourDifference, CIEDE2000_CPUvsCUDA)
 {
     const size_t iterations = 1ULL << 14;
 
@@ -379,8 +385,8 @@ TEST(ColourDifference, RANDOM_CIEDE2000vsCUDA_CIEDE2000)
         std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
 
         //Calculate differences with CPU and CUDA
-        std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, diffType);
-        std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType);
+        std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, 0);
+        std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType, 0);
 
         //Compare results
         for (size_t i = 0; i < fullSize; ++i)
@@ -389,10 +395,10 @@ TEST(ColourDifference, RANDOM_CIEDE2000vsCUDA_CIEDE2000)
 }
 
 ///////////////////////////////////////////////////////////// CPU VS batch CUDA colour difference of random values /////////////////////////////////////////////////////////////
-// 
+
 //Creates random pixels and compares results from CPU RGBEuclidean and CUDA RGBEuclidean difference
 //Calculates the difference with CUDA all at once
-TEST(ColourDifference, RANDOM_RGBEuclideanvsBatchCUDA_RGBEuclidean)
+TEST(ColourDifference, RGBEuclidean_CPUvsBatchCUDA)
 {
     const ColourDifference::Type diffType = ColourDifference::Type::RGB_EUCLIDEAN;
     const size_t size = 1000;
@@ -405,8 +411,8 @@ TEST(ColourDifference, RANDOM_RGBEuclideanvsBatchCUDA_RGBEuclidean)
     std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 255} });
 
     //Calculate differences with CPU and CUDA
-    std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, diffType);
-    std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType);
+    std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, 0);
+    std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType, 0);
 
     //Compare results
     for (size_t i = 0; i < fullSize; ++i)
@@ -415,7 +421,7 @@ TEST(ColourDifference, RANDOM_RGBEuclideanvsBatchCUDA_RGBEuclidean)
 
 //Creates random pixels and compares results from CPU CIE76 and CUDA CIE76 difference
 //Calculates the difference with CUDA all at once
-TEST(ColourDifference, RANDOM_CIE76vsBatchCUDA_CIE76)
+TEST(ColourDifference, CIE76_CPUvsBatchCUDA)
 {
     const ColourDifference::Type diffType = ColourDifference::Type::CIE76;
     const size_t size = 1000;
@@ -428,8 +434,8 @@ TEST(ColourDifference, RANDOM_CIE76vsBatchCUDA_CIE76)
     std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
 
     //Calculate differences with CPU and CUDA
-    std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, diffType);
-    std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType);
+    std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, 0);
+    std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType, 0);
 
     //Compare results
     for (size_t i = 0; i < fullSize; ++i)
@@ -438,7 +444,7 @@ TEST(ColourDifference, RANDOM_CIE76vsBatchCUDA_CIE76)
 
 //Creates random pixels and compares results from CPU CIEDE2000 and CUDA CIEDE2000 difference
 //Calculates the difference with CUDA all at once
-TEST(ColourDifference, RANDOM_CIEDE2000vsBatchCUDA_CIEDE2000)
+TEST(ColourDifference, CIEDE2000_CPUvsBatchCUDA)
 {
     const ColourDifference::Type diffType = ColourDifference::Type::CIEDE2000;
     const size_t size = 1000;
@@ -451,12 +457,88 @@ TEST(ColourDifference, RANDOM_CIEDE2000vsBatchCUDA_CIEDE2000)
     std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
 
     //Calculate differences with CPU and CUDA
-    std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, diffType);
-    std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType);
+    std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, 0);
+    std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType, 0);
 
     //Compare results
     for (size_t i = 0; i < fullSize; ++i)
         EXPECT_NEAR(cudaDifferences.at(i), cpuDifferences.at(i), 0.0001);
 }
 
+///////////////////////////////////////////////////////////// CPU VS CUDA edge case colour difference of random values /////////////////////////////////////////////////////////////
+
+//Creates random pixels and compares results from CPU RGBEuclidean and CUDA RGBEuclidean difference
+//Uses the edge case CUDA kernel, ignoring the last quarter of rows
+TEST(ColourDifference, RGBEuclidean_CUDAEdgeCase)
+{
+    const ColourDifference::Type diffType = ColourDifference::Type::RGB_EUCLIDEAN;
+    const size_t size = 10;
+    const size_t fullSize = size * size;
+    const size_t totalFloats = fullSize * 3;
+    srand(static_cast<unsigned int>(time(NULL)));
+
+    const size_t edgeCaseRows = size / 4;
+
+    //Create random RGB colours
+    std::vector<float> h_firsts = TestUtility::createRandomFloats(totalFloats, { {0, 255} });
+    std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 255} });
+
+    //Calculate differences with CPU and CUDA
+    std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, edgeCaseRows);
+    std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType, edgeCaseRows);
+
+    //Compare results
+    for (size_t i = 0; i < fullSize; ++i)
+        ASSERT_NEAR(cudaDifferences.at(i), cpuDifferences.at(i), 0.0001) << "i = " << i;
+}
+
+//Creates random pixels and compares results from CPU CIE76 and CUDA CIE76 difference
+//Uses the edge case CUDA kernel, ignoring the last quarter of rows
+TEST(ColourDifference, CIE76_CUDAEdgeCase)
+{
+    const ColourDifference::Type diffType = ColourDifference::Type::CIE76;
+    const size_t size = 10;
+    const size_t fullSize = size * size;
+    const size_t totalFloats = fullSize * 3;
+    srand(static_cast<unsigned int>(time(NULL)));
+
+    const size_t edgeCaseRows = size / 4;
+
+    //Create random RGB colours
+    std::vector<float> h_firsts = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+    std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+
+    //Calculate differences with CPU and CUDA
+    std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, edgeCaseRows);
+    std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType, edgeCaseRows);
+
+    //Compare results
+    for (size_t i = 0; i < fullSize; ++i)
+        ASSERT_NEAR(cudaDifferences.at(i), cpuDifferences.at(i), 0.0001) << "i = " << i;
+}
+
+//Creates random pixels and compares results from CPU CIEDE2000 and CUDA CIEDE2000 difference
+//Uses the edge case CUDA kernel, ignoring the last quarter of rows
+TEST(ColourDifference, CIEDE2000_CUDAEdgeCase)
+{
+    const ColourDifference::Type diffType = ColourDifference::Type::CIEDE2000;
+    const size_t size = 10;
+    const size_t fullSize = size * size;
+    const size_t totalFloats = fullSize * 3;
+    srand(static_cast<unsigned int>(time(NULL)));
+
+    const size_t edgeCaseRows = size / 4;
+
+    //Create random RGB colours
+    std::vector<float> h_firsts = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+    std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+
+    //Calculate differences with CPU and CUDA
+    std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, edgeCaseRows);
+    std::vector<double> cudaDifferences = calculateCUDADiff(h_firsts, h_seconds, size, diffType, edgeCaseRows);
+
+    //Compare results
+    for (size_t i = 0; i < fullSize; ++i)
+        ASSERT_NEAR(cudaDifferences.at(i), cpuDifferences.at(i), 0.0001) << "i = " << i;
+}
 #endif

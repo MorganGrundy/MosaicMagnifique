@@ -12,6 +12,8 @@
 #include "testutility.h"
 #include "..\src\Grid\GridGenerator.h"
 #include "..\src\ImageLibrary\ImageLibrary.h"
+#include "tst_Generator.h"
+#include "..\src\Other\TimingLogger.h"
 
 class CUDAGeneratorFixture : public ::testing::Test, public CUDAPhotomosaicGenerator
 {
@@ -49,6 +51,8 @@ protected:
 
     ::testing::AssertionResult TestBestFitsConsistency()
     {
+        TimingLogger::SetSubdir(::testing::UnitTest::GetInstance()->current_test_info()->name());
+
         GridUtility::MosaicBestFit lastBestFit;
         for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
         {
@@ -131,6 +135,8 @@ protected:
 
     ::testing::AssertionResult TestCompare()
     {
+        TimingLogger::SetSubdir(::testing::UnitTest::GetInstance()->current_test_info()->name());
+
         //Create folder for saving photomosaics
         QDir resultFolder(QDir::currentPath() + "/testcases/generator");
         if (!resultFolder.exists())

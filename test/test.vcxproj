@@ -215,6 +215,7 @@
     <ClInclude Include="..\src\Other\CustomQDataStream.h" />
     <ClInclude Include="..\src\CellShape\CellGroup.h" />
     <ClInclude Include="..\src\CellShape\CellShape.h" />
+    <ClInclude Include="..\src\Other\TimingLogger.h" />
     <ClInclude Include="..\src\Photomosaic\ColourDifference.h" />
     <ClInclude Include="..\src\Photomosaic\ColourScheme.h" />
     <ClInclude Include="..\src\Photomosaic\CPUPhotomosaicGenerator.h" />

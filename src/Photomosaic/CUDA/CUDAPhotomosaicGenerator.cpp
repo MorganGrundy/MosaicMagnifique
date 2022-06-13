@@ -108,6 +108,10 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     //For all size steps, stop if no bounds for step
     for (size_t step = 0; step < m_bestFits.size(); ++step)
     {
+        //If user hits cancel in QProgressDialog then return empty best fit
+        if (m_wasCanceled)
+            break;
+
         const int progressStep = std::pow(4, (m_bestFits.size() - 1) - step);
 
         //Reference to cell shapes
@@ -144,6 +148,10 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         for (int y = -GridUtility::PAD_GRID;
              y < static_cast<int>(m_bestFits.at(step).size()) - GridUtility::PAD_GRID; ++y)
         {
+            //If user hits cancel in QProgressDialog then return empty best fit
+            if (m_wasCanceled)
+                break;
+
             timingLogger.StartTiming("XLoop");
             for (int x = -GridUtility::PAD_GRID;
                  x < static_cast<int>(m_bestFits.at(step).at(y + GridUtility::PAD_GRID).size())
@@ -151,7 +159,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
             {
                 //If user hits cancel in QProgressDialog then return empty best fit
                 if (m_wasCanceled)
-                    return false;
+                    break;
 
                 //If cell is valid
                 if (m_bestFits.at(step).at(y + GridUtility::PAD_GRID).at(x + GridUtility::PAD_GRID).has_value())
@@ -162,13 +170,19 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                     //Copy cell image to device
                     copyMatToDevice<float>(cells.front(), d_cellImage);
 
-                    //Copy target area to device
-                    const size_t targetArea[4] = {static_cast<size_t>(cellBounds.y),
-                                                  static_cast<size_t>(cellBounds.br().y),
-                                                  static_cast<size_t>(cellBounds.x),
-                                                  static_cast<size_t>(cellBounds.br().x)};
-                    gpuErrchk(cudaMemcpy(d_targetArea, targetArea, 4 * sizeof(size_t),
-                                         cudaMemcpyHostToDevice));
+                    const bool cellIsClipped = cellBounds.y > 0 || cellBounds.x > 0 || cellBounds.br().y < cells.front().cols || cellBounds.br().x < cells.front().rows;
+
+                    if (cellIsClipped)
+                    {
+                        timingLogger.StartTiming("ClippedCell");
+                        //Copy target area to device
+                        const size_t targetArea[4] = {static_cast<size_t>(cellBounds.y),
+                                                      static_cast<size_t>(cellBounds.br().y),
+                                                      static_cast<size_t>(cellBounds.x),
+                                                      static_cast<size_t>(cellBounds.br().x)};
+                        gpuErrchk(cudaMemcpy(d_targetArea, targetArea, 4 * sizeof(size_t), cudaMemcpyHostToDevice));
+                        timingLogger.StopTiming("ClippedCell");
+                    }
 
 
                     //Calculate if and how current cell is flipped
@@ -195,8 +209,9 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                     {
                         const size_t streamIndex = libI % streamCount;
 
-                        ColourDifference::getCUDAFunction(m_colourDiffType)(d_cellImage, d_libIm.at(libI), d_mask,
-                            cells.front().rows, cells.front().channels(), d_targetArea, d_variants + libI * cellSize, blockSize, streams[streamIndex]);
+                        ColourDifference::getCUDAFunction(m_colourDiffType, cellIsClipped)(d_cellImage, d_libIm.at(libI), d_mask,
+                            cells.front().rows, d_targetArea, d_variants + libI * cellSize,
+                            blockSize, streams[streamIndex]);
 
                         reduceAddKernelWrapper(blockSize, cellSize, d_variants + libI * cellSize, d_reductionMems.at(streamIndex), streams[streamIndex]);
 
@@ -282,7 +297,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     timingLogger.StopAllTiming();
     timingLogger.LogTiming();
 
-    return true;
+    return !m_wasCanceled;
 }
 
 //Copies mat to device pointer

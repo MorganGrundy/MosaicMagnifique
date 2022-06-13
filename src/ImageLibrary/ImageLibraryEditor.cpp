@@ -201,7 +201,7 @@ void ImageLibraryEditor::addImages()
             //Add image to list widget
             auto listWidgetItem = std::make_shared<QListWidgetItem>(QIcon(ImageUtility::matToQPixmap(m_images.getImages().at(imageIndex))), imageName);
             m_imageWidgets.insert(m_imageWidgets.begin() + imageIndex, listWidgetItem);
-            ui->listPhoto->insertItem(imageIndex, listWidgetItem.get());
+            ui->listPhoto->insertItem(static_cast<int>(imageIndex), listWidgetItem.get());
         }
         catch (const std::invalid_argument &e)
         {

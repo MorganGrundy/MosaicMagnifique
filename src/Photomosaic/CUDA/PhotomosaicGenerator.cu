@@ -24,211 +24,147 @@
 #include <device_launch_parameters.h>
 #include <math.h>
 
-//Calculates the euclidean difference between main image and library images
+#include "ColourDifference.cuh"
+
+//Calculates the euclidean difference between two images (im_1, im_2) storing in variants
+//Parts of the image can be ignored using im_mask (variant is set to 0)
+//Image rows = size, cols = size
 __global__
-void euclideanDifferenceKernel(float *main_im, float *lib_im, unsigned char *mask_im,
-                               size_t size, size_t channels, size_t *target_area, double *variants)
+void imageEuclideanDifference(float *im_1, float *im_2, unsigned char *im_mask,
+                              size_t size, double *variants)
 {
-    const size_t index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
-    const size_t stride = blockDim.x * gridDim.x * channels;
-    const size_t imageSize = size * size * channels;
-    for (size_t i = index; i < imageSize; i += stride)
+    const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
+    const size_t stride = blockDim.x * gridDim.x;
+    for (size_t i = index; i < size * size; i += stride)
     {
-        const size_t im_index = i % imageSize;
-        const size_t grayscaleIndex = im_index / channels;
-
-        const size_t row = grayscaleIndex / size;
-        if (row < target_area[0] || row >= target_area[1])
-        {
-            variants[i / channels] = 0;
-            continue;
-        }
-
-        const size_t col = grayscaleIndex % size;
-        if (col < target_area[2] || col >= target_area[3])
-        {
-            variants[i / channels] = 0;
-            continue;
-        }
-
-        if (mask_im[grayscaleIndex] == 0)
-            variants[i / channels] = 0;
+        if (im_mask[i] == 0)
+            variants[i] = 0;
         else
-            variants[i / channels] = sqrt(pow((double) (main_im[im_index] - lib_im[im_index]), (double)2.0) +
-                                          pow((double) (main_im[im_index + 1] - lib_im[im_index + 1]), (double)2.0) +
-                                          pow((double) (main_im[im_index + 2] - lib_im[im_index + 2]), (double)2.0));
+            variants[i] = euclideanDifference(im_1 + i*3, im_2 + i*3);
     }
 }
 
-//Wrapper for euclidean difference kernel
+//Calculates the euclidean difference between two images (im_1, im_2) storing in variants
+//Parts of the image can be ignored using im_mask (variant is set to 0)
+//Image rows = size, cols = size, channels = channels
+//Edge case equivalent of imageEuclideanDifference:
+//target_area contains bounds (min row, max row, min col, max col), variant set to 0 for out of bound pixels
+__global__
+void imageEuclideanDifferenceEdge(float *im_1, float *im_2, unsigned char *mask_im,
+                                  size_t size, size_t *target_area, double *variants)
+{
+    const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
+    const size_t stride = blockDim.x * gridDim.x;
+    const size_t imageSize = size * size;
+    for (size_t i = index; i < imageSize; i += stride)
+    {
+        const size_t row = i / size;
+        const size_t col = i % size;
+        if (row < target_area[0] || row >= target_area[1] || col < target_area[2] || col >= target_area[3])
+        {
+            variants[i] = 0;
+            continue;
+        }
+
+        if (mask_im[i] == 0)
+            variants[i] = 0;
+        else
+            variants[i] = euclideanDifference(im_1 + i*3, im_2 + i*3);
+    }
+}
+
+//Wrapper for imageEuclideanDifference kernel
+//target_area is unused, it is just there so the function parameters match the edge case one
 void euclideanDifferenceKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
-                                      size_t size, size_t channels, size_t *target_area,
-                                      double *variants, size_t blockSize, cudaStream_t stream)
+                                      size_t size, size_t *target_area, double *variants,
+                                      size_t blockSize, cudaStream_t stream)
 {
     const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
-    euclideanDifferenceKernel<<<static_cast<unsigned int>(numBlocks),
-                                static_cast<unsigned int>(blockSize), 0, stream>>>(
-                                    main_im, lib_im, mask_im, size, channels, target_area, variants);
+    imageEuclideanDifference<<<static_cast<unsigned int>(numBlocks),
+                               static_cast<unsigned int>(blockSize),
+                               0, stream>>>(main_im, lib_im, mask_im, size, variants);
 }
 
-//Converts degrees to radians
-__device__
-constexpr double degToRadKernel(const double deg)
+//Wrapper for imageEuclideanDifferenceEdge kernel
+void euclideanDifferenceEdgeKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
+                                          size_t size, size_t *target_area, double *variants,
+                                          size_t blockSize, cudaStream_t stream)
 {
-    return (deg * CUDART_PI) / 180;
+    const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
+    imageEuclideanDifferenceEdge<<<static_cast<unsigned int>(numBlocks),
+                                  static_cast<unsigned int>(blockSize),
+                                  0, stream>>>(main_im, lib_im, mask_im, size, target_area, variants);
 }
 
-//Kernel that calculates the CIEDE2000 difference between main image and library images
+//Calculates the CIEDE2000 difference between two images (im_1, im_2) storing in variants
+//Parts of the image can be ignored using im_mask (variant is set to 0)
+//Image rows = size, cols = size, channels = channels
 __global__
-void CIEDE2000DifferenceKernel(float *main_im, float *lib_im, unsigned char *mask_im,
-                               size_t size, size_t channels, size_t *target_area, double *variants)
+void imageCIEDE2000Difference(float *im_1, float *im_2, unsigned char *mask_im,
+                              size_t size, double *variants)
 {
-    const size_t index = (blockIdx.x * blockDim.x + threadIdx.x) * channels;
-    const size_t stride = blockDim.x * gridDim.x * channels;
-    const size_t imageSize = size * size * channels;
+    const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
+    const size_t stride = blockDim.x * gridDim.x;
+    const size_t imageSize = size * size;
     for (size_t i = index; i < imageSize; i += stride)
     {
-        const size_t im_index = i % imageSize;
-        const size_t grayscaleIndex = im_index / channels;
-
-        const size_t row = grayscaleIndex / size;
-        if (row < target_area[0] || row >= target_area[1])
-        {
-            variants[i / channels] = 0;
-            continue;
-        }
-
-        const size_t col = grayscaleIndex % size;
-        if (col < target_area[2] || col >= target_area[3])
-        {
-            variants[i / channels] = 0;
-            continue;
-        }
-
-        if (mask_im[grayscaleIndex] == 0)
-            variants[i / channels] = 0;
+        if (mask_im[i] == 0)
+            variants[i] = 0;
         else
-        {
-            const double k_L = 1.0, k_C = 1.0, k_H = 1.0;
-            constexpr double deg360InRad = degToRadKernel(360.0);
-            constexpr double deg180InRad = degToRadKernel(180.0);
-            const double pow25To7 = 6103515625.0; //pow(25, 7)
-
-            const double C1 = sqrt((double) (main_im[im_index + 1] * main_im[im_index + 1]) +
-                    (main_im[im_index + 2] * main_im[im_index + 2]));
-            const double C2 = sqrt((double) (lib_im[im_index + 1] * lib_im[im_index + 1]) +
-                    (lib_im[im_index + 2] * lib_im[im_index + 2]));
-            const double barC = (C1 + C2) / 2.0;
-
-            const double G = 0.5 * (1 - sqrt(pow(barC, (double)7.0) / (pow(barC, (double)7.0) + pow25To7)));
-
-            const double a1Prime = (1.0 + G) * main_im[im_index + 1];
-            const double a2Prime = (1.0 + G) * lib_im[im_index + 1];
-
-            const double CPrime1 = sqrt((a1Prime * a1Prime) +
-                                        (main_im[im_index + 2] * main_im[im_index + 2]));
-            const double CPrime2 = sqrt((a2Prime * a2Prime) +(lib_im[im_index + 2] * lib_im[im_index + 2]));
-
-            double hPrime1;
-            if (main_im[im_index + 2] == 0 && a1Prime == 0.0)
-                hPrime1 = 0.0;
-            else
-            {
-                hPrime1 = atan2((double) main_im[im_index + 2], a1Prime);
-                //This must be converted to a hue angle in degrees between 0 and 360 by
-                //addition of 2 pi to negative hue angles.
-                if (hPrime1 < 0)
-                    hPrime1 += deg360InRad;
-            }
-
-            double hPrime2;
-            if (lib_im[im_index + 2] == 0 && a2Prime == 0.0)
-                hPrime2 = 0.0;
-            else
-            {
-                hPrime2 = atan2((double) lib_im[im_index + 2], a2Prime);
-                //This must be converted to a hue angle in degrees between 0 and 360 by
-                //addition of 2pi to negative hue angles.
-                if (hPrime2 < 0)
-                    hPrime2 += deg360InRad;
-            }
-
-            const double deltaLPrime = lib_im[im_index] - main_im[im_index];
-            const double deltaCPrime = CPrime2 - CPrime1;
-
-            double deltahPrime;
-            const double CPrimeProduct = CPrime1 * CPrime2;
-            if (CPrimeProduct == 0.0)
-                deltahPrime = 0;
-            else
-            {
-                //Avoid the fabs() call
-                deltahPrime = hPrime2 - hPrime1;
-                if (deltahPrime < -deg180InRad)
-                    deltahPrime += deg360InRad;
-                else if (deltahPrime > deg180InRad)
-                    deltahPrime -= deg360InRad;
-            }
-
-            const double deltaHPrime = 2.0 * sqrt(CPrimeProduct) * sin(deltahPrime / 2.0);
-
-            const double barLPrime = (main_im[im_index] + lib_im[im_index]) / 2.0;
-            const double barCPrime = (CPrime1 + CPrime2) / 2.0;
-
-            double barhPrime;
-            const double hPrimeSum = hPrime1 + hPrime2;
-            if (CPrime1 * CPrime2 == 0.0)
-                barhPrime = hPrimeSum;
-            else
-            {
-                if (fabs(hPrime1 - hPrime2) <= deg180InRad)
-                    barhPrime = hPrimeSum / 2.0;
-                else
-                {
-                    if (hPrimeSum < deg360InRad)
-                        barhPrime = (hPrimeSum + deg360InRad) / 2.0;
-                    else
-                        barhPrime = (hPrimeSum - deg360InRad) / 2.0;
-                }
-            }
-
-            const double T = 1.0 - (0.17 * cos(barhPrime - degToRadKernel(30.0))) +
-                    (0.24 * cos(2.0 * barhPrime)) +
-                    (0.32 * cos((3.0 * barhPrime) + degToRadKernel(6.0))) -
-                    (0.20 * cos((4.0 * barhPrime) - degToRadKernel(63.0)));
-
-            const double deltaTheta = degToRadKernel(30.0) *
-                    exp(-pow((barhPrime - degToRadKernel(275.0)) / degToRadKernel(25.0), 2.0));
-
-            const double R_C = 2.0 * sqrt(pow(barCPrime, (double)7.0) /
-                                          (pow(barCPrime, (double)7.0) + pow25To7));
-
-            const double S_L = 1 + ((0.015 * pow(barLPrime - 50.0, (double)2.0)) /
-                                    sqrt(20 + pow(barLPrime - 50.0, (double)2.0)));
-            const double S_C = 1 + (0.045 * barCPrime);
-            const double S_H = 1 + (0.015 * barCPrime * T);
-
-            const double R_T = (-sin(2.0 * deltaTheta)) * R_C;
-
-
-            variants[i / channels] = (double) sqrt(pow(deltaLPrime / (k_L * S_L), (double)2.0) +
-                                                   pow(deltaCPrime / (k_C * S_C), (double)2.0) +
-                                                   pow(deltaHPrime / (k_H * S_H), (double)2.0) +
-                                                   (R_T * (deltaCPrime / (k_C * S_C)) *
-                                                    (deltaHPrime / (k_H * S_H))));
-        }
+            variants[i] = CIEDE2000Difference(im_1 + i*3, im_2 + i*3);
     }
 }
 
-//Wrapper for euclidean difference kernel
+//Calculates the CIEDE2000 difference between two images (im_1, im_2) storing in variants
+//Parts of the image can be ignored using im_mask (variant is set to 0)
+//Image rows = size, cols = size, channels = channels
+//Edge case equivalent of imageCIEDE2000Difference:
+//target_area contains bounds (min row, max row, min col, max col), variant set to 0 for out of bound pixels
+__global__
+void imageCIEDE2000DifferenceEdge(float *im_1, float *im_2, unsigned char *mask_im,
+                                  size_t size, size_t *target_area, double *variants)
+{
+    const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
+    const size_t stride = blockDim.x * gridDim.x;
+    const size_t imageSize = size * size;
+    for (size_t i = index; i < imageSize; i += stride)
+    {
+        const size_t row = i / size;
+        const size_t col = i % size;
+        if (row < target_area[0] || row >= target_area[1] || col < target_area[2] || col >= target_area[3])
+        {
+            variants[i] = 0;
+            continue;
+        }
+
+        if (mask_im[i] == 0)
+            variants[i] = 0;
+        else
+            variants[i] = CIEDE2000Difference(im_1 + i*3, im_2 + i*3);
+    }
+}
+
+//Wrapper for imageCIEDE2000Difference kernel
+//target_area is unused, it is just there so the function parameters match the edge case one
 void CIEDE2000DifferenceKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
-                                      size_t size, size_t channels, size_t *target_area,
-                                      double *variants, size_t blockSize, cudaStream_t stream)
+                                      size_t size, size_t *target_area, double *variants,
+                                      size_t blockSize, cudaStream_t stream)
 {
     const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
-    CIEDE2000DifferenceKernel<<<static_cast<unsigned int>(numBlocks),
-                                static_cast<unsigned int>(blockSize), 0, stream>>>(
-        main_im, lib_im, mask_im, size, channels, target_area, variants);
+    imageCIEDE2000Difference<<<static_cast<unsigned int>(numBlocks),
+                               static_cast<unsigned int>(blockSize),
+                               0, stream>>>(main_im, lib_im, mask_im, size, variants);
+}
+
+//Wrapper for imageCIEDE2000DifferenceEdge kernel
+void CIEDE2000DifferenceEdgeKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
+                                          size_t size, size_t *target_area, double *variants,
+                                          size_t blockSize, cudaStream_t stream)
+{
+    const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
+    imageCIEDE2000DifferenceEdge<<<static_cast<unsigned int>(numBlocks),
+                                   static_cast<unsigned int>(blockSize),
+                                   0, stream>>>(main_im, lib_im, mask_im, size, target_area, variants);
 }
 
 //Calculates repeats in range and adds to variants

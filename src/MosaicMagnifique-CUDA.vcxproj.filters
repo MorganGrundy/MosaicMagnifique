@@ -190,6 +190,9 @@
     <ClInclude Include="Other\TimingLogger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Photomosaic\CUDA\ColourDifference.cuh">
+      <Filter>Photomosaic\CUDA</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="$(Configuration)-$(Platform)-CUDA\moc_predefs.h.cbt" />

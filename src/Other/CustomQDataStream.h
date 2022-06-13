@@ -40,7 +40,7 @@ public:
         {
             std::vector<uchar> buff;
             cv::imencode(".png", t_mat, buff);
-            *thisParent << QByteArray(reinterpret_cast<const char *>(buff.data()), buff.size());
+            *thisParent << QByteArray(reinterpret_cast<const char *>(buff.data()), static_cast<int>(buff.size()));
         }
         break;
 

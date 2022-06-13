@@ -162,11 +162,11 @@ std::vector<double> calculateCUDADiff(const std::vector<float> &firsts, const st
     gpuErrchk(cudaMalloc((void **)&mask, fullSize * sizeof(uchar)));
     gpuErrchk(cudaMemcpy(mask, HOST_mask.data(), fullSize * sizeof(uchar), cudaMemcpyHostToDevice));
 
-    //Create target area on GPU
-    size_t HOST_target_area[4] = { 0, size, 0, size };
+    //Create target area on GPU, we aren't testing edge cases here so we won't actually use it
+    //size_t HOST_target_area[4] = { 0, size, 0, size };
     size_t *target_area;
     gpuErrchk(cudaMalloc((void **)&target_area, 4 * sizeof(size_t)));
-    gpuErrchk(cudaMemcpy(target_area, &HOST_target_area, 4 * sizeof(size_t), cudaMemcpyHostToDevice));
+    //gpuErrchk(cudaMemcpy(target_area, &HOST_target_area, 4 * sizeof(size_t), cudaMemcpyHostToDevice));
 
     //Allocate memory on GPU for result
     std::vector<double> HOST_result(fullSize, 0);
@@ -181,10 +181,7 @@ std::vector<double> calculateCUDADiff(const std::vector<float> &firsts, const st
 #else
     const size_t blockSize = deviceProp.maxThreadsPerBlock;
 #endif
-    if (diffType == ColourDifference::Type::CIEDE2000)
-        CIEDE2000DifferenceKernelWrapper(d_first, d_second, mask, size, 3, target_area, result, blockSize, 0);
-    else
-        euclideanDifferenceKernelWrapper(d_first, d_second, mask, size, 3, target_area, result, blockSize, 0);
+    ColourDifference::getCUDAFunction(diffType, false)(d_first, d_second, mask, size, target_area, result, blockSize, 0);
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 

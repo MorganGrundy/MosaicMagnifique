@@ -153,13 +153,12 @@ double ColourDifference::calculateCIEDE2000(const cv::Vec3d &t_first, const cv::
 #include "CUDA\photomosaicgenerator.cuh"
 
 //Returns CUDA function wrapper from enum
-ColourDifference::CUDAFunctionType ColourDifference::getCUDAFunction(const Type& t_type)
+ColourDifference::CUDAFunctionType ColourDifference::getCUDAFunction(const Type& t_type, const bool t_edgeCase)
 {
     switch (t_type)
     {
-    case Type::RGB_EUCLIDEAN: return euclideanDifferenceKernelWrapper;
-    case Type::CIE76: return euclideanDifferenceKernelWrapper;
-    case Type::CIEDE2000: return CIEDE2000DifferenceKernelWrapper;
+    case Type::RGB_EUCLIDEAN: case Type::CIE76: return t_edgeCase ? euclideanDifferenceEdgeKernelWrapper : euclideanDifferenceKernelWrapper;
+    case Type::CIEDE2000: return t_edgeCase ? CIEDE2000DifferenceEdgeKernelWrapper : CIEDE2000DifferenceKernelWrapper;
     default: throw std::invalid_argument(Q_FUNC_INFO " No function for given type");
     }
 }

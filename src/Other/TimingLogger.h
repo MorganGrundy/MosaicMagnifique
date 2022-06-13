@@ -309,7 +309,9 @@ public:
 
 	static void SetSubdir(const QString &t_subdir)
 	{
+#ifdef TIMING_LOGGER
 		outputSubdir = t_subdir;
+#endif
 	}
 
 private:

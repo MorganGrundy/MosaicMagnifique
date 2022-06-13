@@ -1,17 +1,27 @@
 #pragma once
 
 #include <cuda_runtime.h>
-//Wrapper for euclidean difference kernel
-void euclideanDifferenceKernelWrapper(float *main_im, float *lib_im,
-                                      unsigned char *mask_im,
-									  size_t size, size_t channels, size_t *target_area,
-									  double *variants, size_t blockSize, cudaStream_t stream);
+//Wrapper for imageEuclideanDifference kernel
+//target_area is unused, it is just there so the function parameters match the edge case one
+void euclideanDifferenceKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
+									  size_t size, size_t *target_area, double *variants,
+                                      size_t blockSize, cudaStream_t stream);
 
-//Wrapper for euclidean difference kernel
-void CIEDE2000DifferenceKernelWrapper(float *main_im, float *lib_im,
-                                      unsigned char *mask_im,
-									  size_t size, size_t channels, size_t *target_area,
-									  double *variants, size_t blockSize, cudaStream_t stream);
+//Wrapper for imageEuclideanDifferenceEdge kernel
+void euclideanDifferenceEdgeKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
+                                      size_t size, size_t *target_area, double *variants,
+                                      size_t blockSize, cudaStream_t stream);
+
+//Wrapper for imageCIEDE2000Difference kernel
+//target_area is unused, it is just there so the function parameters match the edge case one
+void CIEDE2000DifferenceKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
+									  size_t size, size_t *target_area, double *variants,
+                                      size_t blockSize, cudaStream_t stream);
+
+//Wrapper for imageCIEDE2000DifferenceEdge kernel
+void CIEDE2000DifferenceEdgeKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
+                                          size_t size, size_t *target_area, double *variants,
+                                          size_t blockSize, cudaStream_t stream);
 
 //Wrapper for calculate repeats kernel
 void calculateRepeatsKernelWrapper(double *variants,

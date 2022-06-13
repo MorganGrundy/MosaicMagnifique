@@ -173,6 +173,9 @@
     <ClInclude Include="tst_CUDAGenerator.h">
       <Filter>Photomosaic\CUDA</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\Other\TimingLogger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="debug\moc_predefs.h.cbt">

@@ -9,15 +9,15 @@ typedef double(*p_dfColourDifference)(float *, float *);
 //Calculates the euclidean difference between two 3-channel colour values
 __device__ inline double euclideanDifference(float *colour1, float *colour2)
 {
-    return sqrt(pow((double)(colour1[0] - colour2[0]), (double)2.0) +
-        pow((double)(colour1[1] - colour2[1]), (double)2.0) +
-        pow((double)(colour1[2] - colour2[2]), (double)2.0));
+    return sqrt((double)(colour1[0] - colour2[0]) * (colour1[0] - colour2[0]) +
+                (double)(colour1[1] - colour2[1]) * (colour1[1] - colour2[1]) +
+                (double)(colour1[2] - colour2[2]) * (colour1[2] - colour2[2]));
 }
 
 //Converts degrees to radians
 __device__ inline constexpr double degToRadKernel(const double deg)
 {
-    return (deg * CUDART_PI) / 180;
+    return (deg * CUDART_PI) / 180.0;
 }
 
 //Calculates the CIEDE2000 difference between two 3-channel colour values
@@ -31,7 +31,8 @@ __device__ inline double CIEDE2000Difference(float *colour1, float *colour2)
     const double C2 = sqrt((double)(colour2[1] * colour2[1]) + (colour2[2] * colour2[2]));
     const double barC = (C1 + C2) / 2.0;
 
-    const double G = 0.5 * (1 - sqrt(pow(barC, (double)7.0) / (pow(barC, (double)7.0) + pow25To7)));
+    const double barCPow7 = barC * barC * barC * barC * barC * barC * barC;
+    const double G = 0.5 * (1.0 - sqrt(barCPow7 / (barCPow7 + pow25To7)));
 
     const double a1Prime = (1.0 + G) * colour1[1];
     const double a2Prime = (1.0 + G) * colour2[1];
@@ -40,26 +41,26 @@ __device__ inline double CIEDE2000Difference(float *colour1, float *colour2)
     const double CPrime2 = sqrt((a2Prime * a2Prime) + (colour2[2] * colour2[2]));
 
     double hPrime1;
-    if (colour1[2] == 0 && a1Prime == 0.0)
+    if (colour1[2] == 0.0f && a1Prime == 0.0)
         hPrime1 = 0.0;
     else
     {
         hPrime1 = atan2((double)colour1[2], a1Prime);
         //This must be converted to a hue angle in degrees between 0 and 360 by
         //addition of 2 pi to negative hue angles.
-        if (hPrime1 < 0)
+        if (hPrime1 < 0.0)
             hPrime1 += deg360InRad;
     }
 
     double hPrime2;
-    if (colour2[2] == 0 && a2Prime == 0.0)
+    if (colour2[2] == 0.0f && a2Prime == 0.0)
         hPrime2 = 0.0;
     else
     {
         hPrime2 = atan2((double)colour2[2], a2Prime);
         //This must be converted to a hue angle in degrees between 0 and 360 by
         //addition of 2pi to negative hue angles.
-        if (hPrime2 < 0)
+        if (hPrime2 < 0.0)
             hPrime2 += deg360InRad;
     }
 
@@ -69,7 +70,7 @@ __device__ inline double CIEDE2000Difference(float *colour1, float *colour2)
     double deltahPrime;
     const double CPrimeProduct = CPrime1 * CPrime2;
     if (CPrimeProduct == 0.0)
-        deltahPrime = 0;
+        deltahPrime = 0.0;
     else
     {
         //Avoid the fabs() call
@@ -108,22 +109,28 @@ __device__ inline double CIEDE2000Difference(float *colour1, float *colour2)
         (0.20 * cos((4.0 * barhPrime) - degToRadKernel(63.0)));
 
     const double deltaTheta = degToRadKernel(30.0) *
-        exp(-pow((barhPrime - degToRadKernel(275.0)) / degToRadKernel(25.0), 2.0));
+        exp(-((barhPrime - degToRadKernel(275.0)) * (barhPrime - degToRadKernel(275.0)) / (degToRadKernel(25.0) * degToRadKernel(25.0))));
+    //((a-b)/c)^2 = ((a-b)/c) * ((a-b)/c) = ((a-b) * (a-b)) / (c * c) = (a * a - 2ab + b * b) / (c * c)
+    const double barCPrimePow7 = barCPrime * barCPrime * barCPrime * barCPrime * barCPrime * barCPrime * barCPrime;
+    const double R_C = 2.0 * sqrt(barCPrimePow7 / (barCPrimePow7 + pow25To7));
 
-    const double R_C = 2.0 * sqrt(pow(barCPrime, (double)7.0) /
-        (pow(barCPrime, (double)7.0) + pow25To7));
-
-    const double S_L = 1 + ((0.015 * pow(barLPrime - 50.0, (double)2.0)) /
-        sqrt(20 + pow(barLPrime - 50.0, (double)2.0)));
-    const double S_C = 1 + (0.045 * barCPrime);
-    const double S_H = 1 + (0.015 * barCPrime * T);
+    const double S_L = 1.0 + ((0.015 * (barLPrime * barLPrime - (100 * barLPrime) + 2500.0)) /
+        sqrt(20 + barLPrime * barLPrime - (100 * barLPrime) + 2500.0));
+    const double S_C = 1.0 + (0.045 * barCPrime);
+    const double S_H = 1.0 + (0.015 * barCPrime * T);
 
     const double R_T = (-sin(2.0 * deltaTheta)) * R_C;
 
-    //constexpr double k_L = 1.0, k_C = 1.0, k_H = 1.0;
-    return (double)sqrt(pow(deltaLPrime / (/*k_L * */S_L), (double)2.0) +
-        pow(deltaCPrime / (/*k_C * */S_C), (double)2.0) +
-        pow(deltaHPrime / (/*k_H * */S_H), (double)2.0) +
-        (R_T * (deltaCPrime / (/*k_C * */S_C)) *
-            (deltaHPrime / (/*k_H * */S_H))));
+    /*constexpr double k_L = 1.0, k_C = 1.0, k_H = 1.0;
+    return sqrt(pow(deltaLPrime / (k_L * S_L), 2.0) +
+                pow(deltaCPrime / (k_C * S_C), 2.0) +
+                pow(deltaHPrime / (k_H * S_H), 2.0) +
+            (R_T * (deltaCPrime / (k_C * S_C)) *
+                   (deltaHPrime / (k_H * S_H))));*/
+
+    return sqrt((deltaLPrime * deltaLPrime) / (S_L * S_L) +
+                (deltaCPrime * deltaCPrime) / (S_C * S_C) +
+                (deltaHPrime * deltaHPrime) / (S_H * S_H) +
+                (R_T * (deltaCPrime / S_C) *
+                (deltaHPrime / S_H)));
 }

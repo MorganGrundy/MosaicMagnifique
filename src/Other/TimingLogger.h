@@ -170,6 +170,8 @@ public:
 			}
 			//Add an attribute for count
 			*thisParent << " Count=\"" << std::get<0>(timingInfoGroup) << "\"";
+			//Add an attribute for average duration
+			*thisParent << " Average=\"" << duration / std::get<0>(timingInfoGroup) << " ms\"";
 
 			//No child summary so we can close the tag straight away
 			if (std::get<2>(timingInfoGroup) == nullptr)

@@ -38,10 +38,7 @@ void imageDifference(float *im_1, float *im_2, unsigned char *im_mask,
     const size_t stride = blockDim.x * gridDim.x;
     for (size_t i = index; i < size * size; i += stride)
     {
-        if (im_mask[i] == 0)
-            variants[i] = 0;
-        else
-            variants[i] = func(im_1 + i*3, im_2 + i*3);
+        variants[i] = func(im_1 + i * 3, im_2 + i * 3) * (im_mask[i] != 0);
     }
 }
 
@@ -62,16 +59,12 @@ void imageDifferenceEdge(float *im_1, float *im_2, unsigned char *mask_im,
     {
         const size_t row = i / size;
         const size_t col = i % size;
-        if (row < target_area[0] || row >= target_area[1] || col < target_area[2] || col >= target_area[3])
-        {
-            variants[i] = 0;
-            continue;
-        }
-
-        if (mask_im[i] == 0)
-            variants[i] = 0;
-        else
-            variants[i] = func(im_1 + i*3, im_2 + i*3);
+        bool valid = row >= target_area[0];
+        valid = row < target_area[1] && valid;
+        valid = col >= target_area[2] && valid;
+        valid = col < target_area[3] && valid;
+        valid = mask_im[i] != 0 && valid;
+        variants[i] = func(im_1 + i*3, im_2 + i*3) * valid;
     }
 }
 
@@ -87,6 +80,7 @@ void euclideanDifferenceKernelWrapper(float *main_im, float *lib_im, unsigned ch
                                       size_t size, size_t *target_area, double *variants,
                                       size_t blockSize, cudaStream_t stream)
 {
+    //dim3 dimBlock(blockSize, blockSize);
     const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
     imageDifference<euclideanDifference><<<static_cast<unsigned int>(numBlocks),
                                static_cast<unsigned int>(blockSize),

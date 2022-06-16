@@ -22,18 +22,23 @@ cv::Mat TestUtility::createRandomImage(const int width, const int height, const 
     return randIm;
 }
 
-//Generates a vector of random floats
-std::vector<float> TestUtility::createRandomFloats(const size_t count, const std::vector<std::pair<float, float>> ranges)
+//Generates a vector of random type T
+template <typename T>
+std::vector<T> TestUtility::createRandom(const size_t count, const std::vector<std::pair<T, T>> ranges)
 {
-    std::vector<float> results(count, 0);
+    std::vector<T> results(count, 0);
     for (size_t i = 0; i < count; ++i)
     {
-        const auto &limit = ranges.at(i % ranges.size());
-        results.at(i) = randNum<float>(limit.first, limit.second);
+        const std::pair<T,T> &limit = ranges.at(i % ranges.size());
+        results.at(i) = randNum<T>(limit.first, limit.second);
     }
 
     return results;
 }
+
+//Explicit instantiation of templates
+template std::vector<float> TestUtility::createRandom<float>(const size_t count, const std::vector<std::pair<float, float>> ranges);
+
 
 //Compares a vector of OpenCV mat against a vector of OpenCV CUDA GpuMat
 testing::AssertionResult TestUtility::compareImages(const std::vector<cv::Mat> &set1, const std::vector<cv::cuda::GpuMat> &set2)

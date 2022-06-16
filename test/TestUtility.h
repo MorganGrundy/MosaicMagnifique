@@ -22,8 +22,9 @@ namespace TestUtility
     //Generates a random image of given size
     cv::Mat createRandomImage(const int width, const int height, const bool singleChannel = false);
 
-    //Generates a vector of random floats
-    std::vector<float> createRandomFloats(const size_t count, const std::vector<std::pair<float, float>> ranges);
+    //Generates a vector of random type T
+    template<typename T>
+    std::vector<T> createRandom(const size_t count, const std::vector<std::pair<T, T>> ranges);
 
     //Compares a vector of OpenCV mat against a vector of OpenCV CUDA GpuMat
     ::testing::AssertionResult compareImages(const std::vector<cv::Mat> &set1, const std::vector<cv::cuda::GpuMat> &set2);

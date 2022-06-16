@@ -325,8 +325,8 @@ TEST(ColourDifference, RGBEuclidean_CPUvsCUDA)
     for (size_t i = 0; i < iterations; ++i)
     {
         //Create random CIELab colours
-        std::vector<float> h_firsts = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
-        std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+        std::vector<float> h_firsts = TestUtility::createRandom<float>(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+        std::vector<float> h_seconds = TestUtility::createRandom<float>(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
 
         //Calculate differences with CPU and CUDA
         std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, 0);
@@ -353,8 +353,8 @@ TEST(ColourDifference, CIE76_CPUvsCUDA)
     for (size_t i = 0; i < iterations; ++i)
     {
         //Create random CIELab colours
-        std::vector<float> h_firsts = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
-        std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+        std::vector<float> h_firsts = TestUtility::createRandom<float>(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+        std::vector<float> h_seconds = TestUtility::createRandom<float>(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
 
         //Calculate differences with CPU and CUDA
         std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, 0);
@@ -381,8 +381,8 @@ TEST(ColourDifference, CIEDE2000_CPUvsCUDA)
     for (size_t i = 0; i < iterations; ++i)
     {
         //Create random CIELab colours
-        std::vector<float> h_firsts = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
-        std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+        std::vector<float> h_firsts = TestUtility::createRandom<float>(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+        std::vector<float> h_seconds = TestUtility::createRandom<float>(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
 
         //Calculate differences with CPU and CUDA
         std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, 0);
@@ -407,8 +407,8 @@ TEST(ColourDifference, RGBEuclidean_CPUvsBatchCUDA)
     srand(static_cast<unsigned int>(time(NULL)));
 
     //Create random RGB colours
-    std::vector<float> h_firsts = TestUtility::createRandomFloats(totalFloats, { {0, 255} });
-    std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 255} });
+    std::vector<float> h_firsts = TestUtility::createRandom<float>(totalFloats, { {0, 255} });
+    std::vector<float> h_seconds = TestUtility::createRandom<float>(totalFloats, { {0, 255} });
 
     //Calculate differences with CPU and CUDA
     std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, 0);
@@ -430,8 +430,8 @@ TEST(ColourDifference, CIE76_CPUvsBatchCUDA)
     srand(static_cast<unsigned int>(time(NULL)));
 
     //Create random CIELab colours
-    std::vector<float> h_firsts = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
-    std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+    std::vector<float> h_firsts = TestUtility::createRandom<float>(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+    std::vector<float> h_seconds = TestUtility::createRandom<float>(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
 
     //Calculate differences with CPU and CUDA
     std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, 0);
@@ -453,8 +453,8 @@ TEST(ColourDifference, CIEDE2000_CPUvsBatchCUDA)
     srand(static_cast<unsigned int>(time(NULL)));
 
     //Create random CIELab colours
-    std::vector<float> h_firsts = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
-    std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+    std::vector<float> h_firsts = TestUtility::createRandom<float>(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+    std::vector<float> h_seconds = TestUtility::createRandom<float>(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
 
     //Calculate differences with CPU and CUDA
     std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, 0);
@@ -480,8 +480,8 @@ TEST(ColourDifference, RGBEuclidean_CUDAEdgeCase)
     const size_t edgeCaseRows = size / 4;
 
     //Create random RGB colours
-    std::vector<float> h_firsts = TestUtility::createRandomFloats(totalFloats, { {0, 255} });
-    std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 255} });
+    std::vector<float> h_firsts = TestUtility::createRandom<float>(totalFloats, { {0, 255} });
+    std::vector<float> h_seconds = TestUtility::createRandom<float>(totalFloats, { {0, 255} });
 
     //Calculate differences with CPU and CUDA
     std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, edgeCaseRows);
@@ -505,8 +505,8 @@ TEST(ColourDifference, CIE76_CUDAEdgeCase)
     const size_t edgeCaseRows = size / 4;
 
     //Create random RGB colours
-    std::vector<float> h_firsts = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
-    std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+    std::vector<float> h_firsts = TestUtility::createRandom<float>(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+    std::vector<float> h_seconds = TestUtility::createRandom<float>(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
 
     //Calculate differences with CPU and CUDA
     std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, edgeCaseRows);
@@ -530,8 +530,8 @@ TEST(ColourDifference, CIEDE2000_CUDAEdgeCase)
     const size_t edgeCaseRows = size / 4;
 
     //Create random RGB colours
-    std::vector<float> h_firsts = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
-    std::vector<float> h_seconds = TestUtility::createRandomFloats(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+    std::vector<float> h_firsts = TestUtility::createRandom<float>(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
+    std::vector<float> h_seconds = TestUtility::createRandom<float>(totalFloats, { {0, 100}, {-128, 127}, {-128, 127} });
 
     //Calculate differences with CPU and CUDA
     std::vector<double> cpuDifferences = calculateCPUDiff(h_firsts, h_seconds, size, diffType, edgeCaseRows);

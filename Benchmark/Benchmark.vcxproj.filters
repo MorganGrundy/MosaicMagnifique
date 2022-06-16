@@ -90,6 +90,9 @@
     <ClCompile Include="..\src\Grid\QuadTree.cpp">
       <Filter>Grid</Filter>
     </ClCompile>
+    <ClCompile Include="C:\google-lib\googletest-master\googletest\src\gtest-all.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Other\ImageUtility.h">
@@ -149,6 +152,12 @@
     <ClInclude Include="..\src\Grid\QuadTree.h">
       <Filter>Grid</Filter>
     </ClInclude>
+    <ClInclude Include="Benchmark_MathKernels.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MathKernels.cuh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\src\Photomosaic\CUDA\PhotomosaicGenerator.cu">
@@ -156,6 +165,9 @@
     </CudaCompile>
     <CudaCompile Include="..\src\Photomosaic\CUDA\Reduction.cu">
       <Filter>Photomosaic\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MathKernels.cu">
+      <Filter>Source Files</Filter>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>

@@ -9,9 +9,9 @@ typedef double(*p_dfColourDifference)(float *, float *);
 //Calculates the euclidean difference between two 3-channel colour values
 __device__ inline double euclideanDifference(float *colour1, float *colour2)
 {
-    return sqrt((double)(colour1[0] - colour2[0]) * (colour1[0] - colour2[0]) +
-                (double)(colour1[1] - colour2[1]) * (colour1[1] - colour2[1]) +
-                (double)(colour1[2] - colour2[2]) * (colour1[2] - colour2[2]));
+    return sqrt(((double)colour1[0] - colour2[0]) * ((double)colour1[0] - colour2[0]) +
+                ((double)colour1[1] - colour2[1]) * ((double)colour1[1] - colour2[1]) +
+                ((double)colour1[2] - colour2[2]) * ((double)colour1[2] - colour2[2]));
 }
 
 //Converts degrees to radians

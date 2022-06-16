@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "Benchmark_Generator.h"
+#include "Benchmark_MathKernels.h"
 
 int main(int argc, char *argv[])
 {
@@ -77,6 +78,7 @@ int main(int argc, char *argv[])
 	{
 		std::cout << "Mosaic Magnifique Benchmark\n";
 
-		Benchmark_Generator();
+		//Benchmark_Generator();
+		Benchmark_MathKernels();
 	}
 }

@@ -108,14 +108,17 @@ __device__ inline double CIEDE2000Difference(float *colour1, float *colour2)
         (0.32 * cos((3.0 * barhPrime) + degToRadKernel(6.0))) -
         (0.20 * cos((4.0 * barhPrime) - degToRadKernel(63.0)));
 
-    const double deltaTheta = degToRadKernel(30.0) *
-        exp(-((barhPrime - degToRadKernel(275.0)) * (barhPrime - degToRadKernel(275.0)) / (degToRadKernel(25.0) * degToRadKernel(25.0))));
     //((a-b)/c)^2 = ((a-b)/c) * ((a-b)/c) = ((a-b) * (a-b)) / (c * c) = (a * a - 2ab + b * b) / (c * c)
+    // = (a * (a - 2b) + b * b) / (c * c), b and c are constexpr so will be simplified by compiler:
+    // = (a * (a - d) + e) / f, d = 2b, e = b * b, f = c * c
+    const double deltaTheta = degToRadKernel(30.0) *
+        exp(-((barhPrime * (barhPrime - degToRadKernel(550.0)) + (degToRadKernel(275.0) * degToRadKernel(275.0))) / (degToRadKernel(25.0) * degToRadKernel(25.0))));
+
     const double barCPrimePow7 = barCPrime * barCPrime * barCPrime * barCPrime * barCPrime * barCPrime * barCPrime;
     const double R_C = 2.0 * sqrt(barCPrimePow7 / (barCPrimePow7 + pow25To7));
 
-    const double S_L = 1.0 + ((0.015 * (barLPrime * barLPrime - (100 * barLPrime) + 2500.0)) /
-        sqrt(20 + barLPrime * barLPrime - (100 * barLPrime) + 2500.0));
+    const double S_L = 1.0 + ((0.015 * (barLPrime * (barLPrime - 100.0) + 2500.0)) /
+        sqrt(20 + barLPrime * (barLPrime - 100.0) + 2500.0));
     const double S_C = 1.0 + (0.045 * barCPrime);
     const double S_H = 1.0 + (0.015 * barCPrime * T);
 

@@ -29,6 +29,17 @@ protected:
         setCellGroup(cellGroup);
     }
 
+    void CreateHexagonCellGroup(const size_t t_cellSize = 128, const size_t t_steps = 0, const size_t t_detail = 100)
+    {
+        CellGroup cellGroup;
+        CellShape cellShape;
+        cellShape.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Cells/Hexagon.mcs");
+        cellGroup.setCellShape(cellShape.resized(t_cellSize));
+        cellGroup.setSizeSteps(t_steps);
+        cellGroup.setDetail(t_detail);
+        setCellGroup(cellGroup);
+    }
+
     void LoadImageLibrary()
     {
         ImageLibrary lib(m_cells.getCellSize(0, false));
@@ -102,6 +113,19 @@ protected:
     {
         CellGroup cellGroup;
         cellGroup.setCellShape(CellShape(t_cellSize));
+        cellGroup.setSizeSteps(t_steps);
+        cellGroup.setDetail(t_detail);
+
+        cpuGenerator.setCellGroup(cellGroup);
+        cudaGenerator.setCellGroup(cellGroup);
+    }
+
+    void CreateHexagonCellGroup(const size_t t_cellSize = 128, const size_t t_steps = 0, const size_t t_detail = 100)
+    {
+        CellGroup cellGroup;
+        CellShape cellShape;
+        cellShape.loadFromFile("E:/Desktop/MosaicMagnifique/MosaicMagnifique/Cells/Hexagon.mcs");
+        cellGroup.setCellShape(cellShape.resized(t_cellSize));
         cellGroup.setSizeSteps(t_steps);
         cellGroup.setDetail(t_detail);
 
@@ -372,6 +396,53 @@ TEST_F(CUDAGeneratorFixture, CONSISTENCY_CIEDE2000_Size_Steps)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+//*************************************** CUDA CELL SHAPES ***************************************//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST_F(CUDAGeneratorFixture, CONSISTENCY_RGB_EUCLIDEAN_Cell_Shapes)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::NONE);
+    setRepeat(0, 0);
+    CreateHexagonCellGroup(128, 0, 50);
+    LoadImageLibrary();
+    LoadRandomImage(0.5);
+
+    ASSERT_TRUE(TestBestFitsConsistency());
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST_F(CUDAGeneratorFixture, CONSISTENCY_CIE76_Cell_Shapes)
+{
+    setColourDifference(ColourDifference::Type::CIE76);
+    setColourScheme(ColourScheme::Type::NONE);
+    setRepeat(0, 0);
+    CreateHexagonCellGroup(128, 0, 50);
+    LoadImageLibrary();
+    LoadRandomImage(0.5);
+
+    ASSERT_TRUE(TestBestFitsConsistency());
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST_F(CUDAGeneratorFixture, CONSISTENCY_CIEDE2000_Cell_Shapes)
+{
+    setColourDifference(ColourDifference::Type::CIEDE2000);
+    setColourScheme(ColourScheme::Type::NONE);
+    setRepeat(0, 0);
+    CreateHexagonCellGroup(128, 0, 50);
+    LoadImageLibrary();
+    LoadRandomImage(0.5);
+
+    ASSERT_TRUE(TestBestFitsConsistency());
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 //************************************** DETAIL CPU vs CUDA **************************************//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -548,6 +619,53 @@ TEST_F(CPUvsCUDAGeneratorFixture, COMPARE_CIEDE2000_Size_Steps)
     setColourScheme(ColourScheme::Type::NONE);
     setRepeat(0, 0);
     CreateCellGroup(128, 1, 50);
+    LoadImageLibrary();
+
+    ASSERT_TRUE(TestCompare());
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//************************************ CELL SHAPES CPU vs CUDA ***********************************//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//Generates photomosaic best fits using identical settings with and without CUDA
+//Expects the best fits to be identical
+//Tests with multiple main images
+TEST_F(CPUvsCUDAGeneratorFixture, COMPARE_RGB_EUCLIDEAN_Cell_Shapes)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::NONE);
+    setRepeat(0, 0);
+    CreateHexagonCellGroup(128, 0, 50);
+    LoadImageLibrary();
+
+    ASSERT_TRUE(TestCompare());
+}
+
+//Generates photomosaic best fits using identical settings with and without CUDA
+//Expects the best fits to be identical
+//Tests with multiple main images
+TEST_F(CPUvsCUDAGeneratorFixture, COMPARE_CIE76_Cell_Shapes)
+{
+    setColourDifference(ColourDifference::Type::CIE76);
+    setColourScheme(ColourScheme::Type::NONE);
+    setRepeat(0, 0);
+    CreateHexagonCellGroup(128, 0, 50);
+    LoadImageLibrary();
+
+    ASSERT_TRUE(TestCompare());
+}
+
+//Generates photomosaic best fits using identical settings with and without CUDA
+//Expects the best fits to be identical
+//Tests with multiple main images
+TEST_F(CPUvsCUDAGeneratorFixture, COMPARE_CIEDE2000_Cell_Shapes)
+{
+    setColourDifference(ColourDifference::Type::CIEDE2000);
+    setColourScheme(ColourScheme::Type::NONE);
+    setRepeat(0, 0);
+    CreateHexagonCellGroup(128, 0, 50);
     LoadImageLibrary();
 
     ASSERT_TRUE(TestCompare());

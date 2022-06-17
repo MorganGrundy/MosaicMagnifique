@@ -15,6 +15,7 @@
 #include "testutility.h"
 #include "..\src\Grid\GridGenerator.h"
 #include "..\src\ImageLibrary\ImageLibrary.h"
+#include "..\src\Other\TimingLogger.h"
 
 namespace TST_Generator
 {
@@ -109,6 +110,10 @@ protected:
 
     ::testing::AssertionResult TestBestFitsConsistency()
     {
+        //Tell TimingLogger to output files to subdir %test_suite_name%/%test_case_name%
+        QString testSuite(::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name());
+        TimingLogger::SetSubdir(testSuite + "/" + ::testing::UnitTest::GetInstance()->current_test_info()->name());
+
         GridUtility::MosaicBestFit lastBestFit;
         for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
         {

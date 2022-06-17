@@ -22,6 +22,7 @@
 #include <QDebug>
 
 #include "ColourDifference.h"
+#include "..\Other\TimingLogger.h"
 
 CPUPhotomosaicGenerator::CPUPhotomosaicGenerator() : PhotomosaicGeneratorBase()
 {}
@@ -30,42 +31,62 @@ CPUPhotomosaicGenerator::CPUPhotomosaicGenerator() : PhotomosaicGeneratorBase()
 //Returns true if successful
 bool CPUPhotomosaicGenerator::generateBestFits()
 {
+    TimingLogger timingLogger;
+    timingLogger.StartTiming("generateBestFits");
+
+    timingLogger.StartTiming("Preprocess");
     //Converts colour space of main image and library images
     //Resizes library based on detail level
     auto mainImages = preprocessMainImage();
     auto lib = preprocessLibraryImages();
+    timingLogger.StopTiming("Preprocess");
 
+    timingLogger.StartTiming("StepLoop");
     //For all size steps, stop if no bounds for step
     for (size_t step = 0; step < m_bestFits.size(); ++step)
     {
+        //If user hits cancel in QProgressDialog then return empty best fit
+        if (m_wasCanceled)
+            break;
+
         const int progressStep = std::pow(4, (m_bestFits.size() - 1) - step);
 
         //Reference to cell shapes
         const CellShape &normalCellShape = m_cells.getCell(step);
         const CellShape &detailCellShape = m_cells.getCell(step, true);
 
+        timingLogger.StartTiming("YLoop");
         //Find best match for each cell in grid
         for (int y = -GridUtility::PAD_GRID; y < static_cast<int>(m_bestFits.at(step).size()) - GridUtility::PAD_GRID; ++y)
         {
+            //If user hits cancel in QProgressDialog then return empty best fit
+            if (m_wasCanceled)
+                break;
+
+            timingLogger.StartTiming("XLoop");
             for (int x = -GridUtility::PAD_GRID; x < static_cast<int>(m_bestFits.at(step).at(y + GridUtility::PAD_GRID).size()) - GridUtility::PAD_GRID; ++x)
             {
                 //If user hits cancel in QProgressDialog then return empty best fit
                 if (m_wasCanceled)
-                    return false;
+                    break;
 
                 //If cell is valid
                 if (m_bestFits.at(step).at(y + GridUtility::PAD_GRID).at(x + GridUtility::PAD_GRID).has_value())
                 {
+                    timingLogger.StartTiming("findCellBestFit");
                     //Find cell best fit
                     m_bestFits.at(step).at(y + GridUtility::PAD_GRID).at(x + GridUtility::PAD_GRID) =
                         findCellBestFit(normalCellShape, detailCellShape, x, y, GridUtility::PAD_GRID, mainImages, lib, m_bestFits.at(step));
+                    timingLogger.StopTiming("findCellBestFit");
                 }
 
                 //Increment progress bar
                 m_progress += progressStep;
                 emit progress(m_progress);
             }
+            timingLogger.StopTiming("XLoop");
         }
+        timingLogger.StopTiming("YLoop");
 
         //Resize for next step
         if ((step + 1) < m_bestFits.size())
@@ -74,8 +95,13 @@ bool CPUPhotomosaicGenerator::generateBestFits()
             ImageUtility::batchResizeMat(lib);
         }
     }
+    timingLogger.StopTiming("StepLoop");
 
-    return true;
+    timingLogger.StopTiming("generateBestFits");
+    timingLogger.StopAllTiming();
+    timingLogger.LogTiming();
+
+    return !m_wasCanceled;
 }
 
 //Returns best fit index for cell if it is the grid

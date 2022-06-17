@@ -62,7 +62,9 @@ protected:
 
     ::testing::AssertionResult TestBestFitsConsistency()
     {
-        TimingLogger::SetSubdir(::testing::UnitTest::GetInstance()->current_test_info()->name());
+        //Tell TimingLogger to output files to subdir %test_suite_name%/%test_case_name%
+        QString testSuite(::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name());
+        TimingLogger::SetSubdir(testSuite + "/" + ::testing::UnitTest::GetInstance()->current_test_info()->name());
 
         GridUtility::MosaicBestFit lastBestFit;
         for (size_t i = 0; i < TST_Generator::ITERATIONS; ++i)
@@ -159,7 +161,9 @@ protected:
 
     ::testing::AssertionResult TestCompare()
     {
-        TimingLogger::SetSubdir(::testing::UnitTest::GetInstance()->current_test_info()->name());
+        //Tell TimingLogger to output files to subdir %test_suite_name%/%test_case_name%
+        QString testSuite(::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name());
+        TimingLogger::SetSubdir(testSuite + "/" + ::testing::UnitTest::GetInstance()->current_test_info()->name());
 
         //Create folder for saving photomosaics
         QDir resultFolder(QDir::currentPath() + "/testcases/generator");

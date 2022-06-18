@@ -27,61 +27,58 @@ ColourDifference::FunctionType ColourDifference::getFunction(const Type& t_type)
 //Calculates difference between two colours using Euclidean distance
 double ColourDifference::calculateRGBEuclidean(const cv::Vec3d &t_first, const cv::Vec3d &t_second)
 {
-    return sqrt(pow(t_first[0] - t_second[0], 2) +
-                pow(t_first[1] - t_second[1], 2) +
-                pow(t_first[2] - t_second[2], 2));
+    return sqrt((t_first[0] - t_second[0]) * (t_first[0] - t_second[0]) +
+                (t_first[1] - t_second[1]) * (t_first[1] - t_second[1]) +
+                (t_first[2] - t_second[2]) * (t_first[2] - t_second[2]));
 }
 
 //Converts degrees to radians
 constexpr double ColourDifference::degToRad(const double deg)
 {
-    return (deg * M_PI) / 180;
+    return (deg * M_PI) / 180.0;
 }
 
 //Calculates difference between two CIELAB value using CIEDE2000
 double ColourDifference::calculateCIEDE2000(const cv::Vec3d &t_first, const cv::Vec3d &t_second)
 {
-    const double k_L = 1.0, k_C = 1.0, k_H = 1.0;
     constexpr double deg360InRad = degToRad(360.0);
     constexpr double deg180InRad = degToRad(180.0);
     const double pow25To7 = 6103515625.0; //pow(25, 7)
 
-    const double C1 = sqrt((t_first[1] * t_first[1]) +
-                           (t_first[2] * t_first[2]));
-    const double C2 = sqrt((t_second[1] * t_second[1]) +
-                           (t_second[2] * t_second[2]));
+    const double C1 = sqrt((t_first[1] * t_first[1]) + (t_first[2] * t_first[2]));
+    const double C2 = sqrt((t_second[1] * t_second[1]) + (t_second[2] * t_second[2]));
     const double barC = (C1 + C2) / 2.0;
 
-    const double G = 0.5 * (1 - sqrt(pow(barC, 7) / (pow(barC, 7) + pow25To7)));
+    const double barCPow7 = barC * barC * barC * barC * barC * barC * barC;
+    const double G = 0.5 * (1.0 - sqrt(barCPow7 / (barCPow7 + pow25To7)));
 
     const double a1Prime = (1.0 + G) * t_first[1];
     const double a2Prime = (1.0 + G) * t_second[1];
 
-    const double CPrime1 = sqrt((a1Prime * a1Prime) +
-                                (t_first[2] * t_first[2]));
-    const double CPrime2 = sqrt((a2Prime * a2Prime) +(t_second[2] * t_second[2]));
+    const double CPrime1 = sqrt((a1Prime * a1Prime) + (t_first[2] * t_first[2]));
+    const double CPrime2 = sqrt((a2Prime * a2Prime) + (t_second[2] * t_second[2]));
 
     double hPrime1;
-    if (t_first[2] == 0 && a1Prime == 0.0)
+    if (t_first[2] == 0.0 && a1Prime == 0.0)
         hPrime1 = 0.0;
     else
     {
         hPrime1 = atan2(t_first[2], a1Prime);
         //This must be converted to a hue angle in degrees between 0 and 360 by
         //addition of 2 pi to negative hue angles.
-        if (hPrime1 < 0)
+        if (hPrime1 < 0.0)
             hPrime1 += deg360InRad;
     }
 
     double hPrime2;
-    if (t_second[2] == 0 && a2Prime == 0.0)
+    if (t_second[2] == 0.0 && a2Prime == 0.0)
         hPrime2 = 0.0;
     else
     {
         hPrime2 = atan2(t_second[2], a2Prime);
         //This must be converted to a hue angle in degrees between 0 and 360 by
         //addition of 2pi to negative hue angles.
-        if (hPrime2 < 0)
+        if (hPrime2 < 0.0)
             hPrime2 += deg360InRad;
     }
 
@@ -91,7 +88,7 @@ double ColourDifference::calculateCIEDE2000(const cv::Vec3d &t_first, const cv::
     double deltahPrime;
     const double CPrimeProduct = CPrime1 * CPrime2;
     if (CPrimeProduct == 0.0)
-        deltahPrime = 0;
+        deltahPrime = 0.0;
     else
     {
         //Avoid the fabs() call
@@ -129,24 +126,35 @@ double ColourDifference::calculateCIEDE2000(const cv::Vec3d &t_first, const cv::
                      (0.32 * cos((3.0 * barhPrime) + degToRad(6.0))) -
                      (0.20 * cos((4.0 * barhPrime) - degToRad(63.0)));
 
+    //((a-b)/c)^2 = ((a-b)/c) * ((a-b)/c) = ((a-b) * (a-b)) / (c * c) = (a * a - 2ab + b * b) / (c * c)
+    // = (a * (a - 2b) + b * b) / (c * c), b and c are constexpr so will be simplified by compiler:
+    // = (a * (a - d) + e) / f, d = 2b, e = b * b, f = c * c
     const double deltaTheta = degToRad(30.0) *
-                              exp(-pow((barhPrime - degToRad(275.0)) / degToRad(25.0), 2.0));
+        exp(-((barhPrime * (barhPrime - degToRad(550.0)) + (degToRad(275.0) * degToRad(275.0))) / (degToRad(25.0) * degToRad(25.0))));
 
-    const double R_C = 2.0 * sqrt(pow(barCPrime, 7.0) /
-                                  (pow(barCPrime, 7.0) + pow25To7));
+    const double barCPrimePow7 = barCPrime * barCPrime * barCPrime * barCPrime * barCPrime * barCPrime * barCPrime;
+    const double R_C = 2.0 * sqrt(barCPrimePow7 / (barCPrimePow7 + pow25To7));
 
-    const double S_L = 1 + ((0.015 * pow(barLPrime - 50.0, 2.0)) /
-                            sqrt(20 + pow(barLPrime - 50.0, 2.0)));
-    const double S_C = 1 + (0.045 * barCPrime);
-    const double S_H = 1 + (0.015 * barCPrime * T);
+    const double S_L = 1.0 + ((0.015 * (barLPrime * (barLPrime - 100.0) + 2500.0)) /
+        sqrt(20 + barLPrime * (barLPrime - 100.0) + 2500.0));
+    const double S_C = 1.0 + (0.045 * barCPrime);
+    const double S_H = 1.0 + (0.015 * barCPrime * T);
 
     const double R_T = (-sin(2.0 * deltaTheta)) * R_C;
 
 
+    /*constexpr double k_L = 1.0, k_C = 1.0, k_H = 1.0;
     return sqrt(pow(deltaLPrime / (k_L * S_L), 2.0) +
                 pow(deltaCPrime / (k_C * S_C), 2.0) +
                 pow(deltaHPrime / (k_H * S_H), 2.0) +
-                (R_T * (deltaCPrime / (k_C * S_C)) * (deltaHPrime / (k_H * S_H))));
+            (R_T * (deltaCPrime / (k_C * S_C)) *
+                   (deltaHPrime / (k_H * S_H))));*/
+
+    return sqrt((deltaLPrime * deltaLPrime) / (S_L * S_L) +
+        (deltaCPrime * deltaCPrime) / (S_C * S_C) +
+        (deltaHPrime * deltaHPrime) / (S_H * S_H) +
+        (R_T * (deltaCPrime / S_C) *
+            (deltaHPrime / S_H)));
 }
 
 #ifdef CUDA

@@ -266,7 +266,7 @@ public:
 #endif
 	}
 
-	void StartTiming(const std::string &t_id)
+	void StartTiming([[maybe_unused]] const std::string &t_id)
 	{
 #ifdef TIMING_LOGGER
 		std::shared_ptr<TimingInfo> newInfo = std::make_shared<TimingInfo>(t_id, m_latestActiveInfo);
@@ -280,7 +280,7 @@ public:
 #endif
 	}
 
-	void StopTiming(const std::string &t_id)
+	void StopTiming([[maybe_unused]] const std::string &t_id)
 	{
 #ifdef TIMING_LOGGER
 		std::shared_ptr<TimingInfo> activeInfo = m_latestActiveInfo.lock();
@@ -309,7 +309,7 @@ public:
 #endif
 	}
 
-	static void SetSubdir(const QString &t_subdir)
+	static void SetSubdir([[maybe_unused]] const QString &t_subdir)
 	{
 #ifdef TIMING_LOGGER
 		outputSubdir = t_subdir;

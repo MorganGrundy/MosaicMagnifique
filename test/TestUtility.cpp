@@ -38,6 +38,7 @@ std::vector<T> TestUtility::createRandom(const size_t count, const std::vector<s
 
 //Explicit instantiation of templates
 template std::vector<float> TestUtility::createRandom<float>(const size_t count, const std::vector<std::pair<float, float>> ranges);
+template std::vector<double> TestUtility::createRandom<double>(const size_t count, const std::vector<std::pair<double, double>> ranges);
 
 
 //Compares a vector of OpenCV mat against a vector of OpenCV CUDA GpuMat

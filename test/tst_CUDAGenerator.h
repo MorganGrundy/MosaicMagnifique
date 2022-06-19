@@ -445,6 +445,79 @@ TEST_F(CUDAGeneratorFixture, CONSISTENCY_CIEDE2000_Cell_Shapes)
     ASSERT_TRUE(TestBestFitsConsistency());
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//**************************************** COLOUR SCHEME *****************************************//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST_F(CUDAGeneratorFixture, CONSISTENCY_SCHEME_ANALAGOUS)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::ANALAGOUS);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
+    LoadImageLibrary();
+    LoadRandomImage(0.5);
+
+    ASSERT_TRUE(TestBestFitsConsistency());
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST_F(CUDAGeneratorFixture, CONSISTENCY_SCHEME_COMPLEMENTARY)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::COMPLEMENTARY);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
+    LoadImageLibrary();
+    LoadRandomImage(0.5);
+
+    ASSERT_TRUE(TestBestFitsConsistency());
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST_F(CUDAGeneratorFixture, CONSISTENCY_SCHEME_COMPOUND)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::COMPOUND);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
+    LoadImageLibrary();
+    LoadRandomImage(0.5);
+
+    ASSERT_TRUE(TestBestFitsConsistency());
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST_F(CUDAGeneratorFixture, CONSISTENCY_SCHEME_TETRADIC)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::TETRADIC);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
+    LoadImageLibrary();
+    LoadRandomImage(0.5);
+
+    ASSERT_TRUE(TestBestFitsConsistency());
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST_F(CUDAGeneratorFixture, CONSISTENCY_SCHEME_TRIADIC)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::TRIADIC);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
+    LoadImageLibrary();
+    LoadRandomImage(0.5);
+
+    ASSERT_TRUE(TestBestFitsConsistency());
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //************************************** DETAIL CPU vs CUDA **************************************//
@@ -670,6 +743,80 @@ TEST_F(CPUvsCUDAGeneratorFixture, COMPARE_CIEDE2000_Cell_Shapes)
     setColourScheme(ColourScheme::Type::NONE);
     setRepeat(0, 0);
     CreateHexagonCellGroup(128, 0, 50);
+    LoadImageLibrary();
+
+    ASSERT_TRUE(TestCompare());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//**************************************** COLOUR SCHEME *****************************************//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//Generates photomosaic best fits using identical settings with and without CUDA
+//Expects the best fits to be identical
+//Tests with multiple main images
+TEST_F(CPUvsCUDAGeneratorFixture, COMPARE_SCHEME_ANALAGOUS)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::ANALAGOUS);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
+    LoadImageLibrary();
+
+    ASSERT_TRUE(TestCompare());
+}
+
+//Generates photomosaic best fits using identical settings with and without CUDA
+//Expects the best fits to be identical
+//Tests with multiple main images
+TEST_F(CPUvsCUDAGeneratorFixture, COMPARE_SCHEME_COMPLEMENTARY)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::COMPLEMENTARY);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
+    LoadImageLibrary();
+
+    ASSERT_TRUE(TestCompare());
+}
+
+//Generates photomosaic best fits using identical settings with and without CUDA
+//Expects the best fits to be identical
+//Tests with multiple main images
+TEST_F(CPUvsCUDAGeneratorFixture, COMPARE_SCHEME_COMPOUND)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::COMPOUND);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
+    LoadImageLibrary();
+
+    ASSERT_TRUE(TestCompare());
+}
+
+//Generates photomosaic best fits using identical settings with and without CUDA
+//Expects the best fits to be identical
+//Tests with multiple main images
+TEST_F(CPUvsCUDAGeneratorFixture, COMPARE_SCHEME_TETRADIC)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::TETRADIC);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
+    LoadImageLibrary();
+
+    ASSERT_TRUE(TestCompare());
+}
+
+//Generates photomosaic best fits using identical settings with and without CUDA
+//Expects the best fits to be identical
+//Tests with multiple main images
+TEST_F(CPUvsCUDAGeneratorFixture, COMPARE_SCHEME_TRIADIC)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::TRIADIC);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
     LoadImageLibrary();
 
     ASSERT_TRUE(TestCompare());

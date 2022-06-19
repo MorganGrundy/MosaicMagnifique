@@ -16,6 +16,9 @@
     You should have received a copy of the GNU General Public License
     along with Mosaic Magnifique.  If not, see <https://www.gnu.org/licenses/>.
 */
+#ifndef __CUDACC__ 
+#define __CUDACC__
+#endif
 
 #include <math_constants.h>
 #include <algorithm>
@@ -32,7 +35,7 @@
 template<p_dfColourDifference func>
 __global__
 void imageDifference(float *im_1, float *im_2, unsigned char *im_mask,
-                     size_t size, double *variants)
+                     const size_t size, double *variants)
 {
     const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
     const size_t stride = blockDim.x * gridDim.x;
@@ -50,7 +53,7 @@ void imageDifference(float *im_1, float *im_2, unsigned char *im_mask,
 template<p_dfColourDifference func>
 __global__
 void imageDifferenceEdge(float *im_1, float *im_2, unsigned char *mask_im,
-                         size_t size, size_t *target_area, double *variants)
+                         const size_t size, size_t *target_area, double *variants)
 {
     const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
     const size_t stride = blockDim.x * gridDim.x;
@@ -69,18 +72,17 @@ void imageDifferenceEdge(float *im_1, float *im_2, unsigned char *mask_im,
 }
 
 //Explicit instantiation of templates
-template __global__ void imageDifference<euclideanDifference>(float *im_1, float *im_2, unsigned char *im_mask, size_t size, double *variants);
-template __global__ void imageDifference<CIEDE2000Difference>(float *im_1, float *im_2, unsigned char *im_mask, size_t size, double *variants);
-template __global__ void imageDifferenceEdge<euclideanDifference>(float *im_1, float *im_2, unsigned char *im_mask, size_t size, size_t *target_area, double *variants);
-template __global__ void imageDifferenceEdge<CIEDE2000Difference>(float *im_1, float *im_2, unsigned char *im_mask, size_t size, size_t *target_area, double *variants);
+template __global__ void imageDifference<euclideanDifference>(float *im_1, float *im_2, unsigned char *im_mask, const size_t size, double *variants);
+template __global__ void imageDifference<CIEDE2000Difference>(float *im_1, float *im_2, unsigned char *im_mask, const size_t size, double *variants);
+template __global__ void imageDifferenceEdge<euclideanDifference>(float *im_1, float *im_2, unsigned char *im_mask, const size_t size, size_t *target_area, double *variants);
+template __global__ void imageDifferenceEdge<CIEDE2000Difference>(float *im_1, float *im_2, unsigned char *im_mask, const size_t size, size_t *target_area, double *variants);
 
 //Wrapper for imageDifference kernel with euclideanDifference kernel
 //target_area is unused, it is just there so the function parameters match the edge case one
 void euclideanDifferenceKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
-                                      size_t size, size_t *target_area, double *variants,
-                                      size_t blockSize, cudaStream_t stream)
+                                      const size_t size, [[maybe_unused]]size_t *target_area, double *variants,
+                                      const size_t blockSize, cudaStream_t stream)
 {
-    //dim3 dimBlock(blockSize, blockSize);
     const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
     imageDifference<euclideanDifference><<<static_cast<unsigned int>(numBlocks),
                                static_cast<unsigned int>(blockSize),
@@ -89,8 +91,8 @@ void euclideanDifferenceKernelWrapper(float *main_im, float *lib_im, unsigned ch
 
 //Wrapper for imageDifference kernel with euclideanDifference kernel
 void euclideanDifferenceEdgeKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
-                                          size_t size, size_t *target_area, double *variants,
-                                          size_t blockSize, cudaStream_t stream)
+                                          const size_t size, size_t *target_area, double *variants,
+                                          const size_t blockSize, cudaStream_t stream)
 {
     const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
     imageDifferenceEdge<euclideanDifference><<<static_cast<unsigned int>(numBlocks),
@@ -101,8 +103,8 @@ void euclideanDifferenceEdgeKernelWrapper(float *main_im, float *lib_im, unsigne
 //Wrapper for imageDifference kernel with CIEDE2000Difference kernel
 //target_area is unused, it is just there so the function parameters match the edge case one
 void CIEDE2000DifferenceKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
-                                      size_t size, size_t *target_area, double *variants,
-                                      size_t blockSize, cudaStream_t stream)
+                                      const size_t size, [[maybe_unused]]size_t *target_area, double *variants,
+                                      const size_t blockSize, cudaStream_t stream)
 {
     const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
     imageDifference<CIEDE2000Difference><<<static_cast<unsigned int>(numBlocks),
@@ -112,8 +114,8 @@ void CIEDE2000DifferenceKernelWrapper(float *main_im, float *lib_im, unsigned ch
 
 //Wrapper for imageDifference kernel with CIEDE2000Difference kernel
 void CIEDE2000DifferenceEdgeKernelWrapper(float *main_im, float *lib_im, unsigned char *mask_im,
-                                          size_t size, size_t *target_area, double *variants,
-                                          size_t blockSize, cudaStream_t stream)
+                                          const size_t size, size_t *target_area, double *variants,
+                                          const size_t blockSize, cudaStream_t stream)
 {
     const size_t numBlocks = (size * size + blockSize - 1) / blockSize;
     imageDifferenceEdge<CIEDE2000Difference><<<static_cast<unsigned int>(numBlocks),
@@ -123,7 +125,7 @@ void CIEDE2000DifferenceEdgeKernelWrapper(float *main_im, float *lib_im, unsigne
 
 //Calculates repeats in range and adds to variants
 __global__
-void calculateRepeats(double *variants,
+void calculateRepeats(double **variants, size_t noMainImage,
                      size_t *bestFit, const size_t bestFitMax, const size_t gridWidth,
                      const int leftRange, const int rightRange, const int upRange,
                      const size_t repeatAddition)
@@ -133,18 +135,25 @@ void calculateRepeats(double *variants,
         for (int x = -leftRange; x <= rightRange; ++x)
         {
             if (bestFit[y * gridWidth + x] < bestFitMax)
-                variants[bestFit[y * gridWidth + x]] += repeatAddition;
+            {
+                for (size_t mainI = 0; mainI < noMainImage; ++mainI)
+                    variants[mainI][bestFit[y * gridWidth + x]] += repeatAddition;
+            }
         }
     }
     for (int x = -leftRange; x < 0; ++x)
     {
         if (bestFit[x] < bestFitMax)
-            variants[bestFit[x]] += repeatAddition;
+        {
+            for (size_t mainI = 0; mainI < noMainImage; ++mainI)
+                variants[mainI][bestFit[x]] += repeatAddition;
+        }
     }
 }
 
 //Wrapper for calculate repeats kernel
-void calculateRepeatsKernelWrapper(double *variants,
+//Calculates repeats in range and adds to variants
+void calculateRepeatsKernelWrapper(double **variants, size_t noMainImage,
                                    size_t *bestFit, const size_t bestFitMax,
                                    const size_t gridWidth, const int x, const int y,
                                    const int padGrid,
@@ -156,7 +165,7 @@ void calculateRepeatsKernelWrapper(double *variants,
     const int leftRange = static_cast<int>(std::min(repeatRange, paddedX));
     const int rightRange = static_cast<int>(std::min(repeatRange, gridWidth - paddedX - 1));
     const int upRange = static_cast<int>(std::min(repeatRange, paddedY));
-    calculateRepeats<<<1, 1>>>(variants,
+    calculateRepeats<<<1, 1>>>(variants, noMainImage,
                                bestFit + paddedY * gridWidth + paddedX, bestFitMax, gridWidth,
                                leftRange, rightRange, upRange,
                                repeatAddition);
@@ -164,20 +173,52 @@ void calculateRepeatsKernelWrapper(double *variants,
 
 //Finds lowest value in variants
 __global__
-void findLowestKernel(double *lowestVariant, size_t *bestFit, double *variants, size_t noLibIm)
+void findLowestKernel(double *lowestVariant, size_t *bestFit, double **variants, const size_t noLibIm, const size_t noMainImage)
 {
-    for (size_t i = 0; i < noLibIm; ++i)
+    for (size_t mainI = 0; mainI < noMainImage; ++mainI)
     {
-        if (variants[i] < *lowestVariant)
+        for (size_t libI = 0; libI < noLibIm; ++libI)
         {
-            *lowestVariant = variants[i];
-            *bestFit = i;
+            if (variants[mainI][libI] < *lowestVariant)
+            {
+                *lowestVariant = variants[mainI][libI];
+                *bestFit = libI;
+            }
         }
     }
 }
 
 //Wrapper for find lowest kernel
-void findLowestKernelWrapper(double *lowestVariant, size_t *bestFit, double *variants, size_t noLibIm)
+//Finds lowest value in variants
+void findLowestKernelWrapper(double *lowestVariant, size_t *bestFit, double **variants, const size_t noLibIm, const size_t noMainImage)
 {
-    findLowestKernel<<<1, 1>>>(lowestVariant, bestFit, variants, noLibIm);
+    findLowestKernel<<<1, 1>>>(lowestVariant, bestFit, variants, noLibIm, noMainImage);
+}
+
+//Flattens size elements that have spacing elements between them
+//Grid x size should be set to size of the first dim of data
+//Block x size should be set to at most spacing
+__global__
+void flattenKernel(double **data, const size_t size, const size_t spacing)
+{
+    for (size_t i = threadIdx.x; i < size; i += blockDim.x)
+    {
+        data[blockIdx.x][i] = data[blockIdx.x][i * spacing];
+        __syncthreads();
+    }
+}
+
+//Wrapper for flatten kernel
+//Flattens size elements that have spacing elements between them
+//Grid x size should be set to size of the first dim of data
+//Block x size should be set to at most spacing
+void flattenKernelWrapper(double **data, const size_t noMainImage, const size_t size, const size_t spacing, const size_t maxBlockSize)
+{
+    //Only need to flatten if spacing is > 1
+    if (spacing > 1)
+    {
+        const size_t blockSize = std::min(maxBlockSize, spacing);
+        flattenKernel<<<static_cast<unsigned int>(noMainImage),
+            static_cast<unsigned int>(blockSize)>>>(data, size, spacing);
+    }
 }

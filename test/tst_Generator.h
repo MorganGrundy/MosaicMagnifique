@@ -231,7 +231,7 @@ TEST_F(GeneratorFixture, CONSISTENCY_CIEDE2000_Detail_50)
 
 //Generates photomosaic best fits using identical settings multiple times
 //Expects all the best fits to be identical
-TEST_F(GeneratorFixture, CONSISTENCY_RGB_EUCLIDEAN_Detail_50_Repeats)
+TEST_F(GeneratorFixture, CONSISTENCY_RGB_EUCLIDEAN_Repeats)
 {
     setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
     setColourScheme(ColourScheme::Type::NONE);
@@ -245,7 +245,7 @@ TEST_F(GeneratorFixture, CONSISTENCY_RGB_EUCLIDEAN_Detail_50_Repeats)
 
 //Generates photomosaic best fits using identical settings multiple times
 //Expects all the best fits to be identical
-TEST_F(GeneratorFixture, CONSISTENCY_CIE76_Detail_50_Repeats)
+TEST_F(GeneratorFixture, CONSISTENCY_CIE76_Repeats)
 {
     setColourDifference(ColourDifference::Type::CIE76);
     setColourScheme(ColourScheme::Type::NONE);
@@ -259,7 +259,7 @@ TEST_F(GeneratorFixture, CONSISTENCY_CIE76_Detail_50_Repeats)
 
 //Generates photomosaic best fits using identical settings multiple times
 //Expects all the best fits to be identical
-TEST_F(GeneratorFixture, CONSISTENCY_CIEDE2000_Detail_50_Repeats)
+TEST_F(GeneratorFixture, CONSISTENCY_CIEDE2000_Repeats)
 {
     setColourDifference(ColourDifference::Type::CIEDE2000);
     setColourScheme(ColourScheme::Type::NONE);
@@ -270,7 +270,6 @@ TEST_F(GeneratorFixture, CONSISTENCY_CIEDE2000_Detail_50_Repeats)
 
     ASSERT_TRUE(TestBestFitsConsistency());
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //****************************************** SIZE STEPS ******************************************//
@@ -359,6 +358,80 @@ TEST_F(GeneratorFixture, CONSISTENCY_CIEDE2000_Cell_Shapes)
     setColourScheme(ColourScheme::Type::NONE);
     setRepeat(0, 0);
     CreateHexagonCellGroup(128, 0, 50);
+    LoadImageLibrary();
+    LoadRandomImage(0.5);
+
+    ASSERT_TRUE(TestBestFitsConsistency());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//**************************************** COLOUR SCHEME *****************************************//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST_F(GeneratorFixture, CONSISTENCY_SCHEME_ANALAGOUS)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::ANALAGOUS);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
+    LoadImageLibrary();
+    LoadRandomImage(0.5);
+
+    ASSERT_TRUE(TestBestFitsConsistency());
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST_F(GeneratorFixture, CONSISTENCY_SCHEME_COMPLEMENTARY)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::COMPLEMENTARY);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
+    LoadImageLibrary();
+    LoadRandomImage(0.5);
+
+    ASSERT_TRUE(TestBestFitsConsistency());
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST_F(GeneratorFixture, CONSISTENCY_SCHEME_COMPOUND)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::COMPOUND);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
+    LoadImageLibrary();
+    LoadRandomImage(0.5);
+
+    ASSERT_TRUE(TestBestFitsConsistency());
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST_F(GeneratorFixture, CONSISTENCY_SCHEME_TETRADIC)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::TETRADIC);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
+    LoadImageLibrary();
+    LoadRandomImage(0.5);
+
+    ASSERT_TRUE(TestBestFitsConsistency());
+}
+
+//Generates photomosaic best fits using identical settings multiple times
+//Expects all the best fits to be identical
+TEST_F(GeneratorFixture, CONSISTENCY_SCHEME_TRIADIC)
+{
+    setColourDifference(ColourDifference::Type::RGB_EUCLIDEAN);
+    setColourScheme(ColourScheme::Type::TRIADIC);
+    setRepeat(0, 0);
+    CreateCellGroup(128, 0, 50);
     LoadImageLibrary();
     LoadRandomImage(0.5);
 

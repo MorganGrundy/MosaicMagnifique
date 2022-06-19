@@ -32,17 +32,23 @@ TEST(CUDAKernel, CalculateRepeats)
     gpuErrchk(cudaMemcpy(d_bestFit, bestFit, size * size * sizeof(size_t), cudaMemcpyHostToDevice));
 
     //Create variants
-    double variants[noLibraryImages];
-    for (size_t i = 0; i < noLibraryImages; ++i)
-        variants[i] = TestUtility::randNum<float>(0, 100);
-    double *d_variants;
-    gpuErrchk(cudaMalloc((void **)&d_variants, noLibraryImages * sizeof(double)));
-    gpuErrchk(cudaMemcpy(d_variants, variants, noLibraryImages * sizeof(double),
-                         cudaMemcpyHostToDevice));
+    const size_t noMainImage = 2;
+    std::vector<std::vector<double>> h_hVariants(noMainImage);
+    for (size_t i = 0; i < noMainImage; ++i)
+        h_hVariants.at(i) = TestUtility::createRandom<double>(noLibraryImages, { {0, 100} });
+    std::vector<double *> h_dVariants(noMainImage);
+    for (size_t i = 0; i < noMainImage; ++i)
+    {
+        gpuErrchk(cudaMalloc((void **)&h_dVariants.at(i), noLibraryImages * sizeof(double)));
+        gpuErrchk(cudaMemcpy(h_dVariants.at(i), h_hVariants.at(i).data(), noLibraryImages * sizeof(double), cudaMemcpyHostToDevice));
+    }
+    double **d_dVariants;
+    gpuErrchk(cudaMalloc((void **)&d_dVariants, noMainImage * sizeof(double *)));
+    gpuErrchk(cudaMemcpy(d_dVariants, h_dVariants.data(), noMainImage * sizeof(double *), cudaMemcpyHostToDevice));
 
     int cellY = 2, cellX = 2;
     //Calculate repeats at cell position (2, 2) with CUDA kernel
-    calculateRepeatsKernelWrapper(d_variants,
+    calculateRepeatsKernelWrapper(d_dVariants, noMainImage,
                                   d_bestFit, noLibraryImages,
                                   size, cellX, cellY,
                                   0,
@@ -51,12 +57,16 @@ TEST(CUDAKernel, CalculateRepeats)
     gpuErrchk(cudaDeviceSynchronize());
 
     //Create results
-    double CUDAResults[noLibraryImages];
-    gpuErrchk(cudaMemcpy(CUDAResults, d_variants, noLibraryImages * sizeof(double),
-                         cudaMemcpyDeviceToHost));
+    std::vector<double *> h_dCUDAResults(noMainImage);
+    gpuErrchk(cudaMemcpy(h_dCUDAResults.data(), d_dVariants, noMainImage * sizeof(double *), cudaMemcpyDeviceToHost));
+    std::vector<std::vector<double>> h_hCUDAResults(noMainImage, std::vector<double>(noLibraryImages, 0));
+    for (size_t i = 0; i < noMainImage; ++i)
+        gpuErrchk(cudaMemcpy(h_hCUDAResults.at(i).data(), h_dCUDAResults.at(i), noLibraryImages * sizeof(double), cudaMemcpyDeviceToHost));
 
     gpuErrchk(cudaFree(d_bestFit));
-    gpuErrchk(cudaFree(d_variants));
+    gpuErrchk(cudaFree(d_dVariants));
+    for (size_t i = 0; i < noMainImage; ++i)
+        gpuErrchk(cudaFree(h_dVariants.at(i)));
 
     //Calculate repeats at cell position without CUDA
     size_t cellPosition = cellY * size + cellX;
@@ -68,7 +78,10 @@ TEST(CUDAKernel, CalculateRepeats)
         {
             size_t cellIndex = y * size + x;
             if (cellIndex < cellPosition)
-                variants[bestFit[cellIndex]] += repeatAddition;
+            {
+                for (size_t mainI = 0; mainI < noMainImage; ++mainI)
+                    h_hVariants[mainI][bestFit[cellIndex]] += repeatAddition;
+            }
             else
                 break;
         }
@@ -77,8 +90,9 @@ TEST(CUDAKernel, CalculateRepeats)
     }
 
     //Compare results
-    for (size_t i = 0; i < noLibraryImages; ++i)
-        ASSERT_TRUE(CUDAResults[i] == variants[i]);
+    for (size_t libI = 0; libI < noLibraryImages; ++libI)
+        for (size_t mainI = 0; mainI < noMainImage; ++mainI)
+            ASSERT_EQ(h_hCUDAResults.at(mainI).at(libI), h_hVariants.at(mainI).at(libI)) << "Lib " << libI << ", Main " << mainI;
 }
 
 TEST(CUDAKernel, FindLowest)
@@ -100,16 +114,22 @@ TEST(CUDAKernel, FindLowest)
     gpuErrchk(cudaMemcpy(d_bestFit, &bestFit, sizeof(size_t), cudaMemcpyHostToDevice));
 
     //Create variants
-    double variants[noLibraryImages];
-    for (size_t i = 0; i < noLibraryImages; ++i)
-        variants[i] = TestUtility::randNum<float>(0, 1000);
-    double *d_variants;
-    gpuErrchk(cudaMalloc((void **)&d_variants, noLibraryImages * sizeof(double)));
-    gpuErrchk(cudaMemcpy(d_variants, variants, noLibraryImages * sizeof(double),
-                         cudaMemcpyHostToDevice));
+    const size_t noMainImage = 2;
+    std::vector<std::vector<double>> h_hVariants(noMainImage);
+    for (size_t i = 0; i < noMainImage; ++i)
+        h_hVariants.at(i) = TestUtility::createRandom<double>(noLibraryImages, { {0, 1000} });
+    std::vector<double *> h_dVariants(noMainImage);
+    for (size_t i = 0; i < noMainImage; ++i)
+    {
+        gpuErrchk(cudaMalloc((void **)&h_dVariants.at(i), noLibraryImages * sizeof(double)));
+        gpuErrchk(cudaMemcpy(h_dVariants.at(i), h_hVariants.at(i).data(), noLibraryImages * sizeof(double), cudaMemcpyHostToDevice));
+    }
+    double **d_dVariants;
+    gpuErrchk(cudaMalloc((void **)&d_dVariants, noMainImage * sizeof(double *)));
+    gpuErrchk(cudaMemcpy(d_dVariants, h_dVariants.data(), noMainImage * sizeof(double *), cudaMemcpyHostToDevice));
 
     //Run find lowest kernel
-    findLowestKernelWrapper(d_lowestVariant, d_bestFit, d_variants, noLibraryImages);
+    findLowestKernelWrapper(d_lowestVariant, d_bestFit, d_dVariants, noLibraryImages, noMainImage);
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 
@@ -122,15 +142,20 @@ TEST(CUDAKernel, FindLowest)
 
     gpuErrchk(cudaFree(d_lowestVariant));
     gpuErrchk(cudaFree(d_bestFit));
-    gpuErrchk(cudaFree(d_variants));
+    gpuErrchk(cudaFree(d_dVariants));
+    for (size_t i = 0; i < noMainImage; ++i)
+        gpuErrchk(cudaFree(h_dVariants.at(i)));
 
     //Calculate find lowest on host
-    for (size_t i = 0; i < noLibraryImages; ++i)
+    for (size_t libI = 0; libI < noLibraryImages; ++libI)
     {
-        if (variants[i] < lowestVariant)
+        for (size_t mainI = 0; mainI < noMainImage; ++mainI)
         {
-            lowestVariant = variants[i];
-            bestFit = i;
+            if (h_hVariants.at(mainI).at(libI) < lowestVariant)
+            {
+                lowestVariant = h_hVariants.at(mainI).at(libI);
+                bestFit = libI;
+            }
         }
     }
 
@@ -182,6 +207,68 @@ TEST(CUDAKernel, AddReduction)
 
     //Compare results
     EXPECT_EQ(result, CUDAResult);
+}
+
+TEST(CUDAKernel, Flatten)
+{
+    srand(static_cast<unsigned int>(time(NULL)));
+
+    const size_t noLibraryImages = 1 << 14;
+    const size_t spacing = 5;
+
+    //Create variants
+    const size_t noMainImage = 2;
+    std::vector<std::vector<double>> h_hVariants(noMainImage, std::vector<double>(noLibraryImages * spacing, 0));
+    for (size_t mainI = 0; mainI < noMainImage; ++mainI)
+        for (size_t libI = 0; libI < noLibraryImages; ++libI)
+            h_hVariants.at(mainI).at(libI * spacing) = TestUtility::randNum<double>(0, 1000);
+    std::vector<double *> h_dVariants(noMainImage);
+    for (size_t i = 0; i < noMainImage; ++i)
+    {
+        gpuErrchk(cudaMalloc((void **)&h_dVariants.at(i), noLibraryImages * spacing * sizeof(double)));
+        gpuErrchk(cudaMemcpy(h_dVariants.at(i), h_hVariants.at(i).data(), noLibraryImages * spacing * sizeof(double), cudaMemcpyHostToDevice));
+    }
+    double **d_dVariants;
+    gpuErrchk(cudaMalloc((void **)&d_dVariants, noMainImage * sizeof(double *)));
+    gpuErrchk(cudaMemcpy(d_dVariants, h_dVariants.data(), noMainImage * sizeof(double *), cudaMemcpyHostToDevice));
+
+    //Get CUDA block size
+    cudaDeviceProp deviceProp;
+    gpuErrchk(cudaGetDeviceProperties(&deviceProp, 0));
+    const size_t blockSize = deviceProp.maxThreadsPerBlock;
+
+    flattenKernelWrapper(d_dVariants, noMainImage, noLibraryImages, spacing, blockSize);
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
+
+    //Create results
+    std::vector<double *> h_dCUDAResults(noMainImage);
+    gpuErrchk(cudaMemcpy(h_dCUDAResults.data(), d_dVariants, noMainImage * sizeof(double *), cudaMemcpyDeviceToHost));
+    std::vector<std::vector<double>> h_hCUDAResults(noMainImage, std::vector<double>(noLibraryImages * spacing, 0));
+    for (size_t i = 0; i < noMainImage; ++i)
+        gpuErrchk(cudaMemcpy(h_hCUDAResults.at(i).data(), h_dCUDAResults.at(i), noLibraryImages * spacing * sizeof(double), cudaMemcpyDeviceToHost));
+
+    gpuErrchk(cudaFree(d_dVariants));
+    for (size_t i = 0; i < noMainImage; ++i)
+        gpuErrchk(cudaFree(h_dVariants.at(i)));
+
+    //Flatten without CUDA
+    auto h_hCPUResults = h_hVariants;
+    for (size_t libI = 0; libI < noLibraryImages; ++libI)
+        for (size_t mainI = 0; mainI < noMainImage; ++mainI)
+            h_hCPUResults[mainI][libI] = h_hCPUResults[mainI][libI * spacing];
+
+    //Compare results
+    for (size_t libI = 0; libI < noLibraryImages; ++libI)
+    {
+        for (size_t mainI = 0; mainI < noMainImage; ++mainI)
+        {
+            auto cudaDist = std::distance(h_hVariants.at(mainI).cbegin(), std::find(h_hVariants.at(mainI).cbegin(), h_hVariants.at(mainI).cend(), h_hCUDAResults.at(mainI).at(libI)));
+            auto cpuDist = std::distance(h_hVariants.at(mainI).cbegin(), std::find(h_hVariants.at(mainI).cbegin(), h_hVariants.at(mainI).cend(), h_hCPUResults.at(mainI).at(libI)));
+            ASSERT_EQ(h_hCUDAResults.at(mainI).at(libI), h_hCPUResults.at(mainI).at(libI)) << "Lib " << libI << ", Main " << mainI <<
+                ", Came from " << cudaDist << " and " << cpuDist << " instead of " << libI * spacing;
+        }
+    }
 }
 
 #endif

@@ -51,6 +51,8 @@ MainWindow::MainWindow(QWidget *t_parent)
 {
     ui->setupUi(this);
 
+    setWindowIcon(QIcon(":/MosaicMagnifique.png"));
+
     //Populate colour difference and scheme combo boxes
     for (auto type : ColourDifference::Type_STR)
         ui->comboColourDifference->addItem(type);

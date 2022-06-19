@@ -1,0 +1,178 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;moc;h;def;odl;idl;res;</Extensions>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;moc;h;def;odl;idl;res;</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Grid">
+      <UniqueIdentifier>{af9c0f92-6957-4f1c-a6cc-7ff113500c03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cell Shape">
+      <UniqueIdentifier>{678bfff6-308e-4320-99c2-3dc9a006bf02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Photomosaic">
+      <UniqueIdentifier>{19b7503c-3dfa-4b34-9153-ab5b68270683}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Photomosaic\CUDA">
+      <UniqueIdentifier>{da3144e2-1e44-4c96-83ef-801c4c98f870}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Image Library">
+      <UniqueIdentifier>{45385a4e-8d4f-40dc-8095-75c97992e2fb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\Other\ImageUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\testutility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Photomosaic\ColourDifference.cpp">
+      <Filter>Photomosaic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Photomosaic\ColourScheme.cpp">
+      <Filter>Photomosaic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Photomosaic\CPUPhotomosaicGenerator.cpp">
+      <Filter>Photomosaic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Photomosaic\PhotomosaicGeneratorBase.cpp">
+      <Filter>Photomosaic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Photomosaic\CUDA\CUDAPhotomosaicGenerator.cpp">
+      <Filter>Photomosaic\CUDA</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ImageLibrary\ImageHistogramCompare.cpp">
+      <Filter>Image Library</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ImageLibrary\ImageLibrary.cpp">
+      <Filter>Image Library</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Grid\GridBounds.cpp">
+      <Filter>Grid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Grid\GridGenerator.cpp">
+      <Filter>Grid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Grid\GridUtility.cpp">
+      <Filter>Grid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\CellShape\CellGroup.cpp">
+      <Filter>Cell Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\CellShape\CellShape.cpp">
+      <Filter>Cell Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Grid\QuadTree.cpp">
+      <Filter>Grid</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\google-lib\googletest-master\googletest\src\gtest-all.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\Other\ImageUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Other\MatUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Benchmark_Generator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\testutility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Photomosaic\CUDA\CUDAUtility.h">
+      <Filter>Photomosaic\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Photomosaic\CUDA\PhotomosaicGenerator.cuh">
+      <Filter>Photomosaic\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Photomosaic\CUDA\Reduction.cuh">
+      <Filter>Photomosaic\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Photomosaic\CUDA\CUDAPhotomosaicGenerator.h">
+      <Filter>Photomosaic\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Photomosaic\ColourDifference.h">
+      <Filter>Photomosaic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Photomosaic\ColourScheme.h">
+      <Filter>Photomosaic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Photomosaic\CPUPhotomosaicGenerator.h">
+      <Filter>Photomosaic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ImageLibrary\ImageLibrary.h">
+      <Filter>Image Library</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ImageLibrary\ImageHistogramCompare.h">
+      <Filter>Image Library</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Grid\GridBounds.h">
+      <Filter>Grid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Grid\GridGenerator.h">
+      <Filter>Grid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Grid\GridUtility.h">
+      <Filter>Grid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\CellShape\CellGroup.h">
+      <Filter>Cell Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\CellShape\CellShape.h">
+      <Filter>Cell Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Grid\QuadTree.h">
+      <Filter>Grid</Filter>
+    </ClInclude>
+    <ClInclude Include="Benchmark_MathKernels.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MathKernels.cuh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\src\Photomosaic\CUDA\PhotomosaicGenerator.cu">
+      <Filter>Photomosaic\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\Photomosaic\CUDA\Reduction.cu">
+      <Filter>Photomosaic\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MathKernels.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="..\src\Photomosaic\PhotomosaicGeneratorBase.h">
+      <Filter>Photomosaic</Filter>
+    </QtMoc>
+  </ItemGroup>
+</Project>

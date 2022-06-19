@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <OpenCV-VersionDot>4.5.2</OpenCV-VersionDot>
+    <OpenCV-Version>452</OpenCV-Version>
+    <IsDebug>$([System.Text.RegularExpressions.Regex]::IsMatch($(Configuration), '[Dd]ebug'))</IsDebug>
+    <DebugSuffix Condition="'$(IsDebug)'">d</DebugSuffix>
+    <DebugSuffix Condition="!'$(IsDebug)'">
+    </DebugSuffix>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalDependencies>opencv_core$(OpenCV-Version)$(DebugSuffix).lib;opencv_imgcodecs$(OpenCV-Version)$(DebugSuffix).lib;opencv_imgproc$(OpenCV-Version)$(DebugSuffix).lib;opencv_features2d$(OpenCV-Version)$(DebugSuffix).lib;opencv_objdetect$(OpenCV-Version)$(DebugSuffix).lib;shell32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\OpenCV\opencv-$(OpenCV-VersionDot)\build\install\$(PlatformShortName)\vc16\lib</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="OpenCV-VersionDot">
+      <Value>$(OpenCV-VersionDot)</Value>
+    </BuildMacro>
+    <BuildMacro Include="OpenCV-Version">
+      <Value>$(OpenCV-Version)</Value>
+    </BuildMacro>
+    <BuildMacro Include="IsDebug">
+      <Value>$(IsDebug)</Value>
+    </BuildMacro>
+    <BuildMacro Include="DebugSuffix">
+      <Value>$(DebugSuffix)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

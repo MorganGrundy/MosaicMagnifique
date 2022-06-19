@@ -1,0 +1,16 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/
+/test/testcases/
+*.aps
+*.vcxproj.user
+build/
+Release*/
+Debug*/
+ui_*.h
+*.pdb
+/Library/medium-lib-v4.mil
+/Library/big-lib-v4.mil
+/test/release

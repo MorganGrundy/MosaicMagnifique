@@ -1,0 +1,281 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Form Files">
+      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
+      <Extensions>ui</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Form Files">
+      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
+      <Extensions>ui</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;moc;h;def;odl;idl;res;</Extensions>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;moc;h;def;odl;idl;res;</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{D9D6E242-F8AF-46E4-B9FD-80ECBC20BA3E}</UniqueIdentifier>
+      <Extensions>qrc;*</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{D9D6E242-F8AF-46E4-B9FD-80ECBC20BA3E}</UniqueIdentifier>
+      <Extensions>qrc;*</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Cell Shape">
+      <UniqueIdentifier>{2485bbed-33e6-4ac7-876b-4bee0bc0dbff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Grid">
+      <UniqueIdentifier>{1fe21b84-d8ec-4db7-bb9f-da1de378e6d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Image Library">
+      <UniqueIdentifier>{0f4fc8d1-dd4f-4c6a-b211-2233123afa08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Photomosaic">
+      <UniqueIdentifier>{4f76b278-0a78-4b24-84f4-3af7b14ff383}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Other\CropGraphicsObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Other\CustomGraphicsView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Other\ImageUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Other\Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Other\MainWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Other\Switch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CellShape\CellGroup.cpp">
+      <Filter>Cell Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="CellShape\CellShape.cpp">
+      <Filter>Cell Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="CellShape\CellShapeEditor.cpp">
+      <Filter>Cell Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="Photomosaic\ColourDifference.cpp">
+      <Filter>Photomosaic</Filter>
+    </ClCompile>
+    <ClCompile Include="Photomosaic\ColourScheme.cpp">
+      <Filter>Photomosaic</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageLibrary\ColourVisualisation.cpp">
+      <Filter>Image Library</Filter>
+    </ClCompile>
+    <ClCompile Include="Photomosaic\CPUPhotomosaicGenerator.cpp">
+      <Filter>Photomosaic</Filter>
+    </ClCompile>
+    <ClCompile Include="Photomosaic\PhotomosaicGeneratorBase.cpp">
+      <Filter>Photomosaic</Filter>
+    </ClCompile>
+    <ClCompile Include="Photomosaic\PhotomosaicViewer.cpp">
+      <Filter>Photomosaic</Filter>
+    </ClCompile>
+    <ClCompile Include="Grid\GridBounds.cpp">
+      <Filter>Grid</Filter>
+    </ClCompile>
+    <ClCompile Include="Grid\GridEditor.cpp">
+      <Filter>Grid</Filter>
+    </ClCompile>
+    <ClCompile Include="Grid\GridEditViewer.cpp">
+      <Filter>Grid</Filter>
+    </ClCompile>
+    <ClCompile Include="Grid\GridGenerator.cpp">
+      <Filter>Grid</Filter>
+    </ClCompile>
+    <ClCompile Include="Grid\GridUtility.cpp">
+      <Filter>Grid</Filter>
+    </ClCompile>
+    <ClCompile Include="Grid\GridViewer.cpp">
+      <Filter>Grid</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageLibrary\ImageLibrary.cpp">
+      <Filter>Image Library</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageLibrary\ImageLibraryEditor.cpp">
+      <Filter>Image Library</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageLibrary\ImageSquarer.cpp">
+      <Filter>Image Library</Filter>
+    </ClCompile>
+    <ClCompile Include="Grid\QuadTree.cpp">
+      <Filter>Grid</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageLibrary\ImageHistogramCompare.cpp">
+      <Filter>Image Library</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Other\CropGraphicsObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <QtMoc Include="Other\CustomGraphicsView.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <ClInclude Include="Other\ImageUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <QtMoc Include="Other\MainWindow.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="Other\Switch.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <ClInclude Include="Resources\resource.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Other\MatUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CellShape\CellGroup.h">
+      <Filter>Cell Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Grid\GridBounds.h">
+      <Filter>Grid</Filter>
+    </ClInclude>
+    <ClInclude Include="Grid\GridGenerator.h">
+      <Filter>Grid</Filter>
+    </ClInclude>
+    <ClInclude Include="Grid\GridUtility.h">
+      <Filter>Grid</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageLibrary\ImageLibrary.h">
+      <Filter>Image Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Grid\QuadTree.h">
+      <Filter>Grid</Filter>
+    </ClInclude>
+    <ClInclude Include="Photomosaic\CPUPhotomosaicGenerator.h">
+      <Filter>Photomosaic</Filter>
+    </ClInclude>
+    <ClInclude Include="Photomosaic\ColourScheme.h">
+      <Filter>Photomosaic</Filter>
+    </ClInclude>
+    <ClInclude Include="Photomosaic\ColourDifference.h">
+      <Filter>Photomosaic</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageLibrary\ImageHistogramCompare.h">
+      <Filter>Image Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Other\CustomQDataStream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="$(Configuration)-$(Platform)\moc_predefs.h.cbt" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="Other\MainWindow.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="CellShape\CellShapeEditor.ui">
+      <Filter>Cell Shape</Filter>
+    </QtUic>
+    <QtUic Include="ImageLibrary\ColourVisualisation.ui">
+      <Filter>Image Library</Filter>
+    </QtUic>
+    <QtUic Include="Grid\GridEditor.ui">
+      <Filter>Grid</Filter>
+    </QtUic>
+    <QtUic Include="ImageLibrary\ImageLibraryeditor.ui">
+      <Filter>Image Library</Filter>
+    </QtUic>
+    <QtUic Include="ImageLibrary\ImageSquarer.ui">
+      <Filter>Image Library</Filter>
+    </QtUic>
+    <QtUic Include="Photomosaic\PhotomosaicViewer.ui">
+      <Filter>Photomosaic</Filter>
+    </QtUic>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\LinkIcon.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\MosaicMagnifique.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\UnlinkIcon.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <QtRcc Include="Resources\ui.qrc">
+      <Filter>Resource Files</Filter>
+    </QtRcc>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resources\MosaicMagnifique_resource.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\MosaicMagnifique.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CellShape\CellShape.h">
+      <Filter>Cell Shape</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="CellShape\CellShapeEditor.h">
+      <Filter>Cell Shape</Filter>
+    </QtMoc>
+    <QtMoc Include="Grid\GridEditor.h">
+      <Filter>Grid</Filter>
+    </QtMoc>
+    <QtMoc Include="Grid\GridEditViewer.h">
+      <Filter>Grid</Filter>
+    </QtMoc>
+    <QtMoc Include="Grid\GridViewer.h">
+      <Filter>Grid</Filter>
+    </QtMoc>
+    <QtMoc Include="ImageLibrary\ImageLibraryeditor.h">
+      <Filter>Image Library</Filter>
+    </QtMoc>
+    <QtMoc Include="ImageLibrary\ImageSquarer.h">
+      <Filter>Image Library</Filter>
+    </QtMoc>
+    <QtMoc Include="ImageLibrary\ColourVisualisation.h">
+      <Filter>Image Library</Filter>
+    </QtMoc>
+    <QtMoc Include="Photomosaic\PhotomosaicViewer.h">
+      <Filter>Photomosaic</Filter>
+    </QtMoc>
+    <QtMoc Include="Photomosaic\PhotomosaicGeneratorBase.h">
+      <Filter>Photomosaic</Filter>
+    </QtMoc>
+  </ItemGroup>
+</Project>

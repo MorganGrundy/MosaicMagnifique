@@ -1,0 +1,356 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{0A3D46E8-E927-4953-BF92-EB4B7B8FFA5D}</ProjectGuid>
+    <RootNamespace>MosaicMagnifique</RootNamespace>
+    <Keyword>QtVS_v304</Keyword>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.18362.0</WindowsTargetPlatformMinVersion>
+    <QtMsBuild Condition="'$(QtMsBuild)'=='' or !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <PlatformToolset>v142</PlatformToolset>
+    <OutputDirectory>$(Configuration)-$(Platform)-CUDA\</OutputDirectory>
+    <ATLMinimizesCRunTimeLibraryUsage>false</ATLMinimizesCRunTimeLibraryUsage>
+    <CharacterSet>NotSet</CharacterSet>
+    <ConfigurationType>Application</ConfigurationType>
+    <IntermediateDirectory>$(Configuration)-$(Platform)-CUDA\</IntermediateDirectory>
+    <PrimaryOutput>MosaicMagnifique</PrimaryOutput>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <PlatformToolset>v142</PlatformToolset>
+    <OutputDirectory>$(Configuration)-$(Platform)-CUDA\</OutputDirectory>
+    <ATLMinimizesCRunTimeLibraryUsage>false</ATLMinimizesCRunTimeLibraryUsage>
+    <CharacterSet>NotSet</CharacterSet>
+    <ConfigurationType>Application</ConfigurationType>
+    <IntermediateDirectory>$(Configuration)-$(Platform)-CUDA\</IntermediateDirectory>
+    <PrimaryOutput>MosaicMagnifique</PrimaryOutput>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
+    <Message Importance="High" Text="QtMsBuild: could not locate qt.targets, qt.props; project may not build correctly." />
+  </Target>
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 10.1.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+    <Import Project="..\Shared.props" />
+    <Import Project="..\CUDA.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+    <Import Project="..\Shared.props" />
+    <Import Project="..\CUDA.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt_defaults.props')">
+    <Import Project="$(QtMsBuild)\qt_defaults.props" />
+  </ImportGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)\build\$(Configuration)-$(Platform)-CUDA\</OutDir>
+    <IntDir>$(Configuration)-$(Platform)-CUDA\</IntDir>
+    <TargetName>MosaicMagnifique</TargetName>
+    <IgnoreImportLibrary>true</IgnoreImportLibrary>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)\build\$(Configuration)-$(Platform)-CUDA\</OutDir>
+    <IntDir>$(Configuration)-$(Platform)-CUDA\</IntDir>
+    <TargetName>MosaicMagnifique</TargetName>
+    <IgnoreImportLibrary>true</IgnoreImportLibrary>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <QtInstall>msvc2019_64</QtInstall>
+    <QtModules>core;gui;widgets</QtModules>
+  </PropertyGroup>
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <QtInstall>msvc2019_64</QtInstall>
+    <QtModules>core;gui;widgets</QtModules>
+  </PropertyGroup>
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt.props')">
+    <Import Project="$(QtMsBuild)\qt.props" />
+  </ImportGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;C:\OpenCV\opencv-4.5.2\build\install\include;release;/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
+      <AssemblerListingLocation>$(Configuration)-$(Platform)-CUDA\</AssemblerListingLocation>
+      <BrowseInformation>false</BrowseInformation>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <DisableSpecificWarnings>4577;4467;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <ObjectFileName>$(Configuration)-$(Platform)-CUDA\</ObjectFileName>
+      <Optimization>MaxSpeed</Optimization>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;_USE_MATH_DEFINES;QT_DEPRECATED_WARNINGS;VERSION_MAJOR=3;VERSION_MINOR=2;VERSION_BUILD=16;NDEBUG;QT_NO_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessToFile>false</PreprocessToFile>
+      <ProgramDataBaseFileName>
+      </ProgramDataBaseFileName>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <WarningLevel>Level3</WarningLevel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>C:\openssl\lib;C:\Utils\my_sql\mysql-5.7.25-winx64\lib;C:\Utils\postgresql\pgsql\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>"/MANIFESTDEPENDENCY:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' publicKeyToken='6595b64144ccf1df' language='*' processorArchitecture='*'" %(AdditionalOptions)</AdditionalOptions>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreImportLibrary>true</IgnoreImportLibrary>
+      <LinkIncremental>false</LinkIncremental>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>$(OutDir)\$(TargetName)$(TargetExt)</OutputFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <SubSystem>Windows</SubSystem>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <Version>3.2</Version>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+    </Link>
+    <Midl>
+      <DefaultCharType>Unsigned</DefaultCharType>
+      <EnableErrorChecks>None</EnableErrorChecks>
+      <WarningLevel>0</WarningLevel>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;_USE_MATH_DEFINES;QT_DEPRECATED_WARNINGS;VERSION_MAJOR=3;VERSION_MINOR=2;VERSION_BUILD=16;NDEBUG;QT_NO_DEBUG;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <QtMoc>
+      <CompilerFlavor>msvc</CompilerFlavor>
+      <Include>./$(Configuration)-$(Platform)-CUDA/moc_predefs.h</Include>
+      <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
+      <DynamicSource>output</DynamicSource>
+      <QtMocDir>$(Configuration)-$(Platform)-CUDA\</QtMocDir>
+      <QtMocFileName>moc_%(Filename).cpp</QtMocFileName>
+    </QtMoc>
+    <QtRcc>
+      <InitFuncName>ui</InitFuncName>
+      <Compression>default</Compression>
+      <ExecutionDescription>Rcc'ing %(Identity)...</ExecutionDescription>
+      <QtRccDir>$(Configuration)-$(Platform)-CUDA\</QtRccDir>
+      <QtRccFileName>qrc_%(Filename).cpp</QtRccFileName>
+    </QtRcc>
+    <QtUic>
+      <ExecutionDescription>Uic'ing %(Identity)...</ExecutionDescription>
+      <QtUicDir>%(InputFile)\..\</QtUicDir>
+      <QtUicFileName>ui_%(Filename).h</QtUicFileName>
+    </QtUic>
+    <CudaCompile>
+      <CodeGeneration>compute_35,sm_35</CodeGeneration>
+      <Defines>WIN32</Defines>
+      <Runtime>InheritFromHost</Runtime>
+      <CudaRuntime>Static</CudaRuntime>
+    </CudaCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;C:\OpenCV\opencv-4.5.2\build\install\include;debug;/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
+      <AssemblerListingLocation>$(Configuration)-$(Platform)-CUDA\</AssemblerListingLocation>
+      <BrowseInformation>false</BrowseInformation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4577;4467;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <ObjectFileName>$(Configuration)-$(Platform)-CUDA\</ObjectFileName>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;_USE_MATH_DEFINES;QT_DEPRECATED_WARNINGS;VERSION_MAJOR=3;VERSION_MINOR=2;VERSION_BUILD=16;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessToFile>false</PreprocessToFile>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <WarningLevel>Level3</WarningLevel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>C:\openssl\lib;C:\Utils\my_sql\mysql-5.7.25-winx64\lib;C:\Utils\postgresql\pgsql\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>"/MANIFESTDEPENDENCY:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' publicKeyToken='6595b64144ccf1df' language='*' processorArchitecture='*'" %(AdditionalOptions)</AdditionalOptions>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreImportLibrary>true</IgnoreImportLibrary>
+      <OutputFile>$(OutDir)\$(TargetName)$(TargetExt)</OutputFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <SubSystem>Console</SubSystem>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <Version>3.2</Version>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Midl>
+      <DefaultCharType>Unsigned</DefaultCharType>
+      <EnableErrorChecks>None</EnableErrorChecks>
+      <WarningLevel>0</WarningLevel>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;_USE_MATH_DEFINES;QT_DEPRECATED_WARNINGS;VERSION_MAJOR=3;VERSION_MINOR=2;VERSION_BUILD=16;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <QtMoc>
+      <CompilerFlavor>msvc</CompilerFlavor>
+      <Include>./$(Configuration)-$(Platform)-CUDA/moc_predefs.h</Include>
+      <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
+      <DynamicSource>output</DynamicSource>
+      <QtMocDir>$(Configuration)-$(Platform)-CUDA\</QtMocDir>
+      <QtMocFileName>moc_%(Filename).cpp</QtMocFileName>
+    </QtMoc>
+    <QtRcc>
+      <InitFuncName>ui</InitFuncName>
+      <Compression>default</Compression>
+      <ExecutionDescription>Rcc'ing %(Identity)...</ExecutionDescription>
+      <QtRccDir>$(Configuration)-$(Platform)-CUDA\</QtRccDir>
+      <QtRccFileName>qrc_%(Filename).cpp</QtRccFileName>
+    </QtRcc>
+    <QtUic>
+      <ExecutionDescription>Uic'ing %(Identity)...</ExecutionDescription>
+      <QtUicDir>%(InputFile)\..\</QtUicDir>
+      <QtUicFileName>ui_%(Filename).h</QtUicFileName>
+    </QtUic>
+    <CudaCompile>
+      <TargetMachinePlatform>32</TargetMachinePlatform>
+    </CudaCompile>
+    <CudaLink>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
+    </CudaLink>
+    <CudaLink>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+    </CudaLink>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="CellShape\CellGroup.cpp" />
+    <ClCompile Include="CellShape\CellShape.cpp" />
+    <ClCompile Include="CellShape\CellShapeEditor.cpp" />
+    <ClCompile Include="Photomosaic\ColourDifference.cpp" />
+    <ClCompile Include="ImageLibrary\ColourVisualisation.cpp" />
+    <ClCompile Include="Photomosaic\ColourScheme.cpp" />
+    <ClCompile Include="Photomosaic\CPUPhotomosaicGenerator.cpp" />
+    <ClCompile Include="Other\CropGraphicsObject.cpp" />
+    <ClCompile Include="Other\CustomGraphicsView.cpp" />
+    <ClCompile Include="Photomosaic\CUDA\CUDAPhotomosaicGenerator.cpp" />
+    <ClCompile Include="Grid\GridBounds.cpp" />
+    <ClCompile Include="Grid\GridEditor.cpp" />
+    <ClCompile Include="Grid\GridEditViewer.cpp" />
+    <ClCompile Include="Grid\GridGenerator.cpp" />
+    <ClCompile Include="Grid\GridUtility.cpp" />
+    <ClCompile Include="Grid\GridViewer.cpp" />
+    <ClCompile Include="ImageLibrary\ImageHistogramCompare.cpp" />
+    <ClCompile Include="ImageLibrary\ImageLibrary.cpp" />
+    <ClCompile Include="ImageLibrary\ImageLibraryEditor.cpp" />
+    <ClCompile Include="ImageLibrary\ImageSquarer.cpp" />
+    <ClCompile Include="Other\ImageUtility.cpp" />
+    <ClCompile Include="Other\Main.cpp" />
+    <ClCompile Include="Other\MainWindow.cpp" />
+    <ClCompile Include="Photomosaic\PhotomosaicGeneratorBase.cpp" />
+    <ClCompile Include="Photomosaic\PhotomosaicViewer.cpp" />
+    <ClCompile Include="Grid\QuadTree.cpp" />
+    <ClCompile Include="Other\Switch.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Other\CustomQDataStream.h" />
+    <ClInclude Include="CellShape\CellGroup.h" />
+    <ClInclude Include="CellShape\CellShape.h" />
+    <ClInclude Include="Other\TimingLogger.h" />
+    <ClInclude Include="Photomosaic\ColourScheme.h" />
+    <ClInclude Include="Photomosaic\CUDA\ColourDifference.cuh" />
+    <ClInclude Include="Photomosaic\CUDA\CUDAPhotomosaicGenerator.h" />
+    <ClInclude Include="Photomosaic\CUDA\CUDAUtility.h" />
+    <ClInclude Include="Other\MatUtility.h" />
+    <ClInclude Include="Photomosaic\CUDA\PhotomosaicGenerator.cuh" />
+    <ClInclude Include="Photomosaic\CUDA\Reduction.cuh" />
+    <QtMoc Include="CellShape\CellShapeEditor.h">
+    </QtMoc>
+    <ClInclude Include="Photomosaic\ColourDifference.h" />
+    <QtMoc Include="ImageLibrary\ColourVisualisation.h">
+    </QtMoc>
+    <ClInclude Include="Photomosaic\CPUPhotomosaicGenerator.h" />
+    <ClInclude Include="Other\CropGraphicsObject.h" />
+    <QtMoc Include="Other\CustomGraphicsView.h">
+    </QtMoc>
+    <ClInclude Include="Grid\GridBounds.h" />
+    <QtMoc Include="Grid\GridEditor.h">
+    </QtMoc>
+    <QtMoc Include="Grid\GridEditViewer.h">
+    </QtMoc>
+    <ClInclude Include="Grid\GridGenerator.h" />
+    <ClInclude Include="Grid\GridUtility.h" />
+    <QtMoc Include="Grid\GridViewer.h">
+    </QtMoc>
+    <ClInclude Include="ImageLibrary\ImageHistogramCompare.h" />
+    <ClInclude Include="ImageLibrary\ImageLibrary.h" />
+    <QtMoc Include="ImageLibrary\ImageLibraryEditor.h">
+    </QtMoc>
+    <QtMoc Include="ImageLibrary\ImageSquarer.h">
+    </QtMoc>
+    <ClInclude Include="Other\ImageUtility.h" />
+    <QtMoc Include="Other\MainWindow.h">
+    </QtMoc>
+    <QtMoc Include="Photomosaic\PhotomosaicGeneratorBase.h">
+    </QtMoc>
+    <QtMoc Include="Photomosaic\PhotomosaicViewer.h">
+    </QtMoc>
+    <ClInclude Include="Grid\QuadTree.h" />
+    <QtMoc Include="Other\Switch.h">
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="$(Configuration)-$(Platform)-CUDA\moc_predefs.h.cbt">
+      <FileType>Document</FileType>
+      <AdditionalInputs>$(QTDIR)\mkspecs\features\data\dummy.cpp;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cl -Bx"$(QTDIR)\bin\qmake.exe" -nologo -Zc:wchar_t -FS -Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus /std:c++17 -Zi -MDd -std:c++17 -W3 -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 -wd4577 -wd4467 -E $(QTDIR)\mkspecs\features\data\dummy.cpp 2&gt;NUL &gt;$(Configuration)-$(Platform)-CUDA\moc_predefs.h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cl -Bx"$(QTDIR)\bin\qmake.exe" -nologo -Zc:wchar_t -FS -Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus /std:c++17 -O2 -MD -std:c++17 -W3 -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 -wd4577 -wd4467 -E $(QTDIR)\mkspecs\features\data\dummy.cpp 2&gt;NUL &gt;$(Configuration)-$(Platform)-CUDA\moc_predefs.h</Command>
+      <Message>Generate moc_predefs.h</Message>
+      <Outputs>$(Configuration)-$(Platform)-CUDA\moc_predefs.h;%(Outputs)</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="CellShape\CellShapeEditor.ui">
+    </QtUic>
+    <QtUic Include="ImageLibrary\ColourVisualisation.ui">
+    </QtUic>
+    <QtUic Include="Grid\GridEditor.ui">
+    </QtUic>
+    <QtUic Include="ImageLibrary\ImageLibraryEditor.ui">
+    </QtUic>
+    <QtUic Include="ImageLibrary\ImageSquarer.ui">
+    </QtUic>
+    <QtUic Include="Other\MainWindow.ui">
+    </QtUic>
+    <QtUic Include="Photomosaic\PhotomosaicViewer.ui">
+    </QtUic>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\LinkIcon.png" />
+    <None Include="Resources\MosaicMagnifique.png" />
+    <None Include="Resources\UnlinkIcon.png" />
+    <QtRcc Include="Resources\ui.qrc">
+    </QtRcc>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resources\MosaicMagnifique_resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="Photomosaic\CUDA\PhotomosaicGenerator.cu" />
+    <CudaCompile Include="Photomosaic\CUDA\Reduction.cu" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
+    <Import Project="$(QtMsBuild)\qt.targets" />
+  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 10.1.targets" />
+  </ImportGroup>
+</Project>

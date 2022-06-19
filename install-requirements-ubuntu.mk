@@ -1,4 +1,4 @@
-all: dependencies build
+all: dependencies
 
 dependencies: gcc pkg-config qmake qt opencv
 
@@ -32,18 +32,10 @@ opencv:
 	# ensures opencv shared libraries link
 	sudo ldconfig
 
-build:
-	# build Mosaic Magnifique
-	mkdir build
-	cd build && qmake ../src/src.pro && make
-
 clean:
 ifneq (,$(wildcard ./opencv-4.3.0.zip))
 	rm opencv-4.3.0.zip
 endif
 ifneq (,$(wildcard ./opencv-4.3.0))
 	rm -r opencv-4.3.0
-endif
-ifneq (,$(wildcard ./build))
-	rm -r build
 endif

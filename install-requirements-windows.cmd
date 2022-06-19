@@ -21,17 +21,11 @@ IF DEFINED mode (
 			Call :OpenCVEnvironmentVariable
 			exit /b
 		) ELSE (
-			IF "%mode%" == "build" (
-				Call :BuildMosaic
+			IF "%mode%" == "all" (
+				Call :GetOpenCV
+				Call :BuildOpenCV
+				Call :OpenCVEnvironmentVariable
 				exit /b
-			) ELSE (
-				IF "%mode%" == "all" (
-					Call :GetOpenCV
-					Call :BuildOpenCV
-					Call :OpenCVEnvironmentVariable
-					Call :BuildMosaic
-					exit /b
-				)
 			)
 		)
 	)
@@ -107,37 +101,14 @@ cscript //nologo %vbs%
 if exist %vbs% del /f /q %vbs%
 exit /b
 
-REM Builds Mosaic Magnifique
-:BuildMosaic
-IF NOT DEFINED OPENCV_DIR (
-	echo %%OPENCV_DIR%% environment variable not set.
-	exit /b
-)
-IF NOT EXIST %OPENCV_DIR% (
-	echo OpenCV not found at "%OPENCV_DIR%". %%OPENCV_DIR%% environment variable not valid.
-	exit /b
-)
-
-cd /d "%main_dir%"
-mkdir build
-cd /d build
-qmake ../src/src.pro -spec win32-msvc
-jom qmake_all
-jom
-
-exit /b
-
 REM Displays help info
 :HelpInfo
-echo ----- Mosaic Magnifique install helper -----
+echo ----- Mosaic Magnifique requirements install helper -----
 echo Downloading OpenCV requires wget. Set variable %%wgetdir%% such that wget can be found at %%wgetdir%%\wget.exe
-echo.
-echo Building Mosaic Magnifique requires Qt install, and paths to qmake and jom in %%PATH%% variable
 echo.
 echo Set %%mode%% variable to control script actions:
 echo - "opencv" will download OpenCV source using wget, build a minimal release using cmake, and set environment variables.
 echo - "environment" will create %%OPENCV_DIR%% system variable and add %%OPENCV_DIR%%\bin to system %%PATH%% variable.
-echo - "build" will build Mosaic Magnifique from source using qmake and jom.
 echo - "all" will perform all steps.
 echo.
 echo OpenCV will be installed at "%opencv%". To change this set %%opencv%% variable to the wanted path.

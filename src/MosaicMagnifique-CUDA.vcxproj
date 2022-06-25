@@ -95,7 +95,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ObjectFileName>$(Configuration)-$(Platform)-CUDA\</ObjectFileName>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;_USE_MATH_DEFINES;QT_DEPRECATED_WARNINGS;VERSION_MAJOR=3;VERSION_MINOR=2;VERSION_BUILD=16;NDEBUG;QT_NO_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;_USE_MATH_DEFINES;QT_DEPRECATED_WARNINGS;NDEBUG;QT_NO_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <ProgramDataBaseFileName>
       </ProgramDataBaseFileName>
@@ -127,7 +127,7 @@
       <WarningLevel>0</WarningLevel>
     </Midl>
     <ResourceCompile>
-      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;_USE_MATH_DEFINES;QT_DEPRECATED_WARNINGS;VERSION_MAJOR=3;VERSION_MINOR=2;VERSION_BUILD=16;NDEBUG;QT_NO_DEBUG;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;_USE_MATH_DEFINES;QT_DEPRECATED_WARNINGS;NDEBUG;QT_NO_DEBUG;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <QtMoc>
       <CompilerFlavor>msvc</CompilerFlavor>
@@ -168,7 +168,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ObjectFileName>$(Configuration)-$(Platform)-CUDA\</ObjectFileName>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_WINDOWS;UNICODE;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;_USE_MATH_DEFINES;QT_DEPRECATED_WARNINGS;VERSION_MAJOR=3;VERSION_MINOR=2;VERSION_BUILD=16;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;_USE_MATH_DEFINES;QT_DEPRECATED_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -196,7 +196,7 @@
       <WarningLevel>0</WarningLevel>
     </Midl>
     <ResourceCompile>
-      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;_USE_MATH_DEFINES;QT_DEPRECATED_WARNINGS;VERSION_MAJOR=3;VERSION_MINOR=2;VERSION_BUILD=16;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;_USE_MATH_DEFINES;QT_DEPRECATED_WARNINGS;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <QtMoc>
       <CompilerFlavor>msvc</CompilerFlavor>
@@ -260,10 +260,10 @@
     <ClCompile Include="Other\Switch.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Resources\VersionInfo.h" />
     <ClInclude Include="Other\CustomQDataStream.h" />
     <ClInclude Include="CellShape\CellGroup.h" />
     <ClInclude Include="CellShape\CellShape.h" />
-    <ClInclude Include="Other\TimingLogger.h" />
     <ClInclude Include="Photomosaic\ColourScheme.h" />
     <ClInclude Include="Photomosaic\CUDA\ColourDifference.cuh" />
     <ClInclude Include="Photomosaic\CUDA\CUDAPhotomosaicGenerator.h" />

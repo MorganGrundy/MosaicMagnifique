@@ -187,11 +187,11 @@
     <ClInclude Include="Other\CustomQDataStream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Other\TimingLogger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Photomosaic\CUDA\ColourDifference.cuh">
       <Filter>Photomosaic\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="Resources\VersionInfo.h">
+      <Filter>Resource Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

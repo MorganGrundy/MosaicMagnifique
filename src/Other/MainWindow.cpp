@@ -35,6 +35,7 @@
 #include "..\ImageLibrary\ColourVisualisation.h"
 #include "..\Photomosaic\CPUPhotomosaicGenerator.h"
 #include "..\Grid\GridEditor.h"
+#include "..\Resources\VersionInfo.h"
 
 #ifdef CUDA
 #include <cuda_runtime.h>

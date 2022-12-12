@@ -193,6 +193,12 @@
     <ClInclude Include="Resources\VersionInfo.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
+    <ClInclude Include="Other\Logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Other\TimingLogger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="$(Configuration)-$(Platform)-CUDA\moc_predefs.h.cbt" />

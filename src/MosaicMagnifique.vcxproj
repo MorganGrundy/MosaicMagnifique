@@ -235,6 +235,8 @@
     <ClCompile Include="Other\Switch.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Other\Logger.h" />
+    <ClInclude Include="Other\TimingLogger.h" />
     <ClInclude Include="Photomosaic\ColourScheme.h" />
     <ClInclude Include="CellShape\CellGroup.h" />
     <ClInclude Include="CellShape\CellShape.h" />

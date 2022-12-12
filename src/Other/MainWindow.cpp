@@ -19,6 +19,7 @@
 
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
+#include "Logger.h"
 
 #include <QDesktopServices>
 #include <QFileDialog>
@@ -99,11 +100,8 @@ MainWindow::MainWindow(QWidget *t_parent)
                 QMessageBox msgBox;
                 msgBox.setWindowTitle("About Mosaic Magnifique");
 
-                msgBox.setText("<b>Mosaic Magnifique " +
-                               QString("%1.%2.%3").arg(VERSION_MAJOR).
-                               arg(VERSION_MINOR).arg(VERSION_BUILD) + "</b>");
-                msgBox.setInformativeText("Built on " + QStringLiteral(__DATE__) + " " +
-                                          QStringLiteral(__TIME__));
+                msgBox.setText("<b>Mosaic Magnifique " + QString("%1.%2.%3").arg(VERSION_MAJOR, VERSION_MINOR, VERSION_BUILD) + "</b>");
+                msgBox.setInformativeText("Built on " + QStringLiteral(__DATE__) + " " + QStringLiteral(__TIME__));
                 msgBox.setIconPixmap(QPixmap(":/MosaicMagnifique.png"));
                 msgBox.setStandardButtons(QMessageBox::Close);
                 msgBox.exec();
@@ -163,12 +161,16 @@ MainWindow::MainWindow(QWidget *t_parent)
 //Initialise CUDA and relevant UI
 void MainWindow::CUDAinit()
 {
+    LogInfo("Initialising CUDA...");
     int deviceCount, device;
     int gpuDeviceCount = 0;
     cudaDeviceProp properties;
     cudaError_t cudaResultCode = cudaGetDeviceCount(&deviceCount);
     if (cudaResultCode != cudaSuccess)
+    {
         deviceCount = 0;
+        LogWarn("No CUDA devices found.");
+    }
 
     //Check devices are not emulation only (9999)
     for (device = 0; device < deviceCount; ++device) {
@@ -178,12 +180,19 @@ void MainWindow::CUDAinit()
             ++gpuDeviceCount;
             //Add device name to combo box
             ui->comboCUDA->addItem(properties.name);
+
+            LogInfo(QString("Found valid CUDA device: %1").arg(properties.name));
+        }
+        else
+        {
+            LogInfo(QString("Ignoring emulation CUDA device: %1").arg(properties.name));
         }
     }
 
     //No devices so disable CUDA controls
     if (gpuDeviceCount == 0)
     {
+        LogWarn("No valid CUDA devices, disabled CUDA functionlity.");
         ui->checkCUDA->setChecked(false);
         ui->checkCUDA->setEnabled(false);
         ui->comboCUDA->setEnabled(false);
@@ -207,6 +216,8 @@ MainWindow::~MainWindow()
 //Updates cell shape in grid preview
 void MainWindow::tabChanged(int t_index)
 {
+    LogInfo(QString("Main Window tab changed to %1").arg(ui->tabWidget->tabText(t_index)));
+
     //Generator settings tab
     if (t_index == 2)
     {
@@ -244,17 +255,23 @@ void MainWindow::updateImageLibraryCount(size_t t_newSize)
 //Prompts user for a main image
 void MainWindow::selectMainImage()
 {
-    QString filename = QFileDialog::getOpenFileName(this, tr("Select main image"), "",
+    LogInfo("Selecting main image...");
+
+    const QString filename = QFileDialog::getOpenFileName(this, tr("Select main image"), "",
                                                     "Image Files (*.bmp *.dib *.jpeg *.jpg "
                                                     "*.jpe *.jp2 *.png *.pbm *.pgm *.ppm "
                                                     "*.pxm *.pnm *.sr *.ras *.tiff *.tif "
                                                     "*.hdr *.pic)");
     if (!filename.isNull())
     {
+        LogInfo(QString("Selected main image: %1").arg(filename));
+
         //Load main image and check is valid
         mainImage = cv::imread(filename.toStdString());
         if (mainImage.empty())
         {
+            LogInfo(QString("Failed to load main image: %1").arg(filename));
+
             ui->widgetGridPreview->setBackground(cv::Mat());
             updateGridPreview();
             QMessageBox msgBox;
@@ -263,6 +280,8 @@ void MainWindow::selectMainImage()
             msgBox.exec();
             return;
         }
+
+        LogInfo(QString("Loaded main image: %1").arg(filename));
 
         ui->lineMainImage->setText(filename);
 
@@ -287,6 +306,8 @@ void MainWindow::compareColours()
     if (ui->imageLibraryEditor->getImageLibrarySize() == 0 || mainImage.empty())
         return;
 
+    LogInfo("Opening colour visualisation window.");
+
     ColourVisualisation *colourVisualisation =
         new ColourVisualisation(this, mainImage, ui->imageLibraryEditor->getImageLibrary());
     colourVisualisation->show();
@@ -302,22 +323,30 @@ void MainWindow::photomosaicSizeLink()
         //Gets ratio between current width and height
         photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) /
                 ui->spinPhotomosaicHeight->value();
+
+        LogInfo(QString("Photomosaic size ratio set (w%1/h%2)").arg(ui->spinPhotomosaicWidth->value(), ui->spinPhotomosaicHeight->value()));
     }
     else
     {
         ui->buttonPhotomosaicSizeLink->setIcon(QIcon(":/img/UnlinkIcon.png"));
+        LogInfo("Photomosaic size ratio unset");
     }
 }
 
 //Updates photomosaic width
 void MainWindow::photomosaicWidthChanged(int i)
 {
+    LogInfo(QString("Photomosaic width changed: %1").arg(i));
+
     //If size link active, height is scaled with width
     if (ui->buttonPhotomosaicSizeLink->isChecked())
     {
+        const int newHeight = std::round(i / photomosaicSizeRatio);
+        LogInfo(QString("Changing Photomosaic height based on size ratio: %1").arg(newHeight));
+
         //Blocks signals while changing value to prevent infinite loop
         ui->spinPhotomosaicHeight->blockSignals(true);
-        ui->spinPhotomosaicHeight->setValue(std::round(i / photomosaicSizeRatio));
+        ui->spinPhotomosaicHeight->setValue(newHeight);
         ui->spinPhotomosaicHeight->blockSignals(false);
     }
 
@@ -335,12 +364,17 @@ void MainWindow::photomosaicWidthChanged(int i)
 //Updates photomosaic height
 void MainWindow::photomosaicHeightChanged(int i)
 {
+    LogInfo(QString("Photomosaic height changed: %1").arg(i));
+
     //If size link active, width is scaled with height
     if (ui->buttonPhotomosaicSizeLink->isChecked())
     {
+        const int newWidth = std::floor(i * photomosaicSizeRatio);
+        LogInfo(QString("Changing Photomosaic width based on size ratio: %1").arg(newWidth));
+
         //Blocks signals while changing value to prevent infinite loop
         ui->spinPhotomosaicWidth->blockSignals(true);
-        ui->spinPhotomosaicWidth->setValue(std::floor(i * photomosaicSizeRatio));
+        ui->spinPhotomosaicWidth->setValue(newWidth);
         ui->spinPhotomosaicWidth->blockSignals(false);
     }
 
@@ -360,6 +394,8 @@ void MainWindow::loadImageSize()
 {
     if (!mainImage.empty())
     {
+        LogInfo(QString("Set Photomosaic size to main image size (w%1, h%2)").arg(mainImage.cols, mainImage.rows));
+
         //Blocks signals while changing value
         ui->spinPhotomosaicWidth->blockSignals(true);
         ui->spinPhotomosaicHeight->blockSignals(true);
@@ -382,6 +418,8 @@ void MainWindow::loadImageSize()
 //Updates detail level
 void MainWindow::photomosaicDetailChanged([[maybe_unused]] int i)
 {
+    LogInfo(QString("Photomosaic detail level changed to %1").arg(ui->spinDetail->value()));
+
     ui->widgetGridPreview->getCellGroup().setDetail(ui->spinDetail->value());
     if (!mainImage.empty())
         updateGridPreview();
@@ -390,6 +428,8 @@ void MainWindow::photomosaicDetailChanged([[maybe_unused]] int i)
 //Updates cell size
 void MainWindow::cellSizeChanged(int t_value)
 {
+    LogInfo(QString("Cell size changed to %1").arg(t_value));
+
     //Updates minimum cell size
     updateCellSizes();
 
@@ -404,6 +444,8 @@ void MainWindow::cellSizeChanged(int t_value)
 //Updates cell grid size steps
 void MainWindow::sizeStepsChanged([[maybe_unused]] int t_value)
 {
+    LogInfo(QString("Size steps changed to %1").arg(t_value));
+
     //Updates minimum cell size
     updateCellSizes();
 
@@ -417,10 +459,15 @@ void MainWindow::enableCellShape(bool t_state)
     ui->lineCellShape->setEnabled(t_state);
 
     if (t_state)
-        ui->widgetGridPreview->getCellGroup().setCellShape(
-            newCellShape.resized(ui->spinCellSize->value()));
+    {
+        ui->widgetGridPreview->getCellGroup().setCellShape(newCellShape.resized(ui->spinCellSize->value()));
+        LogInfo("Enabled cell shape");
+    }
     else
+    {
         ui->widgetGridPreview->getCellGroup().setCellShape(CellShape(ui->spinCellSize->value()));
+        LogInfo("Disabled cell shape");
+    }
 
     updateGridPreview();
 }
@@ -430,6 +477,8 @@ void MainWindow::editCellGrid()
 {
     if (!mainImage.empty())
     {
+        LogInfo("Opening grid editor");
+
         //Create grid editor
         GridEditor gridEditor(
             ImageUtility::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
@@ -454,6 +503,7 @@ void MainWindow::editCellGrid()
         QEventLoop loop;
         connect(&gridEditor, SIGNAL(destroyed()), &loop, SLOT(quit()));
         loop.exec();
+        LogInfo("Closed grid editor");
     }
 }
 
@@ -461,6 +511,11 @@ void MainWindow::editCellGrid()
 //Changes CUDA device
 void MainWindow::CUDADeviceChanged(int t_index)
 {
+    cudaDeviceProp properties;
+    gpuErrchk(cudaGetDeviceProperties(&properties, t_index));
+
+    LogInfo(QString("CUDA device changed: %1").arg(properties.name));
+
     gpuErrchk(cudaSetDevice(t_index));
 
     //Initialise CUDA device
@@ -505,10 +560,18 @@ void MainWindow::generatePhotomosaic()
     //Choose which generator to use
 #ifdef CUDA
     if (ui->checkCUDA->isChecked())
+    {
+        LogInfo("Generating Photomosaic with CUDA...");
         generator = std::make_shared<CUDAPhotomosaicGenerator>();
+    }
     else
+    {
 #endif
+        LogInfo("Generating Photomosaic on CPU...");
         generator = std::make_shared<CPUPhotomosaicGenerator>();
+#ifdef CUDA
+    }
+#endif
 
     //Set generator settings
     generator->setMainImage(ui->widgetGridPreview->getBackground());
@@ -556,6 +619,8 @@ void MainWindow::generatePhotomosaic()
 //Update list of cell sizes
 void MainWindow::updateCellSizes()
 {
+    LogInfo(QString("Updating cell sizes."));
+
     //Create string listing cell sizes for each size step
     QString cellSizes("Cell Sizes: ");
     int cellSize = ui->spinCellSize->value();
@@ -587,6 +652,8 @@ void MainWindow::updateCellSizes()
 //Updates grid preview
 void MainWindow::updateGridPreview()
 {
+    LogInfo("Updating grid preview...");
+
     //Save current status message
     QString savedMessage = ui->statusbar->currentMessage();
     //Set status message

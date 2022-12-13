@@ -19,18 +19,18 @@
 
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
-#include "Logger.h"
 
 #include <QDesktopServices>
 #include <QFileDialog>
 #include <QPixmap>
-#include <QMessageBox>
 #include <QInputDialog>
 #include <QProgressDialog>
 #include <QThread>
 #include <opencv2/imgcodecs.hpp>
 #include <chrono>
 
+#include "Logger.h"
+#include "Utility.h"
 #include "ImageUtility.h"
 #include "..\Photomosaic\PhotomosaicViewer.h"
 #include "..\ImageLibrary\ColourVisualisation.h"
@@ -97,10 +97,10 @@ MainWindow::MainWindow(QWidget *t_parent)
     //About action displays Mosaic Magnifique version, and build date and time
     connect(ui->actionAbout, &QAction::triggered, [&]([[maybe_unused]] const bool triggered)
             {
-                QMessageBox msgBox;
+                MessageBox msgBox;
                 msgBox.setWindowTitle("About Mosaic Magnifique");
 
-                msgBox.setText("<b>Mosaic Magnifique " + QString("%1.%2.%3").arg(VERSION_MAJOR, VERSION_MINOR, VERSION_BUILD) + "</b>");
+                msgBox.setText("<b>Mosaic Magnifique " VERSION_STR "</b>");
                 msgBox.setInformativeText("Built on " + QStringLiteral(__DATE__) + " " + QStringLiteral(__TIME__));
                 msgBox.setIconPixmap(QPixmap(":/MosaicMagnifique.png"));
                 msgBox.setStandardButtons(QMessageBox::Close);
@@ -264,20 +264,14 @@ void MainWindow::selectMainImage()
                                                     "*.hdr *.pic)");
     if (!filename.isNull())
     {
-        LogInfo(QString("Selected main image: %1").arg(filename));
-
         //Load main image and check is valid
         mainImage = cv::imread(filename.toStdString());
         if (mainImage.empty())
         {
-            LogInfo(QString("Failed to load main image: %1").arg(filename));
-
             ui->widgetGridPreview->setBackground(cv::Mat());
             updateGridPreview();
-            QMessageBox msgBox;
-            msgBox.setText(tr("The main image \"") + ui->lineMainImage->text() +
-                           tr("\" failed to load"));
-            msgBox.exec();
+
+            MessageBox::information(this, tr("Failed to load main image"), tr("Failed to load main image: %1").arg(filename));
             return;
         }
 
@@ -324,7 +318,7 @@ void MainWindow::photomosaicSizeLink()
         photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) /
                 ui->spinPhotomosaicHeight->value();
 
-        LogInfo(QString("Photomosaic size ratio set (w%1/h%2)").arg(ui->spinPhotomosaicWidth->value(), ui->spinPhotomosaicHeight->value()));
+        LogInfo(QString("Photomosaic size ratio set: %1").arg(photomosaicSizeRatio));
     }
     else
     {
@@ -342,7 +336,7 @@ void MainWindow::photomosaicWidthChanged(int i)
     if (ui->buttonPhotomosaicSizeLink->isChecked())
     {
         const int newHeight = std::round(i / photomosaicSizeRatio);
-        LogInfo(QString("Changing Photomosaic height based on size ratio: %1").arg(newHeight));
+        LogInfo(QString("Changing Photomosaic height to preserve size ratio: %1").arg(newHeight));
 
         //Blocks signals while changing value to prevent infinite loop
         ui->spinPhotomosaicHeight->blockSignals(true);
@@ -370,7 +364,7 @@ void MainWindow::photomosaicHeightChanged(int i)
     if (ui->buttonPhotomosaicSizeLink->isChecked())
     {
         const int newWidth = std::floor(i * photomosaicSizeRatio);
-        LogInfo(QString("Changing Photomosaic width based on size ratio: %1").arg(newWidth));
+        LogInfo(QString("Changing Photomosaic width to preserve size ratio: %1").arg(newWidth));
 
         //Blocks signals while changing value to prevent infinite loop
         ui->spinPhotomosaicWidth->blockSignals(true);
@@ -403,9 +397,13 @@ void MainWindow::loadImageSize()
         ui->spinPhotomosaicHeight->setValue(mainImage.rows);
         ui->spinPhotomosaicWidth->blockSignals(false);
         ui->spinPhotomosaicHeight->blockSignals(false);
+
         //Update size ratio
-        photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) /
-                ui->spinPhotomosaicHeight->value();
+        if (ui->buttonPhotomosaicSizeLink->isChecked())
+        {
+            photomosaicSizeRatio = static_cast<double>(ui->spinPhotomosaicWidth->value()) / ui->spinPhotomosaicHeight->value();
+            LogInfo(QString("Updated Photomosaic size ratio to main image size: %1").arg(photomosaicSizeRatio));
+        }
 
         //Resize main image to user entered size
         ui->widgetGridPreview->setBackground(
@@ -477,8 +475,6 @@ void MainWindow::editCellGrid()
 {
     if (!mainImage.empty())
     {
-        LogInfo("Opening grid editor");
-
         //Create grid editor
         GridEditor gridEditor(
             ImageUtility::resizeImage(mainImage, ui->spinPhotomosaicHeight->value(),
@@ -503,7 +499,6 @@ void MainWindow::editCellGrid()
         QEventLoop loop;
         connect(&gridEditor, SIGNAL(destroyed()), &loop, SLOT(quit()));
         loop.exec();
-        LogInfo("Closed grid editor");
     }
 }
 
@@ -530,18 +525,14 @@ void MainWindow::generatePhotomosaic()
     //Check main image is loaded
     if (ui->widgetGridPreview->getBackground().empty())
     {
-        QMessageBox msgBox;
-        msgBox.setText(tr("No main image loaded, please load an image"));
-        msgBox.exec();
+        MessageBox::information(this, tr("Generate Photomosaic"), tr("No main image loaded, please load an image"));
         return;
     }
 
     //Check library contains images
     if (ui->imageLibraryEditor->getImageLibrarySize() == 0)
     {
-        QMessageBox msgBox;
-        msgBox.setText(tr("The library is empty, please add some images"));
-        msgBox.exec();
+        MessageBox::information(this, tr("Generate Photomosaic"), tr("The library is empty, please add some images"));
         return;
     }
 
@@ -560,18 +551,10 @@ void MainWindow::generatePhotomosaic()
     //Choose which generator to use
 #ifdef CUDA
     if (ui->checkCUDA->isChecked())
-    {
-        LogInfo("Generating Photomosaic with CUDA...");
         generator = std::make_shared<CUDAPhotomosaicGenerator>();
-    }
     else
-    {
 #endif
-        LogInfo("Generating Photomosaic on CPU...");
         generator = std::make_shared<CPUPhotomosaicGenerator>();
-#ifdef CUDA
-    }
-#endif
 
     //Set generator settings
     generator->setMainImage(ui->widgetGridPreview->getBackground());

@@ -20,12 +20,13 @@
 #include "CellShapeEditor.h"
 #include "ui_CellShapeEditor.h"
 
-#include <QMessageBox>
 #include <QFileDialog>
 #include <QDebug>
 #include <QLineEdit>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
+
+#include "..\Other\Logger.h"
 
 CellShapeEditor::CellShapeEditor(QWidget *parent) :
     QWidget(parent),
@@ -100,8 +101,7 @@ void CellShapeEditor::saveCellShape()
     const CellShape &cellShape = ui->cellShapeViewer->getCellGroup().getCell(0);
     if (cellShape.getCellMask(0, 0).empty())
     {
-        QMessageBox::information(this, tr("Failed to save custom cell shape"),
-                                 tr("No cell mask was provided"));
+        MessageBox::warning(this, tr("Failed to save custom cell shape"), tr("No cell mask was provided"));
         return;
     }
 
@@ -116,11 +116,7 @@ void CellShapeEditor::saveCellShape()
     }
     catch (const std::invalid_argument &e)
     {
-        QMessageBox msgBox;
-        msgBox.setText(tr(e.what()));
-        msgBox.exec();
-
-        return;
+        MessageBox::warning(this, tr("Failed to save custom cell shape"), tr(e.what()));
     }
 }
 
@@ -148,11 +144,7 @@ void CellShapeEditor::loadCellShape()
     }
     catch (const std::invalid_argument &e)
     {
-        QMessageBox msgBox;
-        msgBox.setText(tr(e.what()));
-        msgBox.exec();
-
-        return;
+        MessageBox::warning(this, tr("Failed to load custom cell shape"), tr(e.what()));
     }
 }
 

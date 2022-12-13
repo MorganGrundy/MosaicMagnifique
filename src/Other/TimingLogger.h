@@ -7,9 +7,10 @@
 #include <stack>
 #include <QtCore/qdir.h>
 #include <QtCore/qdatetime.h>
-#include <QtCore/qcoreapplication.h>
 #include <QtCore/qstring.h>
 #include <QtCore/qtextstream.h>
+
+#include "Utility.h"
 
 //#define TIMING_LOGGER
 #ifdef TIMING_LOGGER
@@ -223,7 +224,7 @@ public:
 	{
 #ifdef TIMING_LOGGER
 		//Create folder for saving logging timing info
-		QDir folder(GetApplicationDir() + "/TimingLogger/" + outputSubdir + "/");
+		QDir folder(Utility::GetApplicationDir() + "/TimingLogger/" + outputSubdir + "/");
 		if (!folder.exists())
 			folder.mkpath(".");
 
@@ -322,25 +323,5 @@ private:
 	std::weak_ptr<TimingInfo> m_latestActiveInfo;
 
 	inline static QString outputSubdir;
-
-	QString GetApplicationDir()
-	{
-		static QString applicationDir;
-		//Only load the application dir once
-		if (applicationDir.isEmpty())
-		{
-			//Application dir from QCoreApplication is empty, so assume we have no QCoreApplication
-			if (QCoreApplication::applicationDirPath().isEmpty())
-			{
-				//Create a temporary QCoreApplication
-				int argc = 0;
-				QCoreApplication tmp(argc, 0);
-				applicationDir = QCoreApplication::applicationDirPath();
-			}
-			else
-				applicationDir = QCoreApplication::applicationDirPath();
-		}
-		return applicationDir;
-	}
 #endif
 };

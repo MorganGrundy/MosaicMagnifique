@@ -22,11 +22,11 @@
 
 #include <QFileDialog>
 #include <QDebug>
-#include <QMessageBox>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
 #include "..\Other\ImageUtility.h"
+#include "..\Other\Utility.h"
 #include "..\CellShape\CellShape.h"
 #include "ImageSquarer.h"
 
@@ -114,10 +114,7 @@ void ImageLibraryEditor::changeCropMode(const QString &t_mode)
             {
                 //Failed to load, reset crop mode
                 ui->comboCropMode->setCurrentIndex(0);
-                QMessageBox msgBox;
-                msgBox.setText(tr("The cascade classifier \"") + filename +
-                               tr("\" failed to load"));
-                msgBox.exec();
+                MessageBox::warning(this, tr("Failed to load cascade classifier"), tr("Failed to load cascade classifier: %1").arg(filename));
                 return;
             }
         }
@@ -308,11 +305,7 @@ void ImageLibraryEditor::saveLibrary()
     }
     catch (const std::invalid_argument &e)
     {
-        QMessageBox msgBox;
-        msgBox.setText(tr(e.what()));
-        msgBox.exec();
-
-        return;
+        MessageBox::warning(this, tr("Failed to save image library"), tr(e.what()));
     }
 }
 
@@ -330,10 +323,7 @@ void ImageLibraryEditor::loadLibrary()
     }
     catch (const std::invalid_argument &e)
     {
-        QMessageBox msgBox;
-        msgBox.setText(tr(e.what()));
-        msgBox.exec();
-
+        MessageBox::warning(this, tr("Failed to load image library"), tr(e.what()));
         return;
     }
 

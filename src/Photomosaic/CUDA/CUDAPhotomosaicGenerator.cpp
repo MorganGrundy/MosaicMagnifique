@@ -26,6 +26,7 @@
 #include "photomosaicgenerator.cuh"
 #include "reduction.cuh"
 #include "..\..\Other\TimingLogger.h"
+#include "..\..\Other\Logger.h"
 
 CUDAPhotomosaicGenerator::CUDAPhotomosaicGenerator()
 {}
@@ -34,6 +35,8 @@ CUDAPhotomosaicGenerator::CUDAPhotomosaicGenerator()
 //Returns true if successful
 bool CUDAPhotomosaicGenerator::generateBestFits()
 {
+    LogInfo("Generating Photomosaic with CUDA.");
+
     TimingLogger timingLogger;
     timingLogger.StartTiming("generateBestFits");
 

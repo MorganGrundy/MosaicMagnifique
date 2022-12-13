@@ -23,6 +23,7 @@
 
 #include "ColourDifference.h"
 #include "..\Other\TimingLogger.h"
+#include "..\Other\Logger.h"
 
 CPUPhotomosaicGenerator::CPUPhotomosaicGenerator() : PhotomosaicGeneratorBase()
 {}
@@ -31,6 +32,8 @@ CPUPhotomosaicGenerator::CPUPhotomosaicGenerator() : PhotomosaicGeneratorBase()
 //Returns true if successful
 bool CPUPhotomosaicGenerator::generateBestFits()
 {
+    LogInfo("Generating Photomosaic on CPU.");
+
     TimingLogger timingLogger;
     timingLogger.StartTiming("generateBestFits");
 

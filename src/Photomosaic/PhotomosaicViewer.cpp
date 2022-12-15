@@ -27,6 +27,7 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include "..\Other\ImageUtility.h"
+#include "..\Other\Logger.h"
 #include "..\Other\CustomGraphicsView.h"
 
 PhotomosaicViewer::PhotomosaicViewer(
@@ -73,6 +74,7 @@ PhotomosaicViewer::PhotomosaicViewer(QWidget *t_parent)
 PhotomosaicViewer::~PhotomosaicViewer()
 {
     delete ui;
+    LogInfo("Closed Photomosaic Viewer.");
 }
 
 //Allows user to save the Photomosaic as an image file
@@ -115,6 +117,12 @@ void PhotomosaicViewer::openColourSelector()
 
         updatePhotomosaic();
     }
+}
+
+void PhotomosaicViewer::show()
+{
+    QMainWindow::show();
+    LogInfo("Opened Photomosaic Viewer.");
 }
 
 //Creates Photomosaic and displays

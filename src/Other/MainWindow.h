@@ -78,7 +78,9 @@ public slots:
     void editCellGrid();
 
 #ifdef CUDA
-    //Changes CUDA device
+    //Changes and initialises CUDA device
+    //t_index is not the CUDA device index, but the ui->comboCUDA index
+    //The device index is stored in the ui->comboCUDA item data
     void CUDADeviceChanged(int t_index);
 #endif
 

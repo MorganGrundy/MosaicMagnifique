@@ -162,37 +162,43 @@ MainWindow::MainWindow(QWidget *t_parent)
 void MainWindow::CUDAinit()
 {
     LogInfo("Initialising CUDA...");
-    int deviceCount, device;
-    int gpuDeviceCount = 0;
+
+    //Get number of devices
+    int deviceCount;
     cudaDeviceProp properties;
-    cudaError_t cudaResultCode = cudaGetDeviceCount(&deviceCount);
-    if (cudaResultCode != cudaSuccess)
-    {
+    cudaError cudaErrCode = cudaGetDeviceCount(&deviceCount);
+    CUDAUtility::cudaErrorType cudaErrType = CUDAUtility::CUDAErrMessageBox(this, "Disabling CUDA functionality.", cudaErrCode, { cudaErrorNoDevice, cudaErrorInsufficientDriver }, __FILE__, __LINE__);
+    if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
         deviceCount = 0;
-        LogWarn("No CUDA devices found.");
-    }
 
-    //Check devices are not emulation only (9999)
-    for (device = 0; device < deviceCount; ++device) {
-        gpuErrchk(cudaGetDeviceProperties(&properties, device));
-        if (properties.major != 9999)
+    //Get the valid CUDA devices
+    int validDeviceCount = 0;
+    for (int device = 0; device < deviceCount; ++device)
+    {
+        cudaErrCode = cudaGetDeviceProperties(&properties, device);
+        cudaErrType = CUDAUtility::CUDAErrMessageBox(this, "Tried to get device properties for a non-existant device???", cudaErrCode, { cudaErrorInvalidDevice }, __FILE__, __LINE__);
+        if (cudaErrType == CUDAUtility::cudaErrorType::SUCCESS)
         {
-            ++gpuDeviceCount;
-            //Add device name to combo box
-            ui->comboCUDA->addItem(properties.name);
+            //Check device isn't emulation only (9999)
+            if (properties.major != 9999)
+            {
+                //Add device name to combo box
+                ui->comboCUDA->addItem(properties.name, device);
+                ++validDeviceCount;
 
-            LogInfo(QString("Found valid CUDA device: %1").arg(properties.name));
-        }
-        else
-        {
-            LogInfo(QString("Ignoring emulation CUDA device: %1").arg(properties.name));
+                LogInfo(QString("Found valid CUDA device: %1").arg(properties.name));
+            }
+            else
+            {
+                LogInfo(QString("Ignoring emulation CUDA device: %1").arg(properties.name));
+            }
         }
     }
 
     //No devices so disable CUDA controls
-    if (gpuDeviceCount == 0)
+    if (validDeviceCount == 0)
     {
-        LogWarn("No valid CUDA devices, disabled CUDA functionlity.");
+        MessageBox::information(this, "CUDA", "No valid CUDA devices, disabling CUDA functionality.");
         ui->checkCUDA->setChecked(false);
         ui->checkCUDA->setEnabled(false);
         ui->comboCUDA->setEnabled(false);
@@ -503,19 +509,48 @@ void MainWindow::editCellGrid()
 }
 
 #ifdef CUDA
-//Changes CUDA device
+//Changes and initialises CUDA device
+//t_index is not the CUDA device index, but the ui->comboCUDA index
+//The device index is stored in the ui->comboCUDA item data
 void MainWindow::CUDADeviceChanged(int t_index)
 {
-    cudaDeviceProp properties;
-    gpuErrchk(cudaGetDeviceProperties(&properties, t_index));
+    const int cudaDeviceIndex = ui->comboCUDA->itemData(t_index).toInt();
+    const QString cudaDeviceName = ui->comboCUDA->itemText(t_index);
 
-    LogInfo(QString("CUDA device changed: %1").arg(properties.name));
+    cudaError cudaErrCode = cudaSetDevice(cudaDeviceIndex);
+    CUDAUtility::cudaErrorType cudaErrType = CUDAUtility::CUDAErrMessageBox(this, QString("Failed to set CUDA device: %1").arg(cudaDeviceName), cudaErrCode, { cudaErrorInvalidDevice, cudaErrorSetOnActiveProcess }, __FILE__, __LINE__);
+    if (cudaErrType == CUDAUtility::cudaErrorType::SUCCESS)
+    {
+        LogInfo(QString("CUDA device changed: %1").arg(cudaDeviceName));
 
-    gpuErrchk(cudaSetDevice(t_index));
+        //Initialise CUDA device
+        int *deviceInit;
+        cudaErrCode = cudaMalloc(&deviceInit, 0);
+        cudaErrType = CUDAUtility::CUDAErrMessageBox(this, QString("Failed to initialise CUDA device: %1").arg(cudaDeviceName), cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
+    }
 
-    //Initialise CUDA device
-    int *deviceInit;
-    gpuErrchk(cudaMalloc(&deviceInit, 0));
+    //Device is no longer useable?
+    if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
+    {
+        //Remove it from the combo box
+        ui->comboCUDA->blockSignals(true);
+        ui->comboCUDA->removeItem(t_index);
+        ui->comboCUDA->blockSignals(false);
+
+        //Try to change to another device
+        if (ui->comboCUDA->count() > 0)
+        {
+            CUDADeviceChanged(ui->comboCUDA->currentIndex());
+        }
+        else
+        {
+            //No devices left, disabled CUDA functionality
+            MessageBox::information(this, "CUDA", "No valid CUDA devices remaining, disabling CUDA functionality.");
+            ui->checkCUDA->setChecked(false);
+            ui->checkCUDA->setEnabled(false);
+            ui->comboCUDA->setEnabled(false);
+        }
+    }
 }
 #endif
 

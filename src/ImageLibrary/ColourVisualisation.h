@@ -39,4 +39,10 @@ public:
     Ui::ColourVisualisation *ui;
 
     const int iconSize = 100;
+
+public Q_SLOTS:
+    void show();
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
 };

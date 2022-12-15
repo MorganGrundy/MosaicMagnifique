@@ -27,6 +27,7 @@
 #include <opencv2/cudaimgproc.hpp>
 #endif
 
+#include "..\Other\Logger.h"
 #include "..\Grid\GridUtility.h"
 #include "..\Grid\GridBounds.h"
 
@@ -109,6 +110,7 @@ GridUtility::MosaicBestFit PhotomosaicGeneratorBase::getBestFits() const
 //Builds photomosaic from mosaic state
 cv::Mat PhotomosaicGeneratorBase::buildPhotomosaic(const cv::Scalar &t_backgroundColour) const
 {
+    LogInfo("Building Photomosaic.");
     cv::Mat mosaic = cv::Mat(m_img.rows, m_img.cols, CV_8UC4, t_backgroundColour);
     cv::Mat mosaicStep;
 
@@ -221,6 +223,8 @@ void PhotomosaicGeneratorBase::cancel()
 //Performs preprocessing steps on main image: resize, create variants (colour theory), convert colour space
 std::vector<cv::Mat> PhotomosaicGeneratorBase::preprocessMainImage()
 {
+    LogInfo("Started preprocessing main image.");
+
     //Resize
     cv::Mat resizedImage = m_img;
     //cv::resize(m_img, tmp, );
@@ -244,12 +248,15 @@ std::vector<cv::Mat> PhotomosaicGeneratorBase::preprocessMainImage()
             image.convertTo(image, CV_32F);
     }
 
+    LogInfo("Finished preprocessing main image.");
     return result;
 }
 
 //Performs preprocessing steps on library images: resize, convert colour space
 std::vector<cv::Mat> PhotomosaicGeneratorBase::preprocessLibraryImages()
 {
+    LogInfo("Started preprocessing library images.");
+
     //Resize
     std::vector<cv::Mat> result(m_lib.size(), cv::Mat());
     //Use INTER_AREA for decreasing, INTER_CUBIC for increasing
@@ -279,6 +286,7 @@ std::vector<cv::Mat> PhotomosaicGeneratorBase::preprocessLibraryImages()
             image.convertTo(image, CV_32F);
     }
 
+    LogInfo("Finished preprocessing library images.");
     return result;
 }
 

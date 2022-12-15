@@ -49,6 +49,9 @@ public slots:
     //Opens colour selector for setting background colour
     void openColourSelector();
 
+public Q_SLOTS:
+    void show();
+
 private:
     //Creates Photomosaic and displays
     void updatePhotomosaic();

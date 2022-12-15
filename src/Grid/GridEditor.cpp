@@ -19,6 +19,7 @@
 
 #include "GridEditor.h"
 #include "ui_GridEditor.h"
+#include "..\Other\Logger.h"
 
 GridEditor::GridEditor(QWidget *parent) :
     QMainWindow(parent),
@@ -65,6 +66,12 @@ GridEditor::~GridEditor()
     delete ui;
 }
 
+void GridEditor::show()
+{
+    QMainWindow::show();
+    LogInfo("Opened Grid Editor.");
+}
+
 //Updates grid
 void GridEditor::showEvent([[maybe_unused]] QShowEvent *event)
 {
@@ -74,5 +81,6 @@ void GridEditor::showEvent([[maybe_unused]] QShowEvent *event)
 //Emit grid state when grid editor is closed
 void GridEditor::closeEvent([[maybe_unused]] QCloseEvent *event)
 {
+    LogInfo("Closed Grid Editor.");
     emit gridStateChanged(ui->gridEditViewer->getGridState());
 }

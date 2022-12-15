@@ -40,6 +40,9 @@ public:
 signals:
     void gridStateChanged(const GridUtility::MosaicBestFit &t_gridState);
 
+public Q_SLOTS:
+    void show();
+
 protected:
     //Updates grid
     void showEvent(QShowEvent *event) override;

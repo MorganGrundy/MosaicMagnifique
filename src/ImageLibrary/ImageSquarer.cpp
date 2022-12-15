@@ -5,10 +5,12 @@
 #include <opencv2/imgproc.hpp>
 
 #include "..\Other\ImageUtility.h"
+#include "..\Other\Logger.h"
 
 ImageSquarer::ImageSquarer(QWidget *parent) :
     QMainWindow(parent), ui(new Ui::ImageSquarer)
 {
+    LogInfo("Opened Image Squarer.");
     ui->setupUi(this);
 
     connect(ui->pushCrop, &QPushButton::released, this, &ImageSquarer::cropCurrentImage);
@@ -27,6 +29,7 @@ ImageSquarer::ImageSquarer(QWidget *parent) :
 ImageSquarer::~ImageSquarer()
 {
     delete ui;
+    LogInfo("Closed Image Squarer.");
 }
 
 //Allows user to crop input image

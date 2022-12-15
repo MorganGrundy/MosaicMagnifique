@@ -35,7 +35,7 @@ CUDAPhotomosaicGenerator::CUDAPhotomosaicGenerator()
 //Returns true if successful
 bool CUDAPhotomosaicGenerator::generateBestFits()
 {
-    LogInfo("Generating Photomosaic with CUDA.");
+    LogInfo("Started generating Photomosaic on GPU with CUDA.");
 
     TimingLogger timingLogger;
     timingLogger.StartTiming("generateBestFits");
@@ -47,6 +47,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     auto libImages = preprocessLibraryImages();
     timingLogger.StopTiming("Preprocess");
 
+    LogInfo("CUDA Photomosaic Generator - Allocating CUDA memory.");
     timingLogger.StartTiming("cudaMalloc");
     //Get CUDA block size
     cudaDeviceProp deviceProp;
@@ -113,6 +114,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     //Device memory for best fits
     gpuErrchk(cudaMalloc((void **)&d_bestFit, maxNoOfCells * sizeof(size_t)));
     timingLogger.StopTiming("cudaMalloc");
+    LogInfo("CUDA Photomosaic Generator - Allocated CUDA memory.");
 
     timingLogger.StartTiming("StepLoop");
     //For all size steps, stop if no bounds for step
@@ -120,7 +122,10 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     {
         //If user hits cancel in QProgressDialog then return empty best fit
         if (m_wasCanceled)
+        {
+            LogInfo("Photomosaic generation cancelled.");
             break;
+        }
 
         const int progressStep = std::pow(4, (m_bestFits.size() - 1) - step);
 
@@ -160,7 +165,10 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         {
             //If user hits cancel in QProgressDialog then return empty best fit
             if (m_wasCanceled)
+            {
+                LogInfo("Photomosaic generation cancelled.");
                 break;
+            }
 
             timingLogger.StartTiming("XLoop");
             for (int x = -GridUtility::PAD_GRID;
@@ -169,7 +177,10 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
             {
                 //If user hits cancel in QProgressDialog then return empty best fit
                 if (m_wasCanceled)
+                {
+                    LogInfo("Photomosaic generation cancelled.");
                     break;
+                }
 
                 //If cell is valid
                 if (m_bestFits.at(step).at(y + GridUtility::PAD_GRID).at(x + GridUtility::PAD_GRID).has_value())
@@ -295,6 +306,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     }
     timingLogger.StopTiming("StepLoop");
 
+    LogInfo("CUDA Photomosaic Generator - Freeing CUDA memory.");
     timingLogger.StartTiming("cudaFree");
     for (size_t i = 0; i < streamCount; ++i)
         gpuErrchk(cudaStreamDestroy(streams[i]));
@@ -316,6 +328,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     gpuErrchk(cudaFree(d_lowestVariant));
     gpuErrchk(cudaFree(d_bestFit));
     timingLogger.StopTiming("cudaFree");
+    LogInfo("CUDA Photomosaic Generator - Freed CUDA memory.");
     timingLogger.StopTiming("generateBestFits");
     timingLogger.StopAllTiming();
     timingLogger.LogTiming();

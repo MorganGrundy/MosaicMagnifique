@@ -32,7 +32,7 @@ CPUPhotomosaicGenerator::CPUPhotomosaicGenerator() : PhotomosaicGeneratorBase()
 //Returns true if successful
 bool CPUPhotomosaicGenerator::generateBestFits()
 {
-    LogInfo("Generating Photomosaic on CPU.");
+    LogInfo("Started generating Photomosaic on CPU.");
 
     TimingLogger timingLogger;
     timingLogger.StartTiming("generateBestFits");
@@ -50,7 +50,10 @@ bool CPUPhotomosaicGenerator::generateBestFits()
     {
         //If user hits cancel in QProgressDialog then return empty best fit
         if (m_wasCanceled)
+        {
+            LogInfo("Photomosaic generation cancelled.");
             break;
+        }
 
         const int progressStep = std::pow(4, (m_bestFits.size() - 1) - step);
 
@@ -64,14 +67,20 @@ bool CPUPhotomosaicGenerator::generateBestFits()
         {
             //If user hits cancel in QProgressDialog then return empty best fit
             if (m_wasCanceled)
+            {
+                LogInfo("Photomosaic generation cancelled.");
                 break;
+            }
 
             timingLogger.StartTiming("XLoop");
             for (int x = -GridUtility::PAD_GRID; x < static_cast<int>(m_bestFits.at(step).at(y + GridUtility::PAD_GRID).size()) - GridUtility::PAD_GRID; ++x)
             {
                 //If user hits cancel in QProgressDialog then return empty best fit
                 if (m_wasCanceled)
+                {
+                    LogInfo("Photomosaic generation cancelled.");
                     break;
+                }
 
                 //If cell is valid
                 if (m_bestFits.at(step).at(y + GridUtility::PAD_GRID).at(x + GridUtility::PAD_GRID).has_value())
@@ -104,6 +113,7 @@ bool CPUPhotomosaicGenerator::generateBestFits()
     timingLogger.StopAllTiming();
     timingLogger.LogTiming();
 
+    LogInfo("Finished generating Photomosaic on CPU.");
     return !m_wasCanceled;
 }
 

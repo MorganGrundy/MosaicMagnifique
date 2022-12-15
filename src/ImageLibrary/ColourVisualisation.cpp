@@ -21,6 +21,7 @@
 #include "ui_ColourVisualisation.h"
 
 #include "ImageHistogramCompare.h"
+#include "..\Other\Logger.h"
 
 ColourVisualisation::ColourVisualisation(QWidget *parent) :
     QMainWindow(parent),
@@ -34,6 +35,7 @@ ColourVisualisation::ColourVisualisation(QWidget *parent, const cv::Mat &t_image
     QMainWindow(parent),
     ui(new Ui::ColourVisualisation)
 {
+    LogInfo("Opening Colour Visualiser...");
     ui->setupUi(this);
 
     ImageHistogramCompare::colourPriorityList colourPriority =
@@ -55,4 +57,16 @@ ColourVisualisation::ColourVisualisation(QWidget *parent, const cv::Mat &t_image
 ColourVisualisation::~ColourVisualisation()
 {
     delete ui;
+    LogInfo("Closed Colour Visualiser.");
+}
+
+void ColourVisualisation::closeEvent(QCloseEvent *event)
+{
+    LogInfo("Closed Colour Visualiser.");
+}
+
+void ColourVisualisation::show()
+{
+    QMainWindow::show();
+    LogInfo("Opened Colour Visualiser.");
 }

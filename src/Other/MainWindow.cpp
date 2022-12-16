@@ -165,7 +165,6 @@ void MainWindow::CUDAinit()
 
     //Get number of devices
     int deviceCount;
-    cudaDeviceProp properties;
     cudaError cudaErrCode = cudaGetDeviceCount(&deviceCount);
     CUDAUtility::cudaErrorType cudaErrType = CUDAUtility::CUDAErrMessageBox(this, "Disabling CUDA functionality.", cudaErrCode, { cudaErrorNoDevice, cudaErrorInsufficientDriver }, __FILE__, __LINE__);
     if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
@@ -173,6 +172,7 @@ void MainWindow::CUDAinit()
 
     //Get the valid CUDA devices
     int validDeviceCount = 0;
+    cudaDeviceProp properties;
     for (int device = 0; device < deviceCount; ++device)
     {
         cudaErrCode = cudaGetDeviceProperties(&properties, device);
@@ -586,7 +586,10 @@ void MainWindow::generatePhotomosaic()
     //Choose which generator to use
 #ifdef CUDA
     if (ui->checkCUDA->isChecked())
-        generator = std::make_shared<CUDAPhotomosaicGenerator>();
+    {
+        const int device = ui->comboCUDA->currentData().toInt();
+        generator = std::make_shared<CUDAPhotomosaicGenerator>(device);
+    }
     else
 #endif
         generator = std::make_shared<CPUPhotomosaicGenerator>();

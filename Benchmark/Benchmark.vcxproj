@@ -233,6 +233,8 @@
   <ItemGroup>
     <ClCompile Include="..\src\CellShape\CellGroup.cpp" />
     <ClCompile Include="..\src\CellShape\CellShape.cpp" />
+    <ClCompile Include="..\src\Other\Logger.cpp" />
+    <ClCompile Include="..\src\Other\Utility.cpp" />
     <ClCompile Include="..\src\Photomosaic\ColourDifference.cpp" />
     <ClCompile Include="..\src\Photomosaic\ColourScheme.cpp" />
     <ClCompile Include="..\src\Photomosaic\CPUPhotomosaicGenerator.cpp" />
@@ -252,6 +254,8 @@
   <ItemGroup>
     <ClInclude Include="..\src\CellShape\CellGroup.h" />
     <ClInclude Include="..\src\CellShape\CellShape.h" />
+    <ClInclude Include="..\src\Other\Logger.h" />
+    <ClInclude Include="..\src\Other\Utility.h" />
     <ClInclude Include="..\src\Photomosaic\ColourScheme.h" />
     <ClInclude Include="..\src\Photomosaic\CUDA\CUDAPhotomosaicGenerator.h" />
     <ClInclude Include="..\src\Photomosaic\CUDA\CUDAUtility.h" />

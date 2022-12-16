@@ -20,7 +20,7 @@ size_t GeneratePhotomosaic(const QString &libFile, const std::string &mainImageF
     //Choose which generator to use
     std::shared_ptr<PhotomosaicGeneratorBase> generator;
     if (useCUDA)
-        generator = std::make_shared<CUDAPhotomosaicGenerator>();
+        generator = std::make_shared<CUDAPhotomosaicGenerator>(0);
     else
         generator = std::make_shared<CPUPhotomosaicGenerator>();
 

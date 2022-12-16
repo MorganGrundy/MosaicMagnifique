@@ -207,6 +207,8 @@
     </QtUic>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Other\Logger.cpp" />
+    <ClCompile Include="Other\Utility.cpp" />
     <ClCompile Include="Photomosaic\ColourScheme.cpp" />
     <ClCompile Include="CellShape\CellGroup.cpp" />
     <ClCompile Include="CellShape\CellShape.cpp" />
@@ -237,6 +239,7 @@
   <ItemGroup>
     <ClInclude Include="Other\Logger.h" />
     <ClInclude Include="Other\TimingLogger.h" />
+    <ClInclude Include="Other\Utility.h" />
     <ClInclude Include="Photomosaic\ColourScheme.h" />
     <ClInclude Include="CellShape\CellGroup.h" />
     <ClInclude Include="CellShape\CellShape.h" />

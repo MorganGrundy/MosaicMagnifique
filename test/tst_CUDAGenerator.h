@@ -18,7 +18,7 @@
 class CUDAGeneratorFixture : public ::testing::Test, public CUDAPhotomosaicGenerator
 {
 protected:
-    CUDAGeneratorFixture() : CUDAPhotomosaicGenerator() {}
+    CUDAGeneratorFixture() : CUDAPhotomosaicGenerator(0) {}
 
     void CreateCellGroup(const size_t t_cellSize = 128, const size_t t_steps = 0, const size_t t_detail = 100)
     {
@@ -91,7 +91,8 @@ protected:
 class CPUvsCUDAGeneratorFixture : public ::testing::Test
 {
 protected:
-    CPUvsCUDAGeneratorFixture() {}
+    CPUvsCUDAGeneratorFixture() : cudaGenerator(0)
+    {}
 
     void setColourDifference(const ColourDifference::Type t_colourDiff)
     {

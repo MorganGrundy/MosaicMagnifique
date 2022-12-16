@@ -137,6 +137,12 @@
     <ClCompile Include="ImageLibrary\ImageHistogramCompare.cpp">
       <Filter>Image Library</Filter>
     </ClCompile>
+    <ClCompile Include="Other\Utility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Other\Logger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Other\CropGraphicsObject.h">
@@ -197,6 +203,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Other\TimingLogger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Other\Utility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

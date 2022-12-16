@@ -9,9 +9,8 @@
 
 #include "..\..\Other\Utility.h"
 
+//This should only be used in the test project
 #define gpuErrchk(ans) CUDAUtility::gpuAssert((ans), __FILE__, __LINE__)
-
-#define cudaErrStr(errCode) CUDAUtility::createCUDAErrStr((errCode), __FILE__, __LINE__)
 
 namespace CUDAUtility
 {

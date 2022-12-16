@@ -96,6 +96,12 @@
     <ClCompile Include="..\src\Photomosaic\PhotomosaicGeneratorBase.cpp">
       <Filter>Photomosaic</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Other\Logger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Other\Utility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Other\ImageUtility.h">
@@ -174,6 +180,12 @@
       <Filter>Photomosaic\CUDA</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Other\TimingLogger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Other\Logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Other\Utility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -62,7 +62,7 @@ QMessageBox::StandardButton MessageBox::question(QWidget *parent, const QString 
 
 QMessageBox::StandardButton MessageBox::warning(QWidget *parent, const QString &title, const QString &text, StandardButtons buttons, StandardButton defaultButton)
 {
-    g_Logger.write(Utility::MsgType::INFO, "Displaying message box \"" + title + "\": \"" + text + "\"");
+    g_Logger.write(Utility::MsgType::WARNING, "Displaying message box \"" + title + "\": \"" + text + "\"");
     const StandardButton ret = QMessageBox::warning(parent, title, text, buttons, defaultButton);
     g_Logger.write(Utility::MsgType::WARNING, "Message box closed.");
     return ret;
@@ -70,7 +70,7 @@ QMessageBox::StandardButton MessageBox::warning(QWidget *parent, const QString &
 
 QMessageBox::StandardButton MessageBox::critical(QWidget *parent, const QString &title, const QString &text, StandardButtons buttons, StandardButton defaultButton)
 {
-    g_Logger.write(Utility::MsgType::INFO, "Displaying message box \"" + title + "\": \"" + text + "\"");
+    g_Logger.write(Utility::MsgType::CRITICAL, "Displaying message box \"" + title + "\": \"" + text + "\"");
     const StandardButton ret = QMessageBox::critical(parent, title, text, buttons, defaultButton);
     g_Logger.write(Utility::MsgType::CRITICAL, "Message box closed.");
     return ret;

@@ -394,7 +394,7 @@ void MainWindow::loadImageSize()
 {
     if (!mainImage.empty())
     {
-        LogInfo(QString("Set Photomosaic size to main image size (w%1, h%2)").arg(mainImage.cols, mainImage.rows));
+        LogInfo(QString("Set Photomosaic size to main image size (w%1, h%2)").arg(mainImage.cols).arg(mainImage.rows));
 
         //Blocks signals while changing value
         ui->spinPhotomosaicWidth->blockSignals(true);

@@ -109,10 +109,10 @@ void PhotomosaicViewer::openColourSelector()
 
         //Change button colour
         QString newStyle = QString("background-color: rgba(%1, %2, %3, %4)");
-        newStyle = newStyle.arg(QString::number(m_backgroundColor.red()),
-                                QString::number(m_backgroundColor.green()),
-                                QString::number(m_backgroundColor.blue()),
-                                QString::number(m_backgroundColor.alpha()));
+        newStyle = newStyle.arg(QString::number(m_backgroundColor.red()))
+                           .arg(QString::number(m_backgroundColor.green()))
+                           .arg(QString::number(m_backgroundColor.blue()))
+                           .arg(QString::number(m_backgroundColor.alpha()));
         ui->pushBackgroundColour->setStyleSheet(newStyle);
 
         updatePhotomosaic();

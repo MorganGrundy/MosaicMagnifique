@@ -26,7 +26,7 @@ namespace CUDAUtility
 
     inline QString createCUDAErrStr(const cudaError_t code, const char *file, const int line)
     {
-        return QString("CUDA Error (%1): %2\n%3 line %4").arg(static_cast<int>(code)).arg(cudaGetErrorString(code), file).arg(line);
+        return QString("CUDA Error (%1): %2\n%3 line %4").arg(static_cast<int>(code)).arg(cudaGetErrorString(code)).arg(file).arg(line);
     }
 
     enum class cudaErrorType { SUCCESS, ERR_EXPECTED, ERR_UNEXPECTED };

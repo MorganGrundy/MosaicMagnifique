@@ -60,7 +60,7 @@ ColourVisualisation::~ColourVisualisation()
     LogInfo("Closed Colour Visualiser.");
 }
 
-void ColourVisualisation::closeEvent(QCloseEvent *event)
+void ColourVisualisation::closeEvent([[maybe_unused]]QCloseEvent *event)
 {
     LogInfo("Closed Colour Visualiser.");
 }

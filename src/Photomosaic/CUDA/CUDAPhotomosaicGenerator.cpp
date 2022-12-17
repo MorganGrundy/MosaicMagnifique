@@ -54,7 +54,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     //Get CUDA block size
     cudaDeviceProp deviceProp;
     cudaError cudaErrCode = cudaGetDeviceProperties(&deviceProp, m_device);
-    CUDAUtility::cudaErrorType cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to get properties for device %1").arg(m_device), cudaErrCode, { cudaErrorInvalidDevice }, __FILE__, __LINE__);
+    CUDAUtility::cudaErrorType cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to get properties for device %1. Was it disconnected?").arg(m_device), cudaErrCode, { cudaErrorInvalidDevice }, __FILE__, __LINE__);
     if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
         return false;
 
@@ -66,12 +66,15 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
 #endif
 
     //Create streams
-    const size_t streamCount = 16;
     cudaStream_t streams[streamCount];
-    for (size_t i = 0; i < streamCount; ++i)
+    size_t streamsCreated = 0;
+    for (size_t i = 0; i < streamCount && cudaErrType == CUDAUtility::cudaErrorType::SUCCESS; ++i)
     {
         cudaErrCode = cudaStreamCreate(&streams[i]);
-        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to create stream %1/%2").arg(i, streamCount), cudaErrCode, { cudaErrorInvalidValue }, __FILE__, __LINE__);
+        //This should never fail
+        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to create stream %1/%2").arg(i+1).arg(streamCount), cudaErrCode, {}, __FILE__, __LINE__);
+        if (cudaErrType == CUDAUtility::cudaErrorType::SUCCESS)
+            ++streamsCreated;
     }
 
     bool memWasAllocated = false;
@@ -81,7 +84,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
     if (memWasAllocated)
     {
         cudaErrCode = cudaMemcpy(m_d_d_variants, m_h_d_variants.data(), mainImages.size() * sizeof(double *), cudaMemcpyHostToDevice);
-        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy variant device pointers to device array", cudaErrCode, { cudaErrorInvalidValue, cudaErrorInvalidMemcpyDirection }, __FILE__, __LINE__);
+        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy variant device pointers to device array", cudaErrCode, {}, __FILE__, __LINE__);
     }
 
     if (cudaErrType == CUDAUtility::cudaErrorType::SUCCESS && memWasAllocated)
@@ -113,26 +116,26 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
             for (size_t libI = 0; libI < libImages.size() && cudaErrType == CUDAUtility::cudaErrorType::SUCCESS; ++libI)
             {
                 cudaErrCode = copyMatToDevice<float>(libImages.at(libI), m_h_d_libIm.at(libI));
-                cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to copy library image to device %1/%2").arg(libI, libImages.size()), cudaErrCode, { cudaErrorInvalidValue, cudaErrorInvalidMemcpyDirection }, __FILE__, __LINE__);
+                cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to copy library image to device %1/%2").arg(libI+1).arg(libImages.size()), cudaErrCode, {}, __FILE__, __LINE__);
             }
             if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
                 break;
 
             //Copy cell masks to device
             cudaErrCode = copyMatToDevice<uchar>(detailCellShape.getCellMask(0, 0), m_h_d_maskImages.at(0));
-            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy cell mask to device 0/4", cudaErrCode, { cudaErrorInvalidValue, cudaErrorInvalidMemcpyDirection }, __FILE__, __LINE__);
+            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy cell mask to device 1/4", cudaErrCode, {}, __FILE__, __LINE__);
             if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
                 break;
             cudaErrCode = copyMatToDevice<uchar>(detailCellShape.getCellMask(1, 0), m_h_d_maskImages.at(1));
-            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy cell mask to device 1/4", cudaErrCode, { cudaErrorInvalidValue, cudaErrorInvalidMemcpyDirection }, __FILE__, __LINE__);
+            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy cell mask to device 2/4", cudaErrCode, {}, __FILE__, __LINE__);
             if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
                 break;
             cudaErrCode = copyMatToDevice<uchar>(detailCellShape.getCellMask(0, 1), m_h_d_maskImages.at(2));
-            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy cell mask to device 2/4", cudaErrCode, { cudaErrorInvalidValue, cudaErrorInvalidMemcpyDirection }, __FILE__, __LINE__);
+            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy cell mask to device 3/4", cudaErrCode, {}, __FILE__, __LINE__);
             if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
                 break;
             cudaErrCode = copyMatToDevice<uchar>(detailCellShape.getCellMask(1, 1), m_h_d_maskImages.at(3));
-            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy cell mask to device 3/4", cudaErrCode, { cudaErrorInvalidValue, cudaErrorInvalidMemcpyDirection }, __FILE__, __LINE__);
+            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy cell mask to device 4/4", cudaErrCode, {}, __FILE__, __LINE__);
             if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
                 break;
 
@@ -141,11 +144,11 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
             //Set best fits to max value
             const size_t maxBestFit = libImages.size();
             cudaErrCode = cudaMemcpy(m_d_bestFit, &maxBestFit, sizeof(size_t), cudaMemcpyHostToDevice);
-            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy max best fit from host to device", cudaErrCode, { cudaErrorInvalidValue, cudaErrorInvalidMemcpyDirection }, __FILE__, __LINE__);
+            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy max best fit from host to device", cudaErrCode, {}, __FILE__, __LINE__);
             for (size_t cellIndex = 1; cellIndex < noOfCells && cudaErrType == CUDAUtility::cudaErrorType::SUCCESS; ++cellIndex)
             {
                 cudaErrCode = cudaMemcpy(m_d_bestFit + cellIndex, m_d_bestFit, sizeof(size_t), cudaMemcpyDeviceToDevice);
-                cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy max best fit from device to device", cudaErrCode, { cudaErrorInvalidValue, cudaErrorInvalidMemcpyDirection }, __FILE__, __LINE__);
+                cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy max best fit from device to device", cudaErrCode, {}, __FILE__, __LINE__);
             }
             if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
                 break;
@@ -186,7 +189,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                         for (size_t i = 0; i < cells.size() && cudaErrType == CUDAUtility::cudaErrorType::SUCCESS; ++i)
                         {
                             cudaErrCode = copyMatToDevice<float>(cells.at(i), m_h_d_cellImages.at(i));
-                            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to copy cell image to device %1/%2").arg(i, cells.size()), cudaErrCode, { cudaErrorInvalidValue, cudaErrorInvalidMemcpyDirection }, __FILE__, __LINE__);
+                            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to copy cell image to device %1/%2").arg(i+1).arg(cells.size()), cudaErrCode, {}, __FILE__, __LINE__);
                         }
                         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
                             break;
@@ -202,7 +205,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                                                           static_cast<size_t>(cellBounds.x),
                                                           static_cast<size_t>(cellBounds.br().x) };
                             cudaErrCode = cudaMemcpy(m_d_targetArea, targetArea, 4 * sizeof(size_t), cudaMemcpyHostToDevice);
-                            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy target area to device", cudaErrCode, { cudaErrorInvalidValue, cudaErrorInvalidMemcpyDirection }, __FILE__, __LINE__);
+                            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to copy target area to device", cudaErrCode, {}, __FILE__, __LINE__);
                             if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
                                 break;
                             timingLogger.StopTiming("ClippedCell");
@@ -217,19 +220,19 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                         for (size_t i = 0; i < cells.size() && cudaErrType == CUDAUtility::cudaErrorType::SUCCESS; ++i)
                         {
                             cudaErrCode = cudaMemset(m_h_d_variants.at(i), 0, libImages.size() * cellSize * sizeof(double));
-                            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to clear variant %1/%2").arg(i, cells.size()), cudaErrCode, { cudaErrorInvalidValue }, __FILE__, __LINE__);
+                            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to clear variant %1/%2").arg(i+1).arg(cells.size()), cudaErrCode, {}, __FILE__, __LINE__);
                         }
                         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
                             break;
 
                         //Reset lowest variant
                         cudaErrCode = cudaMemcpy(m_d_lowestVariant, &maxVariant, sizeof(double), cudaMemcpyHostToDevice);
-                        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to reset lowest variant", cudaErrCode, { cudaErrorInvalidValue, cudaErrorInvalidMemcpyDirection }, __FILE__, __LINE__);
+                        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to reset lowest variant", cudaErrCode, {}, __FILE__, __LINE__);
                         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
                             break;
 
                         cudaErrCode = cudaStreamSynchronize(0);
-                        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to synchronise main stream", cudaErrCode, { cudaErrorInvalidResourceHandle }, __FILE__, __LINE__);
+                        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to synchronise main stream", cudaErrCode, {}, __FILE__, __LINE__);
                         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
                             break;
                         timingLogger.StopTiming("cudaMemcpy");
@@ -258,7 +261,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
                         for (size_t streamI = 0; streamI < streamCount && cudaErrType == CUDAUtility::cudaErrorType::SUCCESS; ++streamI)
                         {
                             cudaErrCode = cudaStreamSynchronize(streams[streamI]);
-                            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to synchronise stream %1/%2").arg(streamI, streamCount), cudaErrCode, { cudaErrorInvalidResourceHandle }, __FILE__, __LINE__);
+                            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to synchronise stream %1/%2").arg(streamI).arg(streamCount), cudaErrCode, {}, __FILE__, __LINE__);
                         }
                         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
                             break;
@@ -310,7 +313,7 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
             timingLogger.StartTiming("BestFit");
             std::vector<size_t> bestFit(noOfCells, 0);
             cudaErrCode = cudaMemcpy(bestFit.data(), m_d_bestFit, noOfCells * sizeof(size_t), cudaMemcpyDeviceToHost); //Unknown error
-            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Error copying best fits to host", cudaErrCode, { cudaErrorInvalidValue, cudaErrorInvalidMemcpyDirection }, __FILE__, __LINE__);
+            cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Error copying best fits to host", cudaErrCode, {}, __FILE__, __LINE__);
             if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
                 break;
             for (int y = -GridUtility::PAD_GRID;
@@ -340,10 +343,23 @@ bool CUDAPhotomosaicGenerator::generateBestFits()
         timingLogger.StopTiming("StepLoop");
     }
 
-    for (size_t i = 0; i < streamCount && cudaErrType == CUDAUtility::cudaErrorType::SUCCESS; ++i)
+    size_t streamsDestroyed = 0;
+    for (size_t i = 0; i < streamsCreated; ++i)
     {
         cudaErrCode = cudaStreamDestroy(streams[i]);
-        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to destroy CUDA stream %1/%2").arg(i, streamCount), cudaErrCode, { cudaErrorInvalidValue }, __FILE__, __LINE__);
+        if (cudaErrCode == cudaSuccess)
+            ++streamsDestroyed;
+        else
+            LogCritical(QString("Failed to destroy CUDA stream %1/%2\n").arg(i+1).arg(streamCount) + CUDAUtility::createCUDAErrStr(cudaErrCode, __FILE__, __LINE__));
+    }
+    if (streamsDestroyed != streamsCreated)
+    {
+        QMessageBox::StandardButton clickedButton = MessageBox::critical(nullptr, "CUDA failed to destroy streams",
+            "We failed to destroy some of the CUDA streams. I recommend restarting Mosaic Magnifique.\nPlease report this with the logs at: https://github.com/MorganGrundy/MosaicMagnifique/issues \n",
+            QMessageBox::StandardButton::Ok | QMessageBox::Open);
+
+        if (clickedButton == QMessageBox::Open)
+            QDesktopServices::openUrl(QUrl("https://github.com/MorganGrundy/MosaicMagnifique/issues"));
     }
 
     freeDeviceMemory(timingLogger);
@@ -374,7 +390,7 @@ bool CUDAPhotomosaicGenerator::allocateDeviceMemory(TimingLogger &timingLogger,
     for (size_t libI = 0; libI < libImages.size(); ++libI)
     {
         cudaErrCode = cudaMalloc((void **)&m_h_d_libIm.at(libI), maxCellSize * 3 * sizeof(float));
-        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for library image %1/%2").arg(libI, libImages.size()), cudaErrCode, { cudaErrorInvalidValue, cudaErrorMemoryAllocation }, __FILE__, __LINE__);
+        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for library image %1/%2").arg(libI+1).arg(libImages.size()), cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
             return false;
     }
@@ -384,7 +400,7 @@ bool CUDAPhotomosaicGenerator::allocateDeviceMemory(TimingLogger &timingLogger,
     for (size_t i = 0; i < m_h_d_maskImages.size(); ++i)
     {
         cudaErrCode = cudaMalloc((void **)&m_h_d_maskImages.at(i), maxCellSize * sizeof(uchar));
-        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for mask images %1/%2").arg(i, m_h_d_maskImages.size()), cudaErrCode, { cudaErrorInvalidValue, cudaErrorMemoryAllocation }, __FILE__, __LINE__);
+        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for mask images %1/%2").arg(i+1).arg(m_h_d_maskImages.size()), cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
             return false;
     }
@@ -394,12 +410,12 @@ bool CUDAPhotomosaicGenerator::allocateDeviceMemory(TimingLogger &timingLogger,
     for (size_t i = 0; i < mainImages.size(); ++i)
     {
         cudaErrCode = cudaMalloc((void **)&m_h_d_variants.at(i), libImages.size() * maxCellSize * sizeof(double));
-        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for variants %1/%2").arg(i, mainImages.size()), cudaErrCode, { cudaErrorInvalidValue, cudaErrorMemoryAllocation }, __FILE__, __LINE__);
+        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for variants %1/%2").arg(i+1).arg(mainImages.size()), cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
             return false;
     }
     cudaErrCode = cudaMalloc((void **)&m_d_d_variants, mainImages.size() * sizeof(double *));
-    cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to allocate device memory for variants array", cudaErrCode, { cudaErrorInvalidValue, cudaErrorMemoryAllocation }, __FILE__, __LINE__);
+    cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to allocate device memory for variants array", cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
     if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
         return false;
 
@@ -408,14 +424,14 @@ bool CUDAPhotomosaicGenerator::allocateDeviceMemory(TimingLogger &timingLogger,
     for (size_t i = 0; i < mainImages.size(); ++i)
     {
         cudaErrCode = cudaMalloc((void **)&m_h_d_cellImages.at(i), maxCellSize * 3 * sizeof(float));
-        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for cell images %1/%2").arg(i, mainImages.size()), cudaErrCode, { cudaErrorInvalidValue, cudaErrorMemoryAllocation }, __FILE__, __LINE__);
+        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for cell images %1/%2").arg(i+1).arg(mainImages.size()), cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
             return false;
     }
 
     //Device memory for target area
     cudaErrCode = cudaMalloc((void **)&m_d_targetArea, 4 * sizeof(size_t));
-    cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to allocate device memory for target area", cudaErrCode, { cudaErrorInvalidValue, cudaErrorMemoryAllocation }, __FILE__, __LINE__);
+    cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to allocate device memory for target area", cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
     if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
         return false;
 
@@ -426,14 +442,14 @@ bool CUDAPhotomosaicGenerator::allocateDeviceMemory(TimingLogger &timingLogger,
     for (size_t streamI = 0; streamI < streamCount; ++streamI)
     {
         cudaErrCode = cudaMalloc((void **)&m_h_d_reductionMems.at(streamI), libImages.size() * maxReductionMemSize * sizeof(double));
-        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for reduction %1/%2").arg(streamI, streamCount), cudaErrCode, { cudaErrorInvalidValue, cudaErrorMemoryAllocation }, __FILE__, __LINE__);
+        cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for reduction %1/%2").arg(streamI+1).arg(streamCount), cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
             return false;
     }
 
     //Device memory for lowest variant
     cudaErrCode = cudaMalloc((void **)&m_d_lowestVariant, sizeof(double));
-    cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to allocate device memory for lowest variant", cudaErrCode, { cudaErrorInvalidValue, cudaErrorMemoryAllocation }, __FILE__, __LINE__);
+    cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to allocate device memory for lowest variant", cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
     if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
         return false;
 
@@ -441,7 +457,7 @@ bool CUDAPhotomosaicGenerator::allocateDeviceMemory(TimingLogger &timingLogger,
     const size_t maxNoOfCells = m_bestFits.back().size() * m_bestFits.back().back().size();
     //Device memory for best fits
     cudaErrCode = cudaMalloc((void **)&m_d_bestFit, maxNoOfCells * sizeof(size_t));
-    cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to allocate device memory for best fits", cudaErrCode, { cudaErrorInvalidValue, cudaErrorMemoryAllocation }, __FILE__, __LINE__);
+    cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to allocate device memory for best fits", cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
     if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
         return false;
 
@@ -463,12 +479,23 @@ void CUDAPhotomosaicGenerator::freeDeviceMemory(TimingLogger &timingLogger)
     cudaError cudaErrCode;
     bool allFreed = true;
 
+    for (size_t i = 0; i < m_h_d_libIm.size(); ++i)
+    {
+        cudaErrCode = cudaFree(m_h_d_libIm.at(i));
+        if (cudaErrCode != cudaSuccess)
+        {
+            LogCritical(QString("Failed to free device memory for library image %1/%2\n").arg(i + 1).arg(m_h_d_libIm.size()) + CUDAUtility::createCUDAErrStr(cudaErrCode, __FILE__, __LINE__));
+            allFreed = false;
+        }
+    }
+    m_h_d_libIm.clear();
+
     for (size_t i = 0; i < m_h_d_maskImages.size(); ++i)
     {
         cudaErrCode = cudaFree(m_h_d_maskImages.at(i));
         if (cudaErrCode != cudaSuccess)
         {
-            LogCritical(QString("Failed to free device memory for mask image %1/%2\n").arg(i, m_h_d_maskImages.size()) + CUDAUtility::createCUDAErrStr(cudaErrCode, __FILE__, __LINE__));
+            LogCritical(QString("Failed to free device memory for mask image %1/%2\n").arg(i+1).arg(m_h_d_maskImages.size()) + CUDAUtility::createCUDAErrStr(cudaErrCode, __FILE__, __LINE__));
             allFreed = false;
         }
     }
@@ -481,13 +508,12 @@ void CUDAPhotomosaicGenerator::freeDeviceMemory(TimingLogger &timingLogger)
         allFreed = false;
     }
     m_d_d_variants = nullptr;
-
     for (size_t i = 0; i < m_h_d_variants.size(); ++i)
     {
         cudaErrCode = cudaFree(m_h_d_variants.at(i));
         if (cudaErrCode != cudaSuccess)
         {
-            LogCritical(QString("Failed to free device memory for variant %1/%2\n").arg(i, m_h_d_variants.size()) + CUDAUtility::createCUDAErrStr(cudaErrCode, __FILE__, __LINE__));
+            LogCritical(QString("Failed to free device memory for variant %1/%2\n").arg(i+1).arg(m_h_d_variants.size()) + CUDAUtility::createCUDAErrStr(cudaErrCode, __FILE__, __LINE__));
             allFreed = false;
         }
     }
@@ -498,33 +524,11 @@ void CUDAPhotomosaicGenerator::freeDeviceMemory(TimingLogger &timingLogger)
         cudaErrCode = cudaFree(m_h_d_cellImages.at(i));
         if (cudaErrCode != cudaSuccess)
         {
-            LogCritical(QString("Failed to free device memory for cell image %1/%2\n").arg(i, m_h_d_cellImages.size()) + CUDAUtility::createCUDAErrStr(cudaErrCode, __FILE__, __LINE__));
+            LogCritical(QString("Failed to free device memory for cell image %1/%2\n").arg(i+1).arg(m_h_d_cellImages.size()) + CUDAUtility::createCUDAErrStr(cudaErrCode, __FILE__, __LINE__));
             allFreed = false;
         }
     }
     m_h_d_cellImages.clear();
-
-    for (size_t i = 0; i < m_h_d_reductionMems.size(); ++i)
-    {
-        cudaErrCode = cudaFree(m_h_d_reductionMems.at(i));
-        if (cudaErrCode != cudaSuccess)
-        {
-            LogCritical(QString("Failed to free device memory for reduction %1/%2\n").arg(i, m_h_d_reductionMems.size()) + CUDAUtility::createCUDAErrStr(cudaErrCode, __FILE__, __LINE__));
-            allFreed = false;
-        }
-    }
-    m_h_d_reductionMems.clear();
-
-    for (size_t i = 0; i < m_h_d_libIm.size(); ++i)
-    {
-        cudaErrCode = cudaFree(m_h_d_libIm.at(i));
-        if (cudaErrCode != cudaSuccess)
-        {
-            LogCritical(QString("Failed to free device memory for library image %1/%2\n").arg(i, m_h_d_libIm.size()) + CUDAUtility::createCUDAErrStr(cudaErrCode, __FILE__, __LINE__));
-            allFreed = false;
-        }
-    }
-    m_h_d_libIm.clear();
 
     cudaErrCode = cudaFree(m_d_targetArea);
     if (cudaErrCode != cudaSuccess)
@@ -533,6 +537,17 @@ void CUDAPhotomosaicGenerator::freeDeviceMemory(TimingLogger &timingLogger)
         allFreed = false;
     }
     m_d_targetArea = nullptr;
+
+    for (size_t i = 0; i < m_h_d_reductionMems.size(); ++i)
+    {
+        cudaErrCode = cudaFree(m_h_d_reductionMems.at(i));
+        if (cudaErrCode != cudaSuccess)
+        {
+            LogCritical(QString("Failed to free device memory for reduction %1/%2\n").arg(i+1).arg(m_h_d_reductionMems.size()) + CUDAUtility::createCUDAErrStr(cudaErrCode, __FILE__, __LINE__));
+            allFreed = false;
+        }
+    }
+    m_h_d_reductionMems.clear();
 
     cudaErrCode = cudaFree(m_d_lowestVariant);
     if (cudaErrCode != cudaSuccess)

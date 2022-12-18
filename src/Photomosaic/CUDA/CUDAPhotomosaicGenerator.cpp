@@ -379,17 +379,67 @@ bool CUDAPhotomosaicGenerator::allocateDeviceMemory(TimingLogger &timingLogger,
     LogInfo("CUDA Photomosaic Generator - Allocating CUDA memory.");
     timingLogger.StartTiming("cudaMalloc");
 
-    cudaError cudaErrCode;
-    CUDAUtility::cudaErrorType cudaErrType;
-
     //The total pixels/area of the largest cell (where size step is 0)
     const size_t maxCellSize = std::pow(m_cells.getCellSize(0, true), 2);
+
+    //The maximum size of memory needed for add reduction
+    const size_t maxReductionMemSize = (((maxCellSize + 1) / 2 + m_blockSize - 1) / m_blockSize + 1) / 2;
+
+    //The maximum number of cells in grid at a single size step (the smallest size step has the most cells)
+    const size_t maxNoOfCells = m_bestFits.back().size() * m_bestFits.back().back().size();
+
+    //Sizes of the individual cudaMallocs
+    const size_t libraryMallocSize = maxCellSize * 3 * sizeof(float);
+    const size_t maskMallocSize = maxCellSize * sizeof(uchar);
+    const size_t variantMallocSize = libImages.size() * maxCellSize * sizeof(double);
+    const size_t variantArrayMallocSize = mainImages.size() * sizeof(double *);
+    const size_t cellMallocSize = maxCellSize * 3 * sizeof(float);
+    const size_t targetMallocSize = 4 * sizeof(size_t);
+    const size_t reductionMallocSize = libImages.size() * maxReductionMemSize * sizeof(double);
+    const size_t lowestVariantMallocSize = sizeof(double);
+    const size_t bestFitMallocSize = maxNoOfCells * sizeof(size_t);
+
+    //Calculate the total size of all cudaMallocs
+    const size_t totalMallocSize = libraryMallocSize * libImages.size()
+        + maskMallocSize * 4
+        + variantMallocSize * mainImages.size()
+        + variantArrayMallocSize
+        + cellMallocSize * mainImages.size()
+        + targetMallocSize
+        + reductionMallocSize * streamCount
+        + lowestVariantMallocSize
+        + bestFitMallocSize;
+
+    //Get the device free and total memory
+    size_t freeMem = 0, totalMem = 0;
+    cudaError cudaErrCode = cudaMemGetInfo(&freeMem, &totalMem);
+    //Just log if this fails but continue as it's not essential (though if this fails the cudaMalloc probably will too)
+    if (cudaErrCode != cudaSuccess)
+        LogWarn("Failed to get device memory info\n" + CUDAUtility::createCUDAErrStr(cudaErrCode, __FILE__, __LINE__));
+    else
+    {
+        LogInfo(QString("CUDA device has %1 free out of a total %2.").arg(Utility::FormatBytesAsString(freeMem)).arg(Utility::FormatBytesAsString(totalMem)));
+
+        //Error if we don't have enough memory
+        if (totalMem < totalMallocSize)
+        {
+            MessageBox::critical(nullptr, "CUDA not enough total memory", QString("CUDA device does not have enough total memory to generate this Photomosaic. Try reducing the number of library images, the detail, or cell size?\nIt has %1, needs over %2.").arg(Utility::FormatBytesAsString(totalMem)).arg(Utility::FormatBytesAsString(totalMallocSize)));
+            return false;
+        }
+        else if (freeMem < totalMallocSize)
+        {
+            MessageBox::critical(nullptr, "CUDA not enough free memory", QString("CUDA device does not have enough free memory to generate this Photomosaic. Try closing other apps using the CUDA device.\nIt has %1 free out of %2, needs over %3.").arg(Utility::FormatBytesAsString(freeMem)).arg(Utility::FormatBytesAsString(totalMem)).arg(Utility::FormatBytesAsString(totalMallocSize)));
+            return false;
+        }
+    }
+
+    CUDAUtility::cudaErrorType cudaErrType;
 
     //Device memory for library images
     m_h_d_libIm = std::vector<float *>(libImages.size(), nullptr);
     for (size_t libI = 0; libI < libImages.size(); ++libI)
     {
-        cudaErrCode = cudaMalloc((void **)&m_h_d_libIm.at(libI), maxCellSize * 3 * sizeof(float));
+        cudaErrCode = cudaMalloc((void **)&m_h_d_libIm.at(libI), libraryMallocSize);
         cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for library image %1/%2").arg(libI+1).arg(libImages.size()), cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
             return false;
@@ -399,7 +449,7 @@ bool CUDAPhotomosaicGenerator::allocateDeviceMemory(TimingLogger &timingLogger,
     m_h_d_maskImages = std::vector<uchar *>(4);
     for (size_t i = 0; i < m_h_d_maskImages.size(); ++i)
     {
-        cudaErrCode = cudaMalloc((void **)&m_h_d_maskImages.at(i), maxCellSize * sizeof(uchar));
+        cudaErrCode = cudaMalloc((void **)&m_h_d_maskImages.at(i), maskMallocSize);
         cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for mask images %1/%2").arg(i+1).arg(m_h_d_maskImages.size()), cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
             return false;
@@ -409,12 +459,12 @@ bool CUDAPhotomosaicGenerator::allocateDeviceMemory(TimingLogger &timingLogger,
     m_h_d_variants = std::vector<double *>(mainImages.size(), nullptr);
     for (size_t i = 0; i < mainImages.size(); ++i)
     {
-        cudaErrCode = cudaMalloc((void **)&m_h_d_variants.at(i), libImages.size() * maxCellSize * sizeof(double));
+        cudaErrCode = cudaMalloc((void **)&m_h_d_variants.at(i), variantMallocSize);
         cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for variants %1/%2").arg(i+1).arg(mainImages.size()), cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
             return false;
     }
-    cudaErrCode = cudaMalloc((void **)&m_d_d_variants, mainImages.size() * sizeof(double *));
+    cudaErrCode = cudaMalloc((void **)&m_d_d_variants, variantArrayMallocSize);
     cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to allocate device memory for variants array", cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
     if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
         return false;
@@ -423,40 +473,36 @@ bool CUDAPhotomosaicGenerator::allocateDeviceMemory(TimingLogger &timingLogger,
     m_h_d_cellImages = std::vector<float *>(mainImages.size(), nullptr);
     for (size_t i = 0; i < mainImages.size(); ++i)
     {
-        cudaErrCode = cudaMalloc((void **)&m_h_d_cellImages.at(i), maxCellSize * 3 * sizeof(float));
+        cudaErrCode = cudaMalloc((void **)&m_h_d_cellImages.at(i), cellMallocSize);
         cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for cell images %1/%2").arg(i+1).arg(mainImages.size()), cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
             return false;
     }
 
     //Device memory for target area
-    cudaErrCode = cudaMalloc((void **)&m_d_targetArea, 4 * sizeof(size_t));
+    cudaErrCode = cudaMalloc((void **)&m_d_targetArea, targetMallocSize);
     cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to allocate device memory for target area", cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
     if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
         return false;
 
-    //The maximum size of memory needed for add reduction
-    const size_t maxReductionMemSize = (((maxCellSize + 1) / 2 + m_blockSize - 1) / m_blockSize + 1) / 2;
     //Device memory for reduction memory
     m_h_d_reductionMems = std::vector<double *>(streamCount);
     for (size_t streamI = 0; streamI < streamCount; ++streamI)
     {
-        cudaErrCode = cudaMalloc((void **)&m_h_d_reductionMems.at(streamI), libImages.size() * maxReductionMemSize * sizeof(double));
+        cudaErrCode = cudaMalloc((void **)&m_h_d_reductionMems.at(streamI), reductionMallocSize);
         cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, QString("Failed to allocate device memory for reduction %1/%2").arg(streamI+1).arg(streamCount), cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
         if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
             return false;
     }
 
     //Device memory for lowest variant
-    cudaErrCode = cudaMalloc((void **)&m_d_lowestVariant, sizeof(double));
+    cudaErrCode = cudaMalloc((void **)&m_d_lowestVariant, lowestVariantMallocSize);
     cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to allocate device memory for lowest variant", cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
     if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
         return false;
 
-    //The maximum number of cells in grid at a single size step (the smallest size step has the most cells)
-    const size_t maxNoOfCells = m_bestFits.back().size() * m_bestFits.back().back().size();
     //Device memory for best fits
-    cudaErrCode = cudaMalloc((void **)&m_d_bestFit, maxNoOfCells * sizeof(size_t));
+    cudaErrCode = cudaMalloc((void **)&m_d_bestFit, bestFitMallocSize);
     cudaErrType = CUDAUtility::CUDAErrMessageBox(nullptr, "Failed to allocate device memory for best fits", cudaErrCode, { cudaErrorMemoryAllocation }, __FILE__, __LINE__);
     if (cudaErrType != CUDAUtility::cudaErrorType::SUCCESS)
         return false;

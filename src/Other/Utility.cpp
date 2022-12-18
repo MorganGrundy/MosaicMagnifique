@@ -25,6 +25,37 @@ namespace Utility
         }
         return applicationDir;
     }
+
+    //Formats bytes as a string in the format "% TiB % GiB % MiB % KiB % B"
+    //Any 0 values are excluded
+    QString FormatBytesAsString(const size_t bytes)
+    {
+        QString str;
+
+        //The first five units Bytes, Kibibyte, Mebibyte, Gibibyte, and Tebibyte (excluding the B which is common to them all)
+        const char *units[5] = { "", "Ki", "Mi", "Gi", "Ti" };
+
+        //Calculate the values of each stage
+        size_t values[5] = { bytes, 0, 0, 0, 0 };
+        for (int i = 1; i < 5; ++i)
+        {
+            values[i] = values[i - 1] / 1024;
+            values[i - 1] = values[i - 1] % 1024;
+        }
+        
+        //Build the string
+        for (int i = 4; i >= 0; --i)
+        {
+            if (values[i] > 0)
+            {
+                if (!str.isEmpty())
+                    str.append(" ");
+                str.append(QString("%1 %2B").arg(values[i]).arg(units[i]));
+            }
+        }
+
+        return str;
+    }
 }
 
 int MessageBox::exec()

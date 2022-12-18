@@ -18,9 +18,9 @@
 #define LogDebug(x)  
 #endif
 #define LogInfo(x) g_Logger.write(Utility::MsgType::INFO, x)
-#define LogWarn(x) g_Logger.write(Utility::MsgType::WARNING, x);
-#define LogCritical(x) g_Logger.write(Utility::MsgType::CRITICAL, x);
-#define LogFatal(x) g_Logger.write(Utility::MsgType::FATAL, x);
+#define LogWarn(x) g_Logger.write(Utility::MsgType::WARNING, x)
+#define LogCritical(x) g_Logger.write(Utility::MsgType::CRITICAL, x)
+#define LogFatal(x) g_Logger.write(Utility::MsgType::FATAL, x)
 
 class Logger
 {

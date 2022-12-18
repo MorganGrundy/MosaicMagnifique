@@ -9,6 +9,10 @@ namespace Utility
     QString GetApplicationDir();
 
     enum class MsgType { FATAL = 0, CRITICAL = 1, DEBUG = 2, WARNING = 3, INFO = 4 };
+
+    //Formats bytes as a string in the format "% TiB % GiB % MiB % KiB % B"
+    //Any 0 values are excluded
+    QString FormatBytesAsString(const size_t bytes);
 }
 
 class MessageBox : public QMessageBox

@@ -42,7 +42,7 @@ ColourVisualisation::ColourVisualisation(QWidget *parent, const cv::Mat &t_image
         ImageHistogramCompare::getColourPriorityList(t_image, t_libImages);
 
     //Add all colours to list
-    for (auto data: colourPriority)
+    for (const auto &data: colourPriority)
     {
         //Create square image of bin colour (using bin median colour)
         QPixmap colour(iconSize, iconSize);

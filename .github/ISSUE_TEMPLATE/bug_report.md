@@ -23,8 +23,11 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
+**Logs**
+For versions after v3.4.1, attach the recent logs from the \Logs\ folder.
+
 **Context (Environment):**
- - Mosaic Magnifique Version [e.g. 3.0.0]
+ - Mosaic Magnifique Version [e.g. 3.4.1]
  - OS: [e.g. Windows 10, Ubuntu 16.04]
  - Dependency versions (only if you are not using packaged binaries)
 

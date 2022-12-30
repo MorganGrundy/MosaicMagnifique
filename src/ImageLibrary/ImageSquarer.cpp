@@ -10,7 +10,6 @@
 ImageSquarer::ImageSquarer(QWidget *parent) :
     QMainWindow(parent), ui(new Ui::ImageSquarer)
 {
-    LogInfo("Opened Image Squarer.");
     ui->setupUi(this);
 
     connect(ui->pushCrop, &QPushButton::released, this, &ImageSquarer::cropCurrentImage);
@@ -29,7 +28,6 @@ ImageSquarer::ImageSquarer(QWidget *parent) :
 ImageSquarer::~ImageSquarer()
 {
     delete ui;
-    LogInfo("Closed Image Squarer.");
 }
 
 //Allows user to crop input image
@@ -56,6 +54,7 @@ bool ImageSquarer::square(const cv::Mat &t_in, cv::Mat &t_out)
 
     //Display window
     QWidget::show();
+    LogInfo("Opened Image Squarer.");
     ui->graphicsView->fitInView(ui->graphicsView->sceneRect(), Qt::KeepAspectRatio);
 
     //Stores if image was cropped or skipped, stays false if window closed
@@ -76,6 +75,7 @@ bool ImageSquarer::square(const cv::Mat &t_in, cv::Mat &t_out)
     const QMetaObject::Connection connCancel = connect(this, &ImageSquarer::windowClosed,
                                                        &loop, &QEventLoop::quit);
     loop.exec();
+    LogInfo("Closed Image Squarer.");
 
     //Remove connections after loop exits
     disconnect(connCrop);

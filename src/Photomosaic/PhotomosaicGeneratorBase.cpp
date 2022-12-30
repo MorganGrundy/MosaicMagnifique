@@ -96,8 +96,7 @@ void PhotomosaicGeneratorBase::setRepeat(int t_repeatRange, int t_repeatAddition
 //Returns true if successful
 bool PhotomosaicGeneratorBase::generateBestFits()
 {
-    qDebug() << "PhotomosaicGeneratorBase::generateBestFits() - "
-             << "This is a base class";
+    LogCritical("PhotomosaicGeneratorBase::generateBestFits() - This is a base class");
     return false;
 }
 

@@ -101,7 +101,7 @@ void CellShapeEditor::saveCellShape()
     const CellShape &cellShape = ui->cellShapeViewer->getCellGroup().getCell(0);
     if (cellShape.getCellMask(0, 0).empty())
     {
-        MessageBox::warning(this, tr("Failed to save custom cell shape"), tr("No cell mask was provided"));
+        MessageBox::warning(this, tr("Cell Shape Editor"), tr("Failed to save custom cell shape: No cell mask was provided."));
         return;
     }
 
@@ -116,7 +116,7 @@ void CellShapeEditor::saveCellShape()
     }
     catch (const std::invalid_argument &e)
     {
-        MessageBox::warning(this, tr("Failed to save custom cell shape"), tr(e.what()));
+        MessageBox::warning(this, tr("Cell Shape Editor"), tr("Failed to save custom cell shape: %1\n%2").arg(filename).arg(e.what()));
     }
 }
 
@@ -144,7 +144,7 @@ void CellShapeEditor::loadCellShape()
     }
     catch (const std::invalid_argument &e)
     {
-        MessageBox::warning(this, tr("Failed to load custom cell shape"), tr(e.what()));
+        MessageBox::warning(this, tr("Cell Shape Editor"), tr("Failed to load custom cell shape: %1\n%2").arg(filename).arg(e.what()));
     }
 }
 

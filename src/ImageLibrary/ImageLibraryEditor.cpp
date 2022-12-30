@@ -24,9 +24,11 @@
 #include <QDebug>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include <limits>
 
 #include "..\Other\ImageUtility.h"
 #include "..\Other\Utility.h"
+#include "..\Other\Logger.h"
 #include "..\CellShape\CellShape.h"
 #include "ImageSquarer.h"
 
@@ -103,9 +105,9 @@ void ImageLibraryEditor::changeCropMode(const QString &t_mode)
         defaultDir.cd("CascadeClassifier");
         //Prompt user for cascade classifier file
         QString filename = QFileDialog::getOpenFileName(this, tr("Select cascade classifier file"),
-                                                        defaultDir.path() +
-                                                            "/haarcascade_frontalface_default.xml",
-                                                        "Cascade Classifier (*.xml)");
+            defaultDir.path() +
+            "/haarcascade_frontalface_default.xml",
+            "Cascade Classifier (*.xml)");
 
         //Load cascade classifier file
         if (!filename.isNull())
@@ -114,7 +116,7 @@ void ImageLibraryEditor::changeCropMode(const QString &t_mode)
             {
                 //Failed to load, reset crop mode
                 ui->comboCropMode->setCurrentIndex(0);
-                MessageBox::warning(this, tr("Failed to load cascade classifier"), tr("Failed to load cascade classifier: %1").arg(filename));
+                MessageBox::warning(this, tr("Image Library Editor"), tr("Failed to load cascade classifier: %1").arg(filename));
                 return;
             }
         }
@@ -129,7 +131,7 @@ void ImageLibraryEditor::changeCropMode(const QString &t_mode)
         m_cropMode = CropMode::CascadeClassifier;
     }
     else
-        qDebug() << Q_FUNC_INFO << "Crop mode" << t_mode << "was not recognised";
+        MessageBox::critical(this, tr("Image Library Editor"), tr("Crop mode was not recognised: %1").arg(t_mode));
 }
 
 //Loads images
@@ -157,7 +159,7 @@ void ImageLibraryEditor::addImages()
         cv::Mat image = cv::imread(file.toStdString());
         if (image.empty())
         {
-            qDebug() << Q_FUNC_INFO << "Could not open or find the image.";
+            MessageBox::warning(this, tr("Image Library Editor"), tr("Failed to load image: %1").arg(file));
             continue;
         }
 
@@ -183,27 +185,29 @@ void ImageLibraryEditor::addImages()
         }
         catch (const std::invalid_argument &e)
         {
-            qDebug() << Q_FUNC_INFO << e.what();
+            MessageBox::critical(this, tr("Image Library Editor"), QString("Failed to crop image: %1\n%2").arg(file).arg(e.what()));
+            continue;
         }
-
 
         //Extracts filename and extension from full path
         QString imageName = file.right(file.size() - file.lastIndexOf('/') - 1);
 
+        size_t imageIndex = std::numeric_limits<size_t>::max();
         try
         {
             //Add image to library
-            const size_t imageIndex = m_images.addImage(image, imageName);
-
-            //Add image to list widget
-            auto listWidgetItem = std::make_shared<QListWidgetItem>(QIcon(ImageUtility::matToQPixmap(m_images.getImages().at(imageIndex))), imageName);
-            m_imageWidgets.insert(m_imageWidgets.begin() + imageIndex, listWidgetItem);
-            ui->listPhoto->insertItem(static_cast<int>(imageIndex), listWidgetItem.get());
+            imageIndex = m_images.addImage(image, imageName);
         }
         catch (const std::invalid_argument &e)
         {
-            qDebug() << Q_FUNC_INFO << e.what();
+            MessageBox::critical(this, tr("Image Library Editor"), QString("Failed to add image to library: %1\n%2").arg(file).arg(e.what()));
+            throw e;
         }
+
+        //Add image to list widget
+        auto listWidgetItem = std::make_shared<QListWidgetItem>(QIcon(ImageUtility::matToQPixmap(m_images.getImages().at(imageIndex))), imageName);
+        m_imageWidgets.insert(m_imageWidgets.begin() + imageIndex, listWidgetItem);
+        ui->listPhoto->insertItem(static_cast<int>(imageIndex), listWidgetItem.get());
 
         if (m_progressBar != nullptr)
             m_progressBar->setValue(m_progressBar->value() + 1);
@@ -305,7 +309,7 @@ void ImageLibraryEditor::saveLibrary()
     }
     catch (const std::invalid_argument &e)
     {
-        MessageBox::warning(this, tr("Failed to save image library"), tr(e.what()));
+        MessageBox::warning(this, tr("Image Library Editor"), tr("Failed to save image library: %1\n%2").arg(filename).arg(e.what()));
     }
 }
 
@@ -323,7 +327,7 @@ void ImageLibraryEditor::loadLibrary()
     }
     catch (const std::invalid_argument &e)
     {
-        MessageBox::warning(this, tr("Failed to load image library"), tr(e.what()));
+        MessageBox::warning(this, tr("Image Library Editor"), tr("Failed to load image library: %1\n%2").arg(filename).arg(e.what()));
         return;
     }
 

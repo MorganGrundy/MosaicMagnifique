@@ -28,6 +28,7 @@
 
 #include "..\Other\ImageUtility.h"
 #include "..\Other\Logger.h"
+#include "..\Other\Utility.h"
 #include "..\Other\CustomGraphicsView.h"
 
 PhotomosaicViewer::PhotomosaicViewer(
@@ -88,10 +89,9 @@ void PhotomosaicViewer::savePhotomosaic()
     if (!filename.isNull())
     {
         if (!cv::imwrite(filename.toStdString(), m_photomosaic))
-        {
-            QErrorMessage errorMsg(this);
-            errorMsg.showMessage("Failed to save Photomosaic to: " + filename);
-        }
+            MessageBox::warning(this, tr("Photomosaic Viewer"), tr("Failed to save Photomosaic to: %1").arg(filename));
+        else
+            LogInfo("Saved Photomosaic to: " + filename);
     }
 }
 
@@ -114,6 +114,8 @@ void PhotomosaicViewer::openColourSelector()
                            .arg(QString::number(m_backgroundColor.blue()))
                            .arg(QString::number(m_backgroundColor.alpha()));
         ui->pushBackgroundColour->setStyleSheet(newStyle);
+
+        LogInfo("Photomosaic background colour set to: " + newStyle);
 
         updatePhotomosaic();
     }

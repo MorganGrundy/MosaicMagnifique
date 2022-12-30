@@ -50,10 +50,7 @@ bool CPUPhotomosaicGenerator::generateBestFits()
     {
         //If user hits cancel in QProgressDialog then return empty best fit
         if (m_wasCanceled)
-        {
-            LogInfo("Photomosaic generation cancelled.");
             break;
-        }
 
         const int progressStep = std::pow(4, (m_bestFits.size() - 1) - step);
 
@@ -67,20 +64,14 @@ bool CPUPhotomosaicGenerator::generateBestFits()
         {
             //If user hits cancel in QProgressDialog then return empty best fit
             if (m_wasCanceled)
-            {
-                LogInfo("Photomosaic generation cancelled.");
                 break;
-            }
 
             timingLogger.StartTiming("XLoop");
             for (int x = -GridUtility::PAD_GRID; x < static_cast<int>(m_bestFits.at(step).at(y + GridUtility::PAD_GRID).size()) - GridUtility::PAD_GRID; ++x)
             {
                 //If user hits cancel in QProgressDialog then return empty best fit
                 if (m_wasCanceled)
-                {
-                    LogInfo("Photomosaic generation cancelled.");
                     break;
-                }
 
                 //If cell is valid
                 if (m_bestFits.at(step).at(y + GridUtility::PAD_GRID).at(x + GridUtility::PAD_GRID).has_value())
@@ -113,7 +104,11 @@ bool CPUPhotomosaicGenerator::generateBestFits()
     timingLogger.StopAllTiming();
     timingLogger.LogTiming();
 
-    LogInfo("Finished generating Photomosaic on CPU.");
+    if (m_wasCanceled)
+        LogInfo("Photomosaic generation cancelled.");
+    else
+        LogInfo("Finished generating Photomosaic on CPU.");
+
     return !m_wasCanceled;
 }
 
@@ -178,7 +173,7 @@ CPUPhotomosaicGenerator::findCellBestFit(const CellShape &t_cellShape,
     //Invalid index, should never happen
     if (bestFit < 0 || bestFit >= static_cast<int>(t_lib.size()))
     {
-        qDebug() << Q_FUNC_INFO << "Failed to find a best fit";
+        MessageBox::critical(nullptr, tr("CPU Photomosaic Generator"), tr("Failed to find a best fit... The cell will be removed from the Photomosaic"));
         return std::nullopt;
     }
 
